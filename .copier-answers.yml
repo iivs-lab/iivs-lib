@@ -1,0 +1,20 @@
+# Changes here will be overwritten by Copier; do not edit by hand.
+# Run `copier update` to refresh from the template.
+_commit: v1.4.4
+_src_path: gh:kaparoo/python-project-template
+author_email: kaparoo2001@gmail.com
+author_name: Jaewoo Park
+coverage_fail_under: 0
+github_username: iivs-lab
+include_todo: true
+is_library: true
+license_year: 2026
+package_name: iivs
+project_description: A Python toolkit for multi-modal holographic systems and cellular
+    analysis.
+project_name: iivs-lib
+python_version: '3.14'
+release_automation: github-oidc
+repo_name: iivs-lib
+use_pytest: true
+use_testpypi: true
