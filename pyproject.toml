@@ -33,7 +33,8 @@ classifiers = [
 ]
 keywords = []
 dependencies = [
-    "kaparoo-python>=0.3.0",
+    "kaparoo-python>=0.4.0",
+    "natsort>=8.4.0",
     "numpy>=2.4.6",
 ]
 

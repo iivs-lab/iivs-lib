@@ -56,6 +56,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "kaparoo-python" },
+    { name = "natsort" },
     { name = "numpy" },
 ]
 
@@ -69,7 +70,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "kaparoo-python", specifier = ">=0.3.0" },
+    { name = "kaparoo-python", specifier = ">=0.4.0" },
+    { name = "natsort", specifier = ">=8.4.0" },
     { name = "numpy", specifier = ">=2.4.6" },
 ]
 
@@ -92,11 +94,20 @@ wheels = [
 
 [[package]]
 name = "kaparoo-python"
-version = "0.3.0"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple/" }
-sdist = { url = "https://files.pythonhosted.org/packages/31/81/d7291b14f12441447379a688ea8e9f5475631d033c692ea6155acae49e05/kaparoo_python-0.3.0.tar.gz", hash = "sha256:3a5f7dccf0587015b9e07a614f17b188cc42fc7022790f8ed99b18effa271f8e", size = 35015, upload-time = "2026-05-27T18:47:07.907Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/44/31/dc808f3a19d64a9d3c7cfde55f7bb28caac97f65228f9ca7b600cbbf2ba0/kaparoo_python-0.4.0.tar.gz", hash = "sha256:5c3218baca533408fa4e2d0b63a7cd4d2238532cd6280be4fca5d5197055fb74", size = 47921, upload-time = "2026-06-01T17:43:17.699Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/97/08/c381cd548c6cb0183a649bc0e8540789e4698edb5acba7c8b77baec973a8/kaparoo_python-0.3.0-py3-none-any.whl", hash = "sha256:11abe52db833831c09ea094fc33419e6ab1cf2822d2f8a60832df1cf9b117a36", size = 39197, upload-time = "2026-05-27T18:47:06.815Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/44/e79e7f98b77fe5be6cda8caf9b463aedcf0d4feedb5dd596aa6134e829e8/kaparoo_python-0.4.0-py3-none-any.whl", hash = "sha256:b27c9354548bd27aaf1aec498616df6f4b7d60a6eeae5cd123b1a4a9e5129f7d", size = 49885, upload-time = "2026-06-01T17:43:16.439Z" },
+]
+
+[[package]]
+name = "natsort"
+version = "8.4.0"
+source = { registry = "https://pypi.org/simple/" }
+sdist = { url = "https://files.pythonhosted.org/packages/e2/a9/a0c57aee75f77794adaf35322f8b6404cbd0f89ad45c87197a937764b7d0/natsort-8.4.0.tar.gz", hash = "sha256:45312c4a0e5507593da193dedd04abb1469253b601ecaf63445ad80f0a1ea581", size = 76575, upload-time = "2023-06-20T04:17:19.925Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ef/82/7a9d0550484a62c6da82858ee9419f3dd1ccc9aa1c26a1e43da3ecd20b0d/natsort-8.4.0-py3-none-any.whl", hash = "sha256:4732914fb471f56b5cce04d7bae6f164a592c7712e1c85f9ef585e197299521c", size = 38268, upload-time = "2023-06-20T04:17:17.522Z" },
 ]
 
 [[package]]

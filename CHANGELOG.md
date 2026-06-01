@@ -10,9 +10,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- `iivs.dhm.lynceetec.phase`: load and save Lyncee Tec / Koala float32
-  `.bin` phase images (`load_bin`, `save_bin`) with a typed
-  `PhaseBinHeader` (and its `PhaseBinHeader.DTYPE`) and a `PhaseUnit`
-  enum. `load_bin(..., unit=...)` returns values converted to the
-  requested unit and `save_bin(..., data_unit=...)` converts the input
-  before storing, both via the header's `height_per_radian`.
+- `iivs.dhm.koala.phase`: read and write Koala (Lyncée Tec) float32 `.bin`
+  phase images.
+  - `PhaseBinHeader` — a typed, validated header (with
+    `PhaseBinHeader.DTYPE`, `from_dtype` / `from_stream` / `from_file` /
+    `to_dtype`, and `shape`, `pixel_count`, `field_of_view`,
+    `pixel_size_um`, `height_scale_nm` conveniences) and the `PhaseUnit`
+    enum.
+  - `load_bin(path, *, return_header=False)` — load a 2D image, optionally
+    with its header; `read_header(path)` — read just the header cheaply.
+  - `save_bin(...)` — write a 2D image; the phase-to-height scale is given
+    either as `height_scale`, or as `wavelength` + `refractive_delta`.
+  - `validate_phase(data, *, on_nonfinite=...)` — validate a float32 phase
+    image or stack.
+  - `PhaseBinSequence` — an ordered `kaparoo.data.sequences.FileFolderSequence`
+    over a folder of `{index:05d}_phase.bin` images (item = image, metadata =
+    source path), exposing the shared acquisition `header`, optional unit
+    conversion, and a `validate` method.
