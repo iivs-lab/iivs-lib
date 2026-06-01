@@ -32,7 +32,10 @@ classifiers = [
     # See https://pypi.org/classifiers/ for more classifiers
 ]
 keywords = []
-dependencies = []
+dependencies = [
+    "kaparoo-python>=0.3.0",
+    "numpy>=2.4.6",
+]
 
 [project.urls]
 GitHub = "https://www.github.com/iivs-lab/iivs-lib"
