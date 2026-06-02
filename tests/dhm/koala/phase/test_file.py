@@ -3,8 +3,19 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.koala.phase.file import convert_phase, load_bin, read_header, save_bin
+from iivs.dhm.koala.phase.file import (
+    convert_phase,
+    load_bin,
+    read_header,
+    save_bin,
+    validate_phase,
+)
 from iivs.dhm.koala.phase.header import PhaseUnit
+
+
+def test_validate_phase_rejects_below_2d():
+    with pytest.raises(ValueError, match="2-dimensional"):
+        validate_phase(np.zeros(5, dtype=np.float32))
 
 
 def test_save_load_roundtrip(tmp_path):
@@ -60,7 +71,7 @@ def test_save_rejects_both_scale_forms(tmp_path):
 
 
 def test_save_rejects_non_2d(tmp_path):
-    with pytest.raises(ValueError, match="2-dimensional"):
+    with pytest.raises(ValueError, match="single 2D image"):
         save_bin(
             tmp_path / "bad.bin",
             np.zeros(5, dtype=np.float32),
@@ -97,6 +108,17 @@ def test_save_overwrite(tmp_path):
     with pytest.raises(FileExistsError, match="already exists"):
         save_bin(path, data, pixel_size=1.0, height_scale=1.0)
     save_bin(path, data, pixel_size=1.0, height_scale=1.0, overwrite=True)
+
+
+def test_save_nanometers_stores_meters(tmp_path):
+    data_nm = np.array([[100.0, 200.0], [300.0, 400.0]], dtype=np.float32)
+    path = tmp_path / "phase.bin"
+    save_bin(
+        path, data_nm, pixel_size=1e-6, height_scale=2e-7, unit=PhaseUnit.NANOMETERS
+    )
+    image, header = load_bin(path, return_header=True)
+    assert header.unit is PhaseUnit.METERS  # stored as meters, not nanometers
+    np.testing.assert_allclose(image, data_nm * 1e-9, rtol=1e-5)
 
 
 def test_read_header_matches_load(tmp_path):
@@ -166,6 +188,44 @@ def test_convert_phase_meters_to_radians():
         data, from_unit=PhaseUnit.METERS, to_unit=PhaseUnit.RADIANS, height_scale=2.0
     )
     np.testing.assert_array_equal(out, (data / 2.0).astype(np.float32))
+
+
+def test_convert_phase_meters_to_nanometers():
+    data = np.array([[1e-7, 2e-7]], dtype=np.float32)
+    out = convert_phase(
+        data, from_unit=PhaseUnit.METERS, to_unit=PhaseUnit.NANOMETERS, height_scale=2.0
+    )
+    np.testing.assert_allclose(out, data * 1e9, rtol=1e-5)
+
+
+def test_convert_phase_nanometers_to_meters():
+    data = np.array([[100.0, 200.0]], dtype=np.float32)
+    out = convert_phase(
+        data, from_unit=PhaseUnit.NANOMETERS, to_unit=PhaseUnit.METERS, height_scale=2.0
+    )
+    np.testing.assert_allclose(out, data * 1e-9, rtol=1e-5)
+
+
+def test_convert_phase_radians_to_nanometers():
+    data = np.array([[1.0, 2.0]], dtype=np.float32)
+    out = convert_phase(
+        data,
+        from_unit=PhaseUnit.RADIANS,
+        to_unit=PhaseUnit.NANOMETERS,
+        height_scale=3e-7,
+    )
+    np.testing.assert_allclose(out, data * 3e-7 * 1e9, rtol=1e-5)
+
+
+def test_convert_phase_nanometers_to_radians():
+    data = np.array([[300.0, 600.0]], dtype=np.float32)
+    out = convert_phase(
+        data,
+        from_unit=PhaseUnit.NANOMETERS,
+        to_unit=PhaseUnit.RADIANS,
+        height_scale=3e-7,
+    )
+    np.testing.assert_allclose(out, data / 1e9 / 3e-7, rtol=1e-5)
 
 
 def test_convert_phase_same_unit_returns_input():

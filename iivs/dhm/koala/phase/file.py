@@ -11,7 +11,7 @@ from kaparoo.filesystem import StagedFile, ensure_file_exists
 from iivs.dhm.koala.phase.header import PhaseBinHeader, PhaseUnit
 
 if TYPE_CHECKING:
-    from typing import Literal
+    from typing import IO, Literal
 
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
@@ -75,6 +75,9 @@ def validate_phase(
 # ========================== #
 
 
+_NM_PER_M = 1e9  # nanometers per meter
+
+
 def convert_phase(
     data: NDArray[np.float32],
     *,
@@ -84,9 +87,9 @@ def convert_phase(
 ) -> NDArray[np.float32]:
     """Convert phase image `data` from `from_unit` to `to_unit`.
 
-    Uses `height_scale` (meters per radian): radians to meters multiplies by
-    it, meters to radians divides. Returns `data` unchanged when the units
-    already match.
+    RADIANS <-> METERS uses `height_scale` (meters per radian); METERS <->
+    NANOMETERS uses the fixed 1e9 nm/m. Returns `data` unchanged when the
+    units already match.
 
     Args:
         data: The phase or height image to convert.
@@ -100,14 +103,23 @@ def convert_phase(
     Raises:
         ValueError: If the conversion is undefined (e.g. an UNKNOWN unit).
     """
-    if from_unit == to_unit:
+    if from_unit is to_unit:
         return data
-    if from_unit == PhaseUnit.RADIANS and to_unit == PhaseUnit.METERS:
-        return (data * height_scale).astype(np.float32, copy=False)
-    if from_unit == PhaseUnit.METERS and to_unit == PhaseUnit.RADIANS:
-        return (data / height_scale).astype(np.float32, copy=False)
-    msg = f"cannot convert phase from {from_unit.name} to {to_unit.name}"
-    raise ValueError(msg)
+    # `scale` is defined in ascending unit order (RADIANS < METERS <
+    # NANOMETERS); converting the other way uses its reciprocal.
+    match sorted((from_unit, to_unit)):
+        case [PhaseUnit.RADIANS, PhaseUnit.METERS]:
+            scale = height_scale
+        case [PhaseUnit.METERS, PhaseUnit.NANOMETERS]:
+            scale = _NM_PER_M
+        case [PhaseUnit.RADIANS, PhaseUnit.NANOMETERS]:
+            scale = height_scale * _NM_PER_M
+        case _:
+            msg = f"cannot convert phase from {from_unit.name} to {to_unit.name}"
+            raise ValueError(msg)
+    if from_unit > to_unit:
+        scale = 1.0 / scale
+    return (data * scale).astype(np.float32, copy=False)
 
 
 # ========================== #
@@ -132,6 +144,21 @@ def read_header(path: StrPath) -> PhaseBinHeader:
             size, or has invalid header fields.
     """
     return PhaseBinHeader.from_file(path)
+
+
+def _read_pixels(fb: IO[bytes], header: PhaseBinHeader) -> NDArray[np.float32]:
+    """Read the float32 pixel block after the header as an (H, W) array.
+
+    Validates that the remaining bytes match the pixel count declared by
+    `header` before decoding.
+    """
+    raw = fb.read()
+    expected = header.pixel_count * 4  # float32 is 4 bytes
+    if len(raw) != expected:
+        msg = f"pixel count must be {header.pixel_count} ({expected} bytes), got {len(raw)}"
+        raise ValueError(msg)
+    pixels = np.frombuffer(raw, dtype="<f4")
+    return pixels.reshape(header.shape).astype(np.float32, copy=True)
 
 
 @overload
@@ -186,13 +213,8 @@ def load_bin(
     path = ensure_file_exists(path)
     with path.open("rb") as fb:
         header = PhaseBinHeader.from_stream(fb)
-        pixels = np.frombuffer(fb.read(), dtype="<f4")
+        data = _read_pixels(fb, header)
 
-    if pixels.size != header.pixel_count:
-        msg = f"pixel count must be {header.pixel_count} (got {pixels.size}): {path}"
-        raise ValueError(msg)
-
-    data = pixels.reshape(header.shape).astype(np.float32, copy=True)
     data = validate_phase(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
 
@@ -282,7 +304,8 @@ def save_bin(
             `refractive_delta`.
         refractive_delta: Refractive-index difference n1 - n2 (the plain
             difference, not the normalized contrast). Requires `wavelength`.
-        unit: Physical unit of the stored phase values. Defaults to RADIANS.
+        unit: Physical unit of `data`. Defaults to RADIANS. NANOMETERS is
+            converted to METERS before storing (the file cannot store it).
         overwrite: Whether to replace `path` if it already exists. Defaults
             to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
@@ -299,10 +322,18 @@ def save_bin(
     """
     height_scale = _resolve_height_scale(height_scale, wavelength, refractive_delta)
 
-    data = validate_phase(data, on_nonfinite=on_nonfinite)
+    # Reject any non-2D input before validate_phase scans the data.
     if data.ndim != 2:
         msg = f"data must be a single 2D image (got shape {data.shape})"
         raise ValueError(msg)
+    data = validate_phase(data, on_nonfinite=on_nonfinite)
+
+    # NANOMETERS is code-only; store it as METERS.
+    if unit is PhaseUnit.NANOMETERS:
+        data = convert_phase(
+            data, from_unit=unit, to_unit=PhaseUnit.METERS, height_scale=height_scale
+        )
+        unit = PhaseUnit.METERS
 
     header = PhaseBinHeader(
         width=int(data.shape[1]),

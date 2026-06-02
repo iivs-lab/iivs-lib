@@ -109,6 +109,18 @@ def test_header_rejects_invalid_unit():
         PhaseBinHeader(width=2, height=2, pixel_size=1.0, height_scale=1.0, unit=99)
 
 
+def test_header_rejects_nanometers_unit():
+    # NANOMETERS is code-only; it cannot be a stored (header) unit.
+    with pytest.raises(ValueError, match="unit must be one of"):
+        PhaseBinHeader(
+            width=2,
+            height=2,
+            pixel_size=1.0,
+            height_scale=1.0,
+            unit=PhaseUnit.NANOMETERS,
+        )
+
+
 def test_header_is_hashable_and_comparable():
     a = PhaseBinHeader(
         width=3, height=2, pixel_size=0.5, height_scale=0.25, unit=PhaseUnit.RADIANS

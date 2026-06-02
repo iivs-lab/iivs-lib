@@ -18,11 +18,17 @@ if TYPE_CHECKING:
 
 
 class PhaseUnit(IntEnum):
-    """Physical unit of the phase values stored in a .bin file."""
+    """Physical unit of a phase image.
+
+    UNKNOWN, RADIANS, and METERS are the units stored on disk (the
+    ``unit_code`` byte). NANOMETERS is a code-only convenience unit, never
+    written to a file: saving converts it to METERS.
+    """
 
     UNKNOWN = 0
     RADIANS = 1
     METERS = 2
+    NANOMETERS = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,6 +73,7 @@ class PhaseBinHeader:
     endian: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
+        """Validate the fields; warn (not raise) when the unit is UNKNOWN."""
         if self.height <= 0 or self.width <= 0:
             msg = f"height and width must be positive (got {self.height}x{self.width})"
             raise ValueError(msg)
@@ -79,11 +86,11 @@ class PhaseBinHeader:
             msg = f"height_scale must be positive (got {self.height_scale})"
             raise ValueError(msg)
 
-        if self.unit not in PhaseUnit:
-            msg = f"unit must be one of {list(PhaseUnit)} (got {self.unit!r})"
+        if self.unit not in (PhaseUnit.UNKNOWN, PhaseUnit.RADIANS, PhaseUnit.METERS):
+            msg = f"unit must be one of UNKNOWN, RADIANS, METERS (got {self.unit!r})"
             raise ValueError(msg)
 
-        if self.unit == PhaseUnit.UNKNOWN:
+        if self.unit is PhaseUnit.UNKNOWN:
             msg = "unit is UNKNOWN; physical interpretation is undefined"
             warnings.warn(msg, stacklevel=2)
 
@@ -119,6 +126,7 @@ class PhaseBinHeader:
         return self.height_scale * 1e9
 
     def to_dtype(self) -> NDArray[np.void]:
+        """Serialize to a 1-element `PhaseBinHeader.DTYPE` record array."""
         record = np.zeros(1, dtype=PhaseBinHeader.DTYPE)
         record["version"] = self.version
         record["endian"] = self.endian
@@ -132,6 +140,7 @@ class PhaseBinHeader:
 
     @classmethod
     def from_dtype(cls, record: np.void) -> Self:
+        """Build a header from a `PhaseBinHeader.DTYPE` structured scalar."""
         return cls(
             width=int(record["width"]),
             height=int(record["height"]),
