@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 __all__ = (
-    "FPSTimestampSequence",
-    "TXTTimestampSequence",
     "Timestamp",
+    "TimestampFpsSequence",
     "TimestampSequence",
+    "TimestampTxtSequence",
 )
 
 import itertools
@@ -75,8 +75,8 @@ class TimestampSequence(DataSequence[Timestamp, int]):
     """A read-only sequence of per-frame `Timestamp`s, from any source.
 
     Annotate parameters with this interface to accept either implementation:
-    `TXTTimestampSequence` (read from a Lyncée Tec Koala ``timestamps.txt``) or
-    `FPSTimestampSequence` (synthesized from a frame rate). Each item is a
+    `TimestampTxtSequence` (read from a Lyncée Tec Koala ``timestamps.txt``) or
+    `TimestampFpsSequence` (synthesized from a frame rate). Each item is a
     `Timestamp` and its metadata is the frame index.
 
     Subclasses populate `self._timestamps` (the ordered frames) in their
@@ -112,7 +112,7 @@ class TimestampSequence(DataSequence[Timestamp, int]):
         return 1000.0 / self.mean_interval_ms
 
 
-class TXTTimestampSequence(SingleFileSequence[Timestamp, int], TimestampSequence):
+class TimestampTxtSequence(SingleFileSequence[Timestamp, int], TimestampSequence):
     """A `TimestampSequence` read from a Lyncée Tec Koala ``timestamps.txt``.
 
     Each line is ``<index> <time> <date> <elapsed_ms>`` (space-separated), and
@@ -191,7 +191,7 @@ class TXTTimestampSequence(SingleFileSequence[Timestamp, int], TimestampSequence
         return Timestamp.series_from_elapsed_times(elapsed_times_ms)
 
 
-class FPSTimestampSequence(TimestampSequence):
+class TimestampFpsSequence(TimestampSequence):
     """A synthetic `TimestampSequence` with a constant frame rate.
 
     Frames are evenly spaced from `frame_rate`; see `generate` for the timing.
