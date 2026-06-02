@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import warnings
 
 import pytest
 
@@ -61,8 +62,11 @@ def test_header_convenience_units():
     assert header.height_scale_nm == pytest.approx(300.0)
 
 
-def test_header_warns_on_unknown_unit():
-    with pytest.warns(UserWarning, match="UNKNOWN"):
+def test_header_unknown_unit_does_not_warn():
+    # Constructing/reading an UNKNOWN-unit header is silent; the alert lives
+    # at the save boundary (see test_file.py) instead of every construction.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # turn any warning into an error
         PhaseBinHeader(
             width=2,
             height=2,

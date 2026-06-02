@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __all__ = ("PhaseBinHeader", "PhaseUnit")
 
-import warnings
 from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import TYPE_CHECKING, ClassVar, cast
@@ -76,7 +75,7 @@ class PhaseBinHeader:
     endian: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
-        """Validate the fields; warn (not raise) when the unit is UNKNOWN."""
+        """Validate the fields."""
         if self.height <= 0 or self.width <= 0:
             msg = f"height and width must be positive (got {self.height}x{self.width})"
             raise ValueError(msg)
@@ -92,10 +91,6 @@ class PhaseBinHeader:
         if self.unit not in (PhaseUnit.UNKNOWN, PhaseUnit.RADIANS, PhaseUnit.METERS):
             msg = f"unit must be one of UNKNOWN, RADIANS, METERS (got {self.unit!r})"
             raise ValueError(msg)
-
-        if self.unit is PhaseUnit.UNKNOWN:
-            msg = "unit is UNKNOWN; physical interpretation is undefined"
-            warnings.warn(msg, stacklevel=2)
 
     @property
     def shape(self) -> tuple[int, int]:

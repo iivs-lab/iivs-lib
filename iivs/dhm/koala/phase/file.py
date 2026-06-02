@@ -296,7 +296,8 @@ def save_bin(
         refractive_delta: Refractive-index difference n1 - n2 (the plain
             difference, not the normalized contrast). Requires `wavelength`.
         unit: Physical unit of `data`. Defaults to RADIANS. NANOMETERS is
-            converted to METERS before storing (the file cannot store it).
+            converted to METERS before storing (the file cannot store it);
+            UNKNOWN is stored as-is but emits a warning.
         overwrite: Whether to replace `path` if it already exists. Defaults
             to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
@@ -325,6 +326,10 @@ def save_bin(
             data, from_unit=unit, to_unit=PhaseUnit.METERS, height_scale=height_scale
         )
         unit = PhaseUnit.METERS
+
+    if unit is PhaseUnit.UNKNOWN:
+        msg = "saving with unit=UNKNOWN; physical interpretation is undefined"
+        warnings.warn(msg, stacklevel=2)
 
     header = PhaseBinHeader(
         width=int(data.shape[1]),

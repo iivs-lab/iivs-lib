@@ -101,6 +101,17 @@ def test_save_rejects_non_float32(tmp_path):
         )
 
 
+def test_save_warns_on_unknown_unit(tmp_path):
+    with pytest.warns(UserWarning, match="UNKNOWN"):
+        save_bin(
+            tmp_path / "phase.bin",
+            np.zeros((2, 2), dtype=np.float32),
+            pixel_size=1.0,
+            height_scale=1.0,
+            unit=PhaseUnit.UNKNOWN,
+        )
+
+
 def test_save_overwrite(tmp_path):
     data = np.zeros((2, 2), dtype=np.float32)
     path = tmp_path / "phase.bin"
