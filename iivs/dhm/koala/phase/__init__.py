@@ -5,17 +5,17 @@ __all__ = (
     "PhaseBinSequence",
     "PhaseUnit",
     "convert_phase_unit",
-    "load_bin",
-    "read_header",
-    "save_bin",
+    "load_phase_bin",
+    "read_phase_bin_header",
+    "save_phase_bin",
     "validate_phase",
 )
 
 from iivs.dhm.koala.phase.file import (
     convert_phase_unit,
-    load_bin,
-    read_header,
-    save_bin,
+    load_phase_bin,
+    read_phase_bin_header,
+    save_phase_bin,
     validate_phase,
 )
 from iivs.dhm.koala.phase.header import PhaseBinHeader, PhaseUnit

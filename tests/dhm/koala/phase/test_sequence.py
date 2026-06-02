@@ -3,13 +3,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.koala.phase.file import save_bin
+from iivs.dhm.koala.phase.file import save_phase_bin
 from iivs.dhm.koala.phase.header import PhaseBinHeader, PhaseUnit
 from iivs.dhm.koala.phase.sequence import PhaseBinSequence
 
 
 def _write(root, index, value, shape=(2, 3)):
-    save_bin(
+    save_phase_bin(
         root / f"{index:05d}_phase.bin",
         np.full(shape, float(value), dtype=np.float32),
         pixel_size=1e-6,
@@ -54,8 +54,12 @@ def test_folder_includes_all_matching_files(tmp_path):
 def test_folder_ignores_non_matching_names(tmp_path):
     _write(tmp_path, 0, 0)
     blank = np.zeros((2, 3), dtype=np.float32)
-    save_bin(tmp_path / "0001_phase.bin", blank, pixel_size=1e-6, height_scale=2e-7)
-    save_bin(tmp_path / "00002_amp.bin", blank, pixel_size=1e-6, height_scale=2e-7)
+    save_phase_bin(
+        tmp_path / "0001_phase.bin", blank, pixel_size=1e-6, height_scale=2e-7
+    )
+    save_phase_bin(
+        tmp_path / "00002_amp.bin", blank, pixel_size=1e-6, height_scale=2e-7
+    )
     assert len(PhaseBinSequence(tmp_path)) == 1
 
 
@@ -74,8 +78,12 @@ def test_init_validate_runs_validation(tmp_path):
 
 def test_init_validate_data_level_checks_pixels(tmp_path):
     nan = np.array([[np.nan, 1.0], [2.0, 3.0]], dtype=np.float32)
-    with pytest.warns(RuntimeWarning):  # save_bin validates input (on_nonfinite="warn")
-        save_bin(tmp_path / "00000_phase.bin", nan, pixel_size=1e-6, height_scale=2e-7)
+    with pytest.warns(
+        RuntimeWarning
+    ):  # save_phase_bin validates input (on_nonfinite="warn")
+        save_phase_bin(
+            tmp_path / "00000_phase.bin", nan, pixel_size=1e-6, height_scale=2e-7
+        )
     PhaseBinSequence(tmp_path, validate="headers")  # pixels not inspected: ok
     with pytest.raises(ValueError, match="finite"):
         PhaseBinSequence(tmp_path, validate="data")
@@ -91,8 +99,12 @@ def test_validate_passes_on_clean_folder(tmp_path):
 
 def test_validate_names_level_skips_header_check(tmp_path):
     blank = np.zeros((2, 3), dtype=np.float32)
-    save_bin(tmp_path / "00000_phase.bin", blank, pixel_size=1e-6, height_scale=2e-7)
-    save_bin(tmp_path / "00001_phase.bin", blank, pixel_size=9e-6, height_scale=2e-7)
+    save_phase_bin(
+        tmp_path / "00000_phase.bin", blank, pixel_size=1e-6, height_scale=2e-7
+    )
+    save_phase_bin(
+        tmp_path / "00001_phase.bin", blank, pixel_size=9e-6, height_scale=2e-7
+    )
     folder = PhaseBinSequence(tmp_path, validate=None)
     folder.validate(level="names")  # header mismatch ignored at "names"
     with pytest.raises(ValueError, match="header"):
@@ -125,16 +137,24 @@ def test_validate_rejects_gap(tmp_path):
 
 def test_validate_rejects_header_mismatch(tmp_path):
     blank = np.zeros((2, 3), dtype=np.float32)
-    save_bin(tmp_path / "00000_phase.bin", blank, pixel_size=1e-6, height_scale=2e-7)
-    save_bin(tmp_path / "00001_phase.bin", blank, pixel_size=9e-6, height_scale=2e-7)
+    save_phase_bin(
+        tmp_path / "00000_phase.bin", blank, pixel_size=1e-6, height_scale=2e-7
+    )
+    save_phase_bin(
+        tmp_path / "00001_phase.bin", blank, pixel_size=9e-6, height_scale=2e-7
+    )
     with pytest.raises(ValueError, match="header"):
         PhaseBinSequence(tmp_path, validate=None).validate()
 
 
 def test_validate_check_data_detects_non_finite(tmp_path):
     nan = np.array([[np.nan, 1.0], [2.0, 3.0]], dtype=np.float32)
-    with pytest.warns(RuntimeWarning):  # save_bin validates input (on_nonfinite="warn")
-        save_bin(tmp_path / "00000_phase.bin", nan, pixel_size=1e-6, height_scale=2e-7)
+    with pytest.warns(
+        RuntimeWarning
+    ):  # save_phase_bin validates input (on_nonfinite="warn")
+        save_phase_bin(
+            tmp_path / "00000_phase.bin", nan, pixel_size=1e-6, height_scale=2e-7
+        )
     folder = PhaseBinSequence(tmp_path)
     folder.validate()  # "headers": pixels not inspected, passes
     with pytest.raises(ValueError, match="finite"):
@@ -144,7 +164,7 @@ def test_validate_check_data_detects_non_finite(tmp_path):
 def test_load_converts_radians_to_meters(tmp_path):
     data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
     scale = 2e-7
-    save_bin(
+    save_phase_bin(
         tmp_path / "00000_phase.bin",
         data,
         pixel_size=1e-6,
@@ -158,7 +178,7 @@ def test_load_converts_radians_to_meters(tmp_path):
 def test_load_converts_meters_to_radians(tmp_path):
     data = np.array([[2.0, 4.0], [6.0, 8.0]], dtype=np.float32)
     scale = 2e-7
-    save_bin(
+    save_phase_bin(
         tmp_path / "00000_phase.bin",
         data,
         pixel_size=1e-6,
@@ -171,7 +191,7 @@ def test_load_converts_meters_to_radians(tmp_path):
 
 def test_load_no_conversion_by_default_or_same_unit(tmp_path):
     data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
-    save_bin(
+    save_phase_bin(
         tmp_path / "00000_phase.bin",
         data,
         pixel_size=1e-6,

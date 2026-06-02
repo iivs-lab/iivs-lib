@@ -2,9 +2,9 @@ from __future__ import annotations
 
 __all__ = (
     "convert_phase_unit",
-    "load_bin",
-    "read_header",
-    "save_bin",
+    "load_phase_bin",
+    "read_phase_bin_header",
+    "save_phase_bin",
     "validate_phase",
 )
 
@@ -148,7 +148,7 @@ def convert_phase_unit(
 # ========================== #
 
 
-def read_header(path: StrPath) -> PhaseBinHeader:
+def read_phase_bin_header(path: StrPath) -> PhaseBinHeader:
     """Read only the header of a Lyncée Tec Koala .bin file, without the pixels.
 
     A thin wrapper over `PhaseBinHeader.from_file`; reads just the
@@ -181,7 +181,7 @@ def _read_pixels(fb: IO[bytes], header: PhaseBinHeader) -> NDArray[np.float32]:
 
 
 @overload
-def load_bin(
+def load_phase_bin(
     path: StrPath,
     *,
     return_header: Literal[False] = False,
@@ -190,7 +190,7 @@ def load_bin(
 
 
 @overload
-def load_bin(
+def load_phase_bin(
     path: StrPath,
     *,
     return_header: Literal[True],
@@ -199,7 +199,7 @@ def load_bin(
 
 
 @overload
-def load_bin(
+def load_phase_bin(
     path: StrPath,
     *,
     return_header: bool,
@@ -207,7 +207,7 @@ def load_bin(
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]: ...
 
 
-def load_bin(
+def load_phase_bin(
     path: StrPath,
     *,
     return_header: bool = False,
@@ -290,7 +290,7 @@ def _to_storable_unit(
 
 
 @overload
-def save_bin(
+def save_phase_bin(
     path: StrPath,
     data: NDArray[np.float32],
     *,
@@ -303,7 +303,7 @@ def save_bin(
 
 
 @overload
-def save_bin(
+def save_phase_bin(
     path: StrPath,
     data: NDArray[np.float32],
     *,
@@ -316,7 +316,7 @@ def save_bin(
 ) -> None: ...
 
 
-def save_bin(
+def save_phase_bin(
     path: StrPath,
     data: NDArray[np.float32],
     *,

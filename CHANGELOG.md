@@ -17,9 +17,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `to_dtype`, and `shape`, `pixel_count`, `field_of_view`,
     `pixel_size_um`, `height_scale_nm` conveniences) and the `PhaseUnit`
     enum.
-  - `load_bin(path, *, return_header=False)` — load a 2D image, optionally
-    with its header; `read_header(path)` — read just the header cheaply.
-  - `save_bin(...)` — write a 2D image; the phase-to-height scale is given
+  - `load_phase_bin(path, *, return_header=False)` — load a 2D image, optionally
+    with its header; `read_phase_bin_header(path)` — read just the header cheaply.
+  - `save_phase_bin(...)` — write a 2D image; the phase-to-height scale is given
     either as `height_scale`, or as `wavelength` + `refractive_delta`.
   - `validate_phase(data, *, on_nonfinite=...)` — validate a float32 phase
     image or stack.

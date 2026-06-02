@@ -13,7 +13,11 @@ from kaparoo.utils import replace_if_none
 from natsort import natsorted
 from numpy.typing import NDArray
 
-from iivs.dhm.koala.phase.file import convert_phase_unit, load_bin, read_header
+from iivs.dhm.koala.phase.file import (
+    convert_phase_unit,
+    load_phase_bin,
+    read_phase_bin_header,
+)
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -58,7 +62,7 @@ class PhaseBinSequence(FileFolderSequence[NDArray[np.float32], Path]):
     ) -> None:
         super().__init__(root)  # list_files rejects an empty folder
 
-        self._header = read_header(self.get_file(0))
+        self._header = read_phase_bin_header(self.get_file(0))
         self._target_unit = replace_if_none(target_unit, self._header.unit)
 
         if validate is not None:
@@ -110,12 +114,16 @@ class PhaseBinSequence(FileFolderSequence[NDArray[np.float32], Path]):
             raise ValueError(msg)
 
         # The first file is the reference header, so it is never compared.
-        if level != "names" and index != 0 and read_header(path) != self.header:
+        if (
+            level != "names"
+            and index != 0
+            and read_phase_bin_header(path) != self.header
+        ):
             msg = f"header of {path.name} differs from the first file"
             raise ValueError(msg)
 
         if level == "data":
-            load_bin(path, on_nonfinite="raise")
+            load_phase_bin(path, on_nonfinite="raise")
 
     def list_files(self, root: Path) -> list[Path]:
         files = search_files(root, name_filter=Regex(r"\d{5}_phase\.bin"), max_depth=1)
@@ -129,7 +137,7 @@ class PhaseBinSequence(FileFolderSequence[NDArray[np.float32], Path]):
 
     def load_file(self, path: Path) -> NDArray[np.float32]:
         return convert_phase_unit(
-            load_bin(path),
+            load_phase_bin(path),
             source=self._header.unit,
             target=self._target_unit,
             height_scale=self._header.height_scale,
