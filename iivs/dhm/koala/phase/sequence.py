@@ -123,7 +123,7 @@ class PhaseBinSequence(FileFolderSequence[NDArray[np.float32], Path]):
     def load_file(self, path: Path) -> NDArray[np.float32]:
         return convert_phase_unit(
             load_bin(path),
-            from_unit=self._header.unit,
-            to_unit=self._target_unit,
+            source=self._header.unit,
+            target=self._target_unit,
             height_scale=self._header.height_scale,
         )

@@ -87,8 +87,8 @@ _NM_PER_M = 1e9
 def convert_phase_unit(
     data: NDArray[np.float32],
     *,
-    from_unit: PhaseUnit,
-    to_unit: PhaseUnit,
+    source: PhaseUnit,
+    target: PhaseUnit,
     height_scale: float,
 ) -> NDArray[np.float32]:
     """Rescale a phase/height image between `PhaseUnit` representations.
@@ -99,26 +99,26 @@ def convert_phase_unit(
 
     Args:
         data: The phase/height image to convert; never modified.
-        from_unit: The unit `data` is currently in.
-        to_unit: The unit to convert to.
+        source: The unit `data` is currently in.
+        target: The unit to convert to.
         height_scale: Meters per radian. Used only when the conversion
             crosses RADIANS <-> METERS; ignored for a pure METERS <->
             NANOMETERS rescale.
 
     Returns:
-        A new float32 array in `to_unit`, or `data` itself (unchanged) when
-        `from_unit == to_unit`.
+        A new float32 array in `target`, or `data` itself (unchanged) when
+        `source == target`.
 
     Raises:
         ValueError: If the conversion is undefined (e.g. it involves the
             UNKNOWN unit).
     """
-    if from_unit is to_unit:
+    if source is target:
         return data
 
     # `scale` is defined in ascending unit order (RADIANS < METERS <
     # NANOMETERS); converting the other way uses its reciprocal.
-    match sorted((from_unit, to_unit)):
+    match sorted((source, target)):
         case [PhaseUnit.RADIANS, PhaseUnit.METERS]:
             scale = height_scale
         case [PhaseUnit.METERS, PhaseUnit.NANOMETERS]:
@@ -126,10 +126,10 @@ def convert_phase_unit(
         case [PhaseUnit.RADIANS, PhaseUnit.NANOMETERS]:
             scale = height_scale * _NM_PER_M
         case _:
-            msg = f"cannot convert phase from {from_unit.name} to {to_unit.name}"
+            msg = f"cannot convert phase from {source.name} to {target.name}"
             raise ValueError(msg)
 
-    if from_unit > to_unit:
+    if source > target:
         scale = 1.0 / scale
     return (data * scale).astype(np.float32, copy=False)
 
@@ -265,7 +265,7 @@ def _to_storable_unit(
     """
     if unit is PhaseUnit.NANOMETERS:
         data = convert_phase_unit(
-            data, from_unit=unit, to_unit=PhaseUnit.METERS, height_scale=height_scale
+            data, source=unit, target=PhaseUnit.METERS, height_scale=height_scale
         )
         return data, PhaseUnit.METERS
     return data, unit
