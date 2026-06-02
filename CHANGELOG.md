@@ -23,7 +23,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     either as `height_scale`, or as `wavelength` + `refractive_delta`.
   - `validate_phase(data, *, on_nonfinite=...)` — validate a float32 phase
     image or stack.
+  - `convert_phase_unit(data, *, source, target, height_scale)` — rescale a
+    phase/height image between `PhaseUnit` representations.
   - `PhaseBinSequence` — an ordered `kaparoo.data.sequences.FileFolderSequence`
     over a folder of `{index:05d}_phase.bin` images (item = image, metadata =
     source path), exposing the shared acquisition `header`, optional unit
     conversion, and a `validate` method.
+- `iivs.dhm.koala.timestamp`: per-frame acquisition timing.
+  - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
+    `Timestamp.series_from_elapsed_times`.
+  - `TimestampSequence` — read-only interface exposing `mean_interval_ms` and
+    `mean_frame_rate`; implemented by `TimestampTxtSequence` (Koala
+    `timestamps.txt`) and `TimestampFpsSequence` (synthesized from a frame
+    rate).
+- `iivs.dhm.koala.hologram`: read and write Koala uint8 `.tif` holograms.
+  - `load_tif(path)` / `save_tif(path, data, *, overwrite=False)` and
+    `validate_hologram(data)`.
+  - `HologramTifSequence` — an ordered `FileFolderSequence` over a folder of
+    `{index:05d}_holo.tif` images (item = image, metadata = source path),
+    with a `validate` method.
