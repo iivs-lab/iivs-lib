@@ -96,6 +96,11 @@ class TimestampSequence(DataSequence[Timestamp, int]):
         return index
 
     @property
+    def timestamps(self) -> tuple[Timestamp, ...]:
+        """The frames as an immutable tuple, in index order."""
+        return self._timestamps
+
+    @property
     @abstractmethod
     def mean_interval_ms(self) -> float:
         """Mean interval between consecutive frames, in milliseconds."""

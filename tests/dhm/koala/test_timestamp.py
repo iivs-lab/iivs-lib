@@ -147,7 +147,16 @@ def test_fps_rejects_negative_num_frames():
         FPSTimestampSequence(frame_rate=20.0, num_frames=-1)
 
 
-# --- means (TimestampSequence interface) ---
+# --- TimestampSequence interface ---
+
+
+def test_timestamps_property_matches_iteration(tmp_path):
+    seq = TXTTimestampSequence(_write(tmp_path))
+    assert isinstance(seq.timestamps, tuple)
+    assert seq.timestamps == tuple(seq)  # same frames, in index order
+
+
+# --- means ---
 
 
 def test_txt_mean_interval_and_frame_rate(tmp_path):
