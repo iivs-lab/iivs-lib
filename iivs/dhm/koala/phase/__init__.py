@@ -11,12 +11,11 @@ __all__ = (
     "validate_phase",
 )
 
-from iivs.dhm.koala.phase.file import (
-    convert_phase_unit,
+from iivs.dhm.koala.phase.bin import (
+    PhaseBinHeader,
+    PhaseBinSequence,
     load_phase_bin,
     read_phase_bin_header,
     save_phase_bin,
-    validate_phase,
 )
-from iivs.dhm.koala.phase.header import PhaseBinHeader, PhaseUnit
-from iivs.dhm.koala.phase.sequence import PhaseBinSequence
+from iivs.dhm.koala.phase.core import PhaseUnit, convert_phase_unit, validate_phase
