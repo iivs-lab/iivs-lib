@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from iivs.dhm.koala.timestamps import (
+from iivs.dhm.koala.timestamp import (
     Timestamp,
     TimestampFPSSequence,
     TimestampSequence,
