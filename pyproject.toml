@@ -36,6 +36,7 @@ dependencies = [
     "kaparoo-python>=0.4.0",
     "natsort>=8.4.0",
     "numpy>=2.4.6",
+    "tifffile>=2026.6.1",
 ]
 
 [project.urls]
