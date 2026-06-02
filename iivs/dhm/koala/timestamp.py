@@ -78,7 +78,22 @@ class TimestampSequence(DataSequence[Timestamp, int]):
     `TXTTimestampSequence` (read from a Lyncée Tec Koala ``timestamps.txt``) or
     `FPSTimestampSequence` (synthesized from a frame rate). Each item is a
     `Timestamp` and its metadata is the frame index.
+
+    Subclasses populate `self._timestamps` (the ordered frames) in their
+    ``__init__``; the sequence protocol (`__len__`, `get_item`, `get_meta`)
+    is served from it here.
     """
+
+    _timestamps: tuple[Timestamp, ...]
+
+    def __len__(self) -> int:
+        return len(self._timestamps)
+
+    def get_item(self, index: int) -> Timestamp:
+        return self._timestamps[index]
+
+    def get_meta(self, index: int) -> int:
+        return index
 
     @property
     @abstractmethod
@@ -118,15 +133,6 @@ class TXTTimestampSequence(SingleFileSequence[Timestamp, int], TimestampSequence
     def __init__(self, path: StrPath) -> None:
         super().__init__(path)
         self._timestamps = self.parse(self.path)
-
-    def __len__(self) -> int:
-        return len(self._timestamps)
-
-    def get_item(self, index: int) -> Timestamp:
-        return self._timestamps[index]
-
-    def get_meta(self, index: int) -> int:
-        return index
 
     @cached_property
     def mean_interval_ms(self) -> float:
@@ -194,15 +200,6 @@ class FPSTimestampSequence(TimestampSequence):
         self._timestamps = self.generate(frame_rate=frame_rate, num_frames=num_frames)
         self._frame_rate = frame_rate
         self._interval_ms = 1000.0 / frame_rate
-
-    def __len__(self) -> int:
-        return len(self._timestamps)
-
-    def get_item(self, index: int) -> Timestamp:
-        return self._timestamps[index]
-
-    def get_meta(self, index: int) -> int:
-        return index
 
     @property
     def mean_frame_rate(self) -> float:
