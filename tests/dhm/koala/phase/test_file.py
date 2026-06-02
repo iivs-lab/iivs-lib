@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from iivs.dhm.koala.phase.file import (
-    convert_phase,
+    convert_phase_unit,
     load_bin,
     read_header,
     save_bin,
@@ -185,41 +185,41 @@ def test_load_on_nonfinite_policy(tmp_path):
         load_bin(path, on_nonfinite="warn")
 
 
-def test_convert_phase_radians_to_meters():
+def test_convert_phase_unit_radians_to_meters():
     data = np.array([[1.0, 2.0]], dtype=np.float32)
-    out = convert_phase(
+    out = convert_phase_unit(
         data, from_unit=PhaseUnit.RADIANS, to_unit=PhaseUnit.METERS, height_scale=2.0
     )
     np.testing.assert_array_equal(out, (data * 2.0).astype(np.float32))
 
 
-def test_convert_phase_meters_to_radians():
+def test_convert_phase_unit_meters_to_radians():
     data = np.array([[2.0, 4.0]], dtype=np.float32)
-    out = convert_phase(
+    out = convert_phase_unit(
         data, from_unit=PhaseUnit.METERS, to_unit=PhaseUnit.RADIANS, height_scale=2.0
     )
     np.testing.assert_array_equal(out, (data / 2.0).astype(np.float32))
 
 
-def test_convert_phase_meters_to_nanometers():
+def test_convert_phase_unit_meters_to_nanometers():
     data = np.array([[1e-7, 2e-7]], dtype=np.float32)
-    out = convert_phase(
+    out = convert_phase_unit(
         data, from_unit=PhaseUnit.METERS, to_unit=PhaseUnit.NANOMETERS, height_scale=2.0
     )
     np.testing.assert_allclose(out, data * 1e9, rtol=1e-5)
 
 
-def test_convert_phase_nanometers_to_meters():
+def test_convert_phase_unit_nanometers_to_meters():
     data = np.array([[100.0, 200.0]], dtype=np.float32)
-    out = convert_phase(
+    out = convert_phase_unit(
         data, from_unit=PhaseUnit.NANOMETERS, to_unit=PhaseUnit.METERS, height_scale=2.0
     )
     np.testing.assert_allclose(out, data * 1e-9, rtol=1e-5)
 
 
-def test_convert_phase_radians_to_nanometers():
+def test_convert_phase_unit_radians_to_nanometers():
     data = np.array([[1.0, 2.0]], dtype=np.float32)
-    out = convert_phase(
+    out = convert_phase_unit(
         data,
         from_unit=PhaseUnit.RADIANS,
         to_unit=PhaseUnit.NANOMETERS,
@@ -228,9 +228,9 @@ def test_convert_phase_radians_to_nanometers():
     np.testing.assert_allclose(out, data * 3e-7 * 1e9, rtol=1e-5)
 
 
-def test_convert_phase_nanometers_to_radians():
+def test_convert_phase_unit_nanometers_to_radians():
     data = np.array([[300.0, 600.0]], dtype=np.float32)
-    out = convert_phase(
+    out = convert_phase_unit(
         data,
         from_unit=PhaseUnit.NANOMETERS,
         to_unit=PhaseUnit.RADIANS,
@@ -239,18 +239,18 @@ def test_convert_phase_nanometers_to_radians():
     np.testing.assert_allclose(out, data / 1e9 / 3e-7, rtol=1e-5)
 
 
-def test_convert_phase_same_unit_returns_input():
+def test_convert_phase_unit_same_unit_returns_input():
     data = np.zeros((2, 2), dtype=np.float32)
-    out = convert_phase(
+    out = convert_phase_unit(
         data, from_unit=PhaseUnit.RADIANS, to_unit=PhaseUnit.RADIANS, height_scale=2.0
     )
     assert out is data
 
 
-def test_convert_phase_rejects_unknown():
+def test_convert_phase_unit_rejects_unknown():
     data = np.zeros((2, 2), dtype=np.float32)
     with pytest.raises(ValueError, match="cannot convert"):
-        convert_phase(
+        convert_phase_unit(
             data,
             from_unit=PhaseUnit.RADIANS,
             to_unit=PhaseUnit.UNKNOWN,

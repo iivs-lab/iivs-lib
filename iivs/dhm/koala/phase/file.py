@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-__all__ = ("convert_phase", "load_bin", "read_header", "save_bin", "validate_phase")
+__all__ = (
+    "convert_phase_unit",
+    "load_bin",
+    "read_header",
+    "save_bin",
+    "validate_phase",
+)
 
 import warnings
 from typing import TYPE_CHECKING, overload
@@ -42,9 +48,6 @@ def validate_phase(
             "ignore" accepts them silently, "warn" (default) accepts them
             but emits a RuntimeWarning, "raise" raises a ValueError.
 
-    Returns:
-        The validated `data`, unchanged.
-
     Raises:
         ValueError: If `data` is not a float32 array with at least two
             dimensions.
@@ -81,24 +84,38 @@ def validate_phase(
 _NM_PER_M = 1e9
 
 
-def convert_phase(
+def convert_phase_unit(
     data: NDArray[np.float32],
     *,
     from_unit: PhaseUnit,
     to_unit: PhaseUnit,
     height_scale: float,
 ) -> NDArray[np.float32]:
-    """Convert phase image `data` from `from_unit` to `to_unit`.
+    """Rescale a phase/height image between `PhaseUnit` representations.
 
-    RADIANS <-> METERS uses `height_scale` (meters per radian); METERS <->
-    NANOMETERS uses the fixed 1e9 nm/m. Returns `data` unchanged when the
-    units already match.
+    The units form the chain RADIANS <-> METERS <-> NANOMETERS: phase in
+    RADIANS and height in METERS are bridged by `height_scale` (meters per
+    radian), while METERS and NANOMETERS differ by the fixed 1e9 nm/m.
+
+    Args:
+        data: The phase/height image to convert; never modified.
+        from_unit: The unit `data` is currently in.
+        to_unit: The unit to convert to.
+        height_scale: Meters per radian. Used only when the conversion
+            crosses RADIANS <-> METERS; ignored for a pure METERS <->
+            NANOMETERS rescale.
+
+    Returns:
+        A new float32 array in `to_unit`, or `data` itself (unchanged) when
+        `from_unit == to_unit`.
 
     Raises:
-        ValueError: If the conversion is undefined (e.g. an UNKNOWN unit).
+        ValueError: If the conversion is undefined (e.g. it involves the
+            UNKNOWN unit).
     """
     if from_unit is to_unit:
         return data
+
     # `scale` is defined in ascending unit order (RADIANS < METERS <
     # NANOMETERS); converting the other way uses its reciprocal.
     match sorted((from_unit, to_unit)):
@@ -111,6 +128,7 @@ def convert_phase(
         case _:
             msg = f"cannot convert phase from {from_unit.name} to {to_unit.name}"
             raise ValueError(msg)
+
     if from_unit > to_unit:
         scale = 1.0 / scale
     return (data * scale).astype(np.float32, copy=False)
@@ -148,6 +166,7 @@ def _read_pixels(fb: IO[bytes], header: PhaseBinHeader) -> NDArray[np.float32]:
     if len(raw) != expected:
         msg = f"pixel count must be {header.pixel_count} ({expected} bytes), got {len(raw)}"
         raise ValueError(msg)
+
     pixels = np.frombuffer(raw, dtype=_PIXEL_DTYPE)
     return pixels.reshape(header.shape).astype(np.float32, copy=True)
 
@@ -245,7 +264,7 @@ def _to_storable_unit(
     unchanged.
     """
     if unit is PhaseUnit.NANOMETERS:
-        data = convert_phase(
+        data = convert_phase_unit(
             data, from_unit=unit, to_unit=PhaseUnit.METERS, height_scale=height_scale
         )
         return data, PhaseUnit.METERS
@@ -331,7 +350,7 @@ def save_bin(
     """
     height_scale = _resolve_height_scale(height_scale, wavelength, refractive_delta)
 
-    # Reject any non-2D input before validate_phase scans the data.
+    # save stores a single image; validate_phase would also accept a stack.
     if data.ndim != 2:
         msg = f"data must be a single 2D image (got shape {data.shape})"
         raise ValueError(msg)

@@ -13,7 +13,7 @@ from kaparoo.utils import replace_if_none
 from natsort import natsorted
 from numpy.typing import NDArray
 
-from iivs.dhm.koala.phase.file import convert_phase, load_bin, read_header
+from iivs.dhm.koala.phase.file import convert_phase_unit, load_bin, read_header
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -121,7 +121,7 @@ class PhaseBinSequence(FileFolderSequence[NDArray[np.float32], Path]):
         return self.get_file(index)
 
     def load_file(self, path: Path) -> NDArray[np.float32]:
-        return convert_phase(
+        return convert_phase_unit(
             load_bin(path),
             from_unit=self._header.unit,
             to_unit=self._target_unit,

@@ -129,6 +129,7 @@ class PhaseBinHeader:
         record["version"] = self.version
         record["endian"] = self.endian
         record["header_size"] = PhaseBinHeader.HEADER_SIZE
+
         record["width"] = self.width
         record["height"] = self.height
         record["pixel_size"] = self.pixel_size
