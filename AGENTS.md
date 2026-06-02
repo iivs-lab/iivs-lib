@@ -45,6 +45,14 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
 - Mirror the package layout under `tests/`: `iivs/sub/mod.py`
   is tested by `tests/sub/test_mod.py`. Keep `__init__.py` markers in
   test subpackages (matches the `INP` ruff rule).
+- Name modules after their primary concept — usually a **singular**
+  noun (`header.py`, `sequence.py`, `timestamp.py`), even when the
+  module manages many instances (a sequence module is still
+  `sequence.py`). Reserve **plural** names for modules that are a flat
+  collection of co-equal peers with no single dominant concept
+  (`constants.py`, `exceptions.py`, `utils.py`). The module name need
+  not mirror a data file it handles (`timestamp.py` reads
+  `timestamps.txt`).
 - Fixtures live in `tests/conftest.py` when you need them — modern
   default, applies to `tests/` only. Use a root `conftest.py` only for
   `pytest_plugins` declarations, doctest fixtures shared with source
