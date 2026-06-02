@@ -75,7 +75,7 @@ def validate_phase(
 # ========================== #
 
 
-_NM_PER_M = 1e9  # nanometers per meter
+_NM_PER_M = 1e9
 
 
 def convert_phase(
@@ -90,15 +90,6 @@ def convert_phase(
     RADIANS <-> METERS uses `height_scale` (meters per radian); METERS <->
     NANOMETERS uses the fixed 1e9 nm/m. Returns `data` unchanged when the
     units already match.
-
-    Args:
-        data: The phase or height image to convert.
-        from_unit: The unit `data` is currently in.
-        to_unit: The unit to convert to.
-        height_scale: Height represented by one radian of phase, in meters.
-
-    Returns:
-        The converted image, or `data` itself when `from_unit == to_unit`.
 
     Raises:
         ValueError: If the conversion is undefined (e.g. an UNKNOWN unit).
@@ -133,9 +124,6 @@ def read_header(path: StrPath) -> PhaseBinHeader:
     A thin wrapper over `PhaseBinHeader.from_file`; reads just the
     fixed-size header, so it stays cheap when curating many files by
     metadata (shape, field of view) without decoding the images.
-
-    Returns:
-        The parsed header.
 
     Raises:
         FileNotFoundError: If `path` does not exist.

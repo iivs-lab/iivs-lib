@@ -161,7 +161,6 @@ class PhaseBinHeader:
             ValueError: If the stream is too small for a header, or declares
                 an unsupported header size.
         """
-
         raw = fb.read(cls.HEADER_SIZE)
         if len(raw) < cls.HEADER_SIZE:
             msg = f"file must be at least {cls.HEADER_SIZE} bytes for a header (got {len(raw)})"
@@ -185,7 +184,6 @@ class PhaseBinHeader:
             ValueError: If the file is too small for a header, or declares an
                 unsupported header size.
         """
-
         path = ensure_file_exists(path)
         with path.open("rb") as fb:
             return cls.from_stream(fb)
