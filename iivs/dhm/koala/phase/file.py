@@ -175,7 +175,7 @@ def _read_pixels(fb: IO[bytes], header: PhaseBinHeader) -> NDArray[np.float32]:
 def load_bin(
     path: StrPath,
     *,
-    return_header: Literal[False] = ...,
+    return_header: Literal[False] = False,
     on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
 ) -> NDArray[np.float32]: ...
 
@@ -187,6 +187,15 @@ def load_bin(
     return_header: Literal[True],
     on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
 ) -> tuple[NDArray[np.float32], PhaseBinHeader]: ...
+
+
+@overload
+def load_bin(
+    path: StrPath,
+    *,
+    return_header: bool,
+    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]: ...
 
 
 def load_bin(
