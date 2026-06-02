@@ -46,6 +46,8 @@ class PhaseBinHeader:
         endian: Byte-order flag. Fixed at 0 (little-endian).
     """
 
+    # Packed (no alignment padding) -> exactly 23 bytes, matching the
+    # on-disk Lyncée Tec Koala header layout.
     DTYPE: ClassVar[np.dtype[np.void]] = cast(
         "np.dtype[np.void]",
         np.dtype(
@@ -63,13 +65,14 @@ class PhaseBinHeader:
     )
 
     HEADER_SIZE: ClassVar[int] = DTYPE.itemsize
+    SUPPORTED_VERSION: ClassVar[int] = 1
 
     width: int
     height: int
     pixel_size: float
     height_scale: float
     unit: PhaseUnit
-    version: int = field(default=1, init=False)
+    version: int = field(default=SUPPORTED_VERSION, init=False)
     endian: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
@@ -159,20 +162,30 @@ class PhaseBinHeader:
 
         Raises:
             ValueError: If the stream is too small for a header, or declares
-                an unsupported header size.
+                an unsupported header size, version, or byte order.
         """
         raw = fb.read(cls.HEADER_SIZE)
         if len(raw) < cls.HEADER_SIZE:
             msg = f"file must be at least {cls.HEADER_SIZE} bytes for a header (got {len(raw)})"
             raise ValueError(msg)
 
-        record = np.frombuffer(raw, dtype=cls.DTYPE, count=1)
-        record_size = int(record[0]["header_size"])
+        record = np.frombuffer(raw, dtype=cls.DTYPE, count=1)[0]
+        record_size = int(record["header_size"])
         if record_size != cls.HEADER_SIZE:
             msg = f"header size must be {cls.HEADER_SIZE} (got {record_size})"
             raise ValueError(msg)
 
-        return cls.from_dtype(record[0])
+        version = int(record["version"])
+        if version != cls.SUPPORTED_VERSION:
+            msg = f"unsupported header version {version} (expected {cls.SUPPORTED_VERSION})"
+            raise ValueError(msg)
+
+        endian = int(record["endian"])
+        if endian != 0:  # 0 == little-endian; DTYPE stores fields little-endian
+            msg = f"unsupported byte order (endian flag {endian}; only little-endian)"
+            raise ValueError(msg)
+
+        return cls.from_dtype(record)
 
     @classmethod
     def from_file(cls, path: StrPath) -> Self:
@@ -182,7 +195,7 @@ class PhaseBinHeader:
             FileNotFoundError: If `path` does not exist.
             NotAFileError: If `path` exists but is not a regular file.
             ValueError: If the file is too small for a header, or declares an
-                unsupported header size.
+                unsupported header size, version, or byte order.
         """
         path = ensure_file_exists(path)
         with path.open("rb") as fb:

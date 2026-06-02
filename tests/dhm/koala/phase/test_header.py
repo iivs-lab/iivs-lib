@@ -1,8 +1,17 @@
 from __future__ import annotations
 
+import io
+
 import pytest
 
 from iivs.dhm.koala.phase.header import PhaseBinHeader, PhaseUnit
+
+
+def _valid_header_bytes() -> bytearray:
+    header = PhaseBinHeader(
+        width=2, height=2, pixel_size=1.0, height_scale=1.0, unit=PhaseUnit.RADIANS
+    )
+    return bytearray(header.to_dtype().tobytes())
 
 
 def test_header_dtype_is_packed_23_bytes():
@@ -61,6 +70,20 @@ def test_header_warns_on_unknown_unit():
             height_scale=1.0,
             unit=PhaseUnit.UNKNOWN,
         )
+
+
+def test_from_stream_rejects_unsupported_version():
+    raw = _valid_header_bytes()
+    raw[0] = 2  # version byte
+    with pytest.raises(ValueError, match="version"):
+        PhaseBinHeader.from_stream(io.BytesIO(bytes(raw)))
+
+
+def test_from_stream_rejects_unsupported_endian():
+    raw = _valid_header_bytes()
+    raw[1] = 1  # endian byte
+    with pytest.raises(ValueError, match="byte order"):
+        PhaseBinHeader.from_stream(io.BytesIO(bytes(raw)))
 
 
 def test_header_version_endian_fixed():

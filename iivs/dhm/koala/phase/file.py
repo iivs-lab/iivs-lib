@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
+_PIXEL_DTYPE = np.dtype("<f4")  # on-disk pixels: little-endian float32
+
+
 # ========================== #
 #         Validation         #
 # ========================== #
@@ -141,11 +144,11 @@ def _read_pixels(fb: IO[bytes], header: PhaseBinHeader) -> NDArray[np.float32]:
     `header` before decoding.
     """
     raw = fb.read()
-    expected = header.pixel_count * 4  # float32 is 4 bytes
+    expected = header.pixel_count * _PIXEL_DTYPE.itemsize
     if len(raw) != expected:
         msg = f"pixel count must be {header.pixel_count} ({expected} bytes), got {len(raw)}"
         raise ValueError(msg)
-    pixels = np.frombuffer(raw, dtype="<f4")
+    pixels = np.frombuffer(raw, dtype=_PIXEL_DTYPE)
     return pixels.reshape(header.shape).astype(np.float32, copy=True)
 
 
@@ -330,7 +333,7 @@ def save_bin(
         height_scale=height_scale,
         unit=unit,
     ).to_dtype()
-    pixels = np.ascontiguousarray(data, dtype="<f4")
+    pixels = np.ascontiguousarray(data, dtype=_PIXEL_DTYPE)
 
     with StagedFile(path, binary=True, overwrite=overwrite) as staged:
         header.tofile(staged.file)
