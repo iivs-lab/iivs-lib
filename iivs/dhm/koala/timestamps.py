@@ -1,0 +1,236 @@
+from __future__ import annotations
+
+__all__ = (
+    "Timestamp",
+    "TimestampFPSSequence",
+    "TimestampSequence",
+    "TimestampTXTSequence",
+)
+
+import itertools
+import re
+from abc import abstractmethod
+from dataclasses import dataclass
+from functools import cached_property
+from typing import TYPE_CHECKING
+
+from kaparoo.data.sequences.base import DataSequence
+from kaparoo.data.sequences.templates import SingleFileSequence
+from kaparoo.filesystem import ensure_file_exists
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from typing import ClassVar
+
+    from kaparoo.filesystem.types import StrPath
+
+
+@dataclass(frozen=True, slots=True)
+class Timestamp:
+    """Acquisition timing of one frame, in milliseconds.
+
+    Attributes:
+        elapsed_ms: Time since acquisition start.
+        interval_ms: Time since the previous frame (0.0 for the first).
+    """
+
+    elapsed_ms: float
+    interval_ms: float
+
+    def __post_init__(self) -> None:
+        """Validate that the timings are non-negative and consistent."""
+        if self.elapsed_ms < 0.0:
+            msg = f"elapsed_ms must be non-negative (got {self.elapsed_ms})"
+            raise ValueError(msg)
+
+        if self.interval_ms < 0.0:
+            msg = f"interval_ms must be non-negative (got {self.interval_ms})"
+            raise ValueError(msg)
+
+        if self.interval_ms > self.elapsed_ms:
+            msg = f"interval_ms must not exceed elapsed_ms (got {self.interval_ms} > {self.elapsed_ms})"
+            raise ValueError(msg)
+
+    @classmethod
+    def series_from_elapsed(cls, elapsed_ms: Sequence[float]) -> tuple[Timestamp, ...]:
+        """Build a series of `Timestamp`s from cumulative elapsed times.
+
+        The first frame's interval is 0.0; each later frame's interval is its
+        gap from the previous frame. Returns an empty tuple for empty input.
+        """
+        if not elapsed_ms:
+            return ()
+
+        first = cls(elapsed_ms=elapsed_ms[0], interval_ms=0.0)
+        rest = (
+            cls(elapsed_ms=current, interval_ms=current - previous)
+            for previous, current in itertools.pairwise(elapsed_ms)
+        )
+
+        return (first, *rest)
+
+
+class TimestampSequence(DataSequence[Timestamp, int]):
+    """A read-only sequence of per-frame `Timestamp`s, from any source.
+
+    Annotate parameters with this interface to accept either implementation:
+    `TimestampTXTSequence` (read from a Koala ``timestamps.txt``) or
+    `TimestampFPSSequence` (synthesized from a frame rate). Each item is a
+    `Timestamp` and its metadata is the frame index.
+    """
+
+    @property
+    @abstractmethod
+    def mean_interval_ms(self) -> float:
+        """Mean interval between consecutive frames, in milliseconds."""
+        raise NotImplementedError
+
+    @property
+    def mean_frame_rate(self) -> float:
+        """Mean frame rate in hertz, derived from `mean_interval_ms`."""
+        return 1000.0 / self.mean_interval_ms
+
+
+class TimestampTXTSequence(SingleFileSequence[Timestamp, int], TimestampSequence):
+    """A `TimestampSequence` read from a Koala ``timestamps.txt``.
+
+    Each line is ``<index> <time> <date> <elapsed_ms>`` (space-separated), and
+    the frame indices must run contiguously from 0.
+
+    Raises:
+        FileNotFoundError: If `path` does not exist.
+        NotAFileError: If `path` exists but is not a regular file.
+        ValueError: If the file is malformed or its frame indices are not
+            contiguous from 0 (see `parse`).
+    """
+
+    LINE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+        r"""
+        (?P<index>\d{5})\s+          # 5-digit frame index
+        \d{2}:\d{2}:\d{2}\.\d+\s+    # time, HH:MM:SS.fff
+        \d{4}\.\d{2}\.\d{2}\s+       # date, YYYY.MM.DD
+        (?P<elapsed>\d+(?:\.\d+)?)   # elapsed milliseconds
+        """,
+        re.VERBOSE,
+    )
+
+    def __init__(self, path: StrPath) -> None:
+        super().__init__(path)
+        self._timestamps = self.parse(self.path)
+
+    def __len__(self) -> int:
+        return len(self._timestamps)
+
+    def get_item(self, index: int) -> Timestamp:
+        return self._timestamps[index]
+
+    def get_meta(self, index: int) -> int:
+        return index
+
+    @cached_property
+    def mean_interval_ms(self) -> float:
+        """Mean gap between frames, in milliseconds (computed once, then cached).
+
+        Raises:
+            ValueError: If the sequence has fewer than two frames.
+        """
+        if len(self) < 2:
+            msg = f"mean interval requires at least two frames (got {len(self)})"
+            raise ValueError(msg)
+
+        return sum((ts.interval_ms for ts in self), 0.0) / (len(self) - 1)
+
+    @classmethod
+    def parse(cls, path: StrPath) -> tuple[Timestamp, ...]:
+        """Read, validate, and parse a ``timestamps.txt`` into `Timestamp`s.
+
+        Every non-blank line must match ``<5-digit index> <HH:MM:SS.fff>
+        <YYYY.MM.DD> <elapsed_ms>``, and the frame indices must run
+        contiguously from 0.
+
+        Raises:
+            FileNotFoundError: If `path` does not exist.
+            NotAFileError: If `path` exists but is not a regular file.
+            ValueError: If a line does not match the expected format, or the
+                frame indices are not contiguous from 0.
+        """
+        path = ensure_file_exists(path)
+
+        elapsed: list[float] = []
+
+        for lineno, line in enumerate(path.read_text().splitlines()):
+            stripped = line.strip()
+            if not stripped:
+                continue
+
+            matched = cls.LINE_PATTERN.fullmatch(stripped)
+            if matched is None:
+                msg = f"{path}: line {lineno} is malformed (got {line!r})"
+                raise ValueError(msg)
+
+            index = int(matched["index"])
+            if index != len(elapsed):
+                msg = f"{path}: frame index at line {lineno} must be {len(elapsed)} (got {index})"
+                raise ValueError(msg)
+
+            elapsed.append(float(matched["elapsed"]))
+
+        return Timestamp.series_from_elapsed(elapsed)
+
+
+class TimestampFPSSequence(TimestampSequence):
+    """A synthetic `TimestampSequence` with a constant frame rate.
+
+    Frame ``i`` has ``elapsed_ms = i * 1000 / frame_rate`` and a constant
+    interval (0.0 for the first frame); see `generate`.
+
+    Raises:
+        ValueError: If `frame_rate` is not positive, or `num_frames` is
+            negative.
+    """
+
+    def __init__(self, *, frame_rate: float, num_frames: int) -> None:
+        self._timestamps = self.generate(frame_rate=frame_rate, num_frames=num_frames)
+        self._frame_rate = frame_rate
+        self._interval_ms = 1000.0 / frame_rate
+
+    def __len__(self) -> int:
+        return len(self._timestamps)
+
+    def get_item(self, index: int) -> Timestamp:
+        return self._timestamps[index]
+
+    def get_meta(self, index: int) -> int:
+        return index
+
+    @property
+    def mean_frame_rate(self) -> float:
+        """The exact `frame_rate` the sequence was generated with, in hertz."""
+        return self._frame_rate
+
+    @property
+    def mean_interval_ms(self) -> float:
+        """The exact (constant) interval between frames, in milliseconds."""
+        return self._interval_ms
+
+    @classmethod
+    def generate(cls, *, frame_rate: float, num_frames: int) -> tuple[Timestamp, ...]:
+        """Generate `num_frames` timestamps at a constant `frame_rate` (in hertz).
+
+        Frame ``i`` has ``elapsed_ms = i * 1000 / frame_rate``.
+
+        Raises:
+            ValueError: If `frame_rate` is not positive, or `num_frames` is
+                negative.
+        """
+        if frame_rate <= 0.0:
+            msg = f"frame_rate must be positive (got {frame_rate})"
+            raise ValueError(msg)
+
+        if num_frames < 0:
+            msg = f"num_frames must be non-negative (got {num_frames})"
+            raise ValueError(msg)
+
+        interval_ms = 1000.0 / frame_rate
+        elapsed_ms = [i * interval_ms for i in range(num_frames)]
+        return Timestamp.series_from_elapsed(elapsed_ms)
