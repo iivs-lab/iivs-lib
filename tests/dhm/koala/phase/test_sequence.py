@@ -108,6 +108,13 @@ def test_validate_file_checks_single_index(tmp_path):
         seq.validate_file(1)  # 00002 sits at index 1
 
 
+def test_validate_file_rejects_unknown_level(tmp_path):
+    _write(tmp_path, 0, 0)
+    seq = PhaseBinSequence(tmp_path, validate=None)
+    with pytest.raises(ValueError, match="level must be"):
+        seq.validate_file(0, level="bogus")  # ty: ignore[invalid-argument-type]
+
+
 def test_validate_rejects_gap(tmp_path):
     _write(tmp_path, 0, 0)
     _write(tmp_path, 1, 1)

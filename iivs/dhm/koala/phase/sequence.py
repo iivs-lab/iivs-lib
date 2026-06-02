@@ -98,15 +98,22 @@ class PhaseBinSequence(FileFolderSequence[NDArray[np.float32], Path]):
         self, index: int, *, level: Literal["names", "headers", "data"] = "headers"
     ) -> None:
         """Validate the file at `index` to `level` (see `validate`)."""
+        if level not in ("names", "headers", "data"):
+            msg = f"level must be 'names', 'headers', or 'data' (got {level!r})"
+            raise ValueError(msg)
+
         path = self.get_file(index)
+
         expected = f"{index:05d}_phase.bin"
         if path.name != expected:
             msg = f"non-contiguous numbering: expected {expected} at index {index}, got {path.name}"
             raise ValueError(msg)
+
         # The first file is the reference header, so it is never compared.
         if level != "names" and index != 0 and read_header(path) != self.header:
             msg = f"header of {path.name} differs from the first file"
             raise ValueError(msg)
+
         if level == "data":
             load_bin(path, on_nonfinite="raise")
 

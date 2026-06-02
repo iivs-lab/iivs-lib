@@ -18,6 +18,11 @@ def test_validate_phase_rejects_below_2d():
         validate_phase(np.zeros(5, dtype=np.float32))
 
 
+def test_validate_phase_rejects_unknown_on_nonfinite():
+    with pytest.raises(ValueError, match="on_nonfinite must be"):
+        validate_phase(np.zeros((2, 2), dtype=np.float32), on_nonfinite="bogus")  # ty: ignore[invalid-argument-type]
+
+
 def test_save_load_roundtrip(tmp_path):
     rng = np.random.default_rng(0)
     data = rng.standard_normal((4, 5)).astype(np.float32)

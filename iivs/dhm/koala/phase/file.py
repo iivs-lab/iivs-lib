@@ -62,7 +62,16 @@ def validate_phase(
         msg = f"data must be float32 (got {data.dtype})"
         raise ValueError(msg)
 
-    if on_nonfinite != "ignore" and not np.all(np.isfinite(data)):
+    match on_nonfinite:
+        case "ignore":
+            return data
+        case "warn" | "raise":
+            pass
+        case _:
+            msg = f"on_nonfinite must be 'ignore', 'warn', or 'raise' (got {on_nonfinite!r})"
+            raise ValueError(msg)
+
+    if not np.all(np.isfinite(data)):
         nan = int(np.isnan(data).sum())
         posinf = int(np.isposinf(data).sum())
         neginf = int(np.isneginf(data).sum())
