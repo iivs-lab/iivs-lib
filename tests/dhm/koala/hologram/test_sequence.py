@@ -3,12 +3,14 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.koala.hologram.file import save_tif
+from iivs.dhm.koala.hologram.file import save_hologram_tif
 from iivs.dhm.koala.hologram.sequence import HologramTifSequence
 
 
 def _write(root, index, value, shape=(2, 3)):
-    save_tif(root / f"{index:05d}_holo.tif", np.full(shape, value, dtype=np.uint8))
+    save_hologram_tif(
+        root / f"{index:05d}_holo.tif", np.full(shape, value, dtype=np.uint8)
+    )
 
 
 def test_folder_lists_items_in_index_order(tmp_path):
@@ -31,8 +33,8 @@ def test_folder_get_meta_is_source_path(tmp_path):
 def test_folder_ignores_non_matching_names(tmp_path):
     _write(tmp_path, 0, 0)
     blank = np.zeros((2, 3), dtype=np.uint8)
-    save_tif(tmp_path / "0001_holo.tif", blank)  # 4 digits: ignored
-    save_tif(tmp_path / "00002_phase.tif", blank)  # wrong stem: ignored
+    save_hologram_tif(tmp_path / "0001_holo.tif", blank)  # 4 digits: ignored
+    save_hologram_tif(tmp_path / "00002_phase.tif", blank)  # wrong stem: ignored
     assert len(HologramTifSequence(tmp_path)) == 1
 
 

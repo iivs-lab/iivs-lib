@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("load_tif", "save_tif", "validate_hologram")
+__all__ = ("load_hologram_tif", "save_hologram_tif", "validate_hologram")
 
 import io
 from typing import TYPE_CHECKING
@@ -33,7 +33,7 @@ def validate_hologram(data: NDArray[np.uint8]) -> NDArray[np.uint8]:
     return data
 
 
-def load_tif(path: StrPath) -> NDArray[np.uint8]:
+def load_hologram_tif(path: StrPath) -> NDArray[np.uint8]:
     """Load a Koala uint8 hologram from a `.tif` file.
 
     Raises:
@@ -46,7 +46,7 @@ def load_tif(path: StrPath) -> NDArray[np.uint8]:
     return validate_hologram(data)
 
 
-def save_tif(
+def save_hologram_tif(
     path: StrPath, data: NDArray[np.uint8], *, overwrite: bool = False
 ) -> None:
     """Save a 2D uint8 hologram as a `.tif` file.

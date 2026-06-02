@@ -12,7 +12,7 @@ from kaparoo.filesystem.search.filters import Regex
 from natsort import natsorted
 from numpy.typing import NDArray
 
-from iivs.dhm.koala.hologram.file import load_tif
+from iivs.dhm.koala.hologram.file import load_hologram_tif
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -82,7 +82,7 @@ class HologramTifSequence(FileFolderSequence[NDArray[np.uint8], Path]):
             raise ValueError(msg)
 
         if level == "data":
-            load_tif(path)
+            load_hologram_tif(path)
 
     def list_files(self, root: Path) -> list[Path]:
         files = search_files(root, name_filter=Regex(r"\d{5}_holo\.tif"), max_depth=1)
@@ -95,4 +95,4 @@ class HologramTifSequence(FileFolderSequence[NDArray[np.uint8], Path]):
         return self.get_file(index)
 
     def load_file(self, path: Path) -> NDArray[np.uint8]:
-        return load_tif(path)
+        return load_hologram_tif(path)

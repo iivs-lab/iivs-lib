@@ -37,7 +37,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `timestamps.txt`) and `TimestampFpsSequence` (synthesized from a frame
     rate).
 - `iivs.dhm.koala.hologram`: read and write Koala uint8 `.tif` holograms.
-  - `load_tif(path)` / `save_tif(path, data, *, overwrite=False)` and
+  - `load_hologram_tif(path)` / `save_hologram_tif(path, data, *, overwrite=False)` and
     `validate_hologram(data)`.
   - `HologramTifSequence` — an ordered `FileFolderSequence` over a folder of
     `{index:05d}_holo.tif` images (item = image, metadata = source path),
