@@ -36,9 +36,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `mean_frame_rate`; implemented by `TimestampTxtSequence` (Koala
     `timestamps.txt`) and `TimestampFpsSequence` (synthesized from a frame
     rate).
-- `iivs.dhm.koala.hologram`: read and write Koala uint8 `.tif` holograms.
-  - `load_hologram_tif(path)` / `save_hologram_tif(path, data, *, overwrite=False)` and
-    `validate_hologram(data)`.
+- `iivs.dhm.koala.hologram`: read Koala uint8 holograms from a `.tif` folder
+  or a single multi-frame `.raw` file.
+  - `load_hologram_tif(path)` / `save_hologram_tif(path, data, *, overwrite=False)`
+    and `validate_hologram(data)`.
   - `HologramTifSequence` — an ordered `FileFolderSequence` over a folder of
     `{index:05d}_holo.tif` images (item = image, metadata = source path),
     with a `validate` method.
+  - `HologramRawHeader` / `read_hologram_raw_header(path)` — the 16-byte
+    `.raw` header (width, height, bit depth, frame count).
+  - `HologramRawSequence` — a `SingleFileSequence` over a `.raw` file's frames
+    (held internally as a lazy, read-only `np.memmap`; each item is a writable
+    frame copy, metadata is the frame index).
