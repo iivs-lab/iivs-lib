@@ -235,6 +235,23 @@ def _resolve_height_scale(
             raise ValueError(msg)
 
 
+def _to_storable_unit(
+    data: NDArray[np.float32], unit: PhaseUnit, height_scale: float
+) -> tuple[NDArray[np.float32], PhaseUnit]:
+    """Coerce a (data, unit) pair into a unit the file can store.
+
+    The on-disk format holds only UNKNOWN/RADIANS/METERS, so the code-only
+    NANOMETERS unit is converted to METERS; every other unit passes through
+    unchanged.
+    """
+    if unit is PhaseUnit.NANOMETERS:
+        data = convert_phase(
+            data, from_unit=unit, to_unit=PhaseUnit.METERS, height_scale=height_scale
+        )
+        return data, PhaseUnit.METERS
+    return data, unit
+
+
 @overload
 def save_bin(
     path: StrPath,
@@ -319,13 +336,7 @@ def save_bin(
         msg = f"data must be a single 2D image (got shape {data.shape})"
         raise ValueError(msg)
     data = validate_phase(data, on_nonfinite=on_nonfinite)
-
-    # NANOMETERS is code-only; store it as METERS.
-    if unit is PhaseUnit.NANOMETERS:
-        data = convert_phase(
-            data, from_unit=unit, to_unit=PhaseUnit.METERS, height_scale=height_scale
-        )
-        unit = PhaseUnit.METERS
+    data, unit = _to_storable_unit(data, unit, height_scale)
 
     if unit is PhaseUnit.UNKNOWN:
         msg = "saving with unit=UNKNOWN; physical interpretation is undefined"
