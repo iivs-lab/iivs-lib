@@ -14,6 +14,8 @@ from kaparoo.data.sequences.templates import SingleFileSequence
 from kaparoo.filesystem import ensure_file_exists
 from numpy.typing import NDArray
 
+from iivs.dhm.koala.hologram.base import HologramSequence
+
 if TYPE_CHECKING:
     from typing import IO, Self
 
@@ -139,7 +141,9 @@ def read_hologram_raw_header(path: StrPath) -> HologramRawHeader:
     return HologramRawHeader.from_file(path)
 
 
-class HologramRawSequence(SingleFileSequence[NDArray[np.uint8], int]):
+class HologramRawSequence(
+    SingleFileSequence[NDArray[np.uint8], int], HologramSequence[int]
+):
     """An ordered sequence of holograms in a single Koala `.raw` file.
 
     The file is a `HologramRawHeader` followed by its frames, held internally

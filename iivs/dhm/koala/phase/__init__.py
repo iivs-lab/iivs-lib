@@ -3,6 +3,7 @@ from __future__ import annotations
 __all__ = (
     "PhaseBinHeader",
     "PhaseBinSequence",
+    "PhaseSequence",
     "PhaseUnit",
     "convert_phase_unit",
     "load_phase_bin",
@@ -11,6 +12,7 @@ __all__ = (
     "validate_phase",
 )
 
+from iivs.dhm.koala.phase.base import PhaseSequence
 from iivs.dhm.koala.phase.bin import (
     PhaseBinHeader,
     PhaseBinSequence,

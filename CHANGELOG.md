@@ -25,6 +25,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     image or stack.
   - `convert_phase_unit(data, *, source, target, height_scale)` — rescale a
     phase/height image between `PhaseUnit` representations.
+  - `PhaseSequence` — read-only base type for phase image sequences (any
+    source), implemented by `PhaseBinSequence`.
   - `PhaseBinSequence` — an ordered `kaparoo.data.sequences.FileFolderSequence`
     over a folder of `{index:05d}_phase.bin` images (item = image, metadata =
     source path), exposing the shared acquisition `header`, optional unit
@@ -40,6 +42,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   or a single multi-frame `.raw` file.
   - `load_hologram_tif(path)` / `save_hologram_tif(path, data, *, overwrite=False)`
     and `validate_hologram(data)`.
+  - `HologramSequence` — read-only base type for hologram sequences (any
+    source), implemented by `HologramTifSequence` and `HologramRawSequence`.
   - `HologramTifSequence` — an ordered `FileFolderSequence` over a folder of
     `{index:05d}_holo.tif` images (item = image, metadata = source path),
     with a `validate` method.

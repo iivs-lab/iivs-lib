@@ -22,6 +22,7 @@ from kaparoo.utils import replace_if_none
 from natsort import natsorted
 from numpy.typing import NDArray
 
+from iivs.dhm.koala.phase.base import PhaseSequence
 from iivs.dhm.koala.phase.core import PhaseUnit, convert_phase_unit, validate_phase
 
 if TYPE_CHECKING:
@@ -461,7 +462,9 @@ def save_phase_bin(
 # ========================== #
 
 
-class PhaseBinSequence(FileFolderSequence[NDArray[np.float32], Path]):
+class PhaseBinSequence(
+    FileFolderSequence[NDArray[np.float32], Path], PhaseSequence[Path]
+):
     """An ordered sequence of Lyncée Tec Koala `.bin` phase images in a folder.
 
     Lists the direct children matching `{index:05d}_phase.bin` (exactly five

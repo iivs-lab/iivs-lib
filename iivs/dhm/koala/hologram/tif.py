@@ -15,6 +15,7 @@ from kaparoo.filesystem.search.filters import Regex
 from natsort import natsorted
 from numpy.typing import NDArray
 
+from iivs.dhm.koala.hologram.base import HologramSequence
 from iivs.dhm.koala.hologram.core import validate_hologram
 
 if TYPE_CHECKING:
@@ -65,7 +66,9 @@ def save_hologram_tif(
         staged.write(buffer.getvalue())
 
 
-class HologramTifSequence(FileFolderSequence[NDArray[np.uint8], Path]):
+class HologramTifSequence(
+    FileFolderSequence[NDArray[np.uint8], Path], HologramSequence[Path]
+):
     """An ordered sequence of Koala `NNNNN_holo.tif` uint8 hologram images.
 
     Lists the direct children matching `{index:05d}_holo.tif` (exactly five
