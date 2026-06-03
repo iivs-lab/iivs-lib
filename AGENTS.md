@@ -62,9 +62,9 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   Building blocks shared across modalities live in one data-root module,
   `common.py`: the `KoalaBinHeader` base + `.bin` pixel I/O (used by `phase`
   and `intensity`), the numbered-folder `SequentialFileFolder` template (every
-  `*Folder` builds on it), the `FrameShapedMixin`, and `validate_float32_image`.
-  Prefer a shared base/template + a small mixin over copy-pasting across
-  modalities.
+  `*Folder` builds on it), the `FrameShapedMixin`, the float32/uint8 image
+  validators, and the `Float/Txt` grid parser. Prefer a shared base/template +
+  a small mixin over copy-pasting across modalities.
 - A `*Folder` is the auto-discovered special case of its `*List`, so it
   *subclasses the list* (mirroring kaparoo's `FileFolderSequence` ⊂
   `FileListSequence`) and reuses its `load_file`. `FileFolderSequence.__init__

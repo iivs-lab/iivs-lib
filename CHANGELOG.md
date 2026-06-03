@@ -10,8 +10,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- `iivs.dhm.data.phase`: read and write Koala (Lyncée Tec) float32 `.bin`
-  phase images.
+- `iivs.dhm.data.phase`: read and write Koala (Lyncée Tec) float32 phase
+  images -- `.bin` (read + write) and the `Float/Txt` text export (read).
   - `PhaseBinHeader` — a typed, validated header (with
     `PhaseBinHeader.DTYPE`, `from_dtype` / `from_stream` / `from_file` /
     `to_dtype`, and `shape`, `pixel_count`, `field_of_view`,
@@ -47,13 +47,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `SequentialFileFolder` — a `kaparoo.data.sequences.FileFolderSequence` base
     for `{index:05d}_<stem>.<ext>` folders. Subclasses set `FILE_STEM` /
     `FILE_EXT` / `LEVELS` / `DEFAULT_LEVEL` and a `_validate_content` hook;
-    numbered discovery (`list_files`), `get_meta`, and the contiguity-checked
-    `validate` / `validate_file` come for free. `PhaseBinFolder`,
-    `IntensityBinFolder`, and `HologramTifFolder` build on it.
+    numbered discovery (`list_files`), `get_meta`, the contiguity-checked
+    `validate` / `validate_file`, and `FrameShapedMixin` come for free. Every
+    modality `*Folder` builds on it.
   - `FrameShapedMixin` — a mixin that forces a uniform `frame_shape`. There is
     no per-modality `Uniform*Sequence`: a same-shape source is
     `<Modality>Sequence` + `FrameShapedMixin`, so "a uniform phase sequence" is
-    `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`.
+    `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`. Numbered
+    folders get it via `SequentialFileFolder`; single-file sources
+    (`HologramRawFile`) mix it in directly.
   - `validate_float32_image` / `validate_uint8_image` — the shared,
     modality-agnostic image/stack validators (dtype, dimensionality, and -- for
     float32 -- the `on_nonfinite` policy). Both take `allow_stack` (default
