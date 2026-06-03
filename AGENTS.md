@@ -65,9 +65,9 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   `parse_txt_grid`), the uint8-image folder/list codec bases + `.tif` reader
   (`ImageFileFolder` / `ImageFileList`, `ImageTifFolder` / `ImageTifList`,
   `load_uint8_tif`), the `.npy` shape reader (`read_npy_shape`), the
-  extension-checking list base (`ExtensionCheckedFileList`,
-  `ensure_file_extension`), the numbered-folder `SequentialFileFolder` template
-  (every `*Folder` builds on it), the `FrameShapedMixin`, and the float32/uint8
+  extension check (`ensure_file_extension`), the numbered-folder
+  `SequentialFileFolder` template (every `*Folder` builds on it), the
+  `FrameShapedMixin`, and the float32/uint8
   image validators. Prefer a shared base/template + a small mixin over
   copy-pasting across modalities.
 - A `*Folder` is the auto-discovered special case of its `*List`, so it
@@ -75,12 +75,13 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   `FileListSequence`) and reuses its `load_file`. `FileFolderSequence.__init__
   (root)` discovers the files and cooperatively calls the list's `__init__`
   down the MRO, so define the list *before* the folder in the module.
-- `FILE_EXT` lives on the concrete `*List`, not the folder. The list base is
-  `data.common.ExtensionCheckedFileList`, which validates every path's
-  `.<FILE_EXT>` at construction (so a wrong-format file fails up front, not on
+- `FILE_EXT` lives on the concrete `*List`, not the folder. Each modality's
+  list base validates every path's `.<FILE_EXT>` in `__init__` via
+  `common.ensure_file_extension` (so a wrong-format file fails up front, not on
   decode); the `*Folder` inherits `FILE_EXT` for both discovery and that check.
-  Single-file `*File` sources have no list, so they call
-  `common.ensure_file_extension(path, ext)` in `__init__` themselves.
+  A plain helper, not a shared list base -- the check is one line, so it does
+  not earn an `ExtensionChecked*` class in the MRO. Single-file `*File` sources
+  call `ensure_file_extension(path, ext)` in `__init__` themselves.
 - Hoist each modality's format-agnostic list/folder bodies into a
   `<Modality>FileList` / `<Modality>FileFolder` base (in the modality's
   `base.py`, left out of `__all__` -- internal but underscore-free, since

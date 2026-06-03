@@ -7,11 +7,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
-from kaparoo.data.sequences import DataSequence
+from kaparoo.data.sequences import DataSequence, FileListSequence
 from kaparoo.utils import replace_if_none
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import ExtensionCheckedFileList, SequentialFileFolder
+from iivs.dhm.data.common import SequentialFileFolder, ensure_file_extension
 from iivs.dhm.data.phase.core import convert_phase_unit
 
 if TYPE_CHECKING:
@@ -62,26 +62,32 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
 
 
 class PhaseFileList(
-    ExtensionCheckedFileList[NDArray[np.float32], Path], PhaseFloatSequence[Path]
+    FileListSequence[NDArray[np.float32], Path], PhaseFloatSequence[Path]
 ):
     """Format-agnostic phase file list over a ``(read_header, decode)`` codec.
 
     Holds the list machinery -- per-file unit conversion, `target_unit`,
-    `get_meta` -- once; a concrete subclass (`PhaseBinList`, `PhaseTxtList`)
-    supplies only `_read_header` / `_decode` for its on-disk format.
-    `PhaseFileFolder` is the auto-discovered, same-shape specialization.
+    `get_meta`, the `.<FILE_EXT>` check -- once; a concrete subclass
+    (`PhaseBinList`, `PhaseTxtList`) supplies only `FILE_EXT` and the
+    `_read_header` / `_decode` codec for its on-disk format. `PhaseFileFolder`
+    is the auto-discovered, same-shape specialization.
 
     Args:
         files: The files to expose, in the given order.
         target_unit: Unit to return images in, applied per file via that
             file's own `height_scale`. Defaults to None, which keeps each
             file's stored unit.
+
+    Raises:
+        ValueError: If any path does not have the subclass `.<FILE_EXT>` suffix.
     """
+
+    FILE_EXT: ClassVar[str]
 
     def __init__(
         self, files: StrPaths, *, target_unit: PhaseUnit | None = None
     ) -> None:
-        super().__init__(files)
+        super().__init__([ensure_file_extension(f, self.FILE_EXT) for f in files])
         self._target_unit = target_unit
 
     @property

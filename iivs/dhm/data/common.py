@@ -11,7 +11,6 @@ numbered-folder sequence base (`SequentialFileFolder`), the same-shape mixin
 from __future__ import annotations
 
 __all__ = (
-    "ExtensionCheckedFileList",
     "FrameShapedMixin",
     "ImageFileFolder",
     "ImageFileList",
@@ -311,12 +310,16 @@ class FrameShapedMixin(ABC):
 
 
 # ========================== #
-#        File sequence       #
+#        File helpers        #
 # ========================== #
 
 
 def ensure_file_extension(path: StrPath, ext: str) -> Path:
     """Return `path` as a `Path`, requiring a case-insensitive `.<ext>` suffix.
+
+    The explicit `*List` / `*File` sequences validate each given path with this
+    at construction (the auto-discovering folders already filtered by extension),
+    so a wrong-format file is caught up front rather than on decode.
 
     Raises:
         ValueError: If `path`'s suffix is not `.<ext>`.
@@ -326,29 +329,6 @@ def ensure_file_extension(path: StrPath, ext: str) -> Path:
         msg = f"{path.name} must have a .{ext} extension"
         raise ValueError(msg)
     return path
-
-
-class ExtensionCheckedFileList[T, M = Path](FileListSequence[T, M]):
-    """A `FileListSequence` that rejects files lacking the expected extension.
-
-    Plain `FileListSequence` accepts any paths and only fails later, on decode;
-    this validates every path's suffix against the subclass `FILE_EXT` at
-    construction, so a wrong-format file mixed into the list is caught up front.
-    Concrete sequences set `FILE_EXT` (the dotless extension, e.g. "bin"); the
-    auto-discovering folders inherit it and pass trivially, since `list_files`
-    already filtered by it.
-
-    Class attributes:
-        FILE_EXT: The required file extension without the dot (e.g. "bin").
-    """
-
-    FILE_EXT: ClassVar[str]
-
-    def __init__(self, files: StrPaths) -> None:
-        files = list(files)
-        for file in files:
-            ensure_file_extension(file, self.FILE_EXT)
-        super().__init__(files)
 
 
 # ========================== #
@@ -675,20 +655,28 @@ def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
     return validate_uint8_image(data, allow_stack=False)
 
 
-class ImageFileList(ExtensionCheckedFileList[NDArray[np.uint8], Path]):
+class ImageFileList(FileListSequence[NDArray[np.uint8], Path]):
     """A uint8 image sequence over an arbitrary list of files, via a `load_file` codec.
 
     The modality- and format-agnostic body for header-less uint8 image sources
     (`.tif` previews, `.npy` arrays): each file is decoded independently, so the
     files may live anywhere and differ in shape. A concrete subclass supplies
-    only `load_file` for its on-disk format (`ImageTifList`); a modality adds
-    its role by also inheriting its `<Modality>ImageSequence` / sequence type --
+    only `load_file` (and `FILE_EXT`) for its on-disk format (`ImageTifList`); a
+    modality adds its role by also inheriting its `<Modality>ImageSequence` --
     e.g. `PhaseTifList(ImageTifList, PhaseImageSequence[Path])`. `ImageFileFolder`
     is the auto-discovered, same-shape specialization.
 
     Args:
         files: The files to expose, in the given order.
+
+    Raises:
+        ValueError: If any path does not have the subclass `.<FILE_EXT>` suffix.
     """
+
+    FILE_EXT: ClassVar[str]
+
+    def __init__(self, files: StrPaths) -> None:
+        super().__init__([ensure_file_extension(f, self.FILE_EXT) for f in files])
 
     @override
     def get_meta(self, index: int) -> Path:

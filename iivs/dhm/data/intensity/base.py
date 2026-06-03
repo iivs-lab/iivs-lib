@@ -11,15 +11,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
-from kaparoo.data.sequences import DataSequence
+from kaparoo.data.sequences import DataSequence, FileListSequence
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import ExtensionCheckedFileList, SequentialFileFolder
+from iivs.dhm.data.common import SequentialFileFolder, ensure_file_extension
 
 if TYPE_CHECKING:
     from typing import Literal
 
-    from kaparoo.filesystem.types import StrPath
+    from kaparoo.filesystem.types import StrPath, StrPaths
 
     from iivs.dhm.data.intensity.bin import IntensityBinHeader
 
@@ -63,18 +63,27 @@ class IntensityImageSequence[M](IntensitySequence[NDArray[np.uint8], M]):
 
 
 class IntensityFileList(
-    ExtensionCheckedFileList[NDArray[np.float32], Path], IntensityFloatSequence[Path]
+    FileListSequence[NDArray[np.float32], Path], IntensityFloatSequence[Path]
 ):
     """Format-agnostic intensity file list over a ``(read_header, decode)`` codec.
 
-    Holds the list machinery once; a concrete subclass (`IntensityBinList`,
-    `IntensityTxtList`) supplies only `_read_header` / `_decode` for its on-disk
-    format. Intensity carries no unit, so `load_file` is the bare decode.
-    `IntensityFileFolder` is the auto-discovered, same-shape specialization.
+    Holds the list machinery (and the `.<FILE_EXT>` check) once; a concrete
+    subclass (`IntensityBinList`, `IntensityTxtList`) supplies only `FILE_EXT`
+    and the `_read_header` / `_decode` codec for its on-disk format. Intensity
+    carries no unit, so `load_file` is the bare decode. `IntensityFileFolder` is
+    the auto-discovered, same-shape specialization.
 
     Args:
         files: The files to expose, in the given order.
+
+    Raises:
+        ValueError: If any path does not have the subclass `.<FILE_EXT>` suffix.
     """
+
+    FILE_EXT: ClassVar[str]
+
+    def __init__(self, files: StrPaths) -> None:
+        super().__init__([ensure_file_extension(f, self.FILE_EXT) for f in files])
 
     @override
     def get_meta(self, index: int) -> Path:
