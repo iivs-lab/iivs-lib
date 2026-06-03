@@ -62,10 +62,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `HologramRawFile` — a `SingleFileSequence` over a `.raw` file's frames
     (held internally as a lazy, read-only `np.memmap`; each item is a writable
     frame copy, metadata is the frame index).
-- `iivs.dhm.data.constants`: typical optical and biophysical parameters for
-  the lab's transmission setup — `DEFAULT_WAVELENGTH` (666 nm, in m) /
-  `DEFAULT_WAVELENGTH_NM`, `DEFAULT_REFRACTIVE_DELTA` (0.5), and
-  `DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT` (0.2 mL/g, for dry mass).
+- `iivs.dhm.data.constants`: typical optical, geometric, and biophysical
+  parameters for the lab's transmission setup — `DEFAULT_WAVELENGTH` (666 nm,
+  in m) / `DEFAULT_WAVELENGTH_NM`, `DEFAULT_REFRACTIVE_DELTA` (0.5),
+  `DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT` (2.0e-4 m³/kg, for dry mass), and
+  `PIXEL_SIZE_20X` (in m) / `PIXEL_SIZE_20X_UM` (~285 nm; Koala 20X) as a
+  header-less fallback for `PhaseBinHeader.pixel_size`.
 - `iivs.dhm.analysis`: quantitative analysis derived from phase.
   - `opd.OPDConverter` — convert between phase and optical path difference
     (`OPD = phase * wavelength / (2*pi)`) at a fixed wavelength via

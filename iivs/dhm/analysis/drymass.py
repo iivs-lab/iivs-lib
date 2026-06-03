@@ -48,7 +48,7 @@ class DryMassCalculator:
 
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
-        alpha: Specific refractive increment, in mL/g (= um^3/pg).
+        alpha: Specific refractive increment, in m^3/kg.
         opd_converter: Phase-to-OPD converter used by `calc_from_phase`.
             Defaults to one at the default wavelength; inject your own or use
             `from_wavelength`.
@@ -68,8 +68,8 @@ class DryMassCalculator:
         if self.alpha <= 0:
             msg = f"alpha must be positive (got {self.alpha})"
             raise ValueError(msg)
-        pixel_area_um2 = (self.pixel_size * 1e6) ** 2  # m^2 -> um^2; nm -> um is 1e-3
-        object.__setattr__(self, "_scale", pixel_area_um2 * 1e-3 / self.alpha)
+        # pg per summed-nm OPD: px_area(m^2) * (nm->m 1e-9) * (kg->pg 1e15) / alpha.
+        object.__setattr__(self, "_scale", self.pixel_size**2 * 1e6 / self.alpha)
 
     @classmethod
     def from_wavelength(
@@ -133,7 +133,7 @@ def calc_drymass(
         opd: Optical path difference, in nm (e.g. from `phase_to_opd`),
             already background-corrected.
         pixel_size: Physical size of one (square) pixel, in m.
-        alpha: Specific refractive increment, in mL/g (= um^3/pg).
+        alpha: Specific refractive increment, in m^3/kg.
         mask: Optional boolean array selecting the object's pixels.
 
     Returns:
