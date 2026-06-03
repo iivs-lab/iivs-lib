@@ -70,11 +70,12 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   `FileListSequence`) and reuses its `load_file`. `FileFolderSequence.__init__
   (root)` discovers the files and cooperatively calls the list's `__init__`
   down the MRO, so define the list *before* the folder in the module.
-- Hoist each modality's format-agnostic list/folder bodies into a private
-  `_<Modality>FileList` / `_<Modality>FileFolder` base (in the modality's
-  `base.py`) over an abstract ``(read_header, decode)`` codec. The concrete
-  `*BinList` / `*TxtList` supply only that codec; the `*BinFolder` /
-  `*TxtFolder` inherit `_<Modality>FileFolder` *and* their `*List`, supplying
+- Hoist each modality's format-agnostic list/folder bodies into a
+  `<Modality>FileList` / `<Modality>FileFolder` base (in the modality's
+  `base.py`, left out of `__all__` -- internal but underscore-free, since
+  Python has no true private) over an abstract ``(read_header, decode)`` codec.
+  The concrete `*BinList` / `*TxtList` supply only that codec; the `*BinFolder`
+  / `*TxtFolder` inherit `<Modality>FileFolder` *and* their `*List`, supplying
   only `FILE_EXT`. So a new format is a couple of codec methods, not a copied
   list+folder. (The folder's header type annotation references the format
   modules, so import it under `TYPE_CHECKING` to avoid a cycle.)

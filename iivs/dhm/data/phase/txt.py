@@ -16,7 +16,7 @@ from iivs.dhm.data.common import (
     parse_txt_grid,
     validate_float32_image,
 )
-from iivs.dhm.data.phase.base import _PhaseFileFolder, _PhaseFileList
+from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
 from iivs.dhm.data.phase.bin import PhaseBinHeader
 from iivs.dhm.data.phase.core import PhaseUnit
 
@@ -154,10 +154,10 @@ def load_phase_txt(
 # ========================== #
 
 
-class PhaseTxtList(_PhaseFileList):
+class PhaseTxtList(PhaseFileList):
     """A phase sequence over an explicit, arbitrary list of `Float/Txt` files.
 
-    The text twin of `PhaseBinList` (the `.txt` codec over `_PhaseFileList`):
+    The text twin of `PhaseBinList` (the `.txt` codec over `PhaseFileList`):
     no naming/contiguity/shared-header constraint; each file is read
     independently with per-file unit conversion. `PhaseTxtFolder` is the
     auto-discovered, same-shape special case of this.
@@ -183,7 +183,7 @@ class PhaseTxtList(_PhaseFileList):
         return load_phase_txt(path, return_header=True, on_nonfinite=on_nonfinite)
 
 
-class PhaseTxtFolder(_PhaseFileFolder, PhaseTxtList):
+class PhaseTxtFolder(PhaseFileFolder, PhaseTxtList):
     """An ordered sequence of Koala `Float/Txt` phase images in a folder.
 
     The text twin of `PhaseBinFolder`, and the auto-discovered, same-shape

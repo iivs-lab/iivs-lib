@@ -22,7 +22,7 @@ from iivs.dhm.data.common import (
     validate_float32_image,
     write_bin,
 )
-from iivs.dhm.data.phase.base import _PhaseFileFolder, _PhaseFileList
+from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
 from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit
 
 if TYPE_CHECKING:
@@ -324,10 +324,10 @@ def save_phase_bin(
 # ========================== #
 
 
-class PhaseBinList(_PhaseFileList):
+class PhaseBinList(PhaseFileList):
     """A phase sequence over an explicit, arbitrary list of `.bin` files.
 
-    The general case (the `.bin` codec over `_PhaseFileList`): no naming,
+    The general case (the `.bin` codec over `PhaseFileList`): no naming,
     contiguity, single-folder, or shared-header constraint -- each file is read
     independently with per-file unit conversion. `PhaseBinFolder` is the
     auto-discovered, same-shape special case of this.
@@ -356,7 +356,7 @@ class PhaseBinList(_PhaseFileList):
         return load_phase_bin(path, return_header=True, on_nonfinite=on_nonfinite)
 
 
-class PhaseBinFolder(_PhaseFileFolder, PhaseBinList):
+class PhaseBinFolder(PhaseFileFolder, PhaseBinList):
     """An ordered sequence of Lyncée Tec Koala `.bin` phase images in a folder.
 
     The auto-discovered, same-shape special case of `PhaseBinList`: lists the

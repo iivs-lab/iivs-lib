@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, ClassVar, overload, override
 from kaparoo.filesystem import ensure_file_exists
 
 from iivs.dhm.data.common import parse_txt_grid, validate_float32_image
-from iivs.dhm.data.intensity.base import _IntensityFileFolder, _IntensityFileList
+from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
 
 if TYPE_CHECKING:
@@ -124,11 +124,11 @@ def load_intensity_txt(
 # ========================== #
 
 
-class IntensityTxtList(_IntensityFileList):
+class IntensityTxtList(IntensityFileList):
     """An intensity sequence over an explicit, arbitrary list of `Float/Txt` files.
 
     The text twin of `IntensityBinList` (the `.txt` codec over
-    `_IntensityFileList`): no naming/contiguity/shared-header constraint; each
+    `IntensityFileList`): no naming/contiguity/shared-header constraint; each
     file is read independently. `IntensityTxtFolder` is the auto-discovered,
     same-shape special case of this.
 
@@ -152,7 +152,7 @@ class IntensityTxtList(_IntensityFileList):
         return load_intensity_txt(path, on_nonfinite=on_nonfinite)
 
 
-class IntensityTxtFolder(_IntensityFileFolder, IntensityTxtList):
+class IntensityTxtFolder(IntensityFileFolder, IntensityTxtList):
     """An ordered sequence of Koala `Float/Txt` intensity images in a folder.
 
     The text twin of `IntensityBinFolder`, and the auto-discovered, same-shape

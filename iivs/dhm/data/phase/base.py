@@ -36,13 +36,13 @@ class PhaseSequence[M](DataSequence[NDArray[np.float32], M]):
     """
 
 
-class _PhaseFileList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]):
+class PhaseFileList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]):
     """Format-agnostic phase file list over a ``(read_header, decode)`` codec.
 
     Holds the list machinery -- per-file unit conversion, `target_unit`,
     `get_meta` -- once; a concrete subclass (`PhaseBinList`, `PhaseTxtList`)
     supplies only `_read_header` / `_decode` for its on-disk format.
-    `_PhaseFileFolder` is the auto-discovered, same-shape specialization.
+    `PhaseFileFolder` is the auto-discovered, same-shape specialization.
 
     Args:
         files: The files to expose, in the given order.
@@ -90,10 +90,10 @@ class _PhaseFileList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[
         raise NotImplementedError
 
 
-class _PhaseFileFolder(SequentialFileFolder[NDArray[np.float32]], _PhaseFileList):
+class PhaseFileFolder(SequentialFileFolder[NDArray[np.float32]], PhaseFileList):
     """Format-agnostic phase folder: numbered discovery + one shared header.
 
-    The auto-discovered, same-shape specialization of `_PhaseFileList`; it
+    The auto-discovered, same-shape specialization of `PhaseFileList`; it
     reuses that list's `load_file` codec. Concrete folders (`PhaseBinFolder`,
     `PhaseTxtFolder`) set only `FILE_EXT` -- the `(read_header, decode)` codec
     comes from the matching `*List` they also inherit.
@@ -116,7 +116,7 @@ class _PhaseFileFolder(SequentialFileFolder[NDArray[np.float32]], _PhaseFileList
         validate: Literal["names", "headers", "data"] | None = "headers",
     ) -> None:
         # super().__init__(root) discovers the files and, via the cooperative
-        # MRO, runs _PhaseFileList.__init__ (target_unit defaults to None here);
+        # MRO, runs PhaseFileList.__init__ (target_unit defaults to None here);
         # the resolved unit is set below once the shared header is known.
         super().__init__(root)
 

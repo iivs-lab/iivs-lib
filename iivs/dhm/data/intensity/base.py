@@ -33,7 +33,7 @@ class IntensitySequence[M](DataSequence[NDArray[np.float32], M]):
     """
 
 
-class _IntensityFileList(
+class IntensityFileList(
     FileListSequence[NDArray[np.float32], Path], IntensitySequence[Path]
 ):
     """Format-agnostic intensity file list over a ``(read_header, decode)`` codec.
@@ -41,7 +41,7 @@ class _IntensityFileList(
     Holds the list machinery once; a concrete subclass (`IntensityBinList`,
     `IntensityTxtList`) supplies only `_read_header` / `_decode` for its on-disk
     format. Intensity carries no unit, so `load_file` is the bare decode.
-    `_IntensityFileFolder` is the auto-discovered, same-shape specialization.
+    `IntensityFileFolder` is the auto-discovered, same-shape specialization.
 
     Args:
         files: The files to expose, in the given order.
@@ -71,12 +71,12 @@ class _IntensityFileList(
         raise NotImplementedError
 
 
-class _IntensityFileFolder(
-    SequentialFileFolder[NDArray[np.float32]], _IntensityFileList
+class IntensityFileFolder(
+    SequentialFileFolder[NDArray[np.float32]], IntensityFileList
 ):
     """Format-agnostic intensity folder: numbered discovery + one shared header.
 
-    The auto-discovered, same-shape specialization of `_IntensityFileList`; it
+    The auto-discovered, same-shape specialization of `IntensityFileList`; it
     reuses that list's `load_file` codec. Concrete folders set only `FILE_EXT`.
 
     Args:

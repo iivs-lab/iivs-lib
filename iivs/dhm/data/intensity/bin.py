@@ -20,7 +20,7 @@ from iivs.dhm.data.common import (
     validate_float32_image,
     write_bin,
 )
-from iivs.dhm.data.intensity.base import _IntensityFileFolder, _IntensityFileList
+from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
 
 if TYPE_CHECKING:
     from typing import Literal, Self
@@ -215,10 +215,10 @@ def save_intensity_bin(
 # ========================== #
 
 
-class IntensityBinList(_IntensityFileList):
+class IntensityBinList(IntensityFileList):
     """An intensity sequence over an explicit, arbitrary list of `.bin` files.
 
-    The general case (the `.bin` codec over `_IntensityFileList`): no naming,
+    The general case (the `.bin` codec over `IntensityFileList`): no naming,
     contiguity, single-folder, or shared-header constraint; each file is read
     independently. `IntensityBinFolder` is the auto-discovered, same-shape
     special case of this.
@@ -243,7 +243,7 @@ class IntensityBinList(_IntensityFileList):
         return load_intensity_bin(path, on_nonfinite=on_nonfinite)
 
 
-class IntensityBinFolder(_IntensityFileFolder, IntensityBinList):
+class IntensityBinFolder(IntensityFileFolder, IntensityBinList):
     """An ordered sequence of Koala `.bin` intensity images in a folder.
 
     The auto-discovered, same-shape special case of `IntensityBinList`: lists
