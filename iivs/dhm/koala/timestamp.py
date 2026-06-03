@@ -157,14 +157,16 @@ class TimestampTxtSequence(SingleFileSequence[Timestamp, int], TimestampSequence
         """Read, validate, and parse a ``timestamps.txt`` into `Timestamp`s.
 
         Every non-blank line must match ``<5-digit index> <HH:MM:SS.fff>
-        <YYYY.MM.DD> <elapsed_ms>``, and the frame indices must run
-        contiguously from 0. Blank lines are ignored.
+        <YYYY.MM.DD> <elapsed_ms>``, the frame indices must run contiguously
+        from 0, and the elapsed times must be non-decreasing. Blank lines are
+        ignored.
 
         Raises:
             FileNotFoundError: If `path` does not exist.
             NotAFileError: If `path` exists but is not a regular file.
-            ValueError: If a line does not match the expected format, or the
-                frame indices are not contiguous from 0.
+            ValueError: If a line does not match the expected format, the
+                frame indices are not contiguous from 0, or an elapsed time
+                decreases.
         """
         path = ensure_file_exists(path)
 
@@ -186,7 +188,12 @@ class TimestampTxtSequence(SingleFileSequence[Timestamp, int], TimestampSequence
                 msg = f"frame index at line {lineno} must be {expected_index} (got {index}): {path}"
                 raise ValueError(msg)
 
-            elapsed_times_ms.append(float(matched["elapsed"]))
+            elapsed = float(matched["elapsed"])
+            if elapsed_times_ms and elapsed < elapsed_times_ms[-1]:
+                msg = f"elapsed time at line {lineno} must be >= {elapsed_times_ms[-1]} (got {elapsed}): {path}"
+                raise ValueError(msg)
+
+            elapsed_times_ms.append(elapsed)
 
         return Timestamp.series_from_elapsed_times(elapsed_times_ms)
 

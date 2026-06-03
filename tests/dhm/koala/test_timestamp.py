@@ -81,6 +81,12 @@ def test_txt_rejects_noncontiguous_index(tmp_path):
         TimestampTxtSequence(_write(tmp_path, text))
 
 
+def test_txt_rejects_decreasing_elapsed(tmp_path):
+    text = "00000 15:21:47.674 2026.01.15 100\n00001 15:21:47.675 2026.01.15 50\n"
+    with pytest.raises(ValueError, match="elapsed time at line"):
+        TimestampTxtSequence(_write(tmp_path, text))
+
+
 def test_txt_missing_file_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         TimestampTxtSequence(tmp_path / "nope.txt")
