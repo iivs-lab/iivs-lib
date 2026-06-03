@@ -113,9 +113,8 @@ data_file = ".cache/coverage/.coverage"
 precision = 2
 show_missing = true
 skip_covered = false
-# 0 = measure only, no gate. Raise after establishing a baseline; keep
-# it a few points below the measured coverage to absorb variation.
-fail_under = 0
+# Measured coverage is 100%; kept a few points below to absorb variation.
+fail_under = 95
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",
