@@ -25,7 +25,24 @@ pip install iivs-lib
 
 ## 🧩 Modules
 
-_Document your modules here._
+### `iivs.dhm.data`
+
+Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
+
+- **`phase`** — float32 `.bin` phase images: `load_phase_bin` /
+  `save_phase_bin` / `read_phase_bin_header`, the typed `PhaseBinHeader` and
+  `PhaseUnit`, `validate_phase`, and `convert_phase_unit`; folder/list
+  sequences `PhaseBinFolder` / `PhaseBinList`.
+- **`hologram`** — uint8 holograms: `.tif` via `load_hologram_tif` /
+  `save_hologram_tif` with `HologramTifFolder` / `HologramTifList`; a single
+  multi-frame `.raw` via `HologramRawFile` (a lazy `np.memmap`) and
+  `read_hologram_raw_header`; plus `validate_hologram`.
+- **`timestamp`** — per-frame acquisition timing: the `Timestamp` record,
+  `TimestampsTxtFile` (Koala `timestamps.txt`), and `TimestampsFixedFPS`
+  (synthesized from a frame rate).
+
+Every sequence is a `kaparoo.data.sequences.DataSequence`, so it indexes,
+slices, and iterates lazily; same-shape sources also expose `frame_shape`.
 
 ## 📋 TODO
 
