@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from iivs.dhm.koala.phase.base import PhaseSequence, UniformPhaseSequence
-from iivs.dhm.koala.phase.bin import PhaseBinFolder, PhaseBinList
+from iivs.dhm.data.phase.base import PhaseSequence, UniformPhaseSequence
+from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList
 
 
 def test_phase_sequence_hierarchy():

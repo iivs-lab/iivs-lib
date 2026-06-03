@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import tifffile
 
-from iivs.dhm.koala.hologram.tif import (
+from iivs.dhm.data.hologram.tif import (
     HologramTifFolder,
     HologramTifList,
     load_hologram_tif,

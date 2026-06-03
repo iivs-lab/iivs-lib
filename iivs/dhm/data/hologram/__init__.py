@@ -13,14 +13,14 @@ __all__ = (
     "validate_hologram",
 )
 
-from iivs.dhm.koala.hologram.base import HologramSequence, UniformHologramSequence
-from iivs.dhm.koala.hologram.core import validate_hologram
-from iivs.dhm.koala.hologram.raw import (
+from iivs.dhm.data.hologram.base import HologramSequence, UniformHologramSequence
+from iivs.dhm.data.hologram.core import validate_hologram
+from iivs.dhm.data.hologram.raw import (
     HologramRawFile,
     HologramRawHeader,
     read_hologram_raw_header,
 )
-from iivs.dhm.koala.hologram.tif import (
+from iivs.dhm.data.hologram.tif import (
     HologramTifFolder,
     HologramTifList,
     load_hologram_tif,

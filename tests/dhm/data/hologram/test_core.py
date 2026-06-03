@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.koala.hologram.core import validate_hologram
+from iivs.dhm.data.hologram.core import validate_hologram
 
 
 def test_validate_hologram_rejects_non_2d():

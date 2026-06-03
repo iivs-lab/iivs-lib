@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from iivs.dhm.koala.hologram.base import HologramSequence, UniformHologramSequence
-from iivs.dhm.koala.hologram.raw import HologramRawFile
-from iivs.dhm.koala.hologram.tif import HologramTifFolder, HologramTifList
+from iivs.dhm.data.hologram.base import HologramSequence, UniformHologramSequence
+from iivs.dhm.data.hologram.raw import HologramRawFile
+from iivs.dhm.data.hologram.tif import HologramTifFolder, HologramTifList
 
 
 def test_hologram_sequence_hierarchy():

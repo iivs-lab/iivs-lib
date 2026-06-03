@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pytest
 
-from iivs.dhm.koala.phase.bin import (
+from iivs.dhm.data.phase.bin import (
     PhaseBinFolder,
     PhaseBinHeader,
     PhaseBinList,
@@ -14,7 +14,7 @@ from iivs.dhm.koala.phase.bin import (
     read_phase_bin_header,
     save_phase_bin,
 )
-from iivs.dhm.koala.phase.core import PhaseUnit
+from iivs.dhm.data.phase.core import PhaseUnit
 
 
 def _valid_header_bytes() -> bytearray:

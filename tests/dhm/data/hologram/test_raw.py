@@ -5,7 +5,7 @@ import pickle
 import numpy as np
 import pytest
 
-from iivs.dhm.koala.hologram.raw import (
+from iivs.dhm.data.hologram.raw import (
     HologramRawFile,
     HologramRawHeader,
     read_hologram_raw_header,

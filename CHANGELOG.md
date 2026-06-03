@@ -10,7 +10,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- `iivs.dhm.koala.phase`: read and write Koala (Lyncée Tec) float32 `.bin`
+- `iivs.dhm.data.phase`: read and write Koala (Lyncée Tec) float32 `.bin`
   phase images.
   - `PhaseBinHeader` — a typed, validated header (with
     `PhaseBinHeader.DTYPE`, `from_dtype` / `from_stream` / `from_file` /
@@ -36,14 +36,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     explicit, arbitrary list of `.bin` files (any location, no naming or
     shared-header constraint); each file is read independently with per-file
     unit conversion.
-- `iivs.dhm.koala.timestamp`: per-frame acquisition timing.
+- `iivs.dhm.data.timestamp`: per-frame acquisition timing.
   - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
     `Timestamp.series_from_elapsed_times`.
   - `TimestampSequence` — read-only interface exposing `mean_interval_ms` and
     `mean_frame_rate`; implemented by `TimestampsTxtFile` (Koala
     `timestamps.txt`) and `TimestampsFixedFPS` (synthesized from a frame
     rate).
-- `iivs.dhm.koala.hologram`: read Koala (Lyncée Tec) uint8 holograms from a
+- `iivs.dhm.data.hologram`: read Koala (Lyncée Tec) uint8 holograms from a
   `.tif` folder or a single multi-frame `.raw` file.
   - `load_hologram_tif(path)` / `save_hologram_tif(path, data, *, overwrite=False)`
     and `validate_hologram(data)`.

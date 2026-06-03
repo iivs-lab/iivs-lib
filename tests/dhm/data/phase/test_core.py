@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.koala.phase.core import PhaseUnit, convert_phase_unit, validate_phase
+from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit, validate_phase
 
 
 def test_validate_phase_rejects_below_2d():

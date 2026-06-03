@@ -23,8 +23,8 @@ from kaparoo.utils import replace_if_none
 from natsort import natsorted
 from numpy.typing import NDArray
 
-from iivs.dhm.koala.phase.base import PhaseSequence, UniformPhaseSequence
-from iivs.dhm.koala.phase.core import PhaseUnit, convert_phase_unit, validate_phase
+from iivs.dhm.data.phase.base import PhaseSequence, UniformPhaseSequence
+from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit, validate_phase
 
 if TYPE_CHECKING:
     from typing import IO, Literal, Self

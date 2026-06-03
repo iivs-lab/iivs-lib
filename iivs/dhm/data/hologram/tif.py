@@ -21,8 +21,8 @@ from kaparoo.filesystem.search.filters import Regex
 from natsort import natsorted
 from numpy.typing import NDArray
 
-from iivs.dhm.koala.hologram.base import HologramSequence, UniformHologramSequence
-from iivs.dhm.koala.hologram.core import validate_hologram
+from iivs.dhm.data.hologram.base import HologramSequence, UniformHologramSequence
+from iivs.dhm.data.hologram.core import validate_hologram
 
 if TYPE_CHECKING:
     from typing import Literal

@@ -14,7 +14,7 @@ from kaparoo.data.sequences.templates import SingleFileSequence
 from kaparoo.filesystem import ensure_file_exists
 from numpy.typing import NDArray
 
-from iivs.dhm.koala.hologram.base import UniformHologramSequence
+from iivs.dhm.data.hologram.base import UniformHologramSequence
 
 if TYPE_CHECKING:
     from typing import IO, Self
