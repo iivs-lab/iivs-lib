@@ -272,20 +272,45 @@ def write_bin(
 
 
 # ========================== #
+#       Frame-shape mixin    #
+# ========================== #
+
+
+class FrameShapedMixin(ABC):
+    """Mixin marking a sequence whose items all share one `frame_shape`.
+
+    Mix into a modality sequence on a same-shape source (e.g. a single
+    acquisition) to force `frame_shape` to be implemented. There is no
+    per-modality `Uniform*Sequence`: "a uniform phase sequence" is just
+    ``isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)``
+    (and likewise for the other modalities). `SequentialFileFolder` mixes this
+    in for every numbered folder; a single-file source like `HologramRawFile`
+    mixes it in directly.
+    """
+
+    @property
+    @abstractmethod
+    def frame_shape(self) -> tuple[int, int]:
+        """The pixel dimensions (height, width) shared by every item."""
+        raise NotImplementedError
+
+
+# ========================== #
 #       Folder sequence      #
 # ========================== #
 
 
-class SequentialFileFolder[T](FileFolderSequence[T, Path]):
+class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     """A folder of contiguously numbered `{index:05d}_<stem>.<ext>` files.
 
-    Factors the discovery and validation shared by every modality folder
-    (phase, intensity, hologram, ...): `list_files` (numbered discovery),
-    `get_meta` (= source path), the `validate` loop, and the name-contiguity
-    check. A subclass declares the filename parts and validation depth as class
-    attributes, implements `load_file` and (for same-shape sources)
-    `frame_shape`, and supplies its per-format consistency check by overriding
-    `_validate_content`.
+    Each such folder is one acquisition's frames, hence same-shape: it mixes in
+    `FrameShapedMixin`, and subclasses implement `frame_shape` from their header
+    or first file. Factors the discovery and validation shared by every
+    modality folder (phase, intensity, hologram, ...): `list_files` (numbered
+    discovery), `get_meta` (= source path), the `validate` loop, and the
+    name-contiguity check. A subclass declares the filename parts and validation
+    depth as class attributes, implements `load_file`, and supplies its
+    per-format consistency check by overriding `_validate_content`.
 
     Class attributes:
         FILE_STEM: The ``<stem>`` in ``{index:05d}_<stem>.<ext>`` (e.g. "phase").
@@ -357,28 +382,6 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path]):
 
     def _validate_content(self, path: Path, *, level: str) -> None:
         """Per-format consistency check for levels beyond "names" (subclass hook)."""
-        raise NotImplementedError
-
-
-# ========================== #
-#       Frame-shape mixin    #
-# ========================== #
-
-
-class FrameShapedMixin(ABC):
-    """Mixin marking a sequence whose items all share one `frame_shape`.
-
-    Mix into a modality sequence on a same-shape source (e.g. a single
-    acquisition) to force `frame_shape` to be implemented. There is no
-    per-modality `Uniform*Sequence`: "a uniform phase sequence" is just
-    ``isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)``
-    (and likewise for the other modalities).
-    """
-
-    @property
-    @abstractmethod
-    def frame_shape(self) -> tuple[int, int]:
-        """The pixel dimensions (height, width) shared by every item."""
         raise NotImplementedError
 
 

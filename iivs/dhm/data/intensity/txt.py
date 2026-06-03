@@ -8,27 +8,20 @@ __all__ = (
 )
 
 import re
-from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-import numpy as np
-from kaparoo.data.sequences import FileListSequence
 from kaparoo.filesystem import ensure_file_exists
-from numpy.typing import NDArray
 
-from iivs.dhm.data.common import (
-    FrameShapedMixin,
-    SequentialFileFolder,
-    parse_txt_grid,
-    validate_float32_image,
-)
-from iivs.dhm.data.intensity.base import IntensitySequence
+from iivs.dhm.data.common import parse_txt_grid, validate_float32_image
+from iivs.dhm.data.intensity.base import _IntensityFileFolder, _IntensityFileList
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
 
 if TYPE_CHECKING:
     from typing import Literal
 
+    import numpy as np
     from kaparoo.filesystem.types import StrPath
+    from numpy.typing import NDArray
 
 
 # A Koala `Float/Txt` intensity export is a 2-line key=value header (no unit or
@@ -131,81 +124,45 @@ def load_intensity_txt(
 # ========================== #
 
 
-class IntensityTxtList(
-    FileListSequence[NDArray[np.float32], Path], IntensitySequence[Path]
-):
+class IntensityTxtList(_IntensityFileList):
     """An intensity sequence over an explicit, arbitrary list of `Float/Txt` files.
 
-    The text twin of `IntensityBinList`: no naming/contiguity/shared-header
-    constraint; each file is read independently. `IntensityTxtFolder` is the
-    auto-discovered, same-shape special case of this.
+    The text twin of `IntensityBinList` (the `.txt` codec over
+    `_IntensityFileList`): no naming/contiguity/shared-header constraint; each
+    file is read independently. `IntensityTxtFolder` is the auto-discovered,
+    same-shape special case of this.
 
     Args:
         files: The `.txt` files to expose, in the given order.
     """
 
     @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
+    def _read_header(self, path: StrPath) -> IntensityBinHeader:
+        """Read the `Float/Txt` header."""
+        return read_intensity_txt_header(path)
 
     @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`."""
-        return load_intensity_txt(path)
+    def _decode(
+        self,
+        path: StrPath,
+        *,
+        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+    ) -> NDArray[np.float32]:
+        """Decode the `Float/Txt` image."""
+        return load_intensity_txt(path, on_nonfinite=on_nonfinite)
 
 
-class IntensityTxtFolder(
-    SequentialFileFolder[NDArray[np.float32]],
-    IntensityTxtList,
-    FrameShapedMixin,
-):
+class IntensityTxtFolder(_IntensityFileFolder, IntensityTxtList):
     """An ordered sequence of Koala `Float/Txt` intensity images in a folder.
 
-    The text twin of `IntensityBinFolder`, and the auto-discovered special case
-    of `IntensityTxtList` (it inherits the `load_file`): lists
-    `{index:05d}_intensity.txt` and shares one acquisition `header`.
+    The text twin of `IntensityBinFolder`, and the auto-discovered, same-shape
+    special case of `IntensityTxtList`: lists `{index:05d}_intensity.txt`,
+    sharing one acquisition `header`. Construction and validation are inherited;
+    this supplies only the `.txt` extension.
 
     Args:
         root: The folder to scan.
         validate: Validation level at construction, or None to skip.
     """
 
-    FILE_STEM: ClassVar[str] = "intensity"
     FILE_EXT: ClassVar[str] = "txt"
-    LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")
-    DEFAULT_LEVEL: ClassVar[str] = "headers"
-
-    def __init__(
-        self,
-        root: StrPath,
-        *,
-        validate: Literal["names", "headers", "data"] | None = "headers",
-    ) -> None:
-        super().__init__(root)
-
-        self._header = read_intensity_txt_header(self.get_file(0))
-
-        if validate is not None:
-            self.validate(level=validate)
-
-    @property
-    def header(self) -> IntensityBinHeader:
-        """The shared acquisition header, read from the first file."""
-        return self._header
-
-    @property
-    @override
-    def frame_shape(self) -> tuple[int, int]:
-        """The (height, width) of each image, from the shared header."""
-        return self._header.shape
-
-    @override
-    def _validate_content(self, path: Path, *, level: str) -> None:
-        """Check `path`'s header matches the reference; at "data", decode too."""
-        if read_intensity_txt_header(path) != self.header:
-            msg = f"header of {path.name} differs from the first file"
-            raise ValueError(msg)
-
-        if level == "data":
-            load_intensity_txt(path, on_nonfinite="raise")

@@ -67,15 +67,22 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   modalities.
 - A `*Folder` is the auto-discovered special case of its `*List`, so it
   *subclasses the list* (mirroring kaparoo's `FileFolderSequence` ⊂
-  `FileListSequence`) and reuses its `load_file` codec: e.g.
-  `PhaseBinFolder(SequentialFileFolder[...], PhaseBinList, FrameShapedMixin)`.
-  `FileFolderSequence.__init__(root)` discovers the files and cooperatively
-  calls the list's `__init__` down the MRO. Define the list *before* the folder
-  in the module.
-- Mark cross-cutting capabilities with a mixin, not a class per modality. A
-  same-shape source mixes `data.common.FrameShapedMixin` (forces
-  `frame_shape`) into its `<Modality>Sequence` rather than having a
-  `Uniform<Modality>Sequence` each; "a uniform phase sequence" is then
+  `FileListSequence`) and reuses its `load_file`. `FileFolderSequence.__init__
+  (root)` discovers the files and cooperatively calls the list's `__init__`
+  down the MRO, so define the list *before* the folder in the module.
+- Hoist each modality's format-agnostic list/folder bodies into a private
+  `_<Modality>FileList` / `_<Modality>FileFolder` base (in the modality's
+  `base.py`) over an abstract ``(read_header, decode)`` codec. The concrete
+  `*BinList` / `*TxtList` supply only that codec; the `*BinFolder` /
+  `*TxtFolder` inherit `_<Modality>FileFolder` *and* their `*List`, supplying
+  only `FILE_EXT`. So a new format is a couple of codec methods, not a copied
+  list+folder. (The folder's header type annotation references the format
+  modules, so import it under `TYPE_CHECKING` to avoid a cycle.)
+- Mark cross-cutting capabilities with a mixin, not a class per modality.
+  `data.common.SequentialFileFolder` mixes in `data.common.FrameShapedMixin`
+  (forces `frame_shape`) for every numbered folder; a single-file source like
+  `HologramRawFile` mixes it in directly. There is no `Uniform<Modality>
+  Sequence`: "a uniform phase sequence" is just
   `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`.
 - Name sequence classes by role vs backing. Abstract role types keep the
   `Sequence` suffix (`PhaseSequence`, `HologramSequence`,

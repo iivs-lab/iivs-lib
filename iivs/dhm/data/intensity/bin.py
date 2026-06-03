@@ -10,28 +10,24 @@ __all__ = (
 )
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-import numpy as np
-from kaparoo.data.sequences import FileListSequence
 from kaparoo.filesystem import ensure_file_exists
-from numpy.typing import NDArray
 
 from iivs.dhm.data.common import (
-    FrameShapedMixin,
     KoalaBinHeader,
-    SequentialFileFolder,
     read_bin_pixels,
     validate_float32_image,
     write_bin,
 )
-from iivs.dhm.data.intensity.base import IntensitySequence
+from iivs.dhm.data.intensity.base import _IntensityFileFolder, _IntensityFileList
 
 if TYPE_CHECKING:
     from typing import Literal, Self
 
+    import numpy as np
     from kaparoo.filesystem.types import StrPath
+    from numpy.typing import NDArray
 
 
 # ========================== #
@@ -219,51 +215,47 @@ def save_intensity_bin(
 # ========================== #
 
 
-class IntensityBinList(
-    FileListSequence[NDArray[np.float32], Path], IntensitySequence[Path]
-):
+class IntensityBinList(_IntensityFileList):
     """An intensity sequence over an explicit, arbitrary list of `.bin` files.
 
-    The general case: imposes no naming, contiguity, single-folder, or
-    shared-header constraint -- the files may live anywhere and each is read
-    independently. The images may therefore differ in shape, so this is a
-    plain `IntensitySequence` (no `frame_shape`). Each item is the decoded
-    float32 image and its metadata is the source path. `IntensityBinFolder` is
-    the auto-discovered, same-shape special case of this.
+    The general case (the `.bin` codec over `_IntensityFileList`): no naming,
+    contiguity, single-folder, or shared-header constraint; each file is read
+    independently. `IntensityBinFolder` is the auto-discovered, same-shape
+    special case of this.
 
     Args:
         files: The `.bin` files to expose, in the given order.
     """
 
     @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
+    def _read_header(self, path: StrPath) -> IntensityBinHeader:
+        """Read the `.bin` header."""
+        return read_intensity_bin_header(path)
 
     @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`."""
-        return load_intensity_bin(path)
+    def _decode(
+        self,
+        path: StrPath,
+        *,
+        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+    ) -> NDArray[np.float32]:
+        """Decode the `.bin` image."""
+        return load_intensity_bin(path, on_nonfinite=on_nonfinite)
 
 
-class IntensityBinFolder(
-    SequentialFileFolder[NDArray[np.float32]],
-    IntensityBinList,
-    FrameShapedMixin,
-):
+class IntensityBinFolder(_IntensityFileFolder, IntensityBinList):
     """An ordered sequence of Koala `.bin` intensity images in a folder.
 
-    The auto-discovered special case of `IntensityBinList` (it inherits the
-    `load_file`): lists the direct children matching `{index:05d}_intensity.bin`
-    (exactly five digits, case-sensitive), in index order. All images are
-    assumed to share one acquisition `header`, read once from the first file.
-    Each item is the decoded float32 image and its metadata is the source path.
+    The auto-discovered, same-shape special case of `IntensityBinList`: lists
+    the direct children matching `{index:05d}_intensity.bin` (exactly five
+    digits, case-sensitive), sharing one acquisition `header`. Construction and
+    validation are inherited; this supplies only the `.bin` extension.
 
     Args:
         root: The folder to scan. Must exist, be a directory, and contain at
             least one matching file.
-        validate: Run `validate` to this level ("names", "headers", or
-            "data") at construction, or None to skip. Defaults to "headers".
+        validate: Run `validate` to this level at construction, or None to
+            skip. Defaults to "headers".
 
     Raises:
         DirectoryNotFoundError: If `root` does not exist.
@@ -273,45 +265,4 @@ class IntensityBinFolder(
         ValueError: If `validate` is set and the sequence fails validation.
     """
 
-    FILE_STEM: ClassVar[str] = "intensity"
     FILE_EXT: ClassVar[str] = "bin"
-    LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")
-    DEFAULT_LEVEL: ClassVar[str] = "headers"
-
-    def __init__(
-        self,
-        root: StrPath,
-        *,
-        validate: Literal["names", "headers", "data"] | None = "headers",
-    ) -> None:
-        super().__init__(root)  # discovers files; list_files rejects an empty folder
-
-        self._header = read_intensity_bin_header(self.get_file(0))
-
-        if validate is not None:
-            self.validate(level=validate)
-
-    @property
-    def header(self) -> IntensityBinHeader:
-        """The shared acquisition header, read from the first file."""
-        return self._header
-
-    @property
-    @override
-    def frame_shape(self) -> tuple[int, int]:
-        """The (height, width) of each image, from the shared header."""
-        return self._header.shape
-
-    @override
-    def _validate_content(self, path: Path, *, level: str) -> None:
-        """Check `path`'s header matches the reference; at "data", decode too.
-
-        The "headers" and "data" levels both require every file to share the
-        first file's `header`; "data" additionally decodes the pixels.
-        """
-        if read_intensity_bin_header(path) != self.header:
-            msg = f"header of {path.name} differs from the first file"
-            raise ValueError(msg)
-
-        if level == "data":
-            load_intensity_bin(path, on_nonfinite="raise")

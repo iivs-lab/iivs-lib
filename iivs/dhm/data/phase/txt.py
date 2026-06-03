@@ -8,29 +8,24 @@ __all__ = (
 )
 
 import re
-from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-import numpy as np
-from kaparoo.data.sequences import FileListSequence
 from kaparoo.filesystem import ensure_file_exists
-from kaparoo.utils import replace_if_none
-from numpy.typing import NDArray
 
 from iivs.dhm.data.common import (
-    FrameShapedMixin,
-    SequentialFileFolder,
     parse_txt_grid,
     validate_float32_image,
 )
-from iivs.dhm.data.phase.base import PhaseSequence
+from iivs.dhm.data.phase.base import _PhaseFileFolder, _PhaseFileList
 from iivs.dhm.data.phase.bin import PhaseBinHeader
-from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit
+from iivs.dhm.data.phase.core import PhaseUnit
 
 if TYPE_CHECKING:
     from typing import Literal
 
-    from kaparoo.filesystem.types import StrPath, StrPaths
+    import numpy as np
+    from kaparoo.filesystem.types import StrPath
+    from numpy.typing import NDArray
 
 
 # A Koala `Float/Txt` phase export is a 4-line key=value header followed by
@@ -159,55 +154,42 @@ def load_phase_txt(
 # ========================== #
 
 
-class PhaseTxtList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]):
+class PhaseTxtList(_PhaseFileList):
     """A phase sequence over an explicit, arbitrary list of `Float/Txt` files.
 
-    The text twin of `PhaseBinList`: no naming/contiguity/shared-header
-    constraint; each file is read independently with per-file unit conversion.
-    `PhaseTxtFolder` is the auto-discovered, same-shape special case of this.
+    The text twin of `PhaseBinList` (the `.txt` codec over `_PhaseFileList`):
+    no naming/contiguity/shared-header constraint; each file is read
+    independently with per-file unit conversion. `PhaseTxtFolder` is the
+    auto-discovered, same-shape special case of this.
 
     Args:
         files: The `.txt` files to expose, in the given order.
         target_unit: Unit to return images in (None keeps each file's stored).
     """
 
-    def __init__(
-        self, files: StrPaths, *, target_unit: PhaseUnit | None = None
-    ) -> None:
-        super().__init__(files)
-        self._target_unit = target_unit
-
-    @property
-    def target_unit(self) -> PhaseUnit | None:
-        """The unit images are converted to on load, or None to keep each file's."""
-        return self._target_unit
+    @override
+    def _read_header(self, path: StrPath) -> PhaseBinHeader:
+        """Read the `Float/Txt` header."""
+        return read_phase_txt_header(path)
 
     @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
-
-    @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`, converted to `target_unit` if one is set."""
-        image, header = load_phase_txt(path, return_header=True)
-        target = self._target_unit if self._target_unit is not None else header.unit
-        return convert_phase_unit(
-            image, source=header.unit, target=target, height_scale=header.height_scale
-        )
+    def _decode(
+        self,
+        path: StrPath,
+        *,
+        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+    ) -> tuple[NDArray[np.float32], PhaseBinHeader]:
+        """Decode the `Float/Txt` image and its header."""
+        return load_phase_txt(path, return_header=True, on_nonfinite=on_nonfinite)
 
 
-class PhaseTxtFolder(
-    SequentialFileFolder[NDArray[np.float32]],
-    PhaseTxtList,
-    FrameShapedMixin,
-):
+class PhaseTxtFolder(_PhaseFileFolder, PhaseTxtList):
     """An ordered sequence of Koala `Float/Txt` phase images in a folder.
 
-    The text twin of `PhaseBinFolder`, and the auto-discovered special case of
-    `PhaseTxtList` (it inherits the `load_file`): lists `{index:05d}_phase.txt`,
-    shares one acquisition `header` (read from the first file), and converts to
-    `target_unit` on load.
+    The text twin of `PhaseBinFolder`, and the auto-discovered, same-shape
+    special case of `PhaseTxtList`: lists `{index:05d}_phase.txt`, sharing one
+    acquisition `header`. Construction and validation are inherited; this
+    supplies only the `.txt` extension.
 
     Args:
         root: The folder to scan.
@@ -215,50 +197,4 @@ class PhaseTxtFolder(
         validate: Validation level at construction, or None to skip.
     """
 
-    FILE_STEM: ClassVar[str] = "phase"
     FILE_EXT: ClassVar[str] = "txt"
-    LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")
-    DEFAULT_LEVEL: ClassVar[str] = "headers"
-
-    def __init__(
-        self,
-        root: StrPath,
-        *,
-        target_unit: PhaseUnit | None = None,
-        validate: Literal["names", "headers", "data"] | None = "headers",
-    ) -> None:
-        super().__init__(root)
-
-        self._header = read_phase_txt_header(self.get_file(0))
-        self._target_unit = replace_if_none(target_unit, self._header.unit)
-
-        convert_phase_unit(
-            np.empty((0, 0), dtype=np.float32),
-            source=self._header.unit,
-            target=self._target_unit,
-            height_scale=self._header.height_scale,
-        )
-
-        if validate is not None:
-            self.validate(level=validate)
-
-    @property
-    def header(self) -> PhaseBinHeader:
-        """The shared acquisition header, read from the first file."""
-        return self._header
-
-    @property
-    @override
-    def frame_shape(self) -> tuple[int, int]:
-        """The (height, width) of each image, from the shared header."""
-        return self._header.shape
-
-    @override
-    def _validate_content(self, path: Path, *, level: str) -> None:
-        """Check `path`'s header matches the reference; at "data", decode too."""
-        if read_phase_txt_header(path) != self.header:
-            msg = f"header of {path.name} differs from the first file"
-            raise ValueError(msg)
-
-        if level == "data":
-            load_phase_txt(path, on_nonfinite="raise")
