@@ -35,6 +35,14 @@ See [TODO.md](./TODO.md) for tracked open items.
 
 See [CHANGELOG.md](./CHANGELOG.md) for the version history.
 
+## 🙏 Acknowledgements
+
+The Koala file formats read and written by `iivs.dhm.data` originate from
+[Lyncée Tec](https://www.lynceetec.com/)'s Koala software. The phase `.bin`
+format was cross-checked against their reference implementation,
+[`pyKoalaUtils`](https://github.com/lynceetec/pyKoalaUtils) (MIT). iivs-lib is
+an independent reimplementation and contains no code from it.
+
 ## ⚖️ License
 
 This project is distributed under the terms of the [MIT](./LICENSE) license.
