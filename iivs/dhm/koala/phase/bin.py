@@ -525,6 +525,24 @@ class PhaseBinSequence(
         """The unit that loaded images are returned in."""
         return self._target_unit
 
+    def get_meta(self, index: int) -> Path:
+        return self.get_file(index)
+
+    def list_files(self, root: Path) -> list[Path]:
+        files = search_files(root, name_filter=Regex(r"\d{5}_phase\.bin"), max_depth=1)
+        if not files:
+            msg = f"no NNNNN_phase.bin files found in {root}"
+            raise FileNotFoundError(msg)
+        return natsorted(files)
+
+    def load_file(self, path: Path) -> NDArray[np.float32]:
+        return convert_phase_unit(
+            load_phase_bin(path),
+            source=self._header.unit,
+            target=self._target_unit,
+            height_scale=self._header.height_scale,
+        )
+
     def validate(
         self, *, level: Literal["names", "headers", "data"] = "headers"
     ) -> None:
@@ -570,21 +588,3 @@ class PhaseBinSequence(
 
         if level == "data":
             load_phase_bin(path, on_nonfinite="raise")
-
-    def list_files(self, root: Path) -> list[Path]:
-        files = search_files(root, name_filter=Regex(r"\d{5}_phase\.bin"), max_depth=1)
-        if not files:
-            msg = f"no NNNNN_phase.bin files found in {root}"
-            raise FileNotFoundError(msg)
-        return natsorted(files)
-
-    def get_meta(self, index: int) -> Path:
-        return self.get_file(index)
-
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        return convert_phase_unit(
-            load_phase_bin(path),
-            source=self._header.unit,
-            target=self._target_unit,
-            height_scale=self._header.height_scale,
-        )

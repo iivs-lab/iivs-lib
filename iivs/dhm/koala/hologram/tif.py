@@ -99,6 +99,19 @@ class HologramTifSequence(
         if validate is not None:
             self.validate(level=validate)
 
+    def get_meta(self, index: int) -> Path:
+        return self.get_file(index)
+
+    def list_files(self, root: Path) -> list[Path]:
+        files = search_files(root, name_filter=Regex(r"\d{5}_holo\.tif"), max_depth=1)
+        if not files:
+            msg = f"no NNNNN_holo.tif files found in {root}"
+            raise FileNotFoundError(msg)
+        return natsorted(files)
+
+    def load_file(self, path: Path) -> NDArray[np.uint8]:
+        return load_hologram_tif(path)
+
     def validate(self, *, level: Literal["names", "data"] = "names") -> None:
         """Validate the sequence to the given `level`.
 
@@ -131,16 +144,3 @@ class HologramTifSequence(
 
         if level == "data":
             load_hologram_tif(path)
-
-    def list_files(self, root: Path) -> list[Path]:
-        files = search_files(root, name_filter=Regex(r"\d{5}_holo\.tif"), max_depth=1)
-        if not files:
-            msg = f"no NNNNN_holo.tif files found in {root}"
-            raise FileNotFoundError(msg)
-        return natsorted(files)
-
-    def get_meta(self, index: int) -> Path:
-        return self.get_file(index)
-
-    def load_file(self, path: Path) -> NDArray[np.uint8]:
-        return load_hologram_tif(path)
