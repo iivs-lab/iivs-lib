@@ -62,3 +62,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `HologramRawFile` — a `SingleFileSequence` over a `.raw` file's frames
     (held internally as a lazy, read-only `np.memmap`; each item is a writable
     frame copy, metadata is the frame index).
+- `iivs.dhm.data.constants`: typical optical and biophysical parameters for
+  the lab's transmission setup — `DEFAULT_WAVELENGTH` (666 nm, in meters) /
+  `DEFAULT_WAVELENGTH_NM`, `DEFAULT_REFRACTIVE_DELTA` (0.5), and
+  `DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT` (0.2 mL/g, for dry mass).
