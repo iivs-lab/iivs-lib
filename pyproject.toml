@@ -42,6 +42,13 @@ dependencies = [
 [project.urls]
 GitHub = "https://www.github.com/iivs-lab/iivs-lib"
 
+[project.optional-dependencies]
+# Decoders for the LZW-compressed Koala `Image/*.tif` uint8 previews
+# (`PhaseTifFolder` / `IntensityTifFolder`). Install with `iivs-lib[image]`.
+image = [
+    "imagecodecs>=2026.5.10",
+]
+
 # ========================== #
 #      [tool.*] Sections     #
 # ========================== #

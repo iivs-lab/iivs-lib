@@ -12,12 +12,12 @@ item to a CHANGELOG entry once it lands.
   acquisition root and wires phase (`Phase/Float/Bin`), intensity
   (`Intensity/Float/Bin`), holograms (`Holograms/holo.raw`), and timestamps
   into one object, tolerating absent modalities.
-- **Read the `Image/*.tif` previews and `phbounds.txt`.** The `Image/` tifs are
-  rendered **uint8 LZW-compressed** grayscale previews (display-only — distinct
-  from the quantitative `Float` data). Two blockers deferred them: reading LZW
-  needs the **`imagecodecs`** package (not a current dependency, so a core or
-  optional-extra decision), and being uint8 they do not fit the float32
-  `PhaseSequence` / `IntensitySequence` contract (so they would be a separate
-  uint8 preview type, not a phase/intensity sequence). `phbounds.txt` holds the
-  phase display bounds in nm (`min max`) used to map the float data into those
-  previews (and back toward nm). Plan once the above is resolved.
+- **Use `phbounds.txt` to map previews to/from nm.** The uint8 `Image/*.tif`
+  previews are now read (`PhaseTifFolder` / `IntensityTifFolder`, uint8
+  `*ImageSequence`; LZW decoding via the `[image]` extra) but as raw 8-bit
+  values. `phbounds.txt` holds the phase display bounds in nm — a `[nm]` line
+  then `min max` (e.g. `-403.4911 635.9849`) — used to render the float phase
+  into 0–255. A reader could map a preview back toward nm (lossy, 8-bit
+  quantized — the `Float` data stays the exact source). Decide whether to
+  expose it as a `PhaseImageSequence` helper or a standalone converter, and
+  whether intensity has an analogous bounds file.

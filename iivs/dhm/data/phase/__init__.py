@@ -7,6 +7,8 @@ __all__ = (
     "PhaseFloatSequence",
     "PhaseImageSequence",
     "PhaseSequence",
+    "PhaseTifFolder",
+    "PhaseTifList",
     "PhaseTxtFolder",
     "PhaseTxtList",
     "PhaseUnit",
@@ -32,6 +34,7 @@ from iivs.dhm.data.phase.bin import (
     save_phase_bin,
 )
 from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit
+from iivs.dhm.data.phase.tif import PhaseTifFolder, PhaseTifList
 from iivs.dhm.data.phase.txt import (
     PhaseTxtFolder,
     PhaseTxtList,

@@ -7,6 +7,8 @@ __all__ = (
     "IntensityFloatSequence",
     "IntensityImageSequence",
     "IntensitySequence",
+    "IntensityTifFolder",
+    "IntensityTifList",
     "IntensityTxtFolder",
     "IntensityTxtList",
     "load_intensity_bin",
@@ -29,6 +31,7 @@ from iivs.dhm.data.intensity.bin import (
     read_intensity_bin_header,
     save_intensity_bin,
 )
+from iivs.dhm.data.intensity.tif import IntensityTifFolder, IntensityTifList
 from iivs.dhm.data.intensity.txt import (
     IntensityTxtFolder,
     IntensityTxtList,

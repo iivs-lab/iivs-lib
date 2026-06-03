@@ -23,6 +23,9 @@ uv add iivs-lib
 pip install iivs-lib
 ```
 
+The `[image]` extra adds `imagecodecs`, needed only to decode the
+LZW-compressed Koala `Image/*.tif` uint8 previews (`uv add "iivs-lib[image]"`).
+
 ## 🧩 Modules
 
 ### `iivs.dhm.data`
@@ -34,11 +37,14 @@ Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
   `PhaseUnit`, and `convert_phase_unit`; folder/list sequences
   `PhaseBinFolder` / `PhaseBinList`. The same quantitative phase from Koala's
   `Float/Txt` export via `load_phase_txt`, `PhaseTxtFolder` / `PhaseTxtList`.
+  The uint8 `Image/*.tif` display previews (not quantitative) via
+  `PhaseTifFolder` / `PhaseTifList`.
 - **`intensity`** — float32 `.bin` intensity reconstructions (exported
   alongside phase): `load_intensity_bin` / `save_intensity_bin` /
   `read_intensity_bin_header`, the typed `IntensityBinHeader`, and folder/list
   sequences `IntensityBinFolder` / `IntensityBinList`; plus the `Float/Txt`
-  twins `load_intensity_txt`, `IntensityTxtFolder` / `IntensityTxtList`. The
+  twins `load_intensity_txt`, `IntensityTxtFolder` / `IntensityTxtList`, and the
+  uint8 `Image/*.tif` previews `IntensityTifFolder` / `IntensityTifList`. The
   phase and intensity `.bin` formats share the `common.KoalaBinHeader` base.
 - **`hologram`** — uint8 holograms: `.tif` via `load_hologram_tif` /
   `save_hologram_tif` with `HologramTifFolder` / `HologramTifList`; a single
@@ -51,10 +57,14 @@ Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
 Every sequence is a `kaparoo.data.sequences.DataSequence`, so it indexes,
 slices, and iterates lazily; same-shape sources also expose `frame_shape` by
 mixing in `common.FrameShapedMixin` (so a uniform source is its
-`<Modality>Sequence` plus that mixin). Numbered-folder sequences share the
-`common.SequentialFileFolder` discovery/validation base, and validate their
-arrays via `common.validate_float32_image` / `validate_uint8_image`. These
-cross-modality building blocks live in `iivs.dhm.data.common`.
+`<Modality>FloatSequence` / `<Modality>ImageSequence` plus that mixin). For
+phase and intensity the quantitative float32 sources are
+`<Modality>FloatSequence` and the uint8 `Image/*.tif` previews are
+`<Modality>ImageSequence`, both under the `<Modality>Sequence` base.
+Numbered-folder sequences share the `common.SequentialFileFolder`
+discovery/validation base, and validate their arrays via
+`common.validate_float32_image` / `validate_uint8_image`. These cross-modality
+building blocks live in `iivs.dhm.data.common`.
 
 ### `iivs.dhm.analysis`
 

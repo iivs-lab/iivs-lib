@@ -40,6 +40,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `PhaseTxtList` — the text twins of the `.bin` readers over Koala's
     `Float/Txt` export (a 4-line header + float grid carrying the same
     quantitative phase and `PhaseBinHeader`).
+  - `PhaseTifFolder` / `PhaseTifList` — the uint8 `Image/*.tif` display-preview
+    sources (a `PhaseImageSequence`, *not* the quantitative `PhaseFloatSequence`;
+    each item is the 8-bit preview, not the float phase). Decoding the
+    LZW-compressed Koala previews needs the `iivs-lib[image]` extra
+    (`imagecodecs`).
 - `iivs.dhm.data.common`: the building blocks shared across the data
   modalities.
   - `KoalaBinHeader` — base for the packed 23-byte Lyncée Tec Koala `.bin`
@@ -69,6 +74,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `KoalaBinHeader`), with `from_file` / `from_lines`. `phase` and `intensity`
     subclass it to parse their text header into the matching `*BinHeader`,
     sharing the line-count check and the `h/w` + `pixel size` regex.
+  - `load_uint8_tif`, with `ImageTifFolder` / `ImageTifList` — the
+    modality-agnostic uint8 `.tif` reader and folder/list bodies behind the
+    `Image/*.tif` preview sources. A modality adds its role by also inheriting
+    its `<Modality>ImageSequence` (e.g. `PhaseTifFolder(ImageTifFolder,
+    PhaseTifList)`).
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).
@@ -86,6 +96,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `IntensityBinFolder` (a `{index:05d}_intensity.bin` folder)
     and `IntensityBinList` (an arbitrary list of `.bin` files). The `.txt`
     folders/lists are their text twins.
+  - `IntensityTifFolder` / `IntensityTifList` — the uint8 `Image/*.tif`
+    display-preview sources (an `IntensityImageSequence`); like the phase
+    previews, decoding needs the `iivs-lib[image]` extra.
 - `iivs.dhm.data.timestamp`: per-frame acquisition timing.
   - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
     `Timestamp.series_from_elapsed_times`.

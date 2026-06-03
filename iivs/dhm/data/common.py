@@ -12,9 +12,12 @@ from __future__ import annotations
 
 __all__ = (
     "FrameShapedMixin",
+    "ImageTifFolder",
+    "ImageTifList",
     "KoalaBinHeader",
     "KoalaTxtHeader",
     "SequentialFileFolder",
+    "load_uint8_tif",
     "parse_txt_grid",
     "read_bin_pixels",
     "validate_float32_image",
@@ -26,21 +29,23 @@ import re
 import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, cast, override
 
 import numpy as np
-from kaparoo.data.sequences import FileFolderSequence
+import tifffile
+from kaparoo.data.sequences import FileFolderSequence, FileListSequence
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 from kaparoo.filesystem.search import search_files
 from kaparoo.filesystem.search.filters import Regex
 from natsort import natsorted
+from numpy.typing import NDArray
 
 if TYPE_CHECKING:
     from typing import IO, Literal, Self
 
     from kaparoo.filesystem.types import StrPath
-    from numpy.typing import NDArray
 
 
 # ========================== #
@@ -597,3 +602,104 @@ def validate_uint8_image(
         raise ValueError(msg)
 
     return data
+
+
+# ========================== #
+#         Uint8 Tif          #
+# ========================== #
+
+
+def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
+    """Load a single uint8 raster from a `.tif` file.
+
+    Modality-agnostic: the Koala uint8 previews (`Image/*.tif`) and any other
+    single-page 8-bit tif decode through this. The Koala previews are
+    LZW-compressed, so decoding them needs the `imagecodecs` package -- install
+    the `iivs-lib[image]` extra (without it `tifffile` raises for LZW files).
+
+    Raises:
+        FileNotFoundError: If `path` does not exist.
+        NotAFileError: If `path` exists but is not a regular file.
+        ValueError: If the decoded image is not a 2D uint8 array.
+    """
+    path = ensure_file_exists(path)
+    data = tifffile.imread(path)
+    return validate_uint8_image(data, allow_stack=False)
+
+
+class ImageTifList(FileListSequence[NDArray[np.uint8], Path]):
+    """A uint8 tif sequence over an explicit, arbitrary list of `.tif` files.
+
+    The modality-agnostic body for the uint8 `.tif` previews: each file is
+    decoded independently via `load_uint8_tif`, so the files may live anywhere
+    and differ in shape. A modality adds its role by also inheriting its
+    `<Modality>ImageSequence` -- e.g.
+    `PhaseTifList(ImageTifList, PhaseImageSequence[Path])`. `ImageTifFolder` is
+    the auto-discovered, same-shape specialization.
+
+    Args:
+        files: The `.tif` files to expose, in the given order.
+    """
+
+    @override
+    def get_meta(self, index: int) -> Path:
+        """Return the source path of the file at `index`."""
+        return self.get_file(index)
+
+    @override
+    def load_file(self, path: Path) -> NDArray[np.uint8]:
+        """Load and decode the uint8 image at `path`."""
+        return load_uint8_tif(path)
+
+
+class ImageTifFolder(SequentialFileFolder[NDArray[np.uint8]], ImageTifList):
+    """A uint8 tif folder: numbered discovery + one shared (lazily read) shape.
+
+    The auto-discovered, same-shape specialization of `ImageTifList`. A `.tif`
+    preview carries no header, so `frame_shape` is read lazily from the first
+    file and every image is required to match it. Concrete folders set
+    `FILE_STEM` (and inherit `FILE_EXT = "tif"`) and add their image role -- e.g.
+    `PhaseTifFolder(ImageTifFolder, PhaseTifList)`.
+
+    Args:
+        root: The folder to scan.
+        validate: Validation level at construction, or None to skip.
+    """
+
+    FILE_EXT: ClassVar[str] = "tif"
+    LEVELS: ClassVar[tuple[str, ...]] = ("names", "data")
+    DEFAULT_LEVEL: ClassVar[str] = "names"
+
+    def __init__(
+        self,
+        root: StrPath,
+        *,
+        validate: Literal["names", "data"] | None = "names",
+    ) -> None:
+        super().__init__(root)  # discovers the files; rejects an empty folder
+
+        if validate is not None:
+            self.validate(level=validate)
+
+    @cached_property
+    @override
+    def frame_shape(self) -> tuple[int, int]:
+        """The (height, width) of the first image, loaded lazily and cached.
+
+        The `.tif` folder carries no header, so this reads the first file and
+        assumes every image shares its shape.
+        """
+        shape = load_uint8_tif(self.get_file(0)).shape
+        return (shape[0], shape[1])
+
+    @override
+    def _validate_content(self, path: Path, *, level: str) -> None:
+        """Decode `path` and require its shape to match the first file.
+
+        `level` is fixed by the hook contract but unused: the `.tif` folder
+        carries no header, so "data" is its only level past "names".
+        """
+        image = load_uint8_tif(path)
+        if image.shape != self.frame_shape:
+            msg = f"shape of {path.name} must match the first file {self.frame_shape} (got {image.shape})"
+            raise ValueError(msg)

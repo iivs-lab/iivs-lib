@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import tifffile
 
 from iivs.dhm.data.common import (
     FrameShapedMixin,
+    load_uint8_tif,
     parse_txt_grid,
     validate_float32_image,
     validate_uint8_image,
@@ -106,6 +108,27 @@ def test_parse_txt_grid_rejects_shape_mismatch():
 def test_parse_txt_grid_rejects_malformed():
     with pytest.raises(ValueError, match="malformed txt grid"):
         parse_txt_grid(["1 2", "3 nan x"], shape=(2, 2))
+
+
+# ========================== #
+#       load_uint8_tif       #
+# ========================== #
+
+
+def test_load_uint8_tif_roundtrip(tmp_path):
+    data = np.arange(6, dtype=np.uint8).reshape(2, 3)
+    path = tmp_path / "00000_phase.tif"
+    tifffile.imwrite(path, data)  # uncompressed: no imagecodecs needed
+    loaded = load_uint8_tif(path)
+    np.testing.assert_array_equal(loaded, data)
+    assert loaded.dtype == np.uint8
+
+
+def test_load_uint8_tif_rejects_non_uint8(tmp_path):
+    path = tmp_path / "00000_phase.tif"
+    tifffile.imwrite(path, np.zeros((2, 2), dtype=np.float32))
+    with pytest.raises(ValueError, match="uint8"):
+        load_uint8_tif(path)
 
 
 # ========================== #
