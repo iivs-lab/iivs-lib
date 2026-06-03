@@ -502,15 +502,15 @@ class PhaseBinSequence(
         self._header = read_phase_bin_header(self.get_file(0))
         self._target_unit = replace_if_none(target_unit, self._header.unit)
 
-        if self._target_unit is not self._header.unit:
-            # Fail fast: surface an unreachable target unit now, not lazily on
-            # every get_item. An empty array makes this a pure pair check.
-            convert_phase_unit(
-                np.empty((0, 0), dtype=np.float32),
-                source=self._header.unit,
-                target=self._target_unit,
-                height_scale=self._header.height_scale,
-            )
+        # Fail fast: surface an unreachable target unit now, not lazily on every
+        # get_item. convert_phase_unit no-ops when the units already match, so
+        # this runs unconditionally; the empty array keeps it a pure pair check.
+        convert_phase_unit(
+            np.empty((0, 0), dtype=np.float32),
+            source=self._header.unit,
+            target=self._target_unit,
+            height_scale=self._header.height_scale,
+        )
 
         if validate is not None:
             self.validate(level=validate)
