@@ -550,8 +550,9 @@ def test_load_no_conversion_by_default_or_same_unit(tmp_path):
     )
 
 
-def test_load_rejects_unconvertible_unit(tmp_path):
+def test_rejects_unconvertible_target_unit_at_construction(tmp_path):
     _write(tmp_path, 0, 0)  # stored as RADIANS
-    folder = PhaseBinSequence(tmp_path, target_unit=PhaseUnit.UNKNOWN)
+    # Fail fast: an unreachable target unit is rejected when constructing,
+    # not lazily on first item access.
     with pytest.raises(ValueError, match="cannot convert"):
-        _ = folder[0]
+        PhaseBinSequence(tmp_path, target_unit=PhaseUnit.UNKNOWN)

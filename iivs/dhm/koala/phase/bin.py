@@ -476,7 +476,9 @@ class PhaseBinSequence(
             least one matching file.
         target_unit: Unit to return loaded images in. When it differs from the
             stored unit, images are converted on load via the header's
-            `height_scale`. Defaults to None, which keeps the stored unit.
+            `height_scale`; an unreachable unit (e.g. converting to/from
+            UNKNOWN) is rejected at construction. Defaults to None, which keeps
+            the stored unit.
         validate: Run `validate` to this level ("names", "headers", or
             "data") at construction, or None to skip. Defaults to "headers".
 
@@ -484,7 +486,8 @@ class PhaseBinSequence(
         DirectoryNotFoundError: If `root` does not exist.
         NotADirectoryError: If `root` exists but is not a directory.
         FileNotFoundError: If no `NNNNN_phase.bin` files are found in `root`.
-        ValueError: If `validate` is set and the sequence fails validation.
+        ValueError: If `target_unit` cannot be converted from the stored unit,
+            or if `validate` is set and the sequence fails validation.
     """
 
     def __init__(
@@ -498,6 +501,16 @@ class PhaseBinSequence(
 
         self._header = read_phase_bin_header(self.get_file(0))
         self._target_unit = replace_if_none(target_unit, self._header.unit)
+
+        if self._target_unit is not self._header.unit:
+            # Fail fast: surface an unreachable target unit now, not lazily on
+            # every get_item. An empty array makes this a pure pair check.
+            convert_phase_unit(
+                np.empty((0, 0), dtype=np.float32),
+                source=self._header.unit,
+                target=self._target_unit,
+                height_scale=self._header.height_scale,
+            )
 
         if validate is not None:
             self.validate(level=validate)
