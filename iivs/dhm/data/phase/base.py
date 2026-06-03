@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = ("PhaseFloatSequence", "PhaseImageSequence", "PhaseSequence")
 
+from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
@@ -102,10 +103,12 @@ class PhaseFileList(
             image, source=header.unit, target=target, height_scale=header.height_scale
         )
 
+    @abstractmethod
     def _read_header(self, path: StrPath) -> PhaseBinHeader:
         """Read the format's header (subclass codec)."""
         raise NotImplementedError
 
+    @abstractmethod
     def _decode(
         self,
         path: StrPath,

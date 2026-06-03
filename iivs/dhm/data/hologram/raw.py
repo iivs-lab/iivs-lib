@@ -205,7 +205,6 @@ class HologramRawFile(
         """The (height, width) of each frame, from the header."""
         return self._header.shape
 
-    @override
     def __len__(self) -> int:
         return self._header.frame_count
 
@@ -221,7 +220,6 @@ class HologramRawFile(
     def get_meta(self, index: int) -> int:
         return index
 
-    @override
     def __reduce__(self) -> tuple[type[HologramRawFile], tuple[StrPath]]:
         # Pickle only the source path; the memmap re-opens per process on load
         # instead of copying every frame into the pickle (multiprocessing-safe).

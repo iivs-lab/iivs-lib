@@ -6,6 +6,7 @@ __all__ = (
     "IntensitySequence",
 )
 
+from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
@@ -85,10 +86,12 @@ class IntensityFileList(
         """Load the image at `path`."""
         return self._decode(path)
 
+    @abstractmethod
     def _read_header(self, path: StrPath) -> IntensityBinHeader:
         """Read the format's header (subclass codec)."""
         raise NotImplementedError
 
+    @abstractmethod
     def _decode(
         self,
         path: StrPath,

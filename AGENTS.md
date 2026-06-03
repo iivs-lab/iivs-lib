@@ -119,6 +119,20 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   default, applies to `tests/` only. Use a root `conftest.py` only for
   `pytest_plugins` declarations, doctest fixtures shared with source
   files, or project-wide collection hooks.
+- `@override` marks overrides of a *named* base contract (`get_item`,
+  `load_file`, `frame_shape`, `_read_header`, ...), where it guards against the
+  base drifting. Do **not** put it on dunders (`__len__`, `__reduce__`,
+  `__init__`): implementing a dunder is self-evidently an override, and some
+  (like `__reduce__`) only "override" `object`, so the decorator is pure noise.
+- `@abstractmethod` (not a bare `raise NotImplementedError`) for hooks a
+  subclass *must* implement -- the codec hooks (`_read_header` / `_decode` /
+  `load_file`), `frame_shape`, `KoalaTxtHeader._from_geometry`, and the
+  `KoalaBinHeader` serializers -- so an incomplete subclass fails at
+  construction, not at first call. Make the holder an ABC if it isn't already
+  (e.g. `KoalaBinHeader(ABC)`). The exception is an *optional* hook like
+  `SequentialFileFolder._validate_content`, which a names-only folder never
+  calls: keep that a plain `raise NotImplementedError` so it is not forced on
+  every subclass.
 - `ty` has no plugin system; rely on standard typing (PEP 681
   `dataclass_transform`, `.pyi` stubs), not type-checker plugins.
 - Suppress `ty` errors with `# ty: ignore[<error-name>]` using `ty`'s

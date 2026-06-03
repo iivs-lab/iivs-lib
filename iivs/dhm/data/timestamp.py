@@ -88,7 +88,6 @@ class TimestampSequence(DataSequence[Timestamp, int]):
 
     _timestamps: tuple[Timestamp, ...]
 
-    @override
     def __len__(self) -> int:
         return len(self._timestamps)
 

@@ -62,7 +62,7 @@ _PIXEL_DTYPE = np.dtype("<f4")  # on-disk pixels: little-endian float32
 
 
 @dataclass(frozen=True, slots=True)
-class KoalaBinHeader:
+class KoalaBinHeader(ABC):
     """Base for the fixed-size 23-byte Lyncée Tec Koala .bin header.
 
     Holds the geometry (width, height, pixel_size) and the on-disk format
@@ -161,6 +161,7 @@ class KoalaBinHeader:
         record["pixel_size"] = self.pixel_size
         return record
 
+    @abstractmethod
     def to_dtype(self) -> NDArray[np.void]:
         """Serialize to a 1-element `DTYPE` record array.
 
@@ -170,6 +171,7 @@ class KoalaBinHeader:
         raise NotImplementedError
 
     @classmethod
+    @abstractmethod
     def from_dtype(cls, record: np.void) -> Self:
         """Build a header from a `DTYPE` structured scalar.
 
@@ -694,6 +696,7 @@ class ImageFileList(ExtensionCheckedFileList[NDArray[np.uint8], Path]):
         return self.get_file(index)
 
     @override
+    @abstractmethod
     def load_file(self, path: Path) -> NDArray[np.uint8]:
         """Decode the uint8 image at `path` (subclass codec)."""
         raise NotImplementedError
