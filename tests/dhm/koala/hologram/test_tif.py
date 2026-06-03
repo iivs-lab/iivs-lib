@@ -111,6 +111,15 @@ def test_validate_data_level_decodes_each(tmp_path):
     HologramTifSequence(tmp_path).validate(level="data")  # all decode: ok
 
 
+def test_validate_data_level_rejects_shape_mismatch(tmp_path):
+    _write(tmp_path, 0, 0, shape=(2, 3))
+    _write(tmp_path, 1, 1, shape=(4, 5))  # differs from the first image
+    seq = HologramTifSequence(tmp_path)
+    seq.validate(level="names")  # names-only: shape ignored
+    with pytest.raises(ValueError, match="shape of"):
+        seq.validate(level="data")
+
+
 def test_validate_file_checks_single_index(tmp_path):
     _write(tmp_path, 0, 0)
     _write(tmp_path, 2, 2)  # gap at index 1

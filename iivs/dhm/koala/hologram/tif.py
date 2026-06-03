@@ -132,12 +132,12 @@ class HologramTifSequence(
         Args:
             level: How deep to check, cumulatively: "names" (default) that
                 files are numbered contiguously from 0; "data" also that
-                every image decodes as a 2D uint8 array (expensive -- it
-                reads every image).
+                every image decodes as a 2D uint8 array sharing the first
+                image's shape (expensive -- it reads every image).
 
         Raises:
-            ValueError: If the numbering has gaps or (at "data") an image
-                fails to load.
+            ValueError: If the numbering has gaps, or (at "data") an image
+                fails to load or its shape differs from the first image.
         """
         for index in range(len(self)):
             self.validate_file(index, level=level)
@@ -157,4 +157,7 @@ class HologramTifSequence(
             raise ValueError(msg)
 
         if level == "data":
-            load_hologram_tif(path)
+            image = load_hologram_tif(path)
+            if image.shape != self.frame_shape:
+                msg = f"shape of {path.name} must match the first file {self.frame_shape} (got {image.shape})"
+                raise ValueError(msg)
