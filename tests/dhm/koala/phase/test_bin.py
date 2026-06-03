@@ -381,6 +381,7 @@ def test_folder_header_attribute(tmp_path):
     folder = PhaseBinSequence(tmp_path)
     assert isinstance(folder.header, PhaseBinHeader)
     assert folder.header.shape == (2, 3)
+    assert folder.frame_shape == (2, 3)
     assert folder.target_unit == PhaseUnit.RADIANS  # defaults to the stored unit
 
 

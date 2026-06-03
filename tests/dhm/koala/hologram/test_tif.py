@@ -79,6 +79,11 @@ def test_folder_get_meta_is_source_path(tmp_path):
     assert folder.get_meta(0) == tmp_path / "00000_holo.tif"
 
 
+def test_folder_frame_shape(tmp_path):
+    _write(tmp_path, 0, 7, shape=(4, 5))  # no header; read from the first file
+    assert HologramTifSequence(tmp_path).frame_shape == (4, 5)
+
+
 def test_folder_ignores_non_matching_names(tmp_path):
     _write(tmp_path, 0, 0)
     blank = np.zeros((2, 3), dtype=np.uint8)

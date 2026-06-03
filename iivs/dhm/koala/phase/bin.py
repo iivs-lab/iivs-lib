@@ -524,6 +524,11 @@ class PhaseBinSequence(
         """The unit that loaded images are returned in."""
         return self._target_unit
 
+    @property
+    def frame_shape(self) -> tuple[int, int]:
+        """The (height, width) of each image, from the shared header."""
+        return self._header.shape
+
     def get_meta(self, index: int) -> Path:
         """Return the source path of the file at `index`."""
         return self.get_file(index)

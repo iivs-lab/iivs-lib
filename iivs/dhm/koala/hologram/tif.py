@@ -3,6 +3,7 @@ from __future__ import annotations
 __all__ = ("HologramTifSequence", "load_hologram_tif", "save_hologram_tif")
 
 import io
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -98,6 +99,16 @@ class HologramTifSequence(
 
         if validate is not None:
             self.validate(level=validate)
+
+    @cached_property
+    def frame_shape(self) -> tuple[int, int]:
+        """The (height, width) of the first image, loaded lazily and cached.
+
+        The `.tif` folder carries no header, so this reads the first file and
+        assumes every image shares its shape.
+        """
+        shape = load_hologram_tif(self.get_file(0)).shape
+        return (shape[0], shape[1])
 
     def get_meta(self, index: int) -> Path:
         """Return the source path of the file at `index`."""

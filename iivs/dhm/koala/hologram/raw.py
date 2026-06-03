@@ -194,6 +194,11 @@ class HologramRawSequence(
         """All frames as a lazy, read-only `(frame_count, H, W)` memmap."""
         return self._frames
 
+    @property
+    def frame_shape(self) -> tuple[int, int]:
+        """The (height, width) of each frame, from the header."""
+        return self._header.shape
+
     def __len__(self) -> int:
         return self._header.frame_count
 

@@ -58,6 +58,12 @@ def test_get_item_returns_writable_copy(tmp_path):
     np.testing.assert_array_equal(seq.frames[0], frames[0])
 
 
+def test_frame_shape(tmp_path):
+    path = tmp_path / "holo.raw"
+    _write_raw(path, n=3, h=2, w=3)
+    assert HologramRawSequence(path).frame_shape == (2, 3)
+
+
 def test_frames_property_exposes_full_memmap(tmp_path):
     path = tmp_path / "holo.raw"
     frames = _write_raw(path, n=3, h=2, w=3)
