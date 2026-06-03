@@ -329,10 +329,7 @@ def _resolve_height_scale(
             # height per radian = wavelength / (2*pi * refractive_delta)
             return wave / (2.0 * np.pi * delta)
         case _:
-            msg = (
-                "exactly one of height_scale, or both wavelength and "
-                "refractive_delta, must be given"
-            )
+            msg = "give height_scale, or wavelength and refractive_delta (not both)"
             raise ValueError(msg)
 
 
@@ -550,12 +547,11 @@ class PhaseBinSequence(
             msg = f"non-contiguous numbering: expected {expected} at index {index}, got {path.name}"
             raise ValueError(msg)
 
+        if level == "names":
+            return
+
         # The first file is the reference header, so it is never compared.
-        if (
-            level != "names"
-            and index != 0
-            and read_phase_bin_header(path) != self.header
-        ):
+        if index != 0 and read_phase_bin_header(path) != self.header:
             msg = f"header of {path.name} differs from the first file"
             raise ValueError(msg)
 

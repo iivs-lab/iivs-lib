@@ -87,7 +87,7 @@ def test_size_mismatch_raises(tmp_path):
     header = np.array([3, 2, 8, 3], dtype="<i4")  # w, h, bit_depth, frame_count
     data = np.zeros((2, 2, 3), dtype=np.uint8)
     path.write_bytes(header.tobytes() + data.tobytes())
-    with pytest.raises(ValueError, match="does not match"):
+    with pytest.raises(ValueError, match="file size must be"):
         HologramRawSequence(path)
 
 

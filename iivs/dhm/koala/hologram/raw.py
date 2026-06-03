@@ -70,10 +70,8 @@ class HologramRawHeader:
             raise ValueError(msg)
 
         if self.bit_depth not in self.SUPPORTED_BIT_DEPTHS:
-            msg = (
-                f"bit_depth must be one of {list(self.SUPPORTED_BIT_DEPTHS)} "
-                f"(got {self.bit_depth})"
-            )
+            allowed = list(self.SUPPORTED_BIT_DEPTHS)
+            msg = f"bit_depth must be one of {allowed} (got {self.bit_depth})"
             raise ValueError(msg)
 
     @property
@@ -175,11 +173,7 @@ class HologramRawSequence(
         expected = HologramRawHeader.HEADER_SIZE + self._header.data_nbytes
         actual = self.path.stat().st_size
         if actual != expected:
-            msg = (
-                f"file size does not match header: expected {expected} bytes "
-                f"({HologramRawHeader.HEADER_SIZE} + {self._header.frame_count} x "
-                f"{self._header.frame_nbytes}), got {actual}"
-            )
+            msg = f"file size must be {expected} bytes (got {actual})"
             raise ValueError(msg)
 
         self._frames: NDArray[np.uint8] = np.memmap(

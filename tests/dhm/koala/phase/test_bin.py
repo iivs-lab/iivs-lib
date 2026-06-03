@@ -231,7 +231,7 @@ def test_save_with_wavelength_and_refractive_delta(tmp_path):
 
 
 def test_save_rejects_both_scale_forms(tmp_path):
-    with pytest.raises(ValueError, match="exactly one"):
+    with pytest.raises(ValueError, match="not both"):
         save_phase_bin(
             tmp_path / "bad.bin",
             np.zeros((2, 2), dtype=np.float32),
