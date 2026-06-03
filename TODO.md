@@ -5,17 +5,18 @@ item to a CHANGELOG entry once it lands.
 
 ## Open
 
-- **Factor a per-format codec for the list variant + per-file decode.** The
-  numbered-folder mechanics (`list_files` / `get_meta` / `validate` /
-  `validate_file`) are now shared via `data.common.SequentialFileFolder`
-  (a `FileFolderSequence` subclass with a `_validate_content` hook). What
-  remains is the per-format `load_file`, still redeclared by each folder *and*
-  its list variant (`FileListSequence`), and the list variant's `get_meta`. As
-  more formats land, extract a `_<Modality><Format>Codec` holding `load_file`
-  (+ `get_meta` for lists) and share it across the folder and list variants.
-  Stateless formats (hologram `.tif`) DRY fully; stateful ones (phase/intensity
-  `.bin`, shared header) carry per-file conversion. A duplication/maintenance
-  concern, not a correctness one.
+- **Factor a per-modality folder/list base over the format codec.** Now that
+  phase and intensity each ship `.bin` *and* `.txt` formats, `PhaseBinFolder`
+  and `PhaseTxtFolder` (likewise `*BinList` / `*TxtList`, and the intensity
+  pair) differ only by a codec: the header reader and the decode function
+  (`FILE_EXT` aside). Everything else -- `__init__`, `header`, `target_unit`,
+  `frame_shape`, `load_file`, `_validate_content` -- is duplicated per format.
+  Extract a per-modality base (e.g. `_PhaseFileFolder` / `_PhaseFileList`) that
+  holds it once with abstract `_read_header` / `_decode` hooks, and have the
+  bin/txt classes supply just the codec + `FILE_EXT`. The numbered-folder
+  mechanics are already shared via `data.common.SequentialFileFolder`; this is
+  the remaining (modality-level) duplication. A maintenance concern, not a
+  correctness one.
 - **Add a dataset/acquisition opener.** Koala nests its export as
   `<Modality>/Float/Bin`, `<Modality>/Float/Txt`, `<Modality>/Image`, plus
   `Holograms/holo.raw`, `timestamps.txt`, and `phbounds.txt` at the root; today
@@ -23,14 +24,12 @@ item to a CHANGELOG entry once it lands.
   acquisition root and wires phase (`Phase/Float/Bin`), intensity
   (`Intensity/Float/Bin`), holograms (`Holograms/holo.raw`), and timestamps
   into one object, tolerating absent modalities.
-- **Read the `Float/Txt` exports for phase and intensity.** Alongside `.bin`,
-  Koala writes a text float form (`<idx>_phase.txt` / `<idx>_intensity.txt`)
-  with a small header (`h=900 w=900`, `pixel size=...`) followed by the float
-  grid. Redundant with `.bin` but planned: add `.txt` loaders and matching
-  folder/list sequences.
 - **Read the `Image/*.tif` previews and `phbounds.txt`.** The `Image/` tifs are
-  rendered 8/16-bit previews (display-only — distinct from the quantitative
-  `Float` data and from the raw hologram `.tif`). `phbounds.txt` holds the
+  rendered **uint8 LZW-compressed** grayscale previews (display-only — distinct
+  from the quantitative `Float` data). Two blockers deferred them: reading LZW
+  needs the **`imagecodecs`** package (not a current dependency, so a core or
+  optional-extra decision), and being uint8 they do not fit the float32
+  `PhaseSequence` / `IntensitySequence` contract (so they would be a separate
+  uint8 preview type, not a phase/intensity sequence). `phbounds.txt` holds the
   phase display bounds in nm (`min max`) used to map the float data into those
-  previews. Planned: tif preview loaders/sequences plus a `phbounds.txt` reader
-  (the bounds also let one map a preview back toward nm).
+  previews (and back toward nm). Plan once the above is resolved.

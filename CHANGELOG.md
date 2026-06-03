@@ -34,6 +34,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     explicit, arbitrary list of `.bin` files (any location, no naming or
     shared-header constraint); each file is read independently with per-file
     unit conversion.
+  - `load_phase_txt` / `read_phase_txt_header`, with `PhaseTxtFolder` /
+    `PhaseTxtList` — the text twins of the `.bin` readers over Koala's
+    `Float/Txt` export (a 4-line header + float grid carrying the same
+    quantitative phase and `PhaseBinHeader`).
 - `iivs.dhm.data.common`: the building blocks shared across the data
   modalities.
   - `KoalaBinHeader` — base for the packed 23-byte Lyncée Tec Koala `.bin`
@@ -55,6 +59,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     float32 -- the `on_nonfinite` policy). Both take `allow_stack` (default
     True; pass False to require a single 2-D image), used by the `save_*`
     writers. phase/intensity validate float32, holograms uint8.
+  - `parse_txt_grid` — parse a Koala `Float/Txt` body (whitespace-separated
+    float rows) into a float32 `(H, W)` array; used by the `.txt` readers.
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).
@@ -63,9 +69,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     and ignored on load.
   - `load_intensity_bin(path, *, return_header=False)` /
     `save_intensity_bin(...)` / `read_intensity_bin_header(path)`.
+  - `load_intensity_txt` / `read_intensity_txt_header`, with
+    `IntensityTxtFolder` / `IntensityTxtList` — the text twins over Koala's
+    `Float/Txt` export (a 2-line header -- no unit/height-conversion -- + grid).
   - `IntensitySequence` base type (same-shape sources add `FrameShapedMixin`),
     with concrete `IntensityBinFolder` (a `{index:05d}_intensity.bin` folder)
-    and `IntensityBinList` (an arbitrary list of `.bin` files).
+    and `IntensityBinList` (an arbitrary list of `.bin` files). The `.txt`
+    folders/lists are their text twins.
 - `iivs.dhm.data.timestamp`: per-frame acquisition timing.
   - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
     `Timestamp.series_from_elapsed_times`.

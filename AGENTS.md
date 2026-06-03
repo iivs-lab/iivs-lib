@@ -57,7 +57,8 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   under `iivs.dhm.data` (`phase`, `intensity`, `hologram`, `timestamp`)
   splits a multi-format modality into per-format modules plus a
   format-agnostic `core` and a `base` holding the abstract sequence types —
-  e.g. `phase/{core,base,bin}.py`, `hologram/{core,base,tif,raw}.py`.
+  e.g. `phase/{core,base,bin,txt}.py`, `hologram/{base,tif,raw}.py` (a modality
+  drops `core` when it has no format-agnostic logic of its own).
   Building blocks shared across modalities live in one data-root module,
   `common.py`: the `KoalaBinHeader` base + `.bin` pixel I/O (used by `phase`
   and `intensity`), the numbered-folder `SequentialFileFolder` template (every

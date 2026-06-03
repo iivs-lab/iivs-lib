@@ -32,12 +32,14 @@ Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
 - **`phase`** — float32 `.bin` phase images: `load_phase_bin` /
   `save_phase_bin` / `read_phase_bin_header`, the typed `PhaseBinHeader` and
   `PhaseUnit`, and `convert_phase_unit`; folder/list sequences
-  `PhaseBinFolder` / `PhaseBinList`.
+  `PhaseBinFolder` / `PhaseBinList`. The same quantitative phase from Koala's
+  `Float/Txt` export via `load_phase_txt`, `PhaseTxtFolder` / `PhaseTxtList`.
 - **`intensity`** — float32 `.bin` intensity reconstructions (exported
   alongside phase): `load_intensity_bin` / `save_intensity_bin` /
   `read_intensity_bin_header`, the typed `IntensityBinHeader`, and folder/list
-  sequences `IntensityBinFolder` / `IntensityBinList`. The phase and intensity
-  `.bin` formats share the `common.KoalaBinHeader` base.
+  sequences `IntensityBinFolder` / `IntensityBinList`; plus the `Float/Txt`
+  twins `load_intensity_txt`, `IntensityTxtFolder` / `IntensityTxtList`. The
+  phase and intensity `.bin` formats share the `common.KoalaBinHeader` base.
 - **`hologram`** — uint8 holograms: `.tif` via `load_hologram_tif` /
   `save_hologram_tif` with `HologramTifFolder` / `HologramTifList`; a single
   multi-frame `.raw` via `HologramRawFile` (a lazy `np.memmap`) and

@@ -5,6 +5,7 @@ import pytest
 
 from iivs.dhm.data.common import (
     FrameShapedMixin,
+    parse_txt_grid,
     validate_float32_image,
     validate_uint8_image,
 )
@@ -84,6 +85,27 @@ def test_no_stack_rejects_higher_dims():
 def test_no_stack_accepts_2d():
     data = np.zeros((2, 2), dtype=np.uint8)
     assert validate_uint8_image(data, allow_stack=False) is data
+
+
+# ========================== #
+#       parse_txt_grid       #
+# ========================== #
+
+
+def test_parse_txt_grid_ok():
+    grid = parse_txt_grid(["1 2 3", "4 5 6"], shape=(2, 3))
+    np.testing.assert_array_equal(grid, [[1, 2, 3], [4, 5, 6]])
+    assert grid.dtype == np.float32
+
+
+def test_parse_txt_grid_rejects_shape_mismatch():
+    with pytest.raises(ValueError, match="txt grid must be"):
+        parse_txt_grid(["1 2 3", "4 5 6"], shape=(2, 2))
+
+
+def test_parse_txt_grid_rejects_malformed():
+    with pytest.raises(ValueError, match="malformed txt grid"):
+        parse_txt_grid(["1 2", "3 nan x"], shape=(2, 2))
 
 
 # ========================== #

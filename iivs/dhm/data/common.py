@@ -13,6 +13,7 @@ __all__ = (
     "FrameShapedMixin",
     "KoalaBinHeader",
     "SequentialFileFolder",
+    "parse_txt_grid",
     "read_bin_pixels",
     "validate_float32_image",
     "validate_uint8_image",
@@ -455,6 +456,29 @@ def validate_float32_image(
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     return data
+
+
+def parse_txt_grid(lines: list[str], *, shape: tuple[int, int]) -> NDArray[np.float32]:
+    """Parse whitespace-separated float rows into a float32 (H, W) array.
+
+    Used by the Koala `Float/Txt` readers: a modality's text export is a small
+    key=value header followed by `height` rows of `width` floats. Blank lines
+    are ignored.
+
+    Raises:
+        ValueError: If the parsed grid does not match `shape`, or a row is
+            malformed.
+    """
+    rows = [line for line in lines if line.strip()]
+    try:
+        grid = np.loadtxt(rows, dtype=np.float32, ndmin=2)
+    except ValueError as exc:
+        msg = f"malformed txt grid: {exc}"
+        raise ValueError(msg) from exc
+    if grid.shape != shape:
+        msg = f"txt grid must be {shape} (got {grid.shape})"
+        raise ValueError(msg)
+    return grid
 
 
 def validate_uint8_image(
