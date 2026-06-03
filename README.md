@@ -31,18 +31,17 @@ Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
 
 - **`phase`** — float32 `.bin` phase images: `load_phase_bin` /
   `save_phase_bin` / `read_phase_bin_header`, the typed `PhaseBinHeader` and
-  `PhaseUnit`, `validate_phase`, and `convert_phase_unit`; folder/list
-  sequences `PhaseBinFolder` / `PhaseBinList`.
+  `PhaseUnit`, and `convert_phase_unit`; folder/list sequences
+  `PhaseBinFolder` / `PhaseBinList`.
 - **`intensity`** — float32 `.bin` intensity reconstructions (exported
   alongside phase): `load_intensity_bin` / `save_intensity_bin` /
-  `read_intensity_bin_header`, the typed `IntensityBinHeader`,
-  `validate_intensity`, and folder/list sequences `IntensityBinFolder` /
-  `IntensityBinList`. The phase and intensity `.bin` formats share the
-  `binfile.KoalaBinHeader` base.
+  `read_intensity_bin_header`, the typed `IntensityBinHeader`, and folder/list
+  sequences `IntensityBinFolder` / `IntensityBinList`. The phase and intensity
+  `.bin` formats share the `common.KoalaBinHeader` base.
 - **`hologram`** — uint8 holograms: `.tif` via `load_hologram_tif` /
   `save_hologram_tif` with `HologramTifFolder` / `HologramTifList`; a single
   multi-frame `.raw` via `HologramRawFile` (a lazy `np.memmap`) and
-  `read_hologram_raw_header`; plus `validate_hologram`.
+  `read_hologram_raw_header`.
 - **`timestamp`** — per-frame acquisition timing: the `Timestamp` record,
   `TimestampsTxtFile` (Koala `timestamps.txt`), and `TimestampsFixedFPS`
   (synthesized from a frame rate).
@@ -51,8 +50,9 @@ Every sequence is a `kaparoo.data.sequences.DataSequence`, so it indexes,
 slices, and iterates lazily; same-shape sources also expose `frame_shape` by
 mixing in `common.FrameShapedMixin` (so a uniform source is its
 `<Modality>Sequence` plus that mixin). Numbered-folder sequences share the
-`common.SequentialFileFolder` discovery/validation base. These cross-modality
-building blocks live in `iivs.dhm.data.common`.
+`common.SequentialFileFolder` discovery/validation base, and validate their
+arrays via `common.validate_float32_image` / `validate_uint8_image`. These
+cross-modality building blocks live in `iivs.dhm.data.common`.
 
 ### `iivs.dhm.analysis`
 

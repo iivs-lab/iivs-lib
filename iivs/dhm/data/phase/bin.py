@@ -25,10 +25,11 @@ from iivs.dhm.data.common import (
     KoalaBinHeader,
     SequentialFileFolder,
     read_bin_pixels,
+    validate_float32_image,
     write_bin,
 )
 from iivs.dhm.data.phase.base import PhaseSequence
-from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit, validate_phase
+from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit
 
 if TYPE_CHECKING:
     from typing import Literal, Self
@@ -160,7 +161,7 @@ def load_phase_bin(
         return_header: Whether to also return the parsed `PhaseBinHeader`.
             Defaults to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
-            forwarded to `validate_phase`: "ignore" (default) accepts
+            forwarded to `validate_float32_image`: "ignore" (default) accepts
             silently, "warn" emits a RuntimeWarning, "raise" raises a
             ValueError (useful to reject corrupted files). Defaults to
             "ignore", since a structurally valid file's contents are
@@ -183,7 +184,7 @@ def load_phase_bin(
         header = PhaseBinHeader.from_stream(fb)
         data = read_bin_pixels(fb, header)
 
-    data = validate_phase(data, on_nonfinite=on_nonfinite)
+    data = validate_float32_image(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
 
 
@@ -292,7 +293,7 @@ def save_phase_bin(
         overwrite: Whether to replace `path` if it already exists. Defaults
             to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
-            forwarded to `validate_phase`: "ignore" accepts silently,
+            forwarded to `validate_float32_image`: "ignore" accepts silently,
             "warn" (default) emits a RuntimeWarning, "raise" rejects with a
             ValueError.
 
@@ -305,11 +306,8 @@ def save_phase_bin(
     """
     height_scale = _resolve_height_scale(height_scale, wavelength, refractive_delta)
 
-    # save stores a single image; validate_phase would also accept a stack.
-    if data.ndim != 2:
-        msg = f"data must be a single 2D image (got shape {data.shape})"
-        raise ValueError(msg)
-    data = validate_phase(data, on_nonfinite=on_nonfinite)
+    # save stores a single image (allow_stack=False), unlike the loaders.
+    data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
     data, unit = _to_storable_unit(data, unit, height_scale)
 
     if unit is PhaseUnit.UNKNOWN:

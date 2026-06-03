@@ -21,8 +21,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     with its header; `read_phase_bin_header(path)` — read just the header cheaply.
   - `save_phase_bin(...)` — write a 2D image; the phase-to-height scale is given
     either as `height_scale`, or as `wavelength` + `refractive_delta`.
-  - `validate_phase(data, *, on_nonfinite=...)` — validate a float32 phase
-    image or stack.
   - `convert_phase_unit(data, *, source, target, height_scale)` — rescale a
     phase/height image between `PhaseUnit` representations.
   - `PhaseSequence` — read-only base type for any phase image sequence;
@@ -52,10 +50,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     no per-modality `Uniform*Sequence`: a same-shape source is
     `<Modality>Sequence` + `FrameShapedMixin`, so "a uniform phase sequence" is
     `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`.
-  - `validate_float32_image` — the shared, modality-agnostic float32
-    image/stack validator (dtype, dimensionality, and the `on_nonfinite`
-    policy). `phase.validate_phase` and `intensity.validate_intensity` are
-    domain-named aliases over it.
+  - `validate_float32_image` / `validate_uint8_image` — the shared,
+    modality-agnostic image/stack validators (dtype, dimensionality, and -- for
+    float32 -- the `on_nonfinite` policy). Both take `allow_stack` (default
+    True; pass False to require a single 2-D image), used by the `save_*`
+    writers. phase/intensity validate float32, holograms uint8.
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).
@@ -64,7 +63,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     and ignored on load.
   - `load_intensity_bin(path, *, return_header=False)` /
     `save_intensity_bin(...)` / `read_intensity_bin_header(path)`.
-  - `validate_intensity(data, *, on_nonfinite=...)`.
   - `IntensitySequence` base type (same-shape sources add `FrameShapedMixin`),
     with concrete `IntensityBinFolder` (a `{index:05d}_intensity.bin` folder)
     and `IntensityBinList` (an arbitrary list of `.bin` files).
@@ -78,8 +76,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `iivs.dhm.data.hologram`: read and write Koala (Lyncée Tec) uint8 holograms
   — `.tif` files (single or a folder/list), and read-only single multi-frame
   `.raw` files.
-  - `load_hologram_tif(path)` / `save_hologram_tif(path, data, *, overwrite=False)`
-    and `validate_hologram(data)`.
+  - `load_hologram_tif(path)` /
+    `save_hologram_tif(path, data, *, overwrite=False)` (uint8 validated via
+    `common.validate_uint8_image`).
   - `HologramSequence` — read-only base type for any hologram sequence;
     same-shape sources also mix in `data.common.FrameShapedMixin` for
     `frame_shape` (height, width).

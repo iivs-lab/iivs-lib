@@ -9,11 +9,9 @@ __all__ = (
     "load_hologram_tif",
     "read_hologram_raw_header",
     "save_hologram_tif",
-    "validate_hologram",
 )
 
 from iivs.dhm.data.hologram.base import HologramSequence
-from iivs.dhm.data.hologram.core import validate_hologram
 from iivs.dhm.data.hologram.raw import (
     HologramRawFile,
     HologramRawHeader,

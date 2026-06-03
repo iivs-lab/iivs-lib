@@ -10,7 +10,6 @@ __all__ = (
     "load_phase_bin",
     "read_phase_bin_header",
     "save_phase_bin",
-    "validate_phase",
 )
 
 from iivs.dhm.data.phase.base import PhaseSequence
@@ -22,4 +21,4 @@ from iivs.dhm.data.phase.bin import (
     read_phase_bin_header,
     save_phase_bin,
 )
-from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit, validate_phase
+from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit

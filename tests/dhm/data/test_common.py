@@ -3,7 +3,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.data.common import FrameShapedMixin, validate_float32_image
+from iivs.dhm.data.common import (
+    FrameShapedMixin,
+    validate_float32_image,
+    validate_uint8_image,
+)
 from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
 
@@ -47,6 +51,39 @@ def test_raises_on_nonfinite():
 def test_clean_returns_input():
     data = np.zeros((2, 2), dtype=np.float32)
     assert validate_float32_image(data) is data  # default "warn", finite: as-is
+
+
+# ========================== #
+#  validate_uint8_image      #
+# ========================== #
+
+
+def test_uint8_rejects_non_uint8():
+    with pytest.raises(ValueError, match="uint8"):
+        validate_uint8_image(np.zeros((2, 2), dtype=np.float32))
+
+
+def test_uint8_accepts_stack_by_default():
+    data = np.zeros((3, 2, 2), dtype=np.uint8)
+    assert validate_uint8_image(data) is data
+
+
+def test_uint8_clean_2d_returns_input():
+    data = np.zeros((2, 2), dtype=np.uint8)
+    assert validate_uint8_image(data) is data
+
+
+def test_no_stack_rejects_higher_dims():
+    # allow_stack=False requires a single 2D image, for both dtypes.
+    with pytest.raises(ValueError, match="single 2D image"):
+        validate_uint8_image(np.zeros((2, 2, 3), dtype=np.uint8), allow_stack=False)
+    with pytest.raises(ValueError, match="single 2D image"):
+        validate_float32_image(np.zeros((2, 2, 3), dtype=np.float32), allow_stack=False)
+
+
+def test_no_stack_accepts_2d():
+    data = np.zeros((2, 2), dtype=np.uint8)
+    assert validate_uint8_image(data, allow_stack=False) is data
 
 
 # ========================== #

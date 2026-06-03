@@ -23,10 +23,10 @@ from iivs.dhm.data.common import (
     KoalaBinHeader,
     SequentialFileFolder,
     read_bin_pixels,
+    validate_float32_image,
     write_bin,
 )
 from iivs.dhm.data.intensity.base import IntensitySequence
-from iivs.dhm.data.intensity.core import validate_intensity
 
 if TYPE_CHECKING:
     from typing import Literal, Self
@@ -139,7 +139,7 @@ def load_intensity_bin(
         return_header: Whether to also return the parsed `IntensityBinHeader`.
             Defaults to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
-            forwarded to `validate_intensity`: "ignore" (default) accepts
+            forwarded to `validate_float32_image`: "ignore" (default) accepts
             silently, "warn" emits a RuntimeWarning, "raise" raises a
             ValueError (useful to reject corrupted files).
 
@@ -160,7 +160,7 @@ def load_intensity_bin(
         header = IntensityBinHeader.from_stream(fb)
         data = read_bin_pixels(fb, header)
 
-    data = validate_intensity(data, on_nonfinite=on_nonfinite)
+    data = validate_float32_image(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
 
 
@@ -193,7 +193,7 @@ def save_intensity_bin(
         overwrite: Whether to replace `path` if it already exists. Defaults
             to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
-            forwarded to `validate_intensity`: "ignore" accepts silently,
+            forwarded to `validate_float32_image`: "ignore" accepts silently,
             "warn" (default) emits a RuntimeWarning, "raise" rejects with a
             ValueError.
 
@@ -203,11 +203,8 @@ def save_intensity_bin(
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    # save stores a single image; validate_intensity would also accept a stack.
-    if data.ndim != 2:
-        msg = f"data must be a single 2D image (got shape {data.shape})"
-        raise ValueError(msg)
-    data = validate_intensity(data, on_nonfinite=on_nonfinite)
+    # save stores a single image (allow_stack=False), unlike the loader.
+    data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
 
     header = IntensityBinHeader(
         width=int(data.shape[1]),

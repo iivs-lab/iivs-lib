@@ -3,15 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit, validate_phase
-
-
-def test_validate_phase_delegates_to_float32_validator():
-    # The phase-named alias enforces the shared float32-image contract.
-    data = np.zeros((2, 2), dtype=np.float32)
-    assert validate_phase(data) is data
-    with pytest.raises(ValueError, match="float32"):
-        validate_phase(np.zeros((2, 2), dtype=np.float64))
+from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit
 
 
 def test_convert_phase_unit_radians_to_meters():

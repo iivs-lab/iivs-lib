@@ -253,7 +253,7 @@ def test_save_rejects_non_2d(tmp_path):
 
 
 def test_save_rejects_3d_stack(tmp_path):
-    # A 3D array passes validate_phase (ndim >= 2) but save_phase_bin writes one image.
+    # A 3D array would pass with allow_stack, but save_phase_bin writes one image.
     with pytest.raises(ValueError, match="single 2D image"):
         save_phase_bin(
             tmp_path / "bad.bin",

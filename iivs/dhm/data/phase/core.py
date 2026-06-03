@@ -1,17 +1,13 @@
 from __future__ import annotations
 
-__all__ = ("PhaseUnit", "convert_phase_unit", "validate_phase")
+__all__ = ("PhaseUnit", "convert_phase_unit")
 
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
 import numpy as np
 
-from iivs.dhm.data.common import validate_float32_image
-
 if TYPE_CHECKING:
-    from typing import Literal
-
     from numpy.typing import NDArray
 
 
@@ -27,20 +23,6 @@ class PhaseUnit(IntEnum):
     RADIANS = 1
     METERS = 2
     NANOMETERS = 3
-
-
-def validate_phase(
-    data: NDArray[np.float32],
-    *,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
-) -> NDArray[np.float32]:
-    """Validate a float32 phase image or stack and return it.
-
-    A phase-named alias of `validate_float32_image`; see it for the full
-    contract (float32 dtype, at least two dimensions, and the `on_nonfinite`
-    policy).
-    """
-    return validate_float32_image(data, on_nonfinite=on_nonfinite)
 
 
 _NM_PER_M = 1e9

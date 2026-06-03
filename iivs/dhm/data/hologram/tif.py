@@ -18,9 +18,12 @@ from kaparoo.data.sequences import FileListSequence
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import FrameShapedMixin, SequentialFileFolder
+from iivs.dhm.data.common import (
+    FrameShapedMixin,
+    SequentialFileFolder,
+    validate_uint8_image,
+)
 from iivs.dhm.data.hologram.base import HologramSequence
-from iivs.dhm.data.hologram.core import validate_hologram
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -38,7 +41,7 @@ def load_hologram_tif(path: StrPath) -> NDArray[np.uint8]:
     """
     path = ensure_file_exists(path)
     data = tifffile.imread(path)
-    return validate_hologram(data)
+    return validate_uint8_image(data, allow_stack=False)
 
 
 def save_hologram_tif(
@@ -60,7 +63,7 @@ def save_hologram_tif(
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    data = validate_hologram(data)
+    data = validate_uint8_image(data, allow_stack=False)
 
     # tifffile needs a named target, so encode in memory and stage the bytes.
     buffer = io.BytesIO()

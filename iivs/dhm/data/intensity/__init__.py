@@ -8,7 +8,6 @@ __all__ = (
     "load_intensity_bin",
     "read_intensity_bin_header",
     "save_intensity_bin",
-    "validate_intensity",
 )
 
 from iivs.dhm.data.intensity.base import IntensitySequence
@@ -20,4 +19,3 @@ from iivs.dhm.data.intensity.bin import (
     read_intensity_bin_header,
     save_intensity_bin,
 )
-from iivs.dhm.data.intensity.core import validate_intensity
