@@ -5,18 +5,17 @@ item to a CHANGELOG entry once it lands.
 
 ## Open
 
-- **Factor a per-modality folder/list base over the format codec.** Now that
-  phase and intensity each ship `.bin` *and* `.txt` formats, `PhaseBinFolder`
-  and `PhaseTxtFolder` (likewise `*BinList` / `*TxtList`, and the intensity
-  pair) differ only by a codec: the header reader and the decode function
-  (`FILE_EXT` aside). Everything else -- `__init__`, `header`, `target_unit`,
-  `frame_shape`, `load_file`, `_validate_content` -- is duplicated per format.
-  Extract a per-modality base (e.g. `_PhaseFileFolder` / `_PhaseFileList`) that
-  holds it once with abstract `_read_header` / `_decode` hooks, and have the
-  bin/txt classes supply just the codec + `FILE_EXT`. The numbered-folder
-  mechanics are already shared via `data.common.SequentialFileFolder`; this is
-  the remaining (modality-level) duplication. A maintenance concern, not a
-  correctness one.
+- **Share the format codec across `.bin` / `.txt` within a modality.** Two
+  axes of reuse are already in place: numbered-folder mechanics via
+  `data.common.SequentialFileFolder`, and folder/list via each `*Folder`
+  subclassing its `*List` (so the folder inherits `load_file`). What remains is
+  the *per-format* duplication within a modality: `PhaseBinList` vs
+  `PhaseTxtList` differ only by `load_file`'s decoder (`load_phase_bin` vs
+  `load_phase_txt`), and `PhaseBinFolder` vs `PhaseTxtFolder` only by the header
+  reader in `__init__` / `_validate_content` (`FILE_EXT` aside); the intensity
+  pairs likewise. Express the codec (header reader + decode fn) once per
+  (modality, format) and inject it, so the list/folder bodies stop repeating
+  per format. A maintenance concern, not a correctness one.
 - **Add a dataset/acquisition opener.** Koala nests its export as
   `<Modality>/Float/Bin`, `<Modality>/Float/Txt`, `<Modality>/Image`, plus
   `Holograms/holo.raw`, `timestamps.txt`, and `phbounds.txt` at the root; today

@@ -10,5 +10,6 @@ def test_intensity_sequence_hierarchy():
     # arbitrary file list is an IntensitySequence only.
     assert issubclass(IntensityBinFolder, IntensitySequence)
     assert issubclass(IntensityBinFolder, FrameShapedMixin)
+    assert issubclass(IntensityBinFolder, IntensityBinList)  # folder is a special list
     assert issubclass(IntensityBinList, IntensitySequence)
     assert not issubclass(IntensityBinList, FrameShapedMixin)

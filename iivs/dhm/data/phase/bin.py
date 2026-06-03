@@ -329,118 +329,16 @@ def save_phase_bin(
 # ========================== #
 
 
-class PhaseBinFolder(
-    SequentialFileFolder[NDArray[np.float32]],
-    PhaseSequence[Path],
-    FrameShapedMixin,
-):
-    """An ordered sequence of Lyncée Tec Koala `.bin` phase images in a folder.
-
-    Lists the direct children matching `{index:05d}_phase.bin` (exactly five
-    digits, case-sensitive), in index order. All images are assumed to share
-    one acquisition `header`, read once from the first file; that header drives
-    the optional unit conversion and `validate`. Each item is the decoded
-    float32 image (optionally converted to `target_unit`) and its metadata is
-    the source path.
-
-    Args:
-        root: The folder to scan. Must exist, be a directory, and contain at
-            least one matching file.
-        target_unit: Unit to return loaded images in. When it differs from the
-            stored unit, images are converted on load via the header's
-            `height_scale`; an unreachable unit (e.g. converting to/from
-            UNKNOWN) is rejected at construction. Defaults to None, which keeps
-            the stored unit.
-        validate: Run `validate` to this level ("names", "headers", or
-            "data") at construction, or None to skip. Defaults to "headers".
-
-    Raises:
-        DirectoryNotFoundError: If `root` does not exist.
-        NotADirectoryError: If `root` exists but is not a directory.
-        FileNotFoundError: If no `NNNNN_phase.bin` files are found in `root`.
-        ValueError: If `target_unit` cannot be converted from the stored unit,
-            or if `validate` is set and the sequence fails validation.
-    """
-
-    FILE_STEM: ClassVar[str] = "phase"
-    FILE_EXT: ClassVar[str] = "bin"
-    LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")
-    DEFAULT_LEVEL: ClassVar[str] = "headers"
-
-    def __init__(
-        self,
-        root: StrPath,
-        *,
-        target_unit: PhaseUnit | None = None,
-        validate: Literal["names", "headers", "data"] | None = "headers",
-    ) -> None:
-        super().__init__(root)  # list_files rejects an empty folder
-
-        self._header = read_phase_bin_header(self.get_file(0))
-        self._target_unit = replace_if_none(target_unit, self._header.unit)
-
-        # Fail fast: reject an unreachable target unit at construction, not
-        # lazily on each get_item. The empty array makes it a pure pair check.
-        convert_phase_unit(
-            np.empty((0, 0), dtype=np.float32),
-            source=self._header.unit,
-            target=self._target_unit,
-            height_scale=self._header.height_scale,
-        )
-
-        if validate is not None:
-            self.validate(level=validate)
-
-    @property
-    def header(self) -> PhaseBinHeader:
-        """The shared acquisition header, read from the first file."""
-        return self._header
-
-    @property
-    def target_unit(self) -> PhaseUnit:
-        """The unit that loaded images are returned in."""
-        return self._target_unit
-
-    @property
-    @override
-    def frame_shape(self) -> tuple[int, int]:
-        """The (height, width) of each image, from the shared header."""
-        return self._header.shape
-
-    @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`, converted to `target_unit`."""
-        return convert_phase_unit(
-            load_phase_bin(path),
-            source=self._header.unit,
-            target=self._target_unit,
-            height_scale=self._header.height_scale,
-        )
-
-    @override
-    def _validate_content(self, path: Path, *, level: str) -> None:
-        """Check `path`'s header matches the reference; at "data", decode too.
-
-        The "headers" and "data" levels both require every file to share the
-        first file's `header`; "data" additionally decodes the pixels.
-        """
-        if read_phase_bin_header(path) != self.header:
-            msg = f"header of {path.name} differs from the first file"
-            raise ValueError(msg)
-
-        if level == "data":
-            load_phase_bin(path, on_nonfinite="raise")
-
-
 class PhaseBinList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]):
     """A phase sequence over an explicit, arbitrary list of `.bin` files.
 
-    Unlike `PhaseBinFolder`, imposes no naming, contiguity, single-folder,
-    or shared-header constraint: the files may live anywhere and each is read
+    The general case: imposes no naming, contiguity, single-folder, or
+    shared-header constraint -- the files may live anywhere and each is read
     independently, its own header driving any per-file unit conversion. The
     images may therefore differ in shape, so this is a plain `PhaseSequence`
     (no `frame_shape`). Each item is the decoded float32 image (optionally
     converted to `target_unit`) and its metadata is the source path.
+    `PhaseBinFolder` is the auto-discovered, same-shape special case of this.
 
     Args:
         files: The `.bin` files to expose, in the given order.
@@ -474,3 +372,95 @@ class PhaseBinList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Pa
         return convert_phase_unit(
             image, source=header.unit, target=target, height_scale=header.height_scale
         )
+
+
+class PhaseBinFolder(
+    SequentialFileFolder[NDArray[np.float32]],
+    PhaseBinList,
+    FrameShapedMixin,
+):
+    """An ordered sequence of Lyncée Tec Koala `.bin` phase images in a folder.
+
+    The auto-discovered special case of `PhaseBinList` (it inherits the
+    decode/convert `load_file`): lists the direct children matching
+    `{index:05d}_phase.bin` (exactly five digits, case-sensitive), in index
+    order. All images are assumed to share one acquisition `header`, read once
+    from the first file; that header resolves `target_unit` and drives
+    `validate`. Each item is the decoded float32 image (optionally converted to
+    `target_unit`) and its metadata is the source path.
+
+    Args:
+        root: The folder to scan. Must exist, be a directory, and contain at
+            least one matching file.
+        target_unit: Unit to return loaded images in. When it differs from the
+            stored unit, images are converted on load via the header's
+            `height_scale`; an unreachable unit (e.g. converting to/from
+            UNKNOWN) is rejected at construction. Defaults to None, which keeps
+            the stored unit.
+        validate: Run `validate` to this level ("names", "headers", or
+            "data") at construction, or None to skip. Defaults to "headers".
+
+    Raises:
+        DirectoryNotFoundError: If `root` does not exist.
+        NotADirectoryError: If `root` exists but is not a directory.
+        FileNotFoundError: If no `NNNNN_phase.bin` files are found in `root`.
+        ValueError: If `target_unit` cannot be converted from the stored unit,
+            or if `validate` is set and the sequence fails validation.
+    """
+
+    FILE_STEM: ClassVar[str] = "phase"
+    FILE_EXT: ClassVar[str] = "bin"
+    LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")
+    DEFAULT_LEVEL: ClassVar[str] = "headers"
+
+    def __init__(
+        self,
+        root: StrPath,
+        *,
+        target_unit: PhaseUnit | None = None,
+        validate: Literal["names", "headers", "data"] | None = "headers",
+    ) -> None:
+        # super().__init__(root) discovers the files and, via the cooperative
+        # MRO, runs PhaseBinList.__init__ (target_unit defaults to None here);
+        # the resolved unit is set below once the shared header is known.
+        super().__init__(root)
+
+        self._header = read_phase_bin_header(self.get_file(0))
+        self._target_unit = replace_if_none(target_unit, self._header.unit)
+
+        # Fail fast: reject an unreachable target unit at construction, not
+        # lazily on each get_item. The empty array makes it a pure pair check.
+        convert_phase_unit(
+            np.empty((0, 0), dtype=np.float32),
+            source=self._header.unit,
+            target=self._target_unit,
+            height_scale=self._header.height_scale,
+        )
+
+        if validate is not None:
+            self.validate(level=validate)
+
+    @property
+    def header(self) -> PhaseBinHeader:
+        """The shared acquisition header, read from the first file."""
+        return self._header
+
+    @property
+    @override
+    def frame_shape(self) -> tuple[int, int]:
+        """The (height, width) of each image, from the shared header."""
+        return self._header.shape
+
+    @override
+    def _validate_content(self, path: Path, *, level: str) -> None:
+        """Check `path`'s header matches the reference; at "data", decode too.
+
+        The "headers" and "data" levels both require every file to share the
+        first file's `header`; "data" additionally decodes the pixels.
+        """
+        if read_phase_bin_header(path) != self.header:
+            msg = f"header of {path.name} differs from the first file"
+            raise ValueError(msg)
+
+        if level == "data":
+            load_phase_bin(path, on_nonfinite="raise")

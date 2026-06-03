@@ -219,17 +219,45 @@ def save_intensity_bin(
 # ========================== #
 
 
+class IntensityBinList(
+    FileListSequence[NDArray[np.float32], Path], IntensitySequence[Path]
+):
+    """An intensity sequence over an explicit, arbitrary list of `.bin` files.
+
+    The general case: imposes no naming, contiguity, single-folder, or
+    shared-header constraint -- the files may live anywhere and each is read
+    independently. The images may therefore differ in shape, so this is a
+    plain `IntensitySequence` (no `frame_shape`). Each item is the decoded
+    float32 image and its metadata is the source path. `IntensityBinFolder` is
+    the auto-discovered, same-shape special case of this.
+
+    Args:
+        files: The `.bin` files to expose, in the given order.
+    """
+
+    @override
+    def get_meta(self, index: int) -> Path:
+        """Return the source path of the file at `index`."""
+        return self.get_file(index)
+
+    @override
+    def load_file(self, path: Path) -> NDArray[np.float32]:
+        """Load the image at `path`."""
+        return load_intensity_bin(path)
+
+
 class IntensityBinFolder(
     SequentialFileFolder[NDArray[np.float32]],
-    IntensitySequence[Path],
+    IntensityBinList,
     FrameShapedMixin,
 ):
     """An ordered sequence of Koala `.bin` intensity images in a folder.
 
-    Lists the direct children matching `{index:05d}_intensity.bin` (exactly
-    five digits, case-sensitive), in index order. All images are assumed to
-    share one acquisition `header`, read once from the first file. Each item is
-    the decoded float32 image and its metadata is the source path.
+    The auto-discovered special case of `IntensityBinList` (it inherits the
+    `load_file`): lists the direct children matching `{index:05d}_intensity.bin`
+    (exactly five digits, case-sensitive), in index order. All images are
+    assumed to share one acquisition `header`, read once from the first file.
+    Each item is the decoded float32 image and its metadata is the source path.
 
     Args:
         root: The folder to scan. Must exist, be a directory, and contain at
@@ -256,7 +284,7 @@ class IntensityBinFolder(
         *,
         validate: Literal["names", "headers", "data"] | None = "headers",
     ) -> None:
-        super().__init__(root)  # list_files rejects an empty folder
+        super().__init__(root)  # discovers files; list_files rejects an empty folder
 
         self._header = read_intensity_bin_header(self.get_file(0))
 
@@ -275,11 +303,6 @@ class IntensityBinFolder(
         return self._header.shape
 
     @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`."""
-        return load_intensity_bin(path)
-
-    @override
     def _validate_content(self, path: Path, *, level: str) -> None:
         """Check `path`'s header matches the reference; at "data", decode too.
 
@@ -292,29 +315,3 @@ class IntensityBinFolder(
 
         if level == "data":
             load_intensity_bin(path, on_nonfinite="raise")
-
-
-class IntensityBinList(
-    FileListSequence[NDArray[np.float32], Path], IntensitySequence[Path]
-):
-    """An intensity sequence over an explicit, arbitrary list of `.bin` files.
-
-    Unlike `IntensityBinFolder`, imposes no naming, contiguity, single-folder,
-    or shared-header constraint: the files may live anywhere and each is read
-    independently. The images may therefore differ in shape, so this is a
-    plain `IntensitySequence` (no `frame_shape`). Each item is the decoded
-    float32 image and its metadata is the source path.
-
-    Args:
-        files: The `.bin` files to expose, in the given order.
-    """
-
-    @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
-
-    @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`."""
-        return load_intensity_bin(path)

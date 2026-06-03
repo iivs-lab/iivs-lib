@@ -10,5 +10,6 @@ def test_phase_sequence_hierarchy():
     # file list is a PhaseSequence only.
     assert issubclass(PhaseBinFolder, PhaseSequence)
     assert issubclass(PhaseBinFolder, FrameShapedMixin)
+    assert issubclass(PhaseBinFolder, PhaseBinList)  # a folder is a special list
     assert issubclass(PhaseBinList, PhaseSequence)
     assert not issubclass(PhaseBinList, FrameShapedMixin)

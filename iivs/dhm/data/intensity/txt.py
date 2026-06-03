@@ -131,15 +131,40 @@ def load_intensity_txt(
 # ========================== #
 
 
+class IntensityTxtList(
+    FileListSequence[NDArray[np.float32], Path], IntensitySequence[Path]
+):
+    """An intensity sequence over an explicit, arbitrary list of `Float/Txt` files.
+
+    The text twin of `IntensityBinList`: no naming/contiguity/shared-header
+    constraint; each file is read independently. `IntensityTxtFolder` is the
+    auto-discovered, same-shape special case of this.
+
+    Args:
+        files: The `.txt` files to expose, in the given order.
+    """
+
+    @override
+    def get_meta(self, index: int) -> Path:
+        """Return the source path of the file at `index`."""
+        return self.get_file(index)
+
+    @override
+    def load_file(self, path: Path) -> NDArray[np.float32]:
+        """Load the image at `path`."""
+        return load_intensity_txt(path)
+
+
 class IntensityTxtFolder(
     SequentialFileFolder[NDArray[np.float32]],
-    IntensitySequence[Path],
+    IntensityTxtList,
     FrameShapedMixin,
 ):
     """An ordered sequence of Koala `Float/Txt` intensity images in a folder.
 
-    The text twin of `IntensityBinFolder`: lists `{index:05d}_intensity.txt`
-    and shares one acquisition `header` (read from the first file).
+    The text twin of `IntensityBinFolder`, and the auto-discovered special case
+    of `IntensityTxtList` (it inherits the `load_file`): lists
+    `{index:05d}_intensity.txt` and shares one acquisition `header`.
 
     Args:
         root: The folder to scan.
@@ -176,11 +201,6 @@ class IntensityTxtFolder(
         return self._header.shape
 
     @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`."""
-        return load_intensity_txt(path)
-
-    @override
     def _validate_content(self, path: Path, *, level: str) -> None:
         """Check `path`'s header matches the reference; at "data", decode too."""
         if read_intensity_txt_header(path) != self.header:
@@ -189,26 +209,3 @@ class IntensityTxtFolder(
 
         if level == "data":
             load_intensity_txt(path, on_nonfinite="raise")
-
-
-class IntensityTxtList(
-    FileListSequence[NDArray[np.float32], Path], IntensitySequence[Path]
-):
-    """An intensity sequence over an explicit, arbitrary list of `Float/Txt` files.
-
-    The text twin of `IntensityBinList`: no naming/contiguity/shared-header
-    constraint; each file is read independently.
-
-    Args:
-        files: The `.txt` files to expose, in the given order.
-    """
-
-    @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
-
-    @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`."""
-        return load_intensity_txt(path)

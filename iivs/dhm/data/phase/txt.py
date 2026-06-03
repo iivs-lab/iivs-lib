@@ -159,15 +159,54 @@ def load_phase_txt(
 # ========================== #
 
 
+class PhaseTxtList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]):
+    """A phase sequence over an explicit, arbitrary list of `Float/Txt` files.
+
+    The text twin of `PhaseBinList`: no naming/contiguity/shared-header
+    constraint; each file is read independently with per-file unit conversion.
+    `PhaseTxtFolder` is the auto-discovered, same-shape special case of this.
+
+    Args:
+        files: The `.txt` files to expose, in the given order.
+        target_unit: Unit to return images in (None keeps each file's stored).
+    """
+
+    def __init__(
+        self, files: StrPaths, *, target_unit: PhaseUnit | None = None
+    ) -> None:
+        super().__init__(files)
+        self._target_unit = target_unit
+
+    @property
+    def target_unit(self) -> PhaseUnit | None:
+        """The unit images are converted to on load, or None to keep each file's."""
+        return self._target_unit
+
+    @override
+    def get_meta(self, index: int) -> Path:
+        """Return the source path of the file at `index`."""
+        return self.get_file(index)
+
+    @override
+    def load_file(self, path: Path) -> NDArray[np.float32]:
+        """Load the image at `path`, converted to `target_unit` if one is set."""
+        image, header = load_phase_txt(path, return_header=True)
+        target = self._target_unit if self._target_unit is not None else header.unit
+        return convert_phase_unit(
+            image, source=header.unit, target=target, height_scale=header.height_scale
+        )
+
+
 class PhaseTxtFolder(
     SequentialFileFolder[NDArray[np.float32]],
-    PhaseSequence[Path],
+    PhaseTxtList,
     FrameShapedMixin,
 ):
     """An ordered sequence of Koala `Float/Txt` phase images in a folder.
 
-    The text twin of `PhaseBinFolder`: lists `{index:05d}_phase.txt`, shares
-    one acquisition `header` (read from the first file), and converts to
+    The text twin of `PhaseBinFolder`, and the auto-discovered special case of
+    `PhaseTxtList` (it inherits the `load_file`): lists `{index:05d}_phase.txt`,
+    shares one acquisition `header` (read from the first file), and converts to
     `target_unit` on load.
 
     Args:
@@ -209,25 +248,10 @@ class PhaseTxtFolder(
         return self._header
 
     @property
-    def target_unit(self) -> PhaseUnit:
-        """The unit that loaded images are returned in."""
-        return self._target_unit
-
-    @property
     @override
     def frame_shape(self) -> tuple[int, int]:
         """The (height, width) of each image, from the shared header."""
         return self._header.shape
-
-    @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`, converted to `target_unit`."""
-        return convert_phase_unit(
-            load_phase_txt(path),
-            source=self._header.unit,
-            target=self._target_unit,
-            height_scale=self._header.height_scale,
-        )
 
     @override
     def _validate_content(self, path: Path, *, level: str) -> None:
@@ -238,40 +262,3 @@ class PhaseTxtFolder(
 
         if level == "data":
             load_phase_txt(path, on_nonfinite="raise")
-
-
-class PhaseTxtList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]):
-    """A phase sequence over an explicit, arbitrary list of `Float/Txt` files.
-
-    The text twin of `PhaseBinList`: no naming/contiguity/shared-header
-    constraint; each file is read independently with per-file unit conversion.
-
-    Args:
-        files: The `.txt` files to expose, in the given order.
-        target_unit: Unit to return images in (None keeps each file's stored).
-    """
-
-    def __init__(
-        self, files: StrPaths, *, target_unit: PhaseUnit | None = None
-    ) -> None:
-        super().__init__(files)
-        self._target_unit = target_unit
-
-    @property
-    def target_unit(self) -> PhaseUnit | None:
-        """The unit images are converted to on load, or None to keep each file's."""
-        return self._target_unit
-
-    @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
-
-    @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`, converted to `target_unit` if one is set."""
-        image, header = load_phase_txt(path, return_header=True)
-        target = self._target_unit if self._target_unit is not None else header.unit
-        return convert_phase_unit(
-            image, source=header.unit, target=target, height_scale=header.height_scale
-        )

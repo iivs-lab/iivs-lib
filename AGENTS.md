@@ -65,6 +65,13 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   `*Folder` builds on it), the `FrameShapedMixin`, and `validate_float32_image`.
   Prefer a shared base/template + a small mixin over copy-pasting across
   modalities.
+- A `*Folder` is the auto-discovered special case of its `*List`, so it
+  *subclasses the list* (mirroring kaparoo's `FileFolderSequence` ⊂
+  `FileListSequence`) and reuses its `load_file` codec: e.g.
+  `PhaseBinFolder(SequentialFileFolder[...], PhaseBinList, FrameShapedMixin)`.
+  `FileFolderSequence.__init__(root)` discovers the files and cooperatively
+  calls the list's `__init__` down the MRO. Define the list *before* the folder
+  in the module.
 - Mark cross-cutting capabilities with a mixin, not a class per modality. A
   same-shape source mixes `data.common.FrameShapedMixin` (forces
   `frame_shape`) into its `<Modality>Sequence` rather than having a
