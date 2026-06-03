@@ -18,18 +18,6 @@ item to a CHANGELOG entry once it lands.
   (`list_files` / `validate` / `validate_file`). The current diamond
   (`FileFolderSequence` + modality base via `DataSequence`) is benign — this
   is a duplication/maintenance concern, not a correctness one.
-- **Read Koala intensity `.bin` (new modality) and share the bin header.**
-  Koala's real export pairs Phase with an Intensity reconstruction using the
-  identical 23-byte `.bin` header, but intensity sets `unit=0` (none) and
-  `height_scale=-1.0` (a sentinel: no height), which `PhaseBinHeader` rejects
-  (`height_scale must be positive`). Add `iivs.dhm.data.intensity` mirroring
-  phase (`IntensitySequence` / `UniformIntensitySequence`, `IntensityBinFolder`
-  / `IntensityBinList`, `load_intensity_bin` / `save_intensity_bin`,
-  `validate_intensity`). As the second `.bin` modality, factor a shared
-  Koala-bin header first: a base holding version/endian/header_size/width/
-  height/pixel_size plus the raw `hconv` / `unit`, with phase layering the
-  `height_scale > 0` + `PhaseUnit` rules and intensity accepting the
-  `hconv = -1` / `unit = 0` sentinel. Pair this with the codec-mixin item above.
 - **Add a dataset/acquisition opener.** Koala nests its export as
   `<Modality>/Float/Bin`, `<Modality>/Float/Txt`, `<Modality>/Image`, plus
   `Holograms/holo.raw`, `timestamps.txt`, and `phbounds.txt` at the root; today

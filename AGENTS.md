@@ -54,10 +54,13 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   not mirror a data file it handles (`timestamp.py` reads
   `timestamps.txt`).
 - Group data-format code by modality, then by file format. Each modality
-  under `iivs.dhm.data` (`phase`, `hologram`, `timestamp`) splits a
-  multi-format modality into per-format modules plus a format-agnostic
-  `core` and a `base` holding the abstract sequence types — e.g.
-  `phase/{core,base,bin}.py`, `hologram/{core,base,tif,raw}.py`.
+  under `iivs.dhm.data` (`phase`, `intensity`, `hologram`, `timestamp`)
+  splits a multi-format modality into per-format modules plus a
+  format-agnostic `core` and a `base` holding the abstract sequence types —
+  e.g. `phase/{core,base,bin}.py`, `hologram/{core,base,tif,raw}.py`.
+  File-format primitives shared across modalities live at the data-package
+  root — e.g. `binfile.py` holds the `KoalaBinHeader` base and the `.bin`
+  pixel I/O used by both `phase` and `intensity`.
 - Name sequence classes by role vs backing. Abstract role types keep the
   `Sequence` suffix (`PhaseSequence`, `UniformPhaseSequence`,
   `TimestampSequence`); concrete types drop it and read

@@ -36,6 +36,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     explicit, arbitrary list of `.bin` files (any location, no naming or
     shared-header constraint); each file is read independently with per-file
     unit conversion.
+- `iivs.dhm.data.binfile`: the shared Lyncée Tec Koala `.bin` format — the
+  `KoalaBinHeader` base (geometry plus the packed 23-byte header machinery and
+  the float32 pixel block I/O via `read_bin_pixels` / `write_bin`),
+  specialized per modality by `PhaseBinHeader` and `IntensityBinHeader`.
+- `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
+  images (the amplitude/intensity reconstruction Koala exports alongside
+  phase).
+  - `IntensityBinHeader` — the typed header; intensity carries no height scale
+    or unit, so Koala's `hconv = -1` / `unit = 0` sentinel is written on save
+    and ignored on load.
+  - `load_intensity_bin(path, *, return_header=False)` /
+    `save_intensity_bin(...)` / `read_intensity_bin_header(path)`.
+  - `validate_intensity(data, *, on_nonfinite=...)`.
+  - `IntensitySequence` / `UniformIntensitySequence` base types, with concrete
+    `IntensityBinFolder` (a `{index:05d}_intensity.bin` folder) and
+    `IntensityBinList` (an arbitrary list of `.bin` files).
 - `iivs.dhm.data.timestamp`: per-frame acquisition timing.
   - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
     `Timestamp.series_from_elapsed_times`.
