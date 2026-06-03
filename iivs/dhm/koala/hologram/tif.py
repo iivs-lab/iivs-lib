@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 def load_hologram_tif(path: StrPath) -> NDArray[np.uint8]:
-    """Load a Koala uint8 hologram from a `.tif` file.
+    """Load a Lyncée Tec Koala uint8 hologram from a `.tif` file.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
@@ -69,7 +69,7 @@ def save_hologram_tif(
 class HologramTifSequence(
     FileFolderSequence[NDArray[np.uint8], Path], HologramSequence[Path]
 ):
-    """An ordered sequence of Koala `NNNNN_holo.tif` uint8 hologram images.
+    """An ordered sequence of Lyncée Tec Koala `NNNNN_holo.tif` uint8 hologram images.
 
     Lists the direct children matching `{index:05d}_holo.tif` (exactly five
     digits, case-sensitive), in index order. Each item is the decoded uint8

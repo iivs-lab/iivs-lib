@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class HologramRawHeader:
-    """The fixed-size header of a Koala hologram `.raw` file.
+    """The fixed-size header of a Lyncée Tec Koala hologram `.raw` file.
 
     Four little-endian int32 fields -- width, height, bit depth (bits per
     pixel), and frame count -- followed immediately by `frame_count`
@@ -135,14 +135,14 @@ class HologramRawHeader:
 
 
 def read_hologram_raw_header(path: StrPath) -> HologramRawHeader:
-    """Read only the header of a Koala hologram `.raw` file, without the pixels."""
+    """Read only the header of a Lyncée Tec Koala hologram `.raw` file, without the pixels."""
     return HologramRawHeader.from_file(path)
 
 
 class HologramRawSequence(
     SingleFileSequence[NDArray[np.uint8], int], HologramSequence[int]
 ):
-    """An ordered sequence of holograms in a single Koala `.raw` file.
+    """An ordered sequence of holograms in a single Lyncée Tec Koala `.raw` file.
 
     The file is a `HologramRawHeader` followed by its frames, held internally
     as a lazy, read-only `np.memmap` so a large multi-frame file is never
@@ -207,5 +207,5 @@ class HologramRawSequence(
 
     def __reduce__(self) -> tuple[type[HologramRawSequence], tuple[StrPath]]:
         # Pickle only the source path; the memmap re-opens per process on load
-        # instead of copying every frame into the pickle (DataLoader-safe).
+        # instead of copying every frame into the pickle (multiprocessing-safe).
         return (type(self), (self.path,))
