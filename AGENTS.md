@@ -60,7 +60,11 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   e.g. `phase/{core,base,bin}.py`, `hologram/{core,base,tif,raw}.py`.
   File-format primitives shared across modalities live at the data-package
   root — e.g. `binfile.py` holds the `KoalaBinHeader` base and the `.bin`
-  pixel I/O used by both `phase` and `intensity`.
+  pixel I/O used by both `phase` and `intensity`; `folder.py` holds
+  `SequentialFileFolderSequence` (the numbered-folder discovery + validation
+  template every `*Folder` builds on); `sequence.py` holds the `FrameShaped`
+  structural `Protocol`. Prefer a shared base/template + a structural
+  `Protocol` over copy-pasting across modalities.
 - Name sequence classes by role vs backing. Abstract role types keep the
   `Sequence` suffix (`PhaseSequence`, `UniformPhaseSequence`,
   `TimestampSequence`); concrete types drop it and read

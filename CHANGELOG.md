@@ -36,6 +36,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     explicit, arbitrary list of `.bin` files (any location, no naming or
     shared-header constraint); each file is read independently with per-file
     unit conversion.
+- `iivs.dhm.data.folder`: `SequentialFileFolderSequence` — a
+  `kaparoo.data.sequences.FileFolderSequence` base for `{index:05d}_<stem>.<ext>`
+  folders. Subclasses set `FILE_STEM` / `FILE_EXT` / `LEVELS` / `DEFAULT_LEVEL`
+  and a `_validate_content` hook; numbered discovery (`list_files`), `get_meta`,
+  and the contiguity-checked `validate` / `validate_file` come for free. The
+  `PhaseBinFolder`, `IntensityBinFolder`, and `HologramTifFolder` build on it.
+- `iivs.dhm.data.sequence`: `FrameShaped` — a runtime-checkable `Protocol` for
+  any sequence exposing a uniform `frame_shape`, so consumers can accept a
+  same-shape source structurally without depending on the `Uniform*Sequence`
+  hierarchy.
 - `iivs.dhm.data.binfile`: the shared Lyncée Tec Koala `.bin` format — the
   `KoalaBinHeader` base (geometry plus the packed 23-byte header machinery and
   the float32 pixel block I/O via `read_bin_pixels` / `write_bin`),

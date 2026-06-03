@@ -14,14 +14,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
 import numpy as np
-from kaparoo.data.sequences import FileFolderSequence, FileListSequence
+from kaparoo.data.sequences import FileListSequence
 from kaparoo.filesystem import ensure_file_exists
-from kaparoo.filesystem.search import search_files
-from kaparoo.filesystem.search.filters import Regex
-from natsort import natsorted
 from numpy.typing import NDArray
 
 from iivs.dhm.data.binfile import KoalaBinHeader, read_bin_pixels, write_bin
+from iivs.dhm.data.folder import SequentialFileFolderSequence
 from iivs.dhm.data.intensity.base import IntensitySequence, UniformIntensitySequence
 from iivs.dhm.data.intensity.core import validate_intensity
 
@@ -220,7 +218,7 @@ def save_intensity_bin(
 
 
 class IntensityBinFolder(
-    FileFolderSequence[NDArray[np.float32], Path], UniformIntensitySequence[Path]
+    SequentialFileFolderSequence[NDArray[np.float32]], UniformIntensitySequence[Path]
 ):
     """An ordered sequence of Koala `.bin` intensity images in a folder.
 
@@ -242,6 +240,11 @@ class IntensityBinFolder(
             `root`.
         ValueError: If `validate` is set and the sequence fails validation.
     """
+
+    FILE_STEM: ClassVar[str] = "intensity"
+    FILE_EXT: ClassVar[str] = "bin"
+    LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")
+    DEFAULT_LEVEL: ClassVar[str] = "headers"
 
     def __init__(
         self,
@@ -268,66 +271,18 @@ class IntensityBinFolder(
         return self._header.shape
 
     @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
-
-    @override
-    def list_files(self, root: Path) -> list[Path]:
-        """List the `NNNNN_intensity.bin` files under `root`, in index order."""
-        files = search_files(
-            root, name_filter=Regex(r"\d{5}_intensity\.bin"), max_depth=1
-        )
-        if not files:
-            msg = f"no NNNNN_intensity.bin files found in {root}"
-            raise FileNotFoundError(msg)
-        return natsorted(files)
-
-    @override
     def load_file(self, path: Path) -> NDArray[np.float32]:
         """Load the image at `path`."""
         return load_intensity_bin(path)
 
-    def validate(
-        self, *, level: Literal["names", "headers", "data"] = "headers"
-    ) -> None:
-        """Validate the sequence to the given `level`.
+    @override
+    def _validate_content(self, path: Path, *, level: str) -> None:
+        """Check `path`'s header matches the reference; at "data", decode too.
 
-        Args:
-            level: How deep to validate (cumulative): "names" checks only
-                that files are numbered contiguously from 0 (index `i` is
-                `{i:05d}_intensity.bin`); "headers" (default) also that every
-                file shares the first file's header; "data" also that every
-                image decodes without error (expensive -- it reads every
-                pixel).
-
-        Raises:
-            ValueError: If the numbering has gaps, a header differs from the
-                first, or (at "data") an image fails to load.
+        The "headers" and "data" levels both require every file to share the
+        first file's `header`; "data" additionally decodes the pixels.
         """
-        for index in range(len(self)):
-            self.validate_file(index, level=level)
-
-    def validate_file(
-        self, index: int, *, level: Literal["names", "headers", "data"] = "headers"
-    ) -> None:
-        """Validate the file at `index` to `level` (see `validate`)."""
-        if level not in ("names", "headers", "data"):
-            msg = f"level must be 'names', 'headers', or 'data' (got {level!r})"
-            raise ValueError(msg)
-
-        path = self.get_file(index)
-
-        expected = f"{index:05d}_intensity.bin"
-        if path.name != expected:
-            msg = f"non-contiguous numbering: expected {expected} at index {index}, got {path.name}"
-            raise ValueError(msg)
-
-        if level == "names":
-            return
-
-        # The first file is the reference header, so it is never compared.
-        if index != 0 and read_intensity_bin_header(path) != self.header:
+        if read_intensity_bin_header(path) != self.header:
             msg = f"header of {path.name} differs from the first file"
             raise ValueError(msg)
 

@@ -10,17 +10,15 @@ __all__ = (
 import io
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
 import tifffile
-from kaparoo.data.sequences import FileFolderSequence, FileListSequence
+from kaparoo.data.sequences import FileListSequence
 from kaparoo.filesystem import StagedFile, ensure_file_exists
-from kaparoo.filesystem.search import search_files
-from kaparoo.filesystem.search.filters import Regex
-from natsort import natsorted
 from numpy.typing import NDArray
 
+from iivs.dhm.data.folder import SequentialFileFolderSequence
 from iivs.dhm.data.hologram.base import HologramSequence, UniformHologramSequence
 from iivs.dhm.data.hologram.core import validate_hologram
 
@@ -73,7 +71,7 @@ def save_hologram_tif(
 
 
 class HologramTifFolder(
-    FileFolderSequence[NDArray[np.uint8], Path], UniformHologramSequence[Path]
+    SequentialFileFolderSequence[NDArray[np.uint8]], UniformHologramSequence[Path]
 ):
     """An ordered sequence of Lyncée Tec Koala `NNNNN_holo.tif` uint8 hologram images.
 
@@ -93,6 +91,11 @@ class HologramTifFolder(
         FileNotFoundError: If no `NNNNN_holo.tif` files are found in `root`.
         ValueError: If `validate` is set and the sequence fails validation.
     """
+
+    FILE_STEM: ClassVar[str] = "holo"
+    FILE_EXT: ClassVar[str] = "tif"
+    LEVELS: ClassVar[tuple[str, ...]] = ("names", "data")
+    DEFAULT_LEVEL: ClassVar[str] = "names"
 
     def __init__(
         self,
@@ -117,59 +120,21 @@ class HologramTifFolder(
         return (shape[0], shape[1])
 
     @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
-
-    @override
-    def list_files(self, root: Path) -> list[Path]:
-        """List the `NNNNN_holo.tif` files under `root`, in index order."""
-        files = search_files(root, name_filter=Regex(r"\d{5}_holo\.tif"), max_depth=1)
-        if not files:
-            msg = f"no NNNNN_holo.tif files found in {root}"
-            raise FileNotFoundError(msg)
-        return natsorted(files)
-
-    @override
     def load_file(self, path: Path) -> NDArray[np.uint8]:
         """Load and decode the hologram at `path`."""
         return load_hologram_tif(path)
 
-    def validate(self, *, level: Literal["names", "data"] = "names") -> None:
-        """Validate the sequence to the given `level`.
+    @override
+    def _validate_content(self, path: Path, *, level: str) -> None:
+        """Decode `path` and require its shape to match the first file.
 
-        Args:
-            level: How deep to check, cumulatively: "names" (default) that
-                files are numbered contiguously from 0; "data" also that
-                every image decodes as a 2D uint8 array sharing the first
-                image's shape (expensive -- it reads every image).
-
-        Raises:
-            ValueError: If the numbering has gaps, or (at "data") an image
-                fails to load or its shape differs from the first image.
+        `level` is fixed by the hook contract but unused here: the `.tif`
+        folder carries no header, so "data" is its only level past "names".
         """
-        for index in range(len(self)):
-            self.validate_file(index, level=level)
-
-    def validate_file(
-        self, index: int, *, level: Literal["names", "data"] = "names"
-    ) -> None:
-        """Validate the file at `index` to `level` (see `validate`)."""
-        if level not in ("names", "data"):
-            msg = f"level must be 'names' or 'data' (got {level!r})"
+        image = load_hologram_tif(path)
+        if image.shape != self.frame_shape:
+            msg = f"shape of {path.name} must match the first file {self.frame_shape} (got {image.shape})"
             raise ValueError(msg)
-
-        path = self.get_file(index)
-        expected = f"{index:05d}_holo.tif"
-        if path.name != expected:
-            msg = f"non-contiguous numbering: index {index} must be {expected} (got {path.name})"
-            raise ValueError(msg)
-
-        if level == "data":
-            image = load_hologram_tif(path)
-            if image.shape != self.frame_shape:
-                msg = f"shape of {path.name} must match the first file {self.frame_shape} (got {image.shape})"
-                raise ValueError(msg)
 
 
 class HologramTifList(

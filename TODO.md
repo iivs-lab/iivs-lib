@@ -5,19 +5,17 @@ item to a CHANGELOG entry once it lands.
 
 ## Open
 
-- **Factor a per-format codec mixin for sequences.** Each file modality
-  currently ships a folder variant (`FileFolderSequence`) and a list variant
-  (`FileListSequence`) that each redeclare `load_file` / `get_meta`. As more
-  formats land this duplicates the per-format adapter across both variants.
-  When a third format appears, extract a `_<Modality><Format>Codec` mixin
-  holding `load_file` + `get_meta` (with `get_file` declared `TYPE_CHECKING`
-  only, mixin placed first in the bases) and combine it into both variants.
-  Stateless formats (e.g. hologram `.tif`) DRY fully; stateful ones (phase
-  `.bin`, shared header) need the folder variant unified onto per-file decode
-  first. Revisit together with the duplicated numbered-folder validation
-  (`list_files` / `validate` / `validate_file`). The current diamond
-  (`FileFolderSequence` + modality base via `DataSequence`) is benign — this
-  is a duplication/maintenance concern, not a correctness one.
+- **Factor a per-format codec for the list variant + per-file decode.** The
+  numbered-folder mechanics (`list_files` / `get_meta` / `validate` /
+  `validate_file`) are now shared via `data.folder.SequentialFileFolderSequence`
+  (a `FileFolderSequence` subclass with a `_validate_content` hook). What
+  remains is the per-format `load_file`, still redeclared by each folder *and*
+  its list variant (`FileListSequence`), and the list variant's `get_meta`. As
+  more formats land, extract a `_<Modality><Format>Codec` holding `load_file`
+  (+ `get_meta` for lists) and share it across the folder and list variants.
+  Stateless formats (hologram `.tif`) DRY fully; stateful ones (phase/intensity
+  `.bin`, shared header) carry per-file conversion. A duplication/maintenance
+  concern, not a correctness one.
 - **Add a dataset/acquisition opener.** Koala nests its export as
   `<Modality>/Float/Bin`, `<Modality>/Float/Txt`, `<Modality>/Image`, plus
   `Holograms/holo.raw`, `timestamps.txt`, and `phbounds.txt` at the root; today
