@@ -48,10 +48,10 @@ Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
   (synthesized from a frame rate).
 
 Every sequence is a `kaparoo.data.sequences.DataSequence`, so it indexes,
-slices, and iterates lazily; same-shape sources also expose `frame_shape`
-(and match the structural `sequence.FrameShaped` protocol). Numbered-folder
-sequences share the `folder.SequentialFileFolderSequence` discovery/validation
-base.
+slices, and iterates lazily; same-shape sources also expose `frame_shape` by
+mixing in `sequence.FrameShapedMixin` (so a uniform source is its
+`<Modality>Sequence` plus that mixin). Numbered-folder sequences share the
+`folder.SequentialFileFolderSequence` discovery/validation base.
 
 ### `iivs.dhm.analysis`
 

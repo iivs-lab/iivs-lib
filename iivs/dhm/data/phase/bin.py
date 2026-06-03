@@ -22,8 +22,9 @@ from numpy.typing import NDArray
 
 from iivs.dhm.data.binfile import KoalaBinHeader, read_bin_pixels, write_bin
 from iivs.dhm.data.folder import SequentialFileFolderSequence
-from iivs.dhm.data.phase.base import PhaseSequence, UniformPhaseSequence
+from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit, validate_phase
+from iivs.dhm.data.sequence import FrameShapedMixin
 
 if TYPE_CHECKING:
     from typing import Literal, Self
@@ -327,7 +328,9 @@ def save_phase_bin(
 
 
 class PhaseBinFolder(
-    SequentialFileFolderSequence[NDArray[np.float32]], UniformPhaseSequence[Path]
+    SequentialFileFolderSequence[NDArray[np.float32]],
+    PhaseSequence[Path],
+    FrameShapedMixin,
 ):
     """An ordered sequence of Lyncée Tec Koala `.bin` phase images in a folder.
 

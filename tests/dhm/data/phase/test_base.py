@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from iivs.dhm.data.phase.base import PhaseSequence, UniformPhaseSequence
+from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList
+from iivs.dhm.data.sequence import FrameShapedMixin
 
 
 def test_phase_sequence_hierarchy():
-    assert issubclass(UniformPhaseSequence, PhaseSequence)
-    # A single-acquisition folder is uniform; an arbitrary file list is not.
-    assert issubclass(PhaseBinFolder, UniformPhaseSequence)
+    # A same-shape folder is a PhaseSequence + FrameShapedMixin; an arbitrary
+    # file list is a PhaseSequence only.
+    assert issubclass(PhaseBinFolder, PhaseSequence)
+    assert issubclass(PhaseBinFolder, FrameShapedMixin)
     assert issubclass(PhaseBinList, PhaseSequence)
-    assert not issubclass(PhaseBinList, UniformPhaseSequence)
+    assert not issubclass(PhaseBinList, FrameShapedMixin)

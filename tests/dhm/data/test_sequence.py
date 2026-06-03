@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
+from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
-from iivs.dhm.data.sequence import FrameShaped
+from iivs.dhm.data.sequence import FrameShapedMixin
 
 
 def _write(root, index, shape=(2, 3)):
@@ -15,16 +16,19 @@ def _write(root, index, shape=(2, 3)):
     )
 
 
-def test_uniform_sequence_is_frame_shaped(tmp_path):
-    # A same-shape folder exposes frame_shape, so it matches structurally.
+def test_uniform_sequence_is_role_plus_mixin(tmp_path):
+    # "A uniform phase sequence" == PhaseSequence + FrameShapedMixin.
     _write(tmp_path, 0)
     folder = PhaseBinFolder(tmp_path)
-    assert isinstance(folder, FrameShaped)
+    assert isinstance(folder, PhaseSequence)
+    assert isinstance(folder, FrameShapedMixin)
     assert folder.frame_shape == (2, 3)
 
 
-def test_heterogeneous_list_is_not_frame_shaped(tmp_path):
-    # A plain file list has no frame_shape, so it is correctly excluded.
+def test_heterogeneous_list_lacks_the_mixin(tmp_path):
+    # A plain file list is a PhaseSequence but not FrameShapedMixin.
     _write(tmp_path, 0)
     seq = PhaseBinList([tmp_path / "00000_phase.bin"])
-    assert not isinstance(seq, FrameShaped)
+    assert isinstance(seq, PhaseSequence)
+    assert not isinstance(seq, FrameShapedMixin)
+    assert not hasattr(seq, "frame_shape")

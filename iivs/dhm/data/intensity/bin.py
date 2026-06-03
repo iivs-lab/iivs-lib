@@ -20,8 +20,9 @@ from numpy.typing import NDArray
 
 from iivs.dhm.data.binfile import KoalaBinHeader, read_bin_pixels, write_bin
 from iivs.dhm.data.folder import SequentialFileFolderSequence
-from iivs.dhm.data.intensity.base import IntensitySequence, UniformIntensitySequence
+from iivs.dhm.data.intensity.base import IntensitySequence
 from iivs.dhm.data.intensity.core import validate_intensity
+from iivs.dhm.data.sequence import FrameShapedMixin
 
 if TYPE_CHECKING:
     from typing import Literal, Self
@@ -218,7 +219,9 @@ def save_intensity_bin(
 
 
 class IntensityBinFolder(
-    SequentialFileFolderSequence[NDArray[np.float32]], UniformIntensitySequence[Path]
+    SequentialFileFolderSequence[NDArray[np.float32]],
+    IntensitySequence[Path],
+    FrameShapedMixin,
 ):
     """An ordered sequence of Koala `.bin` intensity images in a folder.
 

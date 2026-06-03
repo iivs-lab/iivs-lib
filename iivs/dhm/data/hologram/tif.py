@@ -19,8 +19,9 @@ from kaparoo.filesystem import StagedFile, ensure_file_exists
 from numpy.typing import NDArray
 
 from iivs.dhm.data.folder import SequentialFileFolderSequence
-from iivs.dhm.data.hologram.base import HologramSequence, UniformHologramSequence
+from iivs.dhm.data.hologram.base import HologramSequence
 from iivs.dhm.data.hologram.core import validate_hologram
+from iivs.dhm.data.sequence import FrameShapedMixin
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -71,7 +72,9 @@ def save_hologram_tif(
 
 
 class HologramTifFolder(
-    SequentialFileFolderSequence[NDArray[np.uint8]], UniformHologramSequence[Path]
+    SequentialFileFolderSequence[NDArray[np.uint8]],
+    HologramSequence[Path],
+    FrameShapedMixin,
 ):
     """An ordered sequence of Lyncée Tec Koala `NNNNN_holo.tif` uint8 hologram images.
 

@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from iivs.dhm.data.hologram.base import HologramSequence, UniformHologramSequence
+from iivs.dhm.data.hologram.base import HologramSequence
 from iivs.dhm.data.hologram.raw import HologramRawFile
 from iivs.dhm.data.hologram.tif import HologramTifFolder, HologramTifList
+from iivs.dhm.data.sequence import FrameShapedMixin
 
 
 def test_hologram_sequence_hierarchy():
-    assert issubclass(UniformHologramSequence, HologramSequence)
-    # Single-acquisition sources are uniform; an arbitrary file list is not.
-    assert issubclass(HologramTifFolder, UniformHologramSequence)
-    assert issubclass(HologramRawFile, UniformHologramSequence)
+    # Single-acquisition sources are HologramSequence + FrameShapedMixin; an
+    # arbitrary file list is a HologramSequence only.
+    assert issubclass(HologramTifFolder, HologramSequence)
+    assert issubclass(HologramTifFolder, FrameShapedMixin)
+    assert issubclass(HologramRawFile, HologramSequence)
+    assert issubclass(HologramRawFile, FrameShapedMixin)
     assert issubclass(HologramTifList, HologramSequence)
-    assert not issubclass(HologramTifList, UniformHologramSequence)
+    assert not issubclass(HologramTifList, FrameShapedMixin)

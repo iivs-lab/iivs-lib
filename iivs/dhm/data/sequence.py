@@ -1,21 +1,22 @@
 from __future__ import annotations
 
-__all__ = ("FrameShaped",)
+__all__ = ("FrameShapedMixin",)
 
-from typing import Protocol, runtime_checkable
+from abc import ABC, abstractmethod
 
 
-@runtime_checkable
-class FrameShaped(Protocol):
-    """Structural protocol for a sequence exposing a uniform `frame_shape`.
+class FrameShapedMixin(ABC):
+    """Mixin marking a sequence whose items all share one `frame_shape`.
 
-    Lets consumers accept any same-shape source -- a `UniformPhaseSequence`,
-    `UniformIntensitySequence`, `UniformHologramSequence`, `HologramRawFile`,
-    ... -- structurally, without depending on the modality class hierarchy.
-    The abstract ``Uniform*Sequence`` bases declare the same `frame_shape` as
-    their *role*; this is the cross-cutting *structural* counterpart, so a
-    plain (heterogeneous) sequence without `frame_shape` is correctly excluded.
+    Mix into a modality sequence on a same-shape source (e.g. a single
+    acquisition) to force `frame_shape` to be implemented. There is no
+    per-modality `Uniform*Sequence`: "a uniform phase sequence" is just
+    ``isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)``
+    (and likewise for the other modalities).
     """
 
     @property
-    def frame_shape(self) -> tuple[int, int]: ...
+    @abstractmethod
+    def frame_shape(self) -> tuple[int, int]:
+        """The pixel dimensions (height, width) shared by every item."""
+        raise NotImplementedError

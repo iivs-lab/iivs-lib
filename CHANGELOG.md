@@ -26,7 +26,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `convert_phase_unit(data, *, source, target, height_scale)` — rescale a
     phase/height image between `PhaseUnit` representations.
   - `PhaseSequence` — read-only base type for any phase image sequence;
-    `UniformPhaseSequence` refines it for same-shape images, adding
+    same-shape sources also mix in `data.sequence.FrameShapedMixin` for
     `frame_shape` (height, width).
   - `PhaseBinFolder` — an ordered `kaparoo.data.sequences.FileFolderSequence`
     over a folder of `{index:05d}_phase.bin` images (item = image, metadata =
@@ -42,10 +42,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and a `_validate_content` hook; numbered discovery (`list_files`), `get_meta`,
   and the contiguity-checked `validate` / `validate_file` come for free. The
   `PhaseBinFolder`, `IntensityBinFolder`, and `HologramTifFolder` build on it.
-- `iivs.dhm.data.sequence`: `FrameShaped` — a runtime-checkable `Protocol` for
-  any sequence exposing a uniform `frame_shape`, so consumers can accept a
-  same-shape source structurally without depending on the `Uniform*Sequence`
-  hierarchy.
+- `iivs.dhm.data.sequence`: `FrameShapedMixin` — a mixin that forces a uniform
+  `frame_shape`. There is no per-modality `Uniform*Sequence`: a same-shape
+  source is `<Modality>Sequence` + `FrameShapedMixin`, so "a uniform phase
+  sequence" is `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`.
 - `iivs.dhm.data.binfile`: the shared Lyncée Tec Koala `.bin` format — the
   `KoalaBinHeader` base (geometry plus the packed 23-byte header machinery and
   the float32 pixel block I/O via `read_bin_pixels` / `write_bin`),
@@ -63,9 +63,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `load_intensity_bin(path, *, return_header=False)` /
     `save_intensity_bin(...)` / `read_intensity_bin_header(path)`.
   - `validate_intensity(data, *, on_nonfinite=...)`.
-  - `IntensitySequence` / `UniformIntensitySequence` base types, with concrete
-    `IntensityBinFolder` (a `{index:05d}_intensity.bin` folder) and
-    `IntensityBinList` (an arbitrary list of `.bin` files).
+  - `IntensitySequence` base type (same-shape sources add `FrameShapedMixin`),
+    with concrete `IntensityBinFolder` (a `{index:05d}_intensity.bin` folder)
+    and `IntensityBinList` (an arbitrary list of `.bin` files).
 - `iivs.dhm.data.timestamp`: per-frame acquisition timing.
   - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
     `Timestamp.series_from_elapsed_times`.
@@ -79,7 +79,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `load_hologram_tif(path)` / `save_hologram_tif(path, data, *, overwrite=False)`
     and `validate_hologram(data)`.
   - `HologramSequence` — read-only base type for any hologram sequence;
-    `UniformHologramSequence` refines it for same-shape images, adding
+    same-shape sources also mix in `data.sequence.FrameShapedMixin` for
     `frame_shape` (height, width).
   - `HologramTifFolder` — an ordered `FileFolderSequence` over a folder of
     `{index:05d}_holo.tif` images (item = image, metadata = source path),

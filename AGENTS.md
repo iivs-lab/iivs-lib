@@ -62,11 +62,16 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   root — e.g. `binfile.py` holds the `KoalaBinHeader` base and the `.bin`
   pixel I/O used by both `phase` and `intensity`; `folder.py` holds
   `SequentialFileFolderSequence` (the numbered-folder discovery + validation
-  template every `*Folder` builds on); `sequence.py` holds the `FrameShaped`
-  structural `Protocol`. Prefer a shared base/template + a structural
-  `Protocol` over copy-pasting across modalities.
+  template every `*Folder` builds on); `sequence.py` holds `FrameShapedMixin`.
+  Prefer a shared base/template + a small mixin over copy-pasting across
+  modalities.
+- Mark cross-cutting capabilities with a mixin, not a class per modality. A
+  same-shape source mixes `data.sequence.FrameShapedMixin` (forces
+  `frame_shape`) into its `<Modality>Sequence` rather than having a
+  `Uniform<Modality>Sequence` each; "a uniform phase sequence" is then
+  `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`.
 - Name sequence classes by role vs backing. Abstract role types keep the
-  `Sequence` suffix (`PhaseSequence`, `UniformPhaseSequence`,
+  `Sequence` suffix (`PhaseSequence`, `HologramSequence`,
   `TimestampSequence`); concrete types drop it and read
   `<Modality><Format><Backing>`, the backing mirroring kaparoo's templates
   — `Folder` (`FileFolderSequence`), `List` (`FileListSequence`), `File`
