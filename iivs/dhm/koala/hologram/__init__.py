@@ -4,7 +4,7 @@ __all__ = (
     "HologramRawHeader",
     "HologramRawSequence",
     "HologramSequence",
-    "HologramTifListSequence",
+    "HologramTifList",
     "HologramTifSequence",
     "UniformHologramSequence",
     "load_hologram_tif",
@@ -21,7 +21,7 @@ from iivs.dhm.koala.hologram.raw import (
     read_hologram_raw_header,
 )
 from iivs.dhm.koala.hologram.tif import (
-    HologramTifListSequence,
+    HologramTifList,
     HologramTifSequence,
     load_hologram_tif,
     save_hologram_tif,

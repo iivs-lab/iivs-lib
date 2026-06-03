@@ -32,7 +32,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     over a folder of `{index:05d}_phase.bin` images (item = image, metadata =
     source path), exposing the shared acquisition `header`, optional unit
     conversion, and a `validate` method.
-  - `PhaseBinListSequence` — a `kaparoo.data.sequences.FileListSequence` over an
+  - `PhaseBinList` — a `kaparoo.data.sequences.FileListSequence` over an
     explicit, arbitrary list of `.bin` files (any location, no naming or
     shared-header constraint); each file is read independently with per-file
     unit conversion.
@@ -53,7 +53,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `HologramTifSequence` — an ordered `FileFolderSequence` over a folder of
     `{index:05d}_holo.tif` images (item = image, metadata = source path),
     with a `validate` method.
-  - `HologramTifListSequence` — a `FileListSequence` over an explicit,
+  - `HologramTifList` — a `FileListSequence` over an explicit,
     arbitrary list of `.tif` files (any location, no naming constraint), each
     decoded independently.
   - `HologramRawHeader` / `read_hologram_raw_header(path)` — the 16-byte

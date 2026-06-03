@@ -5,7 +5,7 @@ import pytest
 import tifffile
 
 from iivs.dhm.koala.hologram.tif import (
-    HologramTifListSequence,
+    HologramTifList,
     HologramTifSequence,
     load_hologram_tif,
     save_hologram_tif,
@@ -149,7 +149,7 @@ def test_list_sequence_loads_arbitrary_unrelated_files(tmp_path):
     save_hologram_tif(a, np.full((2, 3), 1, dtype=np.uint8))
     save_hologram_tif(b, np.full((4, 5), 2, dtype=np.uint8))
 
-    seq = HologramTifListSequence([b, a])
+    seq = HologramTifList([b, a])
 
     assert len(seq) == 2
     assert [seq.get_meta(i) for i in range(2)] == [b, a]

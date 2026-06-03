@@ -2,7 +2,7 @@ from __future__ import annotations
 
 __all__ = (
     "PhaseBinHeader",
-    "PhaseBinListSequence",
+    "PhaseBinList",
     "PhaseBinSequence",
     "load_phase_bin",
     "read_phase_bin_header",
@@ -598,9 +598,7 @@ class PhaseBinSequence(
             load_phase_bin(path, on_nonfinite="raise")
 
 
-class PhaseBinListSequence(
-    FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]
-):
+class PhaseBinList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]):
     """A phase sequence over an explicit, arbitrary list of `.bin` files.
 
     Unlike `PhaseBinSequence`, imposes no naming, contiguity, single-folder,

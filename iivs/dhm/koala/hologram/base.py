@@ -14,7 +14,7 @@ class HologramSequence[M](DataSequence[NDArray[np.uint8], M]):
 
     Common base for every hologram sequence -- a single-acquisition
     `HologramTifSequence` / `HologramRawSequence`, or an arbitrary
-    `HologramTifListSequence` of unrelated files; annotate parameters with it
+    `HologramTifList` of unrelated files; annotate parameters with it
     to accept any of them. Each item is a uint8 hologram; `M` is the per-item
     metadata type chosen by the concrete sequence.
     """

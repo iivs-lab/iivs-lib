@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 __all__ = (
-    "HologramTifListSequence",
+    "HologramTifList",
     "HologramTifSequence",
     "load_hologram_tif",
     "save_hologram_tif",
@@ -168,7 +168,7 @@ class HologramTifSequence(
                 raise ValueError(msg)
 
 
-class HologramTifListSequence(
+class HologramTifList(
     FileListSequence[NDArray[np.uint8], Path], HologramSequence[Path]
 ):
     """A hologram sequence over an explicit, arbitrary list of `.tif` files.

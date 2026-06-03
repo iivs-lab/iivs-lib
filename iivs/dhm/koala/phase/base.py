@@ -13,7 +13,7 @@ class PhaseSequence[M](DataSequence[NDArray[np.float32], M]):
     """A read-only sequence of float32 phase images, from any source.
 
     Common base for every phase sequence -- whether the images come from one
-    acquisition (`PhaseBinSequence`) or an arbitrary `PhaseBinListSequence` of
+    acquisition (`PhaseBinSequence`) or an arbitrary `PhaseBinList` of
     unrelated files; annotate parameters with it to accept any of them. Each
     item is a float32 phase image; `M` is the per-item metadata type chosen by
     the concrete sequence (e.g. the source `Path`).

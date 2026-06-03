@@ -8,7 +8,7 @@ import pytest
 
 from iivs.dhm.koala.phase.bin import (
     PhaseBinHeader,
-    PhaseBinListSequence,
+    PhaseBinList,
     PhaseBinSequence,
     load_phase_bin,
     read_phase_bin_header,
@@ -579,7 +579,7 @@ def test_list_sequence_loads_arbitrary_unrelated_files(tmp_path):
         b, np.full((4, 5), 2.0, dtype=np.float32), pixel_size=1e-6, height_scale=2e-7
     )
 
-    seq = PhaseBinListSequence([b, a])
+    seq = PhaseBinList([b, a])
 
     assert len(seq) == 2
     assert [seq.get_meta(i) for i in range(2)] == [b, a]
@@ -597,7 +597,7 @@ def test_list_sequence_converts_per_file(tmp_path):
         height_scale=2e-7,
         unit=PhaseUnit.RADIANS,
     )
-    seq = PhaseBinListSequence([a], target_unit=PhaseUnit.METERS)
+    seq = PhaseBinList([a], target_unit=PhaseUnit.METERS)
     assert seq.target_unit is PhaseUnit.METERS
     np.testing.assert_array_equal(seq[0], np.full((2, 2), 2e-7, dtype=np.float32))
 
@@ -606,6 +606,6 @@ def test_list_sequence_keeps_stored_unit_by_default(tmp_path):
     a = tmp_path / "a.bin"
     data = np.full((2, 2), 1.0, dtype=np.float32)
     save_phase_bin(a, data, pixel_size=1e-6, height_scale=2e-7)  # RADIANS
-    seq = PhaseBinListSequence([a])
+    seq = PhaseBinList([a])
     assert seq.target_unit is None
     np.testing.assert_array_equal(seq[0], data)
