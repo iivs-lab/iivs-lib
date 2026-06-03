@@ -53,6 +53,24 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   (`constants.py`, `exceptions.py`, `utils.py`). The module name need
   not mirror a data file it handles (`timestamp.py` reads
   `timestamps.txt`).
+- Group data-format code by modality, then by file format. Each modality
+  under `iivs.dhm.data` (`phase`, `hologram`, `timestamp`) splits a
+  multi-format modality into per-format modules plus a format-agnostic
+  `core` and a `base` holding the abstract sequence types — e.g.
+  `phase/{core,base,bin}.py`, `hologram/{core,base,tif,raw}.py`.
+- Name sequence classes by role vs backing. Abstract role types keep the
+  `Sequence` suffix (`PhaseSequence`, `UniformPhaseSequence`,
+  `TimestampSequence`); concrete types drop it and read
+  `<Modality><Format><Backing>`, the backing mirroring kaparoo's templates
+  — `Folder` (`FileFolderSequence`), `List` (`FileListSequence`), `File`
+  (`SingleFileSequence`): e.g. `PhaseBinFolder`, `PhaseBinList`,
+  `HologramRawFile`. Pluralize the modality when it is also a single-item
+  class, to mark the collection (`Timestamp` item → `TimestampsTxtFile`).
+  Format tokens copy the literal extension in TitleCase (`Bin`, `Tif`,
+  `Raw`, `Txt`); acronyms stay upper-case (`FPS`).
+- Credit external data sources. Formats originating from a vendor tool name
+  that vendor in docstrings/messages, and are acknowledged in the README and
+  the owning package's docstring (e.g. Lyncée Tec Koala in `iivs.dhm.data`).
 - Fixtures live in `tests/conftest.py` when you need them — modern
   default, applies to `tests/` only. Use a root `conftest.py` only for
   `pytest_plugins` declarations, doctest fixtures shared with source
@@ -95,6 +113,16 @@ applying it by hand.
     labels) are welcome when they clarify a real pitfall or pattern.
   - Reference identifiers in backticks (`my_method`, `param`,
     `MyClass.method`).
+- Exception messages use a terse, lower-case house style: no leading
+  capital, no trailing period. Prefer `f"<subject> must be <constraint>
+  (got {value})"` for validation, or a short imperative for
+  mutually-exclusive options (`"give height_scale, or wavelength and
+  refractive_delta (not both)"`). Keep each message on one line — if it
+  would wrap, shorten it or hoist a value to a local rather than splitting
+  the string literal.
+- Comments must earn their place: delete ones that restate the code. When
+  an implementation note states intent or a contract, prefer promoting it
+  to a docstring.
 - Standalone runnable scripts carry PEP 723 inline metadata (the
   `# /// script` block). `uv` manages it (`uv add --script`); add or edit
   it by hand only when explicitly asked.
