@@ -8,36 +8,37 @@ __all__ = (
 )
 
 import io
-from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import TYPE_CHECKING, ClassVar
 
-import numpy as np
 import tifffile
-from kaparoo.data.sequences import FileListSequence
-from kaparoo.filesystem import StagedFile, ensure_file_exists
-from numpy.typing import NDArray
+from kaparoo.filesystem import StagedFile
 
-from iivs.dhm.data.common import SequentialFileFolder, validate_uint8_image
+from iivs.dhm.data.common import (
+    ImageTifFolder,
+    ImageTifList,
+    load_uint8_tif,
+    validate_uint8_image,
+)
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:
-    from typing import Literal
-
+    import numpy as np
     from kaparoo.filesystem.types import StrPath
+    from numpy.typing import NDArray
 
 
 def load_hologram_tif(path: StrPath) -> NDArray[np.uint8]:
     """Load a Lyncée Tec Koala uint8 hologram from a `.tif` file.
+
+    A thin alias over `common.load_uint8_tif`.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the decoded image is not a 2D uint8 array.
     """
-    path = ensure_file_exists(path)
-    data = tifffile.imread(path)
-    return validate_uint8_image(data, allow_stack=False)
+    return load_uint8_tif(path)
 
 
 def save_hologram_tif(
@@ -69,94 +70,34 @@ def save_hologram_tif(
         staged.write(buffer.getvalue())
 
 
-class HologramTifFolder(
-    SequentialFileFolder[NDArray[np.uint8]], HologramSequence[Path]
-):
-    """An ordered sequence of Lyncée Tec Koala `NNNNN_holo.tif` uint8 hologram images.
-
-    Lists the direct children matching `{index:05d}_holo.tif` (exactly five
-    digits, case-sensitive), in index order. Each item is the decoded uint8
-    image and its metadata is the source path.
-
-    Args:
-        root: The folder to scan. Must exist, be a directory, and contain at
-            least one matching file.
-        validate: Run `validate` to this level ("names" or "data") at
-            construction, or None to skip. Defaults to "names".
-
-    Raises:
-        DirectoryNotFoundError: If `root` does not exist.
-        NotADirectoryError: If `root` exists but is not a directory.
-        FileNotFoundError: If no `NNNNN_holo.tif` files are found in `root`.
-        ValueError: If `validate` is set and the sequence fails validation.
-    """
-
-    FILE_STEM: ClassVar[str] = "holo"
-    FILE_EXT: ClassVar[str] = "tif"
-    LEVELS: ClassVar[tuple[str, ...]] = ("names", "data")
-    DEFAULT_LEVEL: ClassVar[str] = "names"
-
-    def __init__(
-        self,
-        root: StrPath,
-        *,
-        validate: Literal["names", "data"] | None = "names",
-    ) -> None:
-        super().__init__(root)
-
-        if validate is not None:
-            self.validate(level=validate)
-
-    @cached_property
-    @override
-    def frame_shape(self) -> tuple[int, int]:
-        """The (height, width) of the first image, loaded lazily and cached.
-
-        The `.tif` folder carries no header, so this reads the first file and
-        assumes every image shares its shape.
-        """
-        shape = load_hologram_tif(self.get_file(0)).shape
-        return (shape[0], shape[1])
-
-    @override
-    def load_file(self, path: Path) -> NDArray[np.uint8]:
-        """Load and decode the hologram at `path`."""
-        return load_hologram_tif(path)
-
-    @override
-    def _validate_content(self, path: Path, *, level: str) -> None:
-        """Decode `path` and require its shape to match the first file.
-
-        `level` is fixed by the hook contract but unused here: the `.tif`
-        folder carries no header, so "data" is its only level past "names".
-        """
-        image = load_hologram_tif(path)
-        if image.shape != self.frame_shape:
-            msg = f"shape of {path.name} must match the first file {self.frame_shape} (got {image.shape})"
-            raise ValueError(msg)
-
-
-class HologramTifList(
-    FileListSequence[NDArray[np.uint8], Path], HologramSequence[Path]
-):
+class HologramTifList(ImageTifList, HologramSequence[Path]):
     """A hologram sequence over an explicit, arbitrary list of `.tif` files.
 
-    Unlike `HologramTifFolder`, imposes no naming, contiguity, or
-    single-folder constraint: the files may live anywhere and each is decoded
-    independently. The images may therefore differ in shape, so this is a
-    plain `HologramSequence` (no `frame_shape`). Each item is the decoded uint8
-    image and its metadata is the source path.
+    The uint8 tif body comes from `common.ImageTifList`; this adds the hologram
+    role. Imposes no naming, contiguity, or single-folder constraint: the files
+    may live anywhere and each is decoded independently, so they may differ in
+    shape (hence a plain `HologramSequence`, no `frame_shape`). Each item is the
+    decoded uint8 image and its metadata is the source path. `HologramTifFolder`
+    is the auto-discovered, same-shape special case.
 
     Args:
         files: The `.tif` files to expose, in the given order.
     """
 
-    @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
 
-    @override
-    def load_file(self, path: Path) -> NDArray[np.uint8]:
-        """Load and decode the hologram at `path`."""
-        return load_hologram_tif(path)
+class HologramTifFolder(ImageTifFolder, HologramTifList):
+    """An ordered sequence of Lyncée Tec Koala `NNNNN_holo.tif` uint8 holograms.
+
+    The auto-discovered, same-shape special case of `HologramTifList`: lists the
+    direct children matching `{index:05d}_holo.tif` (exactly five digits,
+    case-sensitive) in index order, sharing one (lazily read) `frame_shape`.
+    Construction and validation are inherited from `ImageTifFolder`; this
+    supplies only the file stem.
+
+    Args:
+        root: The folder to scan.
+        validate: Validation level at construction ("names" or "data"), or None
+            to skip. Defaults to "names".
+    """
+
+    FILE_STEM: ClassVar[str] = "holo"

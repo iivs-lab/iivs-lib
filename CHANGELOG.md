@@ -76,9 +76,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     sharing the line-count check and the `h/w` + `pixel size` regex.
   - `load_uint8_tif`, with `ImageTifFolder` / `ImageTifList` — the
     modality-agnostic uint8 `.tif` reader and folder/list bodies behind the
-    `Image/*.tif` preview sources. A modality adds its role by also inheriting
-    its `<Modality>ImageSequence` (e.g. `PhaseTifFolder(ImageTifFolder,
-    PhaseTifList)`).
+    `Image/*.tif` preview sources *and* the hologram `.tif` folder/list. A
+    modality adds its role by also inheriting its `<Modality>ImageSequence` /
+    `<Modality>Sequence` (e.g. `PhaseTifFolder(ImageTifFolder, PhaseTifList)`,
+    `HologramTifFolder(ImageTifFolder, HologramTifList)`).
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).
