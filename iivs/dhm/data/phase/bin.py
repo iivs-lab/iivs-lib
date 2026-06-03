@@ -55,8 +55,10 @@ class PhaseBinHeader:
         endian: Byte-order flag. Fixed at 0 (little-endian).
     """
 
-    # Packed (no alignment padding) -> exactly 23 bytes, matching the
-    # on-disk Lyncée Tec Koala header layout.
+    # Packed (no alignment padding) -> exactly 23 bytes, matching the on-disk
+    # Lyncée Tec Koala header layout (cf. Lyncée Tec's pyKoalaUtils
+    # `binkoala.py`). Field names are clarified from that reference:
+    # header_size=head_size, pixel_size=px_size, height_scale=hconv, unit=unit_code.
     DTYPE: ClassVar[np.dtype[np.void]] = cast(
         "np.dtype[np.void]",
         np.dtype(
