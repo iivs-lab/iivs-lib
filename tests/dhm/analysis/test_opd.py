@@ -9,7 +9,7 @@ from iivs.dhm.data.constants import DEFAULT_WAVELENGTH
 
 def test_phase_to_opd_scales_by_wavelength_over_two_pi():
     phase = np.array([[0.0, np.pi], [2 * np.pi, np.pi / 2]], dtype=np.float32)
-    opd = phase_to_opd(phase, wavelength=666e-9)  # OPD in nanometers
+    opd = phase_to_opd(phase, wavelength=666e-9)  # OPD in nm
     expected = (phase * (666e-9 / (2 * np.pi) * 1e9)).astype(np.float32)
     np.testing.assert_allclose(opd, expected, rtol=1e-6)
     assert opd.dtype == np.float32
@@ -63,7 +63,7 @@ def test_converter_wavelength_nm_property():
 def test_converter_opd_scale_property():
     conv = OPDConverter(wavelength=666e-9)
     assert conv.opd_scale == pytest.approx(666e-9 / (2 * np.pi) * 1e9)  # nm/rad
-    # convert_to_opd is exactly phase * opd_scale (OPD already in nanometers)
+    # convert_to_opd is exactly phase * opd_scale (OPD already in nm)
     phase = np.array([[1.0, 2.0]], dtype=np.float32)
     np.testing.assert_allclose(phase * conv.opd_scale, conv.convert_to_opd(phase))
 

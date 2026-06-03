@@ -47,9 +47,9 @@ class PhaseBinHeader:
     Attributes:
         width: Image width in pixels.
         height: Image height in pixels.
-        pixel_size: Physical size of one (square) pixel, in meters.
-        height_scale: Height represented by one radian of phase, in
-            meters; the phase-to-height conversion factor.
+        pixel_size: Physical size of one (square) pixel, in m.
+        height_scale: Height represented by one rad of phase, in m;
+            the phase-to-height conversion factor.
         unit: Physical unit of the stored phase values.
         version: Format version. Fixed at 1.
         endian: Byte-order flag. Fixed at 0 (little-endian).
@@ -116,23 +116,23 @@ class PhaseBinHeader:
 
     @property
     def field_of_view(self) -> tuple[float, float]:
-        """Field of view in meters as (height, width)."""
+        """Field of view in m as (height, width)."""
         return (self.height * self.pixel_size, self.width * self.pixel_size)
 
     @property
     def pixel_size_um(self) -> float:
-        """Pixel size in micrometers."""
+        """Pixel size in um."""
         return self.pixel_size * 1e6
 
     @property
     def field_of_view_um(self) -> tuple[float, float]:
-        """Field of view in micrometers as (height, width)."""
+        """Field of view in um as (height, width)."""
         height_m, width_m = self.field_of_view
         return (height_m * 1e6, width_m * 1e6)
 
     @property
     def height_scale_nm(self) -> float:
-        """Height scale (height per radian) in nanometers."""
+        """Height scale (height per rad) in nm."""
         return self.height_scale * 1e9
 
     def to_dtype(self) -> NDArray[np.void]:
@@ -329,7 +329,7 @@ def _resolve_height_scale(
         case scale, None, None if scale is not None:
             return scale
         case None, wave, delta if wave is not None and delta is not None:
-            # height per radian = wavelength / (2*pi * refractive_delta)
+            # height per rad = wavelength / (2*pi * refractive_delta)
             return wave / (2.0 * np.pi * delta)
         case _:
             msg = "give height_scale, or wavelength and refractive_delta (not both)"
@@ -396,7 +396,7 @@ def save_phase_bin(
 
     The phase-to-height scale is given either directly as `height_scale`,
     or as a `wavelength` and refractive-index difference `refractive_delta`
-    pair (then height per radian = wavelength / (2*pi * refractive_delta)).
+    pair (then height per rad = wavelength / (2*pi * refractive_delta)).
     Exactly one of the two forms must be given.
 
     The file is written atomically: content is staged to a temp file in the
@@ -406,10 +406,10 @@ def save_phase_bin(
     Args:
         path: The .bin file to write.
         data: The phase image to save, of shape (H, W).
-        pixel_size: Physical size of one (square) pixel, in meters.
-        height_scale: Height represented by one radian of phase, in meters.
+        pixel_size: Physical size of one (square) pixel, in m.
+        height_scale: Height represented by one rad of phase, in m.
             Mutually exclusive with `wavelength`/`refractive_delta`.
-        wavelength: Illumination wavelength, in meters. Requires
+        wavelength: Illumination wavelength, in m. Requires
             `refractive_delta`.
         refractive_delta: Refractive-index difference n1 - n2 (the plain
             difference, not the normalized contrast). Requires `wavelength`.

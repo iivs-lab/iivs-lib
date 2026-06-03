@@ -13,11 +13,11 @@ from iivs.dhm.data.phase import read_phase_bin_header, save_phase_bin
 
 
 def test_default_optical_parameters():
-    assert DEFAULT_WAVELENGTH == 666e-9  # meters
-    assert DEFAULT_WAVELENGTH_NM == 666.0  # nanometers
+    assert DEFAULT_WAVELENGTH == 666e-9  # m
+    assert DEFAULT_WAVELENGTH_NM == 666.0  # nm
     assert DEFAULT_REFRACTIVE_DELTA == 0.5
     assert DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT == 0.2  # mL/g
-    # the meter and nanometer forms describe the same wavelength
+    # the m and nm forms describe the same wavelength
     assert pytest.approx(DEFAULT_WAVELENGTH * 1e9) == DEFAULT_WAVELENGTH_NM
 
 

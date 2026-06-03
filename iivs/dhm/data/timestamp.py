@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class Timestamp:
-    """Acquisition timing of one frame, in milliseconds.
+    """Acquisition timing of one frame, in ms.
 
     Attributes:
         elapsed_ms: Time since acquisition start.
@@ -103,12 +103,12 @@ class TimestampSequence(DataSequence[Timestamp, int]):
     @property
     @abstractmethod
     def mean_interval_ms(self) -> float:
-        """Mean interval between consecutive frames, in milliseconds."""
+        """Mean interval between consecutive frames, in ms."""
         raise NotImplementedError
 
     @property
     def mean_frame_rate(self) -> float:
-        """Mean frame rate in frames per second (fps).
+        """Mean frame rate in fps.
 
         Raises:
             ValueError: If the mean interval is zero, leaving the frame rate
@@ -139,7 +139,7 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
         (?P<index>\d{5})\s+          # 5-digit frame index
         \d{2}:\d{2}:\d{2}\.\d+\s+    # time, HH:MM:SS.fff
         \d{4}\.\d{2}\.\d{2}\s+       # date, YYYY.MM.DD
-        (?P<elapsed>\d+(?:\.\d+)?)   # elapsed milliseconds
+        (?P<elapsed>\d+(?:\.\d+)?)   # elapsed ms
         """,
         re.VERBOSE,
     )
@@ -150,7 +150,7 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
 
     @cached_property
     def mean_interval_ms(self) -> float:
-        """Mean interval between consecutive frames, in milliseconds.
+        """Mean interval between consecutive frames, in ms.
 
         Raises:
             ValueError: If the sequence has fewer than two frames.
@@ -229,7 +229,7 @@ class TimestampsFixedFPS(TimestampSequence):
 
     @property
     def mean_interval_ms(self) -> float:
-        """The constant interval between frames, in milliseconds."""
+        """The constant interval between frames, in ms."""
         return self._interval_ms
 
     @classmethod

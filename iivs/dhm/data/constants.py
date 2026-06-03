@@ -14,8 +14,8 @@ __all__ = (
     "DEFAULT_WAVELENGTH_NM",
 )
 
-DEFAULT_WAVELENGTH = 666e-9  # meters (666 nm)
-DEFAULT_WAVELENGTH_NM = 666.0  # nanometers
+DEFAULT_WAVELENGTH = 666e-9  # m (666 nm)
+DEFAULT_WAVELENGTH_NM = 666.0  # nm
 DEFAULT_REFRACTIVE_DELTA = 0.5  # n_object (~1.5) - n_medium (~1.0), transmission
 
 # Specific refractive increment for dry mass (Barer: n = n_medium + alpha * C).

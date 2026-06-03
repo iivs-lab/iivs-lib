@@ -300,7 +300,7 @@ def test_save_nanometers_stores_meters(tmp_path):
         path, data_nm, pixel_size=1e-6, height_scale=2e-7, unit=PhaseUnit.NANOMETERS
     )
     image, header = load_phase_bin(path, return_header=True)
-    assert header.unit is PhaseUnit.METERS  # stored as meters, not nanometers
+    assert header.unit is PhaseUnit.METERS  # stored as m, not nm
     np.testing.assert_allclose(image, data_nm * 1e-9, rtol=1e-5)
 
 

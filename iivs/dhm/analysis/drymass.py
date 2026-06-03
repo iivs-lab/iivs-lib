@@ -31,10 +31,10 @@ class DryMassCalculator:
         dmc = DryMassCalculator(
             pixel_size=px, opd_converter=OPDConverter.from_wavelength_nm(666)
         )
-        mass = dmc.calc_from_opd(opd, mask=cell)  # opd in nanometers
-        mass = dmc.calc_from_phase(phase, mask=cell)  # phase in radians
+        mass = dmc.calc_from_opd(opd, mask=cell)  # opd in nm
+        mass = dmc.calc_from_phase(phase, mask=cell)  # phase in rad
 
-    Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in picograms.
+    Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg.
     The OPD must already be background-corrected (≈ 0 outside the object); pass
     `mask` to restrict the sum to one segmented object -- segmentation and
     background estimation stay the caller's responsibility. The sum is
@@ -44,7 +44,7 @@ class DryMassCalculator:
     conveniences over this class (as `json.dumps` is over `json.JSONEncoder`).
 
     Attributes:
-        pixel_size: Physical size of one (square) pixel, in meters.
+        pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in mL/g (= um^3/pg).
         opd_converter: Phase-to-OPD converter used by `calc_from_phase`.
             Defaults to one at the default wavelength; inject your own or use
@@ -54,7 +54,7 @@ class DryMassCalculator:
     pixel_size: float
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT
     opd_converter: OPDConverter = field(default_factory=OPDConverter)
-    # pg of dry mass per nanometer of OPD summed over pixels:
+    # pg of dry mass per nm of OPD summed over pixels:
     _scale: float = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
@@ -76,7 +76,7 @@ class DryMassCalculator:
         alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
         wavelength: float = DEFAULT_WAVELENGTH,
     ) -> Self:
-        """Build a calculator whose phase path uses `wavelength` (in meters)."""
+        """Build a calculator whose phase path uses `wavelength` (in m)."""
         return cls(
             pixel_size=pixel_size,
             alpha=alpha,
@@ -85,17 +85,17 @@ class DryMassCalculator:
 
     @property
     def wavelength(self) -> float:
-        """The bound OPD converter's wavelength, in meters (shortcut)."""
+        """The bound OPD converter's wavelength, in m (shortcut)."""
         return self.opd_converter.wavelength
 
     @property
     def wavelength_nm(self) -> float:
-        """The bound OPD converter's wavelength, in nanometers (shortcut)."""
+        """The bound OPD converter's wavelength, in nm (shortcut)."""
         return self.opd_converter.wavelength_nm
 
     @property
     def drymass_scale(self) -> float:
-        """Picograms of dry mass per nanometer of OPD summed over pixels.
+        """pg of dry mass per nm of OPD summed over pixels.
 
         The cached ``pixel_area / alpha`` factor (with unit bookkeeping):
         ``mass == drymass_scale * sum(opd_nm)``. The OPD analogue is
@@ -106,14 +106,14 @@ class DryMassCalculator:
     def calc_from_opd(
         self, opd: NDArray[np.float32], *, mask: NDArray[np.bool_] | None = None
     ) -> float:
-        """Dry mass [pg] from an OPD map (nanometers), optionally masked."""
+        """Dry mass [pg] from an OPD map (nm), optionally masked."""
         selected = opd if mask is None else opd[mask]
         return float(np.sum(selected, dtype=np.float64)) * self._scale
 
     def calc_from_phase(
         self, phase: NDArray[np.float32], *, mask: NDArray[np.bool_] | None = None
     ) -> float:
-        """Dry mass [pg] from a phase map (radians): to OPD, then `calc_from_opd`."""
+        """Dry mass [pg] from a phase map (rad): to OPD, then `calc_from_opd`."""
         return self.calc_from_opd(self.opd_converter.convert_to_opd(phase), mask=mask)
 
 
@@ -127,14 +127,14 @@ def calc_drymass(
     """Dry mass [pg] of an OPD map (nm); one-shot `DryMassCalculator`.
 
     Args:
-        opd: Optical path difference, in nanometers (e.g. from `phase_to_opd`),
+        opd: Optical path difference, in nm (e.g. from `phase_to_opd`),
             already background-corrected.
-        pixel_size: Physical size of one (square) pixel, in meters.
+        pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in mL/g (= um^3/pg).
         mask: Optional boolean array selecting the object's pixels.
 
     Returns:
-        Dry mass in picograms (pg).
+        Dry mass in pg.
     """
     return DryMassCalculator(pixel_size=pixel_size, alpha=alpha).calc_from_opd(
         opd, mask=mask

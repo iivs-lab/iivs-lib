@@ -63,20 +63,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     (held internally as a lazy, read-only `np.memmap`; each item is a writable
     frame copy, metadata is the frame index).
 - `iivs.dhm.data.constants`: typical optical and biophysical parameters for
-  the lab's transmission setup — `DEFAULT_WAVELENGTH` (666 nm, in meters) /
+  the lab's transmission setup — `DEFAULT_WAVELENGTH` (666 nm, in m) /
   `DEFAULT_WAVELENGTH_NM`, `DEFAULT_REFRACTIVE_DELTA` (0.5), and
   `DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT` (0.2 mL/g, for dry mass).
 - `iivs.dhm.analysis`: quantitative analysis derived from phase.
   - `opd.OPDConverter` — convert between phase and optical path difference
     (`OPD = phase * wavelength / (2*pi)`) at a fixed wavelength via
-    `convert_to_opd` / `convert_to_phase`, with OPD in nanometers (the QPI
+    `convert_to_opd` / `convert_to_phase`, with OPD in nm (the QPI
     convention) and the cached scale exposed as `opd_scale` (nm/rad); construct
-    with meters or `OPDConverter.from_wavelength_nm`. `opd.phase_to_opd` /
+    with m or `OPDConverter.from_wavelength_nm`. `opd.phase_to_opd` /
     `opd.opd_to_phase` are one-shot conveniences over it (as `json.dumps` is
     over `JSONEncoder`).
   - `drymass.DryMassCalculator` — integrate a background-corrected, optionally
     masked OPD (`calc_from_opd`, in nm) or phase (`calc_from_phase`) into a dry
-    mass in picograms (Barer), binding pixel size, specific refractive
+    mass in pg (Barer), binding pixel size, specific refractive
     increment, and an injected `opd_converter` (for the phase path) once,
     precomputing the per-pixel factor (exposed as `drymass_scale`; sum in
     float64). Build it from a wavelength with

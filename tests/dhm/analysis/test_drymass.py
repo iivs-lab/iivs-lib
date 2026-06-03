@@ -14,7 +14,7 @@ from iivs.dhm.analysis.opd import OPDConverter, phase_to_opd
 def test_calc_drymass_uniform_region():
     # 50 nm OPD over 100 px of 0.1 um pitch:
     # per px = 0.05 um * (0.1 um)^2 / 0.2 = 2.5e-3 pg; x100 = 0.25 pg.
-    opd = np.full((10, 10), 50.0, dtype=np.float32)  # nanometers
+    opd = np.full((10, 10), 50.0, dtype=np.float32)  # nm
     assert calc_drymass(opd, pixel_size=1e-7, alpha=0.2) == pytest.approx(0.25)
 
 
@@ -27,7 +27,7 @@ def test_calc_drymass_respects_mask():
 
 
 def test_calc_drymass_scales_with_alpha():
-    opd = np.full((4, 4), 30.0, dtype=np.float32)  # nanometers
+    opd = np.full((4, 4), 30.0, dtype=np.float32)  # nm
     m1 = calc_drymass(opd, pixel_size=1e-7, alpha=0.2)
     m2 = calc_drymass(opd, pixel_size=1e-7, alpha=0.4)
     assert m2 == pytest.approx(m1 / 2)  # mass is inversely proportional to alpha
