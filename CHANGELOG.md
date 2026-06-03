@@ -43,8 +43,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `mean_frame_rate`; implemented by `TimestampsTxtFile` (Koala
     `timestamps.txt`) and `TimestampsFixedFPS` (synthesized from a frame
     rate).
-- `iivs.dhm.data.hologram`: read Koala (Lyncée Tec) uint8 holograms from a
-  `.tif` folder or a single multi-frame `.raw` file.
+- `iivs.dhm.data.hologram`: read and write Koala (Lyncée Tec) uint8 holograms
+  — `.tif` files (single or a folder/list), and read-only single multi-frame
+  `.raw` files.
   - `load_hologram_tif(path)` / `save_hologram_tif(path, data, *, overwrite=False)`
     and `validate_hologram(data)`.
   - `HologramSequence` — read-only base type for any hologram sequence;
