@@ -185,6 +185,15 @@ def test_txt_mean_undefined_for_short_sequence(tmp_path):
         _ = seq.mean_interval_ms
 
 
+def test_txt_mean_frame_rate_undefined_for_zero_interval(tmp_path):
+    # Two frames at the same elapsed time -> mean interval 0 -> rate undefined.
+    text = "00000 15:21:47.674 2026.01.15 0\n00001 15:21:47.674 2026.01.15 0\n"
+    seq = TimestampTxtSequence(_write(tmp_path, text))
+    assert seq.mean_interval_ms == 0.0
+    with pytest.raises(ValueError, match="undefined"):
+        _ = seq.mean_frame_rate
+
+
 def test_fps_mean_is_exact():
     seq = TimestampFpsSequence(frame_rate=20.0, num_frames=3)
     assert seq.mean_interval_ms == pytest.approx(50.0)

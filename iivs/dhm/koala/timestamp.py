@@ -108,8 +108,17 @@ class TimestampSequence(DataSequence[Timestamp, int]):
 
     @property
     def mean_frame_rate(self) -> float:
-        """Mean frame rate in frames per second (fps)."""
-        return 1000.0 / self.mean_interval_ms
+        """Mean frame rate in frames per second (fps).
+
+        Raises:
+            ValueError: If the mean interval is zero, leaving the frame rate
+                undefined.
+        """
+        interval_ms = self.mean_interval_ms
+        if interval_ms == 0.0:
+            msg = "mean frame rate is undefined when the mean interval is zero"
+            raise ValueError(msg)
+        return 1000.0 / interval_ms
 
 
 class TimestampTxtSequence(SingleFileSequence[Timestamp, int], TimestampSequence):
