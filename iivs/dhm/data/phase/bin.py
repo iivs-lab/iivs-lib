@@ -12,7 +12,7 @@ __all__ = (
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, overload, override
 
 import numpy as np
 from kaparoo.data.sequences import FileFolderSequence, FileListSequence
@@ -394,14 +394,17 @@ class PhaseBinFolder(
         return self._target_unit
 
     @property
+    @override
     def frame_shape(self) -> tuple[int, int]:
         """The (height, width) of each image, from the shared header."""
         return self._header.shape
 
+    @override
     def get_meta(self, index: int) -> Path:
         """Return the source path of the file at `index`."""
         return self.get_file(index)
 
+    @override
     def list_files(self, root: Path) -> list[Path]:
         """List the `NNNNN_phase.bin` files under `root`, in index order."""
         files = search_files(root, name_filter=Regex(r"\d{5}_phase\.bin"), max_depth=1)
@@ -410,6 +413,7 @@ class PhaseBinFolder(
             raise FileNotFoundError(msg)
         return natsorted(files)
 
+    @override
     def load_file(self, path: Path) -> NDArray[np.float32]:
         """Load the image at `path`, converted to `target_unit`."""
         return convert_phase_unit(
@@ -495,10 +499,12 @@ class PhaseBinList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Pa
         """The unit images are converted to on load, or None to keep each file's."""
         return self._target_unit
 
+    @override
     def get_meta(self, index: int) -> Path:
         """Return the source path of the file at `index`."""
         return self.get_file(index)
 
+    @override
     def load_file(self, path: Path) -> NDArray[np.float32]:
         """Load the image at `path`, converted to `target_unit` if one is set."""
         image, header = load_phase_bin(path, return_header=True)

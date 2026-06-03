@@ -10,7 +10,7 @@ __all__ = (
 import io
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import numpy as np
 import tifffile
@@ -106,6 +106,7 @@ class HologramTifFolder(
             self.validate(level=validate)
 
     @cached_property
+    @override
     def frame_shape(self) -> tuple[int, int]:
         """The (height, width) of the first image, loaded lazily and cached.
 
@@ -115,10 +116,12 @@ class HologramTifFolder(
         shape = load_hologram_tif(self.get_file(0)).shape
         return (shape[0], shape[1])
 
+    @override
     def get_meta(self, index: int) -> Path:
         """Return the source path of the file at `index`."""
         return self.get_file(index)
 
+    @override
     def list_files(self, root: Path) -> list[Path]:
         """List the `NNNNN_holo.tif` files under `root`, in index order."""
         files = search_files(root, name_filter=Regex(r"\d{5}_holo\.tif"), max_depth=1)
@@ -127,6 +130,7 @@ class HologramTifFolder(
             raise FileNotFoundError(msg)
         return natsorted(files)
 
+    @override
     def load_file(self, path: Path) -> NDArray[np.uint8]:
         """Load and decode the hologram at `path`."""
         return load_hologram_tif(path)
@@ -183,10 +187,12 @@ class HologramTifList(
         files: The `.tif` files to expose, in the given order.
     """
 
+    @override
     def get_meta(self, index: int) -> Path:
         """Return the source path of the file at `index`."""
         return self.get_file(index)
 
+    @override
     def load_file(self, path: Path) -> NDArray[np.uint8]:
         """Load and decode the hologram at `path`."""
         return load_hologram_tif(path)

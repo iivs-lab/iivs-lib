@@ -11,7 +11,7 @@ __all__ = (
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, overload
+from typing import TYPE_CHECKING, ClassVar, overload, override
 
 import numpy as np
 from kaparoo.data.sequences import FileFolderSequence, FileListSequence
@@ -262,14 +262,17 @@ class IntensityBinFolder(
         return self._header
 
     @property
+    @override
     def frame_shape(self) -> tuple[int, int]:
         """The (height, width) of each image, from the shared header."""
         return self._header.shape
 
+    @override
     def get_meta(self, index: int) -> Path:
         """Return the source path of the file at `index`."""
         return self.get_file(index)
 
+    @override
     def list_files(self, root: Path) -> list[Path]:
         """List the `NNNNN_intensity.bin` files under `root`, in index order."""
         files = search_files(
@@ -280,6 +283,7 @@ class IntensityBinFolder(
             raise FileNotFoundError(msg)
         return natsorted(files)
 
+    @override
     def load_file(self, path: Path) -> NDArray[np.float32]:
         """Load the image at `path`."""
         return load_intensity_bin(path)
@@ -346,10 +350,12 @@ class IntensityBinList(
         files: The `.bin` files to expose, in the given order.
     """
 
+    @override
     def get_meta(self, index: int) -> Path:
         """Return the source path of the file at `index`."""
         return self.get_file(index)
 
+    @override
     def load_file(self, path: Path) -> NDArray[np.float32]:
         """Load the image at `path`."""
         return load_intensity_bin(path)

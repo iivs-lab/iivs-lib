@@ -12,7 +12,7 @@ import re
 from abc import abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from kaparoo.data.sequences.base import DataSequence
 from kaparoo.data.sequences.templates import SingleFileSequence
@@ -86,12 +86,15 @@ class TimestampSequence(DataSequence[Timestamp, int]):
 
     _timestamps: tuple[Timestamp, ...]
 
+    @override
     def __len__(self) -> int:
         return len(self._timestamps)
 
+    @override
     def get_item(self, index: int) -> Timestamp:
         return self._timestamps[index]
 
+    @override
     def get_meta(self, index: int) -> int:
         return index
 
@@ -149,6 +152,7 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
         self._timestamps = self.parse(self.path)
 
     @cached_property
+    @override
     def mean_interval_ms(self) -> float:
         """Mean interval between consecutive frames, in ms.
 
@@ -223,11 +227,13 @@ class TimestampsFixedFPS(TimestampSequence):
         self._interval_ms = 1000.0 / frame_rate
 
     @property
+    @override
     def mean_frame_rate(self) -> float:
         """The constant frame rate, in fps."""
         return self._frame_rate
 
     @property
+    @override
     def mean_interval_ms(self) -> float:
         """The constant interval between frames, in ms."""
         return self._interval_ms

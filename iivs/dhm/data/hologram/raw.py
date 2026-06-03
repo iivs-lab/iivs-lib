@@ -7,7 +7,7 @@ __all__ = (
 )
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, cast, override
 
 import numpy as np
 from kaparoo.data.sequences.templates import SingleFileSequence
@@ -195,13 +195,16 @@ class HologramRawFile(
         return self._frames
 
     @property
+    @override
     def frame_shape(self) -> tuple[int, int]:
         """The (height, width) of each frame, from the header."""
         return self._header.shape
 
+    @override
     def __len__(self) -> int:
         return self._header.frame_count
 
+    @override
     def get_item(self, index: int) -> NDArray[np.uint8]:
         """Return a writable, owned copy of the frame at `index`.
 
@@ -209,9 +212,11 @@ class HologramRawFile(
         """
         return self._frames[index].copy()
 
+    @override
     def get_meta(self, index: int) -> int:
         return index
 
+    @override
     def __reduce__(self) -> tuple[type[HologramRawFile], tuple[StrPath]]:
         # Pickle only the source path; the memmap re-opens per process on load
         # instead of copying every frame into the pickle (multiprocessing-safe).
