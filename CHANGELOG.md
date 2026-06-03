@@ -63,6 +63,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     writers. phase/intensity validate float32, holograms uint8.
   - `parse_txt_grid` — parse a Koala `Float/Txt` body (whitespace-separated
     float rows) into a float32 `(H, W)` array; used by the `.txt` readers.
+  - `KoalaTxtHeader` — the `Float/Txt` header reader (the text twin of
+    `KoalaBinHeader`), with `from_file` / `from_lines`. `phase` and `intensity`
+    subclass it to parse their text header into the matching `*BinHeader`,
+    sharing the line-count check and the `h/w` + `pixel size` regex.
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).

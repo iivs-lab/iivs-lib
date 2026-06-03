@@ -7,12 +7,15 @@ __all__ = (
     "read_intensity_txt_header",
 )
 
-import re
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
 from kaparoo.filesystem import ensure_file_exists
 
-from iivs.dhm.data.common import parse_txt_grid, validate_float32_image
+from iivs.dhm.data.common import (
+    KoalaTxtHeader,
+    parse_txt_grid,
+    validate_float32_image,
+)
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
 
@@ -24,32 +27,34 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-# A Koala `Float/Txt` intensity export is a 2-line key=value header (no unit or
-# height-conversion line, unlike phase) followed by `height` rows of `width`
-# floats:
-#     h=900 w=900
-#     pixel size=2.84871e-07 m
-#     <row 0> ... <row height-1>
-_HEADER_LINES = 2
-_HW_RE = re.compile(r"h=(\d+)\s+w=(\d+)")
-_PIXEL_SIZE_RE = re.compile(r"pixel size=([0-9.eE+-]+)")
+class IntensityTxtHeader(KoalaTxtHeader[IntensityBinHeader]):
+    """Reads a Koala `Float/Txt` intensity header into an `IntensityBinHeader`.
 
+    The 2-line header is just the shared `h/w` + `pixel size` pair -- intensity
+    carries no unit or height-conversion line, unlike phase::
 
-def _parse_header(lines: list[str], path: StrPath) -> IntensityBinHeader:
-    """Parse the 2-line text header into an `IntensityBinHeader`."""
-    if len(lines) < _HEADER_LINES:
-        msg = f"intensity txt header needs {_HEADER_LINES} lines (got {len(lines)}): {path}"
-        raise ValueError(msg)
+        h=900 w=900
+        pixel size=2.84871e-07 m
+    """
 
-    hw = _HW_RE.search(lines[0])
-    pixel_size = _PIXEL_SIZE_RE.search(lines[1])
-    if hw is None or pixel_size is None:
-        msg = f"malformed intensity txt header: {path}"
-        raise ValueError(msg)
+    HEADER_LINES: ClassVar[int] = 2
+    MODALITY: ClassVar[str] = "intensity"
 
-    return IntensityBinHeader(
-        width=int(hw[2]), height=int(hw[1]), pixel_size=float(pixel_size[1])
-    )
+    @classmethod
+    @override
+    def _from_geometry(
+        cls,
+        lines: list[str],
+        *,
+        height: int,
+        width: int,
+        pixel_size: float,
+        path: StrPath,
+    ) -> IntensityBinHeader:
+        """Build straight from the geometry -- intensity has no extra header lines."""
+        return IntensityBinHeader(
+            width=width, height=height, pixel_size=pixel_size
+        )
 
 
 def read_intensity_txt_header(path: StrPath) -> IntensityBinHeader:
@@ -60,10 +65,7 @@ def read_intensity_txt_header(path: StrPath) -> IntensityBinHeader:
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the header is missing or malformed.
     """
-    path = ensure_file_exists(path)
-    with path.open() as fb:
-        lines = [fb.readline() for _ in range(_HEADER_LINES)]
-    return _parse_header(lines, path)
+    return IntensityTxtHeader.from_file(path)
 
 
 @overload
@@ -113,8 +115,10 @@ def load_intensity_txt(
     """
     path = ensure_file_exists(path)
     lines = path.read_text().splitlines()
-    header = _parse_header(lines, path)
-    data = parse_txt_grid(lines[_HEADER_LINES:], shape=header.shape)
+    header = IntensityTxtHeader.from_lines(lines, path)
+    data = parse_txt_grid(
+        lines[IntensityTxtHeader.HEADER_LINES :], shape=header.shape
+    )
     data = validate_float32_image(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
 

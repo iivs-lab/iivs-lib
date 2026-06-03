@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, ClassVar, overload, override
 from kaparoo.filesystem import ensure_file_exists
 
 from iivs.dhm.data.common import (
+    KoalaTxtHeader,
     parse_txt_grid,
     validate_float32_image,
 )
@@ -28,51 +29,60 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-# A Koala `Float/Txt` phase export is a 4-line key=value header followed by
-# `height` rows of `width` floats:
-#     h=900 w=900
-#     pixel size=2.84871e-07 m
-#     data unit=rad
-#     height conversion factor (-> m)=2.11994e-07
-#     <row 0> ... <row height-1>
-_HEADER_LINES = 4
-_HW_RE = re.compile(r"h=(\d+)\s+w=(\d+)")
-_PIXEL_SIZE_RE = re.compile(r"pixel size=([0-9.eE+-]+)")
-_UNIT_RE = re.compile(r"data unit=(\S+)")
-_HCONV_RE = re.compile(r"height conversion factor.*=([0-9.eE+-]+)")
-_UNIT_BY_NAME = {
-    "rad": PhaseUnit.RADIANS,
-    "m": PhaseUnit.METERS,
-    "none": PhaseUnit.UNKNOWN,
-}
+class PhaseTxtHeader(KoalaTxtHeader[PhaseBinHeader]):
+    """Reads a Koala `Float/Txt` phase header into a `PhaseBinHeader`.
 
+    The 4-line header adds a `data unit` and a `height conversion factor` line
+    to the shared `h/w` + `pixel size` pair::
 
-def _parse_header(lines: list[str], path: StrPath) -> PhaseBinHeader:
-    """Parse the 4-line text header into a `PhaseBinHeader` (same fields as `.bin`)."""
-    if len(lines) < _HEADER_LINES:
-        msg = f"phase txt header needs {_HEADER_LINES} lines (got {len(lines)}): {path}"
-        raise ValueError(msg)
+        h=900 w=900
+        pixel size=2.84871e-07 m
+        data unit=rad
+        height conversion factor (-> m)=2.11994e-07
+    """
 
-    hw = _HW_RE.search(lines[0])
-    pixel_size = _PIXEL_SIZE_RE.search(lines[1])
-    hconv = _HCONV_RE.search(lines[3])
-    if hw is None or pixel_size is None or hconv is None:
-        msg = f"malformed phase txt header: {path}"
-        raise ValueError(msg)
-
-    unit_match = _UNIT_RE.search(lines[2])
-    unit = (
-        _UNIT_BY_NAME.get(unit_match[1].lower(), PhaseUnit.UNKNOWN)
-        if unit_match
-        else PhaseUnit.UNKNOWN
+    HEADER_LINES: ClassVar[int] = 4
+    MODALITY: ClassVar[str] = "phase"
+    _UNIT_RE: ClassVar[re.Pattern[str]] = re.compile(r"data unit=(\S+)")
+    _HCONV_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"height conversion factor.*=([0-9.eE+-]+)"
     )
-    return PhaseBinHeader(
-        width=int(hw[2]),
-        height=int(hw[1]),
-        pixel_size=float(pixel_size[1]),
-        height_scale=float(hconv[1]),
-        unit=unit,
-    )
+    _UNIT_BY_NAME: ClassVar[dict[str, PhaseUnit]] = {
+        "rad": PhaseUnit.RADIANS,
+        "m": PhaseUnit.METERS,
+        "none": PhaseUnit.UNKNOWN,
+    }
+
+    @classmethod
+    @override
+    def _from_geometry(
+        cls,
+        lines: list[str],
+        *,
+        height: int,
+        width: int,
+        pixel_size: float,
+        path: StrPath,
+    ) -> PhaseBinHeader:
+        """Add phase's unit and height-conversion lines to the shared geometry."""
+        hconv = cls._HCONV_RE.search(lines[3])
+        if hconv is None:
+            msg = f"malformed {cls.MODALITY} txt header: {path}"
+            raise ValueError(msg)
+
+        unit_match = cls._UNIT_RE.search(lines[2])
+        unit = (
+            cls._UNIT_BY_NAME.get(unit_match[1].lower(), PhaseUnit.UNKNOWN)
+            if unit_match
+            else PhaseUnit.UNKNOWN
+        )
+        return PhaseBinHeader(
+            width=width,
+            height=height,
+            pixel_size=pixel_size,
+            height_scale=float(hconv[1]),
+            unit=unit,
+        )
 
 
 def read_phase_txt_header(path: StrPath) -> PhaseBinHeader:
@@ -86,10 +96,7 @@ def read_phase_txt_header(path: StrPath) -> PhaseBinHeader:
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the header is missing or malformed.
     """
-    path = ensure_file_exists(path)
-    with path.open() as fb:
-        lines = [fb.readline() for _ in range(_HEADER_LINES)]
-    return _parse_header(lines, path)
+    return PhaseTxtHeader.from_file(path)
 
 
 @overload
@@ -143,8 +150,8 @@ def load_phase_txt(
     """
     path = ensure_file_exists(path)
     lines = path.read_text().splitlines()
-    header = _parse_header(lines, path)
-    data = parse_txt_grid(lines[_HEADER_LINES:], shape=header.shape)
+    header = PhaseTxtHeader.from_lines(lines, path)
+    data = parse_txt_grid(lines[PhaseTxtHeader.HEADER_LINES :], shape=header.shape)
     data = validate_float32_image(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
 

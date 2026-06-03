@@ -79,6 +79,23 @@ def test_rejects_malformed_header(tmp_path):
         load_phase_txt(path)
 
 
+def test_rejects_missing_height_conversion(tmp_path):
+    # h/w and pixel size are valid, but the height-conversion line is missing.
+    path = tmp_path / "00000_phase.txt"
+    path.write_text("h=2 w=2\npixel size=1 m\ndata unit=rad\n(no factor)\n1 2\n3 4\n")
+    with pytest.raises(ValueError, match="malformed phase txt header"):
+        load_phase_txt(path)
+
+
+def test_unit_defaults_to_unknown_when_missing(tmp_path):
+    # No parseable `data unit=` line -> the unit falls back to UNKNOWN.
+    path = tmp_path / "00000_phase.txt"
+    path.write_text(
+        "h=2 w=2\npixel size=1 m\n(no unit)\nheight conversion factor=1\n1 2\n3 4\n"
+    )
+    assert read_phase_txt_header(path).unit is PhaseUnit.UNKNOWN
+
+
 def test_load_on_nonfinite_policy(tmp_path):
     data = np.array([[np.nan, 1.0], [2.0, 3.0]], dtype=np.float32)
     path = tmp_path / "00000_phase.txt"

@@ -2,9 +2,10 @@
 
 Holds the cross-modality primitives that the per-modality packages compose:
 the Koala `.bin` header/IO (`KoalaBinHeader`, `read_bin_pixels`, `write_bin`),
-the numbered-folder sequence base (`SequentialFileFolder`), the same-shape
-mixin (`FrameShapedMixin`), and the float32 image validator
-(`validate_float32_image`).
+the `Float/Txt` header/grid readers (`KoalaTxtHeader`, `parse_txt_grid`), the
+numbered-folder sequence base (`SequentialFileFolder`), the same-shape mixin
+(`FrameShapedMixin`), and the image validators (`validate_float32_image`,
+`validate_uint8_image`).
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from __future__ import annotations
 __all__ = (
     "FrameShapedMixin",
     "KoalaBinHeader",
+    "KoalaTxtHeader",
     "SequentialFileFolder",
     "parse_txt_grid",
     "read_bin_pixels",
@@ -20,6 +22,7 @@ __all__ = (
     "write_bin",
 )
 
+import re
 import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -482,6 +485,88 @@ def parse_txt_grid(lines: list[str], *, shape: tuple[int, int]) -> NDArray[np.fl
         msg = f"txt grid must be {shape} (got {grid.shape})"
         raise ValueError(msg)
     return grid
+
+
+class KoalaTxtHeader[H: KoalaBinHeader](ABC):
+    """Reader for the key=value header atop a Koala `Float/Txt` export.
+
+    The text twin of `KoalaBinHeader`'s binary parsing. The first two lines are
+    always ``h=<H> w=<W>`` and ``pixel size=<m> m``; a modality may add more
+    (phase carries a `data unit` and a `height conversion factor` line). A
+    subclass sets `HEADER_LINES` / `MODALITY` and builds its header type `H`
+    from the shared geometry plus any extra lines in `_from_geometry`, so
+    `phase` and `intensity` share the line-count check, the `h/w` + `pixel size`
+    regex, and the file read.
+
+    Type Parameters:
+        H: The header the subclass produces (e.g. `PhaseBinHeader`).
+    """
+
+    HEADER_LINES: ClassVar[int]
+    MODALITY: ClassVar[str]
+    _HW_RE: ClassVar[re.Pattern[str]] = re.compile(r"h=(\d+)\s+w=(\d+)")
+    _PIXEL_SIZE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        r"pixel size=([0-9.eE+-]+)"
+    )
+
+    @classmethod
+    def from_lines(cls, lines: list[str], path: StrPath) -> H:
+        """Parse the header from a file's lines (only the first `HEADER_LINES` matter).
+
+        Accepts the whole file's lines -- any grid that follows is ignored here.
+
+        Raises:
+            ValueError: If there are too few lines, or the geometry is malformed.
+        """
+        if len(lines) < cls.HEADER_LINES:
+            msg = f"{cls.MODALITY} txt header needs {cls.HEADER_LINES} lines (got {len(lines)}): {path}"
+            raise ValueError(msg)
+
+        hw = cls._HW_RE.search(lines[0])
+        pixel_size = cls._PIXEL_SIZE_RE.search(lines[1])
+        if hw is None or pixel_size is None:
+            msg = f"malformed {cls.MODALITY} txt header: {path}"
+            raise ValueError(msg)
+
+        return cls._from_geometry(
+            lines,
+            height=int(hw[1]),
+            width=int(hw[2]),
+            pixel_size=float(pixel_size[1]),
+            path=path,
+        )
+
+    @classmethod
+    @abstractmethod
+    def _from_geometry(
+        cls,
+        lines: list[str],
+        *,
+        height: int,
+        width: int,
+        pixel_size: float,
+        path: StrPath,
+    ) -> H:
+        """Build the modality header from the shared geometry and any extra lines.
+
+        `lines` carries the full header (at least `HEADER_LINES` long); read any
+        modality-specific lines (e.g. phase's unit / height-conversion) here.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def from_file(cls, path: StrPath) -> H:
+        """Open `path` and read just its header.
+
+        Raises:
+            FileNotFoundError: If `path` does not exist.
+            NotAFileError: If `path` exists but is not a regular file.
+            ValueError: If the header is missing or malformed.
+        """
+        path = ensure_file_exists(path)
+        with path.open() as fb:
+            lines = [fb.readline() for _ in range(cls.HEADER_LINES)]
+        return cls.from_lines(lines, path)
 
 
 def validate_uint8_image(
