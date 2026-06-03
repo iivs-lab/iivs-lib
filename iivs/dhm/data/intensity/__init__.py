@@ -4,6 +4,8 @@ __all__ = (
     "IntensityBinFolder",
     "IntensityBinHeader",
     "IntensityBinList",
+    "IntensityFloatSequence",
+    "IntensityImageSequence",
     "IntensitySequence",
     "IntensityTxtFolder",
     "IntensityTxtList",
@@ -14,7 +16,11 @@ __all__ = (
     "save_intensity_bin",
 )
 
-from iivs.dhm.data.intensity.base import IntensitySequence
+from iivs.dhm.data.intensity.base import (
+    IntensityFloatSequence,
+    IntensityImageSequence,
+    IntensitySequence,
+)
 from iivs.dhm.data.intensity.bin import (
     IntensityBinFolder,
     IntensityBinHeader,

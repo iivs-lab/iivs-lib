@@ -83,8 +83,13 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   `data.common.SequentialFileFolder` mixes in `data.common.FrameShapedMixin`
   (forces `frame_shape`) for every numbered folder; a single-file source like
   `HologramRawFile` mixes it in directly. There is no `Uniform<Modality>
-  Sequence`: "a uniform phase sequence" is just
-  `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`.
+  Sequence`: "a uniform float phase sequence" is just
+  `isinstance(x, PhaseFloatSequence) and isinstance(x, FrameShapedMixin)`.
+- Split the role base when a modality has more than one pixel representation.
+  `PhaseSequence[T, M]` is the dtype-generic modality base; `PhaseFloatSequence`
+  (quantitative float32, from `Float/{Bin,Txt}`) and `PhaseImageSequence`
+  (uint8 `Image/*.tif` preview) specialize it. A modality with a single
+  representation (e.g. `Hologram`) keeps a flat `<Modality>Sequence`.
 - Name sequence classes by role vs backing. Abstract role types keep the
   `Sequence` suffix (`PhaseSequence`, `HologramSequence`,
   `TimestampSequence`); concrete types drop it and read

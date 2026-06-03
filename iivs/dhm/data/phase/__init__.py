@@ -4,6 +4,8 @@ __all__ = (
     "PhaseBinFolder",
     "PhaseBinHeader",
     "PhaseBinList",
+    "PhaseFloatSequence",
+    "PhaseImageSequence",
     "PhaseSequence",
     "PhaseTxtFolder",
     "PhaseTxtList",
@@ -16,7 +18,11 @@ __all__ = (
     "save_phase_bin",
 )
 
-from iivs.dhm.data.phase.base import PhaseSequence
+from iivs.dhm.data.phase.base import (
+    PhaseFloatSequence,
+    PhaseImageSequence,
+    PhaseSequence,
+)
 from iivs.dhm.data.phase.bin import (
     PhaseBinFolder,
     PhaseBinHeader,

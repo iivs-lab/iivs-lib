@@ -23,9 +23,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     either as `height_scale`, or as `wavelength` + `refractive_delta`.
   - `convert_phase_unit(data, *, source, target, height_scale)` — rescale a
     phase/height image between `PhaseUnit` representations.
-  - `PhaseSequence` — read-only base type for any phase image sequence;
-    same-shape sources also mix in `data.common.FrameShapedMixin` for
-    `frame_shape` (height, width).
+  - `PhaseSequence` — read-only modality base for any phase sequence, over
+    both `PhaseFloatSequence` (quantitative float32, from `Float/{Bin,Txt}`)
+    and `PhaseImageSequence` (the uint8 `Image/*.tif` preview). Same-shape
+    sources also mix in `data.common.FrameShapedMixin` for `frame_shape`
+    (height, width).
   - `PhaseBinFolder` — an ordered `kaparoo.data.sequences.FileFolderSequence`
     over a folder of `{index:05d}_phase.bin` images (item = image, metadata =
     source path), exposing the shared acquisition `header`, optional unit
@@ -78,8 +80,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `load_intensity_txt` / `read_intensity_txt_header`, with
     `IntensityTxtFolder` / `IntensityTxtList` — the text twins over Koala's
     `Float/Txt` export (a 2-line header -- no unit/height-conversion -- + grid).
-  - `IntensitySequence` base type (same-shape sources add `FrameShapedMixin`),
-    with concrete `IntensityBinFolder` (a `{index:05d}_intensity.bin` folder)
+  - `IntensitySequence` modality base, split into `IntensityFloatSequence`
+    (quantitative float32) and `IntensityImageSequence` (the uint8
+    `Image/*.tif` preview); same-shape sources add `FrameShapedMixin`. Concrete
+    `IntensityBinFolder` (a `{index:05d}_intensity.bin` folder)
     and `IntensityBinList` (an arbitrary list of `.bin` files). The `.txt`
     folders/lists are their text twins.
 - `iivs.dhm.data.timestamp`: per-frame acquisition timing.

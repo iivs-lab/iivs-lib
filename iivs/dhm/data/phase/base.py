@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("PhaseSequence",)
+__all__ = ("PhaseFloatSequence", "PhaseImageSequence", "PhaseSequence")
 
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
@@ -22,21 +22,47 @@ if TYPE_CHECKING:
     from iivs.dhm.data.phase.core import PhaseUnit
 
 
-class PhaseSequence[M](DataSequence[NDArray[np.float32], M]):
-    """A read-only sequence of float32 phase images, from any source.
+class PhaseSequence[T, M](DataSequence[T, M]):
+    """A read-only sequence of phase images, from any source.
 
-    Common base for every phase sequence -- whether the images come from one
-    acquisition (`PhaseBinFolder`) or an arbitrary `PhaseBinList` of unrelated
-    files; annotate parameters with it to accept any of them. Each item is a
-    float32 phase image; `M` is the per-item metadata type chosen by the
-    concrete sequence (e.g. the source `Path`).
+    The modality-level base over both representations Koala exports:
+    quantitative float32 (`PhaseFloatSequence`, from `Float/{Bin,Txt}`) and the
+    uint8 display preview (`PhaseImageSequence`, from `Image/*.tif`). Annotate
+    with it to accept any phase sequence regardless of pixel type; annotate with
+    the `Float` / `Image` subtype when the dtype matters.
 
-    Same-shape sources additionally mix in `data.common.FrameShapedMixin` to
-    expose `frame_shape`.
+    Type Parameters:
+        T: The item (image) array type -- `NDArray[np.float32]` (quantitative)
+            or `NDArray[np.uint8]` (preview).
+        M: The per-item metadata type chosen by the concrete sequence (e.g. the
+            source `Path`).
     """
 
 
-class PhaseFileList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]):
+class PhaseFloatSequence[M](PhaseSequence[NDArray[np.float32], M]):
+    """A read-only sequence of quantitative float32 phase images.
+
+    The phase reconstruction Koala exports as `Float/{Bin,Txt}`; annotate
+    parameters with it to accept any float32 phase source -- one acquisition
+    (`PhaseBinFolder`) or an arbitrary `PhaseBinList` of unrelated files, and
+    their `.txt` twins. Same-shape sources additionally mix in
+    `data.common.FrameShapedMixin` to expose `frame_shape`.
+    """
+
+
+class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
+    """A read-only sequence of uint8 phase preview images.
+
+    The display-only 8-bit preview Koala renders under `Image/*.tif` (the float
+    phase mapped through `phbounds.txt` into 0-255) -- distinct from, and not a
+    substitute for, the quantitative `PhaseFloatSequence`. Same-shape sources
+    mix in `data.common.FrameShapedMixin` to expose `frame_shape`.
+    """
+
+
+class PhaseFileList(
+    FileListSequence[NDArray[np.float32], Path], PhaseFloatSequence[Path]
+):
     """Format-agnostic phase file list over a ``(read_header, decode)`` codec.
 
     Holds the list machinery -- per-file unit conversion, `target_unit`,

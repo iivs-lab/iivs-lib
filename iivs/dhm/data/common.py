@@ -284,8 +284,8 @@ class FrameShapedMixin(ABC):
 
     Mix into a modality sequence on a same-shape source (e.g. a single
     acquisition) to force `frame_shape` to be implemented. There is no
-    per-modality `Uniform*Sequence`: "a uniform phase sequence" is just
-    ``isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)``
+    per-modality `Uniform*Sequence`: "a uniform float phase sequence" is just
+    ``isinstance(x, PhaseFloatSequence) and isinstance(x, FrameShapedMixin)``
     (and likewise for the other modalities). `SequentialFileFolder` mixes this
     in for every numbered folder; a single-file source like `HologramRawFile`
     mixes it in directly.
