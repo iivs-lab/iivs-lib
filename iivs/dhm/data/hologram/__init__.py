@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "HologramNpyFolder",
     "HologramRawFile",
     "HologramRawHeader",
     "HologramSequence",
@@ -12,6 +13,7 @@ __all__ = (
 )
 
 from iivs.dhm.data.hologram.base import HologramSequence
+from iivs.dhm.data.hologram.npy import HologramNpyFolder
 from iivs.dhm.data.hologram.raw import (
     HologramRawFile,
     HologramRawHeader,

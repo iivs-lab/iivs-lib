@@ -8,6 +8,7 @@ from iivs.dhm.data.common import (
     FrameShapedMixin,
     load_uint8_tif,
     parse_txt_grid,
+    read_npy_shape,
     validate_float32_image,
     validate_uint8_image,
 )
@@ -129,6 +130,24 @@ def test_load_uint8_tif_rejects_non_uint8(tmp_path):
     tifffile.imwrite(path, np.zeros((2, 2), dtype=np.float32))
     with pytest.raises(ValueError, match="uint8"):
         load_uint8_tif(path)
+
+
+# ========================== #
+#       read_npy_shape       #
+# ========================== #
+
+
+def test_read_npy_shape_2d(tmp_path):
+    path = tmp_path / "a.npy"
+    np.save(path, np.zeros((3, 4), dtype=np.float32))
+    assert read_npy_shape(path) == (3, 4)
+
+
+def test_read_npy_shape_rejects_non_2d(tmp_path):
+    path = tmp_path / "a.npy"
+    np.save(path, np.zeros((2, 3, 4), dtype=np.float32))
+    with pytest.raises(ValueError, match="2D array"):
+        read_npy_shape(path)
 
 
 # ========================== #

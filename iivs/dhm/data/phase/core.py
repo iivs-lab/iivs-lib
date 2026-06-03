@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("PhaseUnit", "convert_phase_unit")
+__all__ = ("PhaseUnit", "convert_phase_unit", "resolve_height_scale")
 
 from enum import IntEnum
 from typing import TYPE_CHECKING
@@ -26,6 +26,30 @@ class PhaseUnit(IntEnum):
 
 
 _NM_PER_M = 1e9
+
+
+def resolve_height_scale(
+    height_scale: float | None,
+    wavelength: float | None,
+    refractive_delta: float | None,
+) -> float:
+    """Return `height_scale`, or derive it from `wavelength` and `refractive_delta`.
+
+    The phase-to-height factor (m per rad) is given either directly, or as a
+    `wavelength` / `refractive_delta` pair (`height per rad = wavelength /
+    (2*pi * refractive_delta)`). Exactly one of the two forms must be given.
+
+    Raises:
+        ValueError: If neither or both forms are given.
+    """
+    match height_scale, wavelength, refractive_delta:
+        case scale, None, None if scale is not None:
+            return scale
+        case None, wave, delta if wave is not None and delta is not None:
+            return wave / (2.0 * np.pi * delta)
+        case _:
+            msg = "give height_scale, or wavelength and refractive_delta (not both)"
+            raise ValueError(msg)
 
 
 def convert_phase_unit(

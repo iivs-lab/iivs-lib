@@ -13,7 +13,6 @@ import warnings
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-import numpy as np
 from kaparoo.filesystem import ensure_file_exists
 
 from iivs.dhm.data.common import (
@@ -23,11 +22,16 @@ from iivs.dhm.data.common import (
     write_bin,
 )
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
-from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit
+from iivs.dhm.data.phase.core import (
+    PhaseUnit,
+    convert_phase_unit,
+    resolve_height_scale,
+)
 
 if TYPE_CHECKING:
     from typing import Literal, Self
 
+    import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
@@ -188,23 +192,6 @@ def load_phase_bin(
 # ========================== #
 
 
-def _resolve_height_scale(
-    height_scale: float | None,
-    wavelength: float | None,
-    refractive_delta: float | None,
-) -> float:
-    """Return `height_scale`, or derive it from `wavelength` and `refractive_delta`."""
-    match height_scale, wavelength, refractive_delta:
-        case scale, None, None if scale is not None:
-            return scale
-        case None, wave, delta if wave is not None and delta is not None:
-            # height per rad = wavelength / (2*pi * refractive_delta)
-            return wave / (2.0 * np.pi * delta)
-        case _:
-            msg = "give height_scale, or wavelength and refractive_delta (not both)"
-            raise ValueError(msg)
-
-
 def _to_storable_unit(
     data: NDArray[np.float32], unit: PhaseUnit, height_scale: float
 ) -> tuple[NDArray[np.float32], PhaseUnit]:
@@ -299,7 +286,7 @@ def save_phase_bin(
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    height_scale = _resolve_height_scale(height_scale, wavelength, refractive_delta)
+    height_scale = resolve_height_scale(height_scale, wavelength, refractive_delta)
 
     # save stores a single image (allow_stack=False), unlike the loaders.
     data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)

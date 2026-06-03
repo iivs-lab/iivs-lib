@@ -38,18 +38,21 @@ Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
   `PhaseBinFolder` / `PhaseBinList`. The same quantitative phase from Koala's
   `Float/Txt` export via `load_phase_txt`, `PhaseTxtFolder` / `PhaseTxtList`.
   The uint8 `Image/*.tif` display previews (not quantitative) via
-  `PhaseTifFolder` / `PhaseTifList`.
+  `PhaseTifFolder` / `PhaseTifList`. Header-less `.npy` frames via
+  `PhaseNpyFolder` (`pixel_size` / `unit` / `height_scale` passed to the
+  constructor; `numpy.load`, pickle disabled).
 - **`intensity`** — float32 `.bin` intensity reconstructions (exported
   alongside phase): `load_intensity_bin` / `save_intensity_bin` /
   `read_intensity_bin_header`, the typed `IntensityBinHeader`, and folder/list
   sequences `IntensityBinFolder` / `IntensityBinList`; plus the `Float/Txt`
-  twins `load_intensity_txt`, `IntensityTxtFolder` / `IntensityTxtList`, and the
-  uint8 `Image/*.tif` previews `IntensityTifFolder` / `IntensityTifList`. The
-  phase and intensity `.bin` formats share the `common.KoalaBinHeader` base.
+  twins `load_intensity_txt`, `IntensityTxtFolder` / `IntensityTxtList`, the
+  uint8 `Image/*.tif` previews `IntensityTifFolder` / `IntensityTifList`, and
+  header-less `.npy` frames via `IntensityNpyFolder` (`pixel_size` passed in).
+  The phase and intensity `.bin` formats share the `common.KoalaBinHeader` base.
 - **`hologram`** — uint8 holograms: `.tif` via `load_hologram_tif` /
   `save_hologram_tif` with `HologramTifFolder` / `HologramTifList`; a single
   multi-frame `.raw` via `HologramRawFile` (a lazy `np.memmap`) and
-  `read_hologram_raw_header`.
+  `read_hologram_raw_header`; header-less `.npy` frames via `HologramNpyFolder`.
 - **`timestamp`** — per-frame acquisition timing: the `Timestamp` record,
   `TimestampsTxtFile` (Koala `timestamps.txt`), and `TimestampsFixedFPS`
   (synthesized from a frame rate).

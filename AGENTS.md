@@ -57,16 +57,17 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   under `iivs.dhm.data` (`phase`, `intensity`, `hologram`, `timestamp`)
   splits a multi-format modality into per-format modules plus a
   format-agnostic `core` and a `base` holding the abstract sequence types —
-  e.g. `phase/{core,base,bin,txt,tif}.py`, `hologram/{base,tif,raw}.py` (a
-  modality drops `core` when it has no format-agnostic logic of its own).
+  e.g. `phase/{core,base,bin,txt,tif,npy}.py`, `hologram/{base,tif,raw,npy}.py`
+  (a modality drops `core` when it has no format-agnostic logic of its own).
   Building blocks shared across modalities live in one data-root module,
   `common.py`: the `KoalaBinHeader` base + `.bin` pixel I/O (used by `phase`
   and `intensity`), the `Float/Txt` header/grid readers (`KoalaTxtHeader`,
-  `parse_txt_grid`), the uint8-tif reader + folder/list bodies (`load_uint8_tif`,
-  `ImageTifFolder` / `ImageTifList`), the numbered-folder `SequentialFileFolder`
-  template (every `*Folder` builds on it), the `FrameShapedMixin`, and the
-  float32/uint8 image validators. Prefer a shared base/template + a small mixin
-  over copy-pasting across modalities.
+  `parse_txt_grid`), the uint8-image folder/list codec bases + `.tif` reader
+  (`ImageFileFolder` / `ImageFileList`, `ImageTifFolder` / `ImageTifList`,
+  `load_uint8_tif`), the `.npy` shape reader (`read_npy_shape`), the
+  numbered-folder `SequentialFileFolder` template (every `*Folder` builds on
+  it), the `FrameShapedMixin`, and the float32/uint8 image validators. Prefer a
+  shared base/template + a small mixin over copy-pasting across modalities.
 - A `*Folder` is the auto-discovered special case of its `*List`, so it
   *subclasses the list* (mirroring kaparoo's `FileFolderSequence` ⊂
   `FileListSequence`) and reuses its `load_file`. `FileFolderSequence.__init__

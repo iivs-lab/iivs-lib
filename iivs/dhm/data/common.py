@@ -12,6 +12,8 @@ from __future__ import annotations
 
 __all__ = (
     "FrameShapedMixin",
+    "ImageFileFolder",
+    "ImageFileList",
     "ImageTifFolder",
     "ImageTifList",
     "KoalaBinHeader",
@@ -20,6 +22,7 @@ __all__ = (
     "load_uint8_tif",
     "parse_txt_grid",
     "read_bin_pixels",
+    "read_npy_shape",
     "validate_float32_image",
     "validate_uint8_image",
     "write_bin",
@@ -605,7 +608,7 @@ def validate_uint8_image(
 
 
 # ========================== #
-#         Uint8 Tif          #
+#         Uint8 Image        #
 # ========================== #
 
 
@@ -627,18 +630,19 @@ def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
     return validate_uint8_image(data, allow_stack=False)
 
 
-class ImageTifList(FileListSequence[NDArray[np.uint8], Path]):
-    """A uint8 tif sequence over an explicit, arbitrary list of `.tif` files.
+class ImageFileList(FileListSequence[NDArray[np.uint8], Path]):
+    """A uint8 image sequence over an arbitrary list of files, via a `load_file` codec.
 
-    The modality-agnostic body for the uint8 `.tif` previews: each file is
-    decoded independently via `load_uint8_tif`, so the files may live anywhere
-    and differ in shape. A modality adds its role by also inheriting its
-    `<Modality>ImageSequence` -- e.g.
-    `PhaseTifList(ImageTifList, PhaseImageSequence[Path])`. `ImageTifFolder` is
-    the auto-discovered, same-shape specialization.
+    The modality- and format-agnostic body for header-less uint8 image sources
+    (`.tif` previews, `.npy` arrays): each file is decoded independently, so the
+    files may live anywhere and differ in shape. A concrete subclass supplies
+    only `load_file` for its on-disk format (`ImageTifList`); a modality adds
+    its role by also inheriting its `<Modality>ImageSequence` / sequence type --
+    e.g. `PhaseTifList(ImageTifList, PhaseImageSequence[Path])`. `ImageFileFolder`
+    is the auto-discovered, same-shape specialization.
 
     Args:
-        files: The `.tif` files to expose, in the given order.
+        files: The files to expose, in the given order.
     """
 
     @override
@@ -648,25 +652,25 @@ class ImageTifList(FileListSequence[NDArray[np.uint8], Path]):
 
     @override
     def load_file(self, path: Path) -> NDArray[np.uint8]:
-        """Load and decode the uint8 image at `path`."""
-        return load_uint8_tif(path)
+        """Decode the uint8 image at `path` (subclass codec)."""
+        raise NotImplementedError
 
 
-class ImageTifFolder(SequentialFileFolder[NDArray[np.uint8]], ImageTifList):
-    """A uint8 tif folder: numbered discovery + one shared (lazily read) shape.
+class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ImageFileList):
+    """A uint8 image folder: numbered discovery + one shared (lazily read) shape.
 
-    The auto-discovered, same-shape specialization of `ImageTifList`. A `.tif`
-    preview carries no header, so `frame_shape` is read lazily from the first
-    file and every image is required to match it. Concrete folders set
-    `FILE_STEM` (and inherit `FILE_EXT = "tif"`) and add their image role -- e.g.
-    `PhaseTifFolder(ImageTifFolder, PhaseTifList)`.
+    The auto-discovered, same-shape specialization of `ImageFileList`. A
+    header-less image file carries no shape metadata, so `frame_shape` is read
+    lazily from the first file (via the subclass `load_file`) and every image is
+    required to match it. Concrete folders set `FILE_EXT` / `FILE_STEM`, supply
+    a `load_file`, and add their image role -- e.g. `ImageTifFolder` (tif) or
+    `HologramNpyFolder` (npy).
 
     Args:
         root: The folder to scan.
         validate: Validation level at construction, or None to skip.
     """
 
-    FILE_EXT: ClassVar[str] = "tif"
     LEVELS: ClassVar[tuple[str, ...]] = ("names", "data")
     DEFAULT_LEVEL: ClassVar[str] = "names"
 
@@ -686,20 +690,76 @@ class ImageTifFolder(SequentialFileFolder[NDArray[np.uint8]], ImageTifList):
     def frame_shape(self) -> tuple[int, int]:
         """The (height, width) of the first image, loaded lazily and cached.
 
-        The `.tif` folder carries no header, so this reads the first file and
-        assumes every image shares its shape.
+        A header-less image folder carries no shape metadata, so this reads the
+        first file and assumes every image shares its shape.
         """
-        shape = load_uint8_tif(self.get_file(0)).shape
+        shape = self.load_file(self.get_file(0)).shape
         return (shape[0], shape[1])
 
     @override
     def _validate_content(self, path: Path, *, level: str) -> None:
         """Decode `path` and require its shape to match the first file.
 
-        `level` is fixed by the hook contract but unused: the `.tif` folder
-        carries no header, so "data" is its only level past "names".
+        `level` is fixed by the hook contract but unused: a header-less image
+        folder carries no header, so "data" is its only level past "names".
         """
-        image = load_uint8_tif(path)
+        image = self.load_file(path)
         if image.shape != self.frame_shape:
             msg = f"shape of {path.name} must match the first file {self.frame_shape} (got {image.shape})"
             raise ValueError(msg)
+
+
+class ImageTifList(ImageFileList):
+    """A uint8 `.tif` image sequence over an arbitrary list of files.
+
+    Supplies the `.tif` codec (`load_uint8_tif`) over `ImageFileList`. A modality
+    adds its role by also inheriting its `<Modality>ImageSequence` (e.g.
+    `PhaseTifList(ImageTifList, PhaseImageSequence[Path])`). `ImageTifFolder` is
+    the auto-discovered, same-shape specialization.
+
+    Args:
+        files: The `.tif` files to expose, in the given order.
+    """
+
+    @override
+    def load_file(self, path: Path) -> NDArray[np.uint8]:
+        """Load and decode the uint8 tif image at `path`."""
+        return load_uint8_tif(path)
+
+
+class ImageTifFolder(ImageFileFolder, ImageTifList):
+    """A uint8 `.tif` folder: `ImageFileFolder` over the `.tif` codec.
+
+    The auto-discovered, same-shape specialization of `ImageTifList`. Concrete
+    folders set `FILE_STEM` (and inherit `FILE_EXT = "tif"`) and add their image
+    role -- e.g. `PhaseTifFolder(ImageTifFolder, PhaseTifList)`.
+
+    Args:
+        root: The folder to scan.
+        validate: Validation level at construction, or None to skip.
+    """
+
+    FILE_EXT: ClassVar[str] = "tif"
+
+
+# ========================== #
+#            Npy             #
+# ========================== #
+
+
+def read_npy_shape(path: StrPath) -> tuple[int, int]:
+    """Read a 2D `.npy` array's (height, width) without loading its data.
+
+    Memory-maps the file to read just the shape from the `.npy` header, so a
+    header-less `.npy` folder can be validated by shape cheaply. Pickled object
+    arrays are rejected (`allow_pickle=False`).
+
+    Raises:
+        ValueError: If the array is not 2-dimensional.
+    """
+    array = np.load(path, mmap_mode="r", allow_pickle=False)
+    shape = array.shape
+    if len(shape) != 2:
+        msg = f"{Path(path).name} must be a 2D array (got {len(shape)}D)"
+        raise ValueError(msg)
+    return (shape[0], shape[1])

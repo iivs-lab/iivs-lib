@@ -45,6 +45,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     each item is the 8-bit preview, not the float phase). Decoding the
     LZW-compressed Koala previews needs the `iivs-lib[image]` extra
     (`imagecodecs`).
+  - `PhaseNpyFolder` — a header-less `{index:05d}_phase.npy` float32 folder.
+    `.npy` carries no Koala header, so `pixel_size`, `unit`, and `height_scale`
+    (or `wavelength` + `refractive_delta`) are passed to the constructor and
+    shared by every frame; arrays load via `numpy.load(allow_pickle=False)`
+    (pickle disabled). `resolve_height_scale` is the shared scale-or-wavelength
+    helper it and `save_phase_bin` use.
 - `iivs.dhm.data.common`: the building blocks shared across the data
   modalities.
   - `KoalaBinHeader` — base for the packed 23-byte Lyncée Tec Koala `.bin`
@@ -74,12 +80,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `KoalaBinHeader`), with `from_file` / `from_lines`. `phase` and `intensity`
     subclass it to parse their text header into the matching `*BinHeader`,
     sharing the line-count check and the `h/w` + `pixel size` regex.
-  - `load_uint8_tif`, with `ImageTifFolder` / `ImageTifList` — the
-    modality-agnostic uint8 `.tif` reader and folder/list bodies behind the
-    `Image/*.tif` preview sources *and* the hologram `.tif` folder/list. A
-    modality adds its role by also inheriting its `<Modality>ImageSequence` /
-    `<Modality>Sequence` (e.g. `PhaseTifFolder(ImageTifFolder, PhaseTifList)`,
-    `HologramTifFolder(ImageTifFolder, HologramTifList)`).
+  - `load_uint8_tif`, with the `ImageFileList` / `ImageFileFolder` codec bases
+    and their `.tif` concretes `ImageTifList` / `ImageTifFolder` — the
+    modality-agnostic uint8 image folder/list bodies (a `load_file` codec +
+    lazy `frame_shape`) behind the `Image/*.tif` previews, the hologram `.tif`
+    folder, and -- via a `numpy.load` `load_file` -- `HologramNpyFolder`.
+  - `read_npy_shape` — read a 2-D `.npy` array's `(height, width)` without
+    loading its data (memory-mapped, `allow_pickle=False`); used to validate the
+    `*NpyFolder`s cheaply.
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).
@@ -100,6 +108,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `IntensityTifFolder` / `IntensityTifList` — the uint8 `Image/*.tif`
     display-preview sources (an `IntensityImageSequence`); like the phase
     previews, decoding needs the `iivs-lib[image]` extra.
+  - `IntensityNpyFolder` — a header-less `{index:05d}_intensity.npy` float32
+    folder; `pixel_size` is passed to the constructor (intensity has no unit or
+    height scale). Arrays load via `numpy.load(allow_pickle=False)`.
 - `iivs.dhm.data.timestamp`: per-frame acquisition timing.
   - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
     `Timestamp.series_from_elapsed_times`.
@@ -127,6 +138,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `HologramRawFile` — a `SingleFileSequence` over a `.raw` file's frames
     (held internally as a lazy, read-only `np.memmap`; each item is a writable
     frame copy, metadata is the frame index).
+  - `HologramNpyFolder` — a header-less `{index:05d}_holo.npy` uint8 folder (no
+    metadata needed); arrays load via `numpy.load(allow_pickle=False)`.
 - `iivs.dhm.data.constants`: typical optical, geometric, and biophysical
   parameters for the lab's transmission setup — `DEFAULT_WAVELENGTH` (666 nm,
   in m) / `DEFAULT_WAVELENGTH_NM`, `DEFAULT_REFRACTIVE_DELTA` (0.5),
