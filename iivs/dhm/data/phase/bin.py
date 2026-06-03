@@ -20,11 +20,15 @@ from kaparoo.filesystem import ensure_file_exists
 from kaparoo.utils import replace_if_none
 from numpy.typing import NDArray
 
-from iivs.dhm.data.binfile import KoalaBinHeader, read_bin_pixels, write_bin
-from iivs.dhm.data.folder import SequentialFileFolderSequence
+from iivs.dhm.data.common import (
+    FrameShapedMixin,
+    KoalaBinHeader,
+    SequentialFileFolder,
+    read_bin_pixels,
+    write_bin,
+)
 from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit, validate_phase
-from iivs.dhm.data.sequence import FrameShapedMixin
 
 if TYPE_CHECKING:
     from typing import Literal, Self
@@ -328,7 +332,7 @@ def save_phase_bin(
 
 
 class PhaseBinFolder(
-    SequentialFileFolderSequence[NDArray[np.float32]],
+    SequentialFileFolder[NDArray[np.float32]],
     PhaseSequence[Path],
     FrameShapedMixin,
 ):

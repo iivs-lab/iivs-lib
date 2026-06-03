@@ -16,6 +16,6 @@ class PhaseSequence[M](DataSequence[NDArray[np.float32], M]):
     float32 phase image; `M` is the per-item metadata type chosen by the
     concrete sequence (e.g. the source `Path`).
 
-    Same-shape sources additionally mix in `data.sequence.FrameShapedMixin` to
+    Same-shape sources additionally mix in `data.common.FrameShapedMixin` to
     expose `frame_shape`.
     """

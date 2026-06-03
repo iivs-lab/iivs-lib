@@ -16,6 +16,6 @@ class HologramSequence[M](DataSequence[NDArray[np.uint8], M]):
     Each item is a uint8 hologram; `M` is the per-item metadata type chosen by
     the concrete sequence.
 
-    Same-shape sources additionally mix in `data.sequence.FrameShapedMixin` to
+    Same-shape sources additionally mix in `data.common.FrameShapedMixin` to
     expose `frame_shape`.
     """

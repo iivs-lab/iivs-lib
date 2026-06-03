@@ -26,7 +26,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `convert_phase_unit(data, *, source, target, height_scale)` — rescale a
     phase/height image between `PhaseUnit` representations.
   - `PhaseSequence` — read-only base type for any phase image sequence;
-    same-shape sources also mix in `data.sequence.FrameShapedMixin` for
+    same-shape sources also mix in `data.common.FrameShapedMixin` for
     `frame_shape` (height, width).
   - `PhaseBinFolder` — an ordered `kaparoo.data.sequences.FileFolderSequence`
     over a folder of `{index:05d}_phase.bin` images (item = image, metadata =
@@ -36,24 +36,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     explicit, arbitrary list of `.bin` files (any location, no naming or
     shared-header constraint); each file is read independently with per-file
     unit conversion.
-- `iivs.dhm.data.folder`: `SequentialFileFolderSequence` — a
-  `kaparoo.data.sequences.FileFolderSequence` base for `{index:05d}_<stem>.<ext>`
-  folders. Subclasses set `FILE_STEM` / `FILE_EXT` / `LEVELS` / `DEFAULT_LEVEL`
-  and a `_validate_content` hook; numbered discovery (`list_files`), `get_meta`,
-  and the contiguity-checked `validate` / `validate_file` come for free. The
-  `PhaseBinFolder`, `IntensityBinFolder`, and `HologramTifFolder` build on it.
-- `iivs.dhm.data.sequence`: `FrameShapedMixin` — a mixin that forces a uniform
-  `frame_shape`. There is no per-modality `Uniform*Sequence`: a same-shape
-  source is `<Modality>Sequence` + `FrameShapedMixin`, so "a uniform phase
-  sequence" is `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`.
-- `iivs.dhm.data.binfile`: the shared Lyncée Tec Koala `.bin` format — the
-  `KoalaBinHeader` base (geometry plus the packed 23-byte header machinery and
-  the float32 pixel block I/O via `read_bin_pixels` / `write_bin`),
-  specialized per modality by `PhaseBinHeader` and `IntensityBinHeader`.
-- `iivs.dhm.data.image`: `validate_float32_image` — the shared, modality-agnostic
-  float32 image/stack validator (dtype, dimensionality, and the `on_nonfinite`
-  policy). `phase.validate_phase` and `intensity.validate_intensity` are
-  domain-named aliases over it.
+- `iivs.dhm.data.common`: the building blocks shared across the data
+  modalities.
+  - `KoalaBinHeader` — base for the packed 23-byte Lyncée Tec Koala `.bin`
+    header (geometry + structural read), with the float32 pixel-block I/O
+    `read_bin_pixels` / `write_bin`; specialized per modality by
+    `PhaseBinHeader` and `IntensityBinHeader`.
+  - `SequentialFileFolder` — a `kaparoo.data.sequences.FileFolderSequence` base
+    for `{index:05d}_<stem>.<ext>` folders. Subclasses set `FILE_STEM` /
+    `FILE_EXT` / `LEVELS` / `DEFAULT_LEVEL` and a `_validate_content` hook;
+    numbered discovery (`list_files`), `get_meta`, and the contiguity-checked
+    `validate` / `validate_file` come for free. `PhaseBinFolder`,
+    `IntensityBinFolder`, and `HologramTifFolder` build on it.
+  - `FrameShapedMixin` — a mixin that forces a uniform `frame_shape`. There is
+    no per-modality `Uniform*Sequence`: a same-shape source is
+    `<Modality>Sequence` + `FrameShapedMixin`, so "a uniform phase sequence" is
+    `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`.
+  - `validate_float32_image` — the shared, modality-agnostic float32
+    image/stack validator (dtype, dimensionality, and the `on_nonfinite`
+    policy). `phase.validate_phase` and `intensity.validate_intensity` are
+    domain-named aliases over it.
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).
@@ -79,7 +81,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `load_hologram_tif(path)` / `save_hologram_tif(path, data, *, overwrite=False)`
     and `validate_hologram(data)`.
   - `HologramSequence` — read-only base type for any hologram sequence;
-    same-shape sources also mix in `data.sequence.FrameShapedMixin` for
+    same-shape sources also mix in `data.common.FrameShapedMixin` for
     `frame_shape` (height, width).
   - `HologramTifFolder` — an ordered `FileFolderSequence` over a folder of
     `{index:05d}_holo.tif` images (item = image, metadata = source path),

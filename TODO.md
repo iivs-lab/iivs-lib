@@ -7,7 +7,7 @@ item to a CHANGELOG entry once it lands.
 
 - **Factor a per-format codec for the list variant + per-file decode.** The
   numbered-folder mechanics (`list_files` / `get_meta` / `validate` /
-  `validate_file`) are now shared via `data.folder.SequentialFileFolderSequence`
+  `validate_file`) are now shared via `data.common.SequentialFileFolder`
   (a `FileFolderSequence` subclass with a `_validate_content` hook). What
   remains is the per-format `load_file`, still redeclared by each folder *and*
   its list variant (`FileListSequence`), and the list variant's `get_meta`. As

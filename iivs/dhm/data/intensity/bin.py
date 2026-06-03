@@ -18,11 +18,15 @@ from kaparoo.data.sequences import FileListSequence
 from kaparoo.filesystem import ensure_file_exists
 from numpy.typing import NDArray
 
-from iivs.dhm.data.binfile import KoalaBinHeader, read_bin_pixels, write_bin
-from iivs.dhm.data.folder import SequentialFileFolderSequence
+from iivs.dhm.data.common import (
+    FrameShapedMixin,
+    KoalaBinHeader,
+    SequentialFileFolder,
+    read_bin_pixels,
+    write_bin,
+)
 from iivs.dhm.data.intensity.base import IntensitySequence
 from iivs.dhm.data.intensity.core import validate_intensity
-from iivs.dhm.data.sequence import FrameShapedMixin
 
 if TYPE_CHECKING:
     from typing import Literal, Self
@@ -219,7 +223,7 @@ def save_intensity_bin(
 
 
 class IntensityBinFolder(
-    SequentialFileFolderSequence[NDArray[np.float32]],
+    SequentialFileFolder[NDArray[np.float32]],
     IntensitySequence[Path],
     FrameShapedMixin,
 ):

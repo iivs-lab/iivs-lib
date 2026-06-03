@@ -4,7 +4,7 @@ __all__ = ("validate_intensity",)
 
 from typing import TYPE_CHECKING
 
-from iivs.dhm.data.image import validate_float32_image
+from iivs.dhm.data.common import validate_float32_image
 
 if TYPE_CHECKING:
     from typing import Literal

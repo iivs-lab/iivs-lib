@@ -49,9 +49,10 @@ Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
 
 Every sequence is a `kaparoo.data.sequences.DataSequence`, so it indexes,
 slices, and iterates lazily; same-shape sources also expose `frame_shape` by
-mixing in `sequence.FrameShapedMixin` (so a uniform source is its
+mixing in `common.FrameShapedMixin` (so a uniform source is its
 `<Modality>Sequence` plus that mixin). Numbered-folder sequences share the
-`folder.SequentialFileFolderSequence` discovery/validation base.
+`common.SequentialFileFolder` discovery/validation base. These cross-modality
+building blocks live in `iivs.dhm.data.common`.
 
 ### `iivs.dhm.analysis`
 

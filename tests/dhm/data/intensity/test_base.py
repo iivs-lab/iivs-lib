@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from iivs.dhm.data.common import FrameShapedMixin
 from iivs.dhm.data.intensity.base import IntensitySequence
 from iivs.dhm.data.intensity.bin import IntensityBinFolder, IntensityBinList
-from iivs.dhm.data.sequence import FrameShapedMixin
 
 
 def test_intensity_sequence_hierarchy():

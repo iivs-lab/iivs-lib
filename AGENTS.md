@@ -58,15 +58,14 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   splits a multi-format modality into per-format modules plus a
   format-agnostic `core` and a `base` holding the abstract sequence types —
   e.g. `phase/{core,base,bin}.py`, `hologram/{core,base,tif,raw}.py`.
-  File-format primitives shared across modalities live at the data-package
-  root — e.g. `binfile.py` holds the `KoalaBinHeader` base and the `.bin`
-  pixel I/O used by both `phase` and `intensity`; `folder.py` holds
-  `SequentialFileFolderSequence` (the numbered-folder discovery + validation
-  template every `*Folder` builds on); `sequence.py` holds `FrameShapedMixin`.
+  Building blocks shared across modalities live in one data-root module,
+  `common.py`: the `KoalaBinHeader` base + `.bin` pixel I/O (used by `phase`
+  and `intensity`), the numbered-folder `SequentialFileFolder` template (every
+  `*Folder` builds on it), the `FrameShapedMixin`, and `validate_float32_image`.
   Prefer a shared base/template + a small mixin over copy-pasting across
   modalities.
 - Mark cross-cutting capabilities with a mixin, not a class per modality. A
-  same-shape source mixes `data.sequence.FrameShapedMixin` (forces
+  same-shape source mixes `data.common.FrameShapedMixin` (forces
   `frame_shape`) into its `<Modality>Sequence` rather than having a
   `Uniform<Modality>Sequence` each; "a uniform phase sequence" is then
   `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`.

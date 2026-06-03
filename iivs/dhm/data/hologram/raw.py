@@ -14,8 +14,8 @@ from kaparoo.data.sequences.templates import SingleFileSequence
 from kaparoo.filesystem import ensure_file_exists
 from numpy.typing import NDArray
 
+from iivs.dhm.data.common import FrameShapedMixin
 from iivs.dhm.data.hologram.base import HologramSequence
-from iivs.dhm.data.sequence import FrameShapedMixin
 
 if TYPE_CHECKING:
     from typing import IO, Self

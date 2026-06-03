@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from iivs.dhm.data.common import FrameShapedMixin
 from iivs.dhm.data.hologram.base import HologramSequence
 from iivs.dhm.data.hologram.raw import HologramRawFile
 from iivs.dhm.data.hologram.tif import HologramTifFolder, HologramTifList
-from iivs.dhm.data.sequence import FrameShapedMixin
 
 
 def test_hologram_sequence_hierarchy():
