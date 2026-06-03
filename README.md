@@ -44,6 +44,29 @@ Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
 Every sequence is a `kaparoo.data.sequences.DataSequence`, so it indexes,
 slices, and iterates lazily; same-shape sources also expose `frame_shape`.
 
+### `iivs.dhm.analysis`
+
+Physical quantities derived from phase, each via an engine object that
+precomputes its conversion factor (with one-shot function conveniences):
+
+- **`opd`** — optical path difference (`OPD = phase * wavelength / (2*pi)`, in
+  nm). `OPDConverter` (`convert_to_opd` / `convert_to_phase`, scale
+  `opd_scale`); `phase_to_opd` / `opd_to_phase`.
+- **`drymass`** — dry mass (pg) via the Barer relation. `DryMassCalculator`
+  (`calc_from_opd` / `calc_from_phase` over a background-corrected, optionally
+  masked map; scale `drymass_scale`); `calc_drymass` / `calc_drymass_from_phase`.
+
+#### Using with PyTorch (autograd)
+
+The `convert_*` / `calc_*` methods operate on NumPy arrays. Inside a model,
+keep gradients by multiplying tensors with the cached scale factors (plain
+floats) using native ops instead:
+
+```python
+opd = phase * conv.opd_scale                  # phase: Tensor -> OPD (nm), grad kept
+mass = opd[mask].sum() * calc.drymass_scale   # OPD -> dry mass (pg), grad kept
+```
+
 ## 📋 TODO
 
 See [TODO.md](./TODO.md) for tracked open items.

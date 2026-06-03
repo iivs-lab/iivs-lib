@@ -43,6 +43,9 @@ class DryMassCalculator:
     The module-level `calc_drymass` / `calc_drymass_from_phase` are one-shot
     conveniences over this class (as `json.dumps` is over `json.JSONEncoder`).
 
+    The `calc_*` methods are NumPy-based; for PyTorch autograd, reduce tensors
+    with `drymass_scale` directly (e.g. ``opd[mask].sum() * calc.drymass_scale``).
+
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in mL/g (= um^3/pg).

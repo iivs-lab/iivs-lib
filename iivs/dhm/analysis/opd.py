@@ -38,6 +38,9 @@ class OPDConverter:
     The module-level `phase_to_opd` / `opd_to_phase` are one-shot conveniences
     over this class (as `json.dumps` is over `json.JSONEncoder`).
 
+    The `convert_*` methods are NumPy-based; for PyTorch autograd, multiply
+    tensors by `opd_scale` directly (a plain float, so gradients are kept).
+
     Attributes:
         wavelength: Illumination wavelength, in m.
     """
