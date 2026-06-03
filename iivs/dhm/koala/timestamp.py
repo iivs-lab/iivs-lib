@@ -224,10 +224,12 @@ class TimestampFpsSequence(TimestampSequence):
 
     @property
     def mean_frame_rate(self) -> float:
+        """The constant frame rate, in fps."""
         return self._frame_rate
 
     @property
     def mean_interval_ms(self) -> float:
+        """The constant interval between frames, in milliseconds."""
         return self._interval_ms
 
     @classmethod

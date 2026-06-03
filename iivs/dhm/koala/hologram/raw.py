@@ -198,8 +198,10 @@ class HologramRawSequence(
         return self._header.frame_count
 
     def get_item(self, index: int) -> NDArray[np.uint8]:
-        # A writable, owned copy (consistent with the other sequences); use
-        # `frames` for zero-copy access to the underlying memmap.
+        """Return a writable, owned copy of the frame at `index`.
+
+        Use the read-only `frames` memmap directly for zero-copy access.
+        """
         return self._frames[index].copy()
 
     def get_meta(self, index: int) -> int:

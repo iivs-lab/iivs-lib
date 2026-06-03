@@ -502,9 +502,8 @@ class PhaseBinSequence(
         self._header = read_phase_bin_header(self.get_file(0))
         self._target_unit = replace_if_none(target_unit, self._header.unit)
 
-        # Fail fast: surface an unreachable target unit now, not lazily on every
-        # get_item. convert_phase_unit no-ops when the units already match, so
-        # this runs unconditionally; the empty array keeps it a pure pair check.
+        # Fail fast: reject an unreachable target unit at construction, not
+        # lazily on each get_item. The empty array makes it a pure pair check.
         convert_phase_unit(
             np.empty((0, 0), dtype=np.float32),
             source=self._header.unit,
@@ -526,9 +525,11 @@ class PhaseBinSequence(
         return self._target_unit
 
     def get_meta(self, index: int) -> Path:
+        """Return the source path of the file at `index`."""
         return self.get_file(index)
 
     def list_files(self, root: Path) -> list[Path]:
+        """List the `NNNNN_phase.bin` files under `root`, in index order."""
         files = search_files(root, name_filter=Regex(r"\d{5}_phase\.bin"), max_depth=1)
         if not files:
             msg = f"no NNNNN_phase.bin files found in {root}"
@@ -536,6 +537,7 @@ class PhaseBinSequence(
         return natsorted(files)
 
     def load_file(self, path: Path) -> NDArray[np.float32]:
+        """Load the image at `path`, converted to `target_unit`."""
         return convert_phase_unit(
             load_phase_bin(path),
             source=self._header.unit,
