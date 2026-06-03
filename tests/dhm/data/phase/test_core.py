@@ -6,14 +6,12 @@ import pytest
 from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit, validate_phase
 
 
-def test_validate_phase_rejects_below_2d():
-    with pytest.raises(ValueError, match="2-dimensional"):
-        validate_phase(np.zeros(5, dtype=np.float32))
-
-
-def test_validate_phase_rejects_unknown_on_nonfinite():
-    with pytest.raises(ValueError, match="on_nonfinite must be"):
-        validate_phase(np.zeros((2, 2), dtype=np.float32), on_nonfinite="bogus")  # ty: ignore[invalid-argument-type]
+def test_validate_phase_delegates_to_float32_validator():
+    # The phase-named alias enforces the shared float32-image contract.
+    data = np.zeros((2, 2), dtype=np.float32)
+    assert validate_phase(data) is data
+    with pytest.raises(ValueError, match="float32"):
+        validate_phase(np.zeros((2, 2), dtype=np.float64))
 
 
 def test_convert_phase_unit_radians_to_meters():

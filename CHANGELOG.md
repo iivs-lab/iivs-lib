@@ -50,6 +50,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `KoalaBinHeader` base (geometry plus the packed 23-byte header machinery and
   the float32 pixel block I/O via `read_bin_pixels` / `write_bin`),
   specialized per modality by `PhaseBinHeader` and `IntensityBinHeader`.
+- `iivs.dhm.data.image`: `validate_float32_image` — the shared, modality-agnostic
+  float32 image/stack validator (dtype, dimensionality, and the `on_nonfinite`
+  policy). `phase.validate_phase` and `intensity.validate_intensity` are
+  domain-named aliases over it.
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).
