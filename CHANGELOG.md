@@ -25,13 +25,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     image or stack.
   - `convert_phase_unit(data, *, source, target, height_scale)` — rescale a
     phase/height image between `PhaseUnit` representations.
-  - `PhaseSequence` — read-only base type for phase image sequences (any
-    source), exposing each image's `frame_shape` (height, width);
-    implemented by `PhaseBinSequence`.
+  - `PhaseSequence` — read-only base type for any phase image sequence;
+    `UniformPhaseSequence` refines it for same-shape images, adding
+    `frame_shape` (height, width).
   - `PhaseBinSequence` — an ordered `kaparoo.data.sequences.FileFolderSequence`
     over a folder of `{index:05d}_phase.bin` images (item = image, metadata =
     source path), exposing the shared acquisition `header`, optional unit
     conversion, and a `validate` method.
+  - `PhaseBinListSequence` — a `kaparoo.data.sequences.FileListSequence` over an
+    explicit, arbitrary list of `.bin` files (any location, no naming or
+    shared-header constraint); each file is read independently with per-file
+    unit conversion.
 - `iivs.dhm.koala.timestamp`: per-frame acquisition timing.
   - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
     `Timestamp.series_from_elapsed_times`.
@@ -43,12 +47,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `.tif` folder or a single multi-frame `.raw` file.
   - `load_hologram_tif(path)` / `save_hologram_tif(path, data, *, overwrite=False)`
     and `validate_hologram(data)`.
-  - `HologramSequence` — read-only base type for hologram sequences (any
-    source), exposing each hologram's `frame_shape` (height, width);
-    implemented by `HologramTifSequence` and `HologramRawSequence`.
+  - `HologramSequence` — read-only base type for any hologram sequence;
+    `UniformHologramSequence` refines it for same-shape images, adding
+    `frame_shape` (height, width).
   - `HologramTifSequence` — an ordered `FileFolderSequence` over a folder of
     `{index:05d}_holo.tif` images (item = image, metadata = source path),
     with a `validate` method.
+  - `HologramTifListSequence` — a `FileListSequence` over an explicit,
+    arbitrary list of `.tif` files (any location, no naming constraint), each
+    decoded independently.
   - `HologramRawHeader` / `read_hologram_raw_header(path)` — the 16-byte
     `.raw` header (width, height, bit depth, frame count).
   - `HologramRawSequence` — a `SingleFileSequence` over a `.raw` file's frames

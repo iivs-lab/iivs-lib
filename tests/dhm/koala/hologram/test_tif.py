@@ -5,6 +5,7 @@ import pytest
 import tifffile
 
 from iivs.dhm.koala.hologram.tif import (
+    HologramTifListSequence,
     HologramTifSequence,
     load_hologram_tif,
     save_hologram_tif,
@@ -134,3 +135,24 @@ def test_validate_file_rejects_unknown_level(tmp_path):
     seq = HologramTifSequence(tmp_path, validate=None)
     with pytest.raises(ValueError, match="level must be"):
         seq.validate_file(0, level="bogus")  # ty: ignore[invalid-argument-type]
+
+
+# --- file list ---
+
+
+def test_list_sequence_loads_arbitrary_unrelated_files(tmp_path):
+    # Arbitrary names, nested folder, heterogeneous shapes; order preserved.
+    a = tmp_path / "first.tif"
+    sub = tmp_path / "nested"
+    sub.mkdir()
+    b = sub / "whatever.tif"
+    save_hologram_tif(a, np.full((2, 3), 1, dtype=np.uint8))
+    save_hologram_tif(b, np.full((4, 5), 2, dtype=np.uint8))
+
+    seq = HologramTifListSequence([b, a])
+
+    assert len(seq) == 2
+    assert [seq.get_meta(i) for i in range(2)] == [b, a]
+    np.testing.assert_array_equal(seq[0], np.full((4, 5), 2, dtype=np.uint8))
+    np.testing.assert_array_equal(seq[1], np.full((2, 3), 1, dtype=np.uint8))
+    assert not hasattr(seq, "frame_shape")  # heterogeneous: no uniform shape

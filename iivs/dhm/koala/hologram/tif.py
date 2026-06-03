@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-__all__ = ("HologramTifSequence", "load_hologram_tif", "save_hologram_tif")
+__all__ = (
+    "HologramTifListSequence",
+    "HologramTifSequence",
+    "load_hologram_tif",
+    "save_hologram_tif",
+)
 
 import io
 from functools import cached_property
@@ -9,14 +14,14 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import tifffile
-from kaparoo.data.sequences import FileFolderSequence
+from kaparoo.data.sequences import FileFolderSequence, FileListSequence
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 from kaparoo.filesystem.search import search_files
 from kaparoo.filesystem.search.filters import Regex
 from natsort import natsorted
 from numpy.typing import NDArray
 
-from iivs.dhm.koala.hologram.base import HologramSequence
+from iivs.dhm.koala.hologram.base import HologramSequence, UniformHologramSequence
 from iivs.dhm.koala.hologram.core import validate_hologram
 
 if TYPE_CHECKING:
@@ -68,7 +73,7 @@ def save_hologram_tif(
 
 
 class HologramTifSequence(
-    FileFolderSequence[NDArray[np.uint8], Path], HologramSequence[Path]
+    FileFolderSequence[NDArray[np.uint8], Path], UniformHologramSequence[Path]
 ):
     """An ordered sequence of Lyncée Tec Koala `NNNNN_holo.tif` uint8 hologram images.
 
@@ -161,3 +166,27 @@ class HologramTifSequence(
             if image.shape != self.frame_shape:
                 msg = f"shape of {path.name} must match the first file {self.frame_shape} (got {image.shape})"
                 raise ValueError(msg)
+
+
+class HologramTifListSequence(
+    FileListSequence[NDArray[np.uint8], Path], HologramSequence[Path]
+):
+    """A hologram sequence over an explicit, arbitrary list of `.tif` files.
+
+    Unlike `HologramTifSequence`, imposes no naming, contiguity, or
+    single-folder constraint: the files may live anywhere and each is decoded
+    independently. The images may therefore differ in shape, so this is a
+    plain `HologramSequence` (no `frame_shape`). Each item is the decoded uint8
+    image and its metadata is the source path.
+
+    Args:
+        files: The `.tif` files to expose, in the given order.
+    """
+
+    def get_meta(self, index: int) -> Path:
+        """Return the source path of the file at `index`."""
+        return self.get_file(index)
+
+    def load_file(self, path: Path) -> NDArray[np.uint8]:
+        """Load and decode the hologram at `path`."""
+        return load_hologram_tif(path)

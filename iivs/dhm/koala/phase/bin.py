@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = (
     "PhaseBinHeader",
+    "PhaseBinListSequence",
     "PhaseBinSequence",
     "load_phase_bin",
     "read_phase_bin_header",
@@ -14,7 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, cast, overload
 
 import numpy as np
-from kaparoo.data.sequences import FileFolderSequence
+from kaparoo.data.sequences import FileFolderSequence, FileListSequence
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 from kaparoo.filesystem.search import search_files
 from kaparoo.filesystem.search.filters import Regex
@@ -22,13 +23,13 @@ from kaparoo.utils import replace_if_none
 from natsort import natsorted
 from numpy.typing import NDArray
 
-from iivs.dhm.koala.phase.base import PhaseSequence
+from iivs.dhm.koala.phase.base import PhaseSequence, UniformPhaseSequence
 from iivs.dhm.koala.phase.core import PhaseUnit, convert_phase_unit, validate_phase
 
 if TYPE_CHECKING:
     from typing import IO, Literal, Self
 
-    from kaparoo.filesystem.types import StrPath
+    from kaparoo.filesystem.types import StrPath, StrPaths
 
 
 _PIXEL_DTYPE = np.dtype("<f4")  # on-disk pixels: little-endian float32
@@ -460,7 +461,7 @@ def save_phase_bin(
 
 
 class PhaseBinSequence(
-    FileFolderSequence[NDArray[np.float32], Path], PhaseSequence[Path]
+    FileFolderSequence[NDArray[np.float32], Path], UniformPhaseSequence[Path]
 ):
     """An ordered sequence of Lyncée Tec Koala `.bin` phase images in a folder.
 
@@ -595,3 +596,47 @@ class PhaseBinSequence(
 
         if level == "data":
             load_phase_bin(path, on_nonfinite="raise")
+
+
+class PhaseBinListSequence(
+    FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]
+):
+    """A phase sequence over an explicit, arbitrary list of `.bin` files.
+
+    Unlike `PhaseBinSequence`, imposes no naming, contiguity, single-folder,
+    or shared-header constraint: the files may live anywhere and each is read
+    independently, its own header driving any per-file unit conversion. The
+    images may therefore differ in shape, so this is a plain `PhaseSequence`
+    (no `frame_shape`). Each item is the decoded float32 image (optionally
+    converted to `target_unit`) and its metadata is the source path.
+
+    Args:
+        files: The `.bin` files to expose, in the given order.
+        target_unit: Unit to return images in, applied per file via that
+            file's own `height_scale`. Defaults to None, which keeps each
+            file's stored unit. A file whose stored unit cannot reach
+            `target_unit` raises `ValueError` when that item is accessed.
+    """
+
+    def __init__(
+        self, files: StrPaths, *, target_unit: PhaseUnit | None = None
+    ) -> None:
+        super().__init__(files)
+        self._target_unit = target_unit
+
+    @property
+    def target_unit(self) -> PhaseUnit | None:
+        """The unit images are converted to on load, or None to keep each file's."""
+        return self._target_unit
+
+    def get_meta(self, index: int) -> Path:
+        """Return the source path of the file at `index`."""
+        return self.get_file(index)
+
+    def load_file(self, path: Path) -> NDArray[np.float32]:
+        """Load the image at `path`, converted to `target_unit` if one is set."""
+        image, header = load_phase_bin(path, return_header=True)
+        target = self._target_unit if self._target_unit is not None else header.unit
+        return convert_phase_unit(
+            image, source=header.unit, target=target, height_scale=header.height_scale
+        )
