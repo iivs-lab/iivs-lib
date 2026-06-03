@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 from iivs.dhm.koala.hologram.raw import (
+    HologramRawFile,
     HologramRawHeader,
-    HologramRawSequence,
     read_hologram_raw_header,
 )
 
@@ -37,7 +37,7 @@ def test_sequence_roundtrip(tmp_path):
     path = tmp_path / "holo.raw"
     frames = _write_raw(path, n=4, h=2, w=3)
 
-    seq = HologramRawSequence(path)
+    seq = HologramRawFile(path)
 
     assert len(seq) == 4
     assert seq.header.frame_count == 4
@@ -49,7 +49,7 @@ def test_sequence_roundtrip(tmp_path):
 def test_get_item_returns_writable_copy(tmp_path):
     path = tmp_path / "holo.raw"
     frames = _write_raw(path, n=3, h=2, w=3)
-    seq = HologramRawSequence(path)
+    seq = HologramRawFile(path)
 
     item = seq[0]
     assert item.flags.writeable  # unlike the underlying read-only memmap
@@ -61,13 +61,13 @@ def test_get_item_returns_writable_copy(tmp_path):
 def test_frame_shape(tmp_path):
     path = tmp_path / "holo.raw"
     _write_raw(path, n=3, h=2, w=3)
-    assert HologramRawSequence(path).frame_shape == (2, 3)
+    assert HologramRawFile(path).frame_shape == (2, 3)
 
 
 def test_frames_property_exposes_full_memmap(tmp_path):
     path = tmp_path / "holo.raw"
     frames = _write_raw(path, n=3, h=2, w=3)
-    seq = HologramRawSequence(path)
+    seq = HologramRawFile(path)
     assert seq.frames.shape == (3, 2, 3)
     np.testing.assert_array_equal(seq.frames, frames)
 
@@ -75,7 +75,7 @@ def test_frames_property_exposes_full_memmap(tmp_path):
 def test_sequence_pickles_to_path_without_copying_frames(tmp_path):
     path = tmp_path / "holo.raw"
     frames = _write_raw(path, n=8, h=64, w=64)  # 32 KiB of pixels
-    seq = HologramRawSequence(path)
+    seq = HologramRawFile(path)
 
     blob = pickle.dumps(seq)
     assert len(blob) < frames.nbytes  # carries the path, not the frame bytes
@@ -94,7 +94,7 @@ def test_size_mismatch_raises(tmp_path):
     data = np.zeros((2, 2, 3), dtype=np.uint8)
     path.write_bytes(header.tobytes() + data.tobytes())
     with pytest.raises(ValueError, match="file size must be"):
-        HologramRawSequence(path)
+        HologramRawFile(path)
 
 
 def test_rejects_unsupported_bit_depth(tmp_path):

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 __all__ = (
+    "PhaseBinFolder",
     "PhaseBinHeader",
     "PhaseBinList",
-    "PhaseBinSequence",
     "load_phase_bin",
     "read_phase_bin_header",
     "save_phase_bin",
@@ -460,7 +460,7 @@ def save_phase_bin(
 # ========================== #
 
 
-class PhaseBinSequence(
+class PhaseBinFolder(
     FileFolderSequence[NDArray[np.float32], Path], UniformPhaseSequence[Path]
 ):
     """An ordered sequence of Lyncée Tec Koala `.bin` phase images in a folder.
@@ -601,7 +601,7 @@ class PhaseBinSequence(
 class PhaseBinList(FileListSequence[NDArray[np.float32], Path], PhaseSequence[Path]):
     """A phase sequence over an explicit, arbitrary list of `.bin` files.
 
-    Unlike `PhaseBinSequence`, imposes no naming, contiguity, single-folder,
+    Unlike `PhaseBinFolder`, imposes no naming, contiguity, single-folder,
     or shared-header constraint: the files may live anywhere and each is read
     independently, its own header driving any per-file unit conversion. The
     images may therefore differ in shape, so this is a plain `PhaseSequence`

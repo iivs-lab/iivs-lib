@@ -28,7 +28,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `PhaseSequence` — read-only base type for any phase image sequence;
     `UniformPhaseSequence` refines it for same-shape images, adding
     `frame_shape` (height, width).
-  - `PhaseBinSequence` — an ordered `kaparoo.data.sequences.FileFolderSequence`
+  - `PhaseBinFolder` — an ordered `kaparoo.data.sequences.FileFolderSequence`
     over a folder of `{index:05d}_phase.bin` images (item = image, metadata =
     source path), exposing the shared acquisition `header`, optional unit
     conversion, and a `validate` method.
@@ -40,8 +40,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
     `Timestamp.series_from_elapsed_times`.
   - `TimestampSequence` — read-only interface exposing `mean_interval_ms` and
-    `mean_frame_rate`; implemented by `TimestampTxtSequence` (Koala
-    `timestamps.txt`) and `TimestampFpsSequence` (synthesized from a frame
+    `mean_frame_rate`; implemented by `TimestampsTxtFile` (Koala
+    `timestamps.txt`) and `TimestampsFixedFPS` (synthesized from a frame
     rate).
 - `iivs.dhm.koala.hologram`: read Koala (Lyncée Tec) uint8 holograms from a
   `.tif` folder or a single multi-frame `.raw` file.
@@ -50,7 +50,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `HologramSequence` — read-only base type for any hologram sequence;
     `UniformHologramSequence` refines it for same-shape images, adding
     `frame_shape` (height, width).
-  - `HologramTifSequence` — an ordered `FileFolderSequence` over a folder of
+  - `HologramTifFolder` — an ordered `FileFolderSequence` over a folder of
     `{index:05d}_holo.tif` images (item = image, metadata = source path),
     with a `validate` method.
   - `HologramTifList` — a `FileListSequence` over an explicit,
@@ -58,6 +58,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     decoded independently.
   - `HologramRawHeader` / `read_hologram_raw_header(path)` — the 16-byte
     `.raw` header (width, height, bit depth, frame count).
-  - `HologramRawSequence` — a `SingleFileSequence` over a `.raw` file's frames
+  - `HologramRawFile` — a `SingleFileSequence` over a `.raw` file's frames
     (held internally as a lazy, read-only `np.memmap`; each item is a writable
     frame copy, metadata is the frame index).

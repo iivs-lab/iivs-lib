@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 __all__ = (
+    "HologramRawFile",
     "HologramRawHeader",
-    "HologramRawSequence",
     "read_hologram_raw_header",
 )
 
@@ -139,7 +139,7 @@ def read_hologram_raw_header(path: StrPath) -> HologramRawHeader:
     return HologramRawHeader.from_file(path)
 
 
-class HologramRawSequence(
+class HologramRawFile(
     SingleFileSequence[NDArray[np.uint8], int], UniformHologramSequence[int]
 ):
     """An ordered sequence of holograms in a single Lyncée Tec Koala `.raw` file.
@@ -147,8 +147,8 @@ class HologramRawSequence(
     The file is a `HologramRawHeader` followed by its frames, held internally
     as a lazy, read-only `np.memmap` so a large multi-frame file is never
     loaded whole. Each item is a fresh, writable copy of one frame (metadata
-    is the frame index) -- matching `PhaseBinSequence` and
-    `HologramTifSequence` -- so it can go straight to `torch.from_numpy`. For
+    is the frame index) -- matching `PhaseBinFolder` and
+    `HologramTifFolder` -- so it can go straight to `torch.from_numpy`. For
     zero-copy bulk access, use the read-only `frames` memmap directly.
 
     The sequence pickles to just its path -- the memmap re-opens in each
@@ -212,7 +212,7 @@ class HologramRawSequence(
     def get_meta(self, index: int) -> int:
         return index
 
-    def __reduce__(self) -> tuple[type[HologramRawSequence], tuple[StrPath]]:
+    def __reduce__(self) -> tuple[type[HologramRawFile], tuple[StrPath]]:
         # Pickle only the source path; the memmap re-opens per process on load
         # instead of copying every frame into the pickle (multiprocessing-safe).
         return (type(self), (self.path,))

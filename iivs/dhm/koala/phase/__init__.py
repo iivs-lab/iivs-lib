@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 __all__ = (
+    "PhaseBinFolder",
     "PhaseBinHeader",
     "PhaseBinList",
-    "PhaseBinSequence",
     "PhaseSequence",
     "PhaseUnit",
     "UniformPhaseSequence",
@@ -16,9 +16,9 @@ __all__ = (
 
 from iivs.dhm.koala.phase.base import PhaseSequence, UniformPhaseSequence
 from iivs.dhm.koala.phase.bin import (
+    PhaseBinFolder,
     PhaseBinHeader,
     PhaseBinList,
-    PhaseBinSequence,
     load_phase_bin,
     read_phase_bin_header,
     save_phase_bin,

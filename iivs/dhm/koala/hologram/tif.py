@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 __all__ = (
+    "HologramTifFolder",
     "HologramTifList",
-    "HologramTifSequence",
     "load_hologram_tif",
     "save_hologram_tif",
 )
@@ -72,7 +72,7 @@ def save_hologram_tif(
         staged.write(buffer.getvalue())
 
 
-class HologramTifSequence(
+class HologramTifFolder(
     FileFolderSequence[NDArray[np.uint8], Path], UniformHologramSequence[Path]
 ):
     """An ordered sequence of Lyncée Tec Koala `NNNNN_holo.tif` uint8 hologram images.
@@ -173,7 +173,7 @@ class HologramTifList(
 ):
     """A hologram sequence over an explicit, arbitrary list of `.tif` files.
 
-    Unlike `HologramTifSequence`, imposes no naming, contiguity, or
+    Unlike `HologramTifFolder`, imposes no naming, contiguity, or
     single-folder constraint: the files may live anywhere and each is decoded
     independently. The images may therefore differ in shape, so this is a
     plain `HologramSequence` (no `frame_shape`). Each item is the decoded uint8

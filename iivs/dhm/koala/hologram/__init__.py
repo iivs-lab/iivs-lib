@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 __all__ = (
+    "HologramRawFile",
     "HologramRawHeader",
-    "HologramRawSequence",
     "HologramSequence",
+    "HologramTifFolder",
     "HologramTifList",
-    "HologramTifSequence",
     "UniformHologramSequence",
     "load_hologram_tif",
     "read_hologram_raw_header",
@@ -16,13 +16,13 @@ __all__ = (
 from iivs.dhm.koala.hologram.base import HologramSequence, UniformHologramSequence
 from iivs.dhm.koala.hologram.core import validate_hologram
 from iivs.dhm.koala.hologram.raw import (
+    HologramRawFile,
     HologramRawHeader,
-    HologramRawSequence,
     read_hologram_raw_header,
 )
 from iivs.dhm.koala.hologram.tif import (
+    HologramTifFolder,
     HologramTifList,
-    HologramTifSequence,
     load_hologram_tif,
     save_hologram_tif,
 )
