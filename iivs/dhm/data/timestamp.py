@@ -18,6 +18,8 @@ from kaparoo.data.sequences.base import DataSequence
 from kaparoo.data.sequences.templates import SingleFileSequence
 from kaparoo.filesystem import ensure_file_exists
 
+from iivs.dhm.data.common import ensure_file_extension
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import ClassVar
@@ -133,8 +135,9 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the file is malformed or its frame indices are not
-            contiguous from 0 (see `parse`).
+        ValueError: If `path` does not have a `.txt` extension, the file is
+            malformed, or its frame indices are not contiguous from 0 (see
+            `parse`).
     """
 
     LINE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
@@ -148,6 +151,7 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
     )
 
     def __init__(self, path: StrPath) -> None:
+        ensure_file_extension(path, "txt")
         super().__init__(path)
         self._timestamps = self.parse(self.path)
 

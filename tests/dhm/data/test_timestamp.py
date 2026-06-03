@@ -29,6 +29,13 @@ def test_txt_is_a_timestamp_sequence(tmp_path):
     assert isinstance(TimestampsTxtFile(_write(tmp_path)), TimestampSequence)
 
 
+def test_txt_rejects_wrong_extension(tmp_path):
+    path = tmp_path / "timestamps.dat"
+    path.write_text(_SAMPLE)
+    with pytest.raises(ValueError, match=r"must have a \.txt extension"):
+        TimestampsTxtFile(path)
+
+
 def test_txt_len_and_frame_indices(tmp_path):
     seq = TimestampsTxtFile(_write(tmp_path))
     assert len(seq) == 3

@@ -325,7 +325,12 @@ class PhaseBinList(PhaseFileList):
             file's own `height_scale`. Defaults to None, which keeps each
             file's stored unit. A file whose stored unit cannot reach
             `target_unit` raises `ValueError` when that item is accessed.
+
+    Raises:
+        ValueError: If any path does not have a `.bin` extension.
     """
+
+    FILE_EXT: ClassVar[str] = "bin"
 
     @override
     def _read_header(self, path: StrPath) -> PhaseBinHeader:
@@ -366,5 +371,3 @@ class PhaseBinFolder(PhaseFileFolder, PhaseBinList):
         ValueError: If `target_unit` cannot be converted from the stored unit,
             or if `validate` is set and the sequence fails validation.
     """
-
-    FILE_EXT: ClassVar[str] = "bin"

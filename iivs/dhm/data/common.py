@@ -11,6 +11,7 @@ numbered-folder sequence base (`SequentialFileFolder`), the same-shape mixin
 from __future__ import annotations
 
 __all__ = (
+    "ExtensionCheckedFileList",
     "FrameShapedMixin",
     "ImageFileFolder",
     "ImageFileList",
@@ -19,6 +20,7 @@ __all__ = (
     "KoalaBinHeader",
     "KoalaTxtHeader",
     "SequentialFileFolder",
+    "ensure_file_extension",
     "load_uint8_tif",
     "parse_txt_grid",
     "read_bin_pixels",
@@ -48,7 +50,7 @@ from numpy.typing import NDArray
 if TYPE_CHECKING:
     from typing import IO, Literal, Self
 
-    from kaparoo.filesystem.types import StrPath
+    from kaparoo.filesystem.types import StrPath, StrPaths
 
 
 # ========================== #
@@ -304,6 +306,47 @@ class FrameShapedMixin(ABC):
     def frame_shape(self) -> tuple[int, int]:
         """The pixel dimensions (height, width) shared by every item."""
         raise NotImplementedError
+
+
+# ========================== #
+#        File sequence       #
+# ========================== #
+
+
+def ensure_file_extension(path: StrPath, ext: str) -> Path:
+    """Return `path` as a `Path`, requiring a case-insensitive `.<ext>` suffix.
+
+    Raises:
+        ValueError: If `path`'s suffix is not `.<ext>`.
+    """
+    path = Path(path)
+    if path.suffix.lower() != f".{ext.lower()}":
+        msg = f"{path.name} must have a .{ext} extension"
+        raise ValueError(msg)
+    return path
+
+
+class ExtensionCheckedFileList[T, M = Path](FileListSequence[T, M]):
+    """A `FileListSequence` that rejects files lacking the expected extension.
+
+    Plain `FileListSequence` accepts any paths and only fails later, on decode;
+    this validates every path's suffix against the subclass `FILE_EXT` at
+    construction, so a wrong-format file mixed into the list is caught up front.
+    Concrete sequences set `FILE_EXT` (the dotless extension, e.g. "bin"); the
+    auto-discovering folders inherit it and pass trivially, since `list_files`
+    already filtered by it.
+
+    Class attributes:
+        FILE_EXT: The required file extension without the dot (e.g. "bin").
+    """
+
+    FILE_EXT: ClassVar[str]
+
+    def __init__(self, files: StrPaths) -> None:
+        files = list(files)
+        for file in files:
+            ensure_file_extension(file, self.FILE_EXT)
+        super().__init__(files)
 
 
 # ========================== #
@@ -630,7 +673,7 @@ def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
     return validate_uint8_image(data, allow_stack=False)
 
 
-class ImageFileList(FileListSequence[NDArray[np.uint8], Path]):
+class ImageFileList(ExtensionCheckedFileList[NDArray[np.uint8], Path]):
     """A uint8 image sequence over an arbitrary list of files, via a `load_file` codec.
 
     The modality- and format-agnostic body for header-less uint8 image sources
@@ -721,6 +764,8 @@ class ImageTifList(ImageFileList):
         files: The `.tif` files to expose, in the given order.
     """
 
+    FILE_EXT: ClassVar[str] = "tif"
+
     @override
     def load_file(self, path: Path) -> NDArray[np.uint8]:
         """Load and decode the uint8 tif image at `path`."""
@@ -738,8 +783,6 @@ class ImageTifFolder(ImageFileFolder, ImageTifList):
         root: The folder to scan.
         validate: Validation level at construction, or None to skip.
     """
-
-    FILE_EXT: ClassVar[str] = "tif"
 
 
 # ========================== #

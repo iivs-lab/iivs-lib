@@ -65,22 +65,31 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   `parse_txt_grid`), the uint8-image folder/list codec bases + `.tif` reader
   (`ImageFileFolder` / `ImageFileList`, `ImageTifFolder` / `ImageTifList`,
   `load_uint8_tif`), the `.npy` shape reader (`read_npy_shape`), the
-  numbered-folder `SequentialFileFolder` template (every `*Folder` builds on
-  it), the `FrameShapedMixin`, and the float32/uint8 image validators. Prefer a
-  shared base/template + a small mixin over copy-pasting across modalities.
+  extension-checking list base (`ExtensionCheckedFileList`,
+  `ensure_file_extension`), the numbered-folder `SequentialFileFolder` template
+  (every `*Folder` builds on it), the `FrameShapedMixin`, and the float32/uint8
+  image validators. Prefer a shared base/template + a small mixin over
+  copy-pasting across modalities.
 - A `*Folder` is the auto-discovered special case of its `*List`, so it
   *subclasses the list* (mirroring kaparoo's `FileFolderSequence` ⊂
   `FileListSequence`) and reuses its `load_file`. `FileFolderSequence.__init__
   (root)` discovers the files and cooperatively calls the list's `__init__`
   down the MRO, so define the list *before* the folder in the module.
+- `FILE_EXT` lives on the concrete `*List`, not the folder. The list base is
+  `data.common.ExtensionCheckedFileList`, which validates every path's
+  `.<FILE_EXT>` at construction (so a wrong-format file fails up front, not on
+  decode); the `*Folder` inherits `FILE_EXT` for both discovery and that check.
+  Single-file `*File` sources have no list, so they call
+  `common.ensure_file_extension(path, ext)` in `__init__` themselves.
 - Hoist each modality's format-agnostic list/folder bodies into a
   `<Modality>FileList` / `<Modality>FileFolder` base (in the modality's
   `base.py`, left out of `__all__` -- internal but underscore-free, since
   Python has no true private) over an abstract ``(read_header, decode)`` codec.
-  The concrete `*BinList` / `*TxtList` supply only that codec; the `*BinFolder`
-  / `*TxtFolder` inherit `<Modality>FileFolder` *and* their `*List`, supplying
-  only `FILE_EXT`. So a new format is a couple of codec methods, not a copied
-  list+folder. (The folder's header type annotation references the format
+  The concrete `*BinList` / `*TxtList` supply that codec *and* `FILE_EXT`; the
+  `*BinFolder` / `*TxtFolder` just combine `<Modality>FileFolder` with their
+  `*List`, inheriting everything. So a new format is a couple of codec methods,
+  not a copied list+folder. (The folder's header type annotation references the
+  format
   modules, so import it under `TYPE_CHECKING` to avoid a cycle.)
 - Mark cross-cutting capabilities with a mixin, not a class per modality.
   `data.common.SequentialFileFolder` mixes in `data.common.FrameShapedMixin`

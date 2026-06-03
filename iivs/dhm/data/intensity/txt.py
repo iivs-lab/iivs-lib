@@ -140,6 +140,8 @@ class IntensityTxtList(IntensityFileList):
         files: The `.txt` files to expose, in the given order.
     """
 
+    FILE_EXT: ClassVar[str] = "txt"
+
     @override
     def _read_header(self, path: StrPath) -> IntensityBinHeader:
         """Read the `Float/Txt` header."""
@@ -168,5 +170,3 @@ class IntensityTxtFolder(IntensityFileFolder, IntensityTxtList):
         root: The folder to scan.
         validate: Validation level at construction, or None to skip.
     """
-
-    FILE_EXT: ClassVar[str] = "txt"

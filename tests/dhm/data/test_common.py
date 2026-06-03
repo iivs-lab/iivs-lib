@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 import tifffile
 
 from iivs.dhm.data.common import (
     FrameShapedMixin,
+    ensure_file_extension,
     load_uint8_tif,
     parse_txt_grid,
     read_npy_shape,
@@ -130,6 +133,28 @@ def test_load_uint8_tif_rejects_non_uint8(tmp_path):
     tifffile.imwrite(path, np.zeros((2, 2), dtype=np.float32))
     with pytest.raises(ValueError, match="uint8"):
         load_uint8_tif(path)
+
+
+# ========================== #
+#     file extensions        #
+# ========================== #
+
+
+def test_ensure_file_extension_ok():
+    # Case-insensitive; returns the path as a Path.
+    assert ensure_file_extension("dir/x.BIN", "bin") == Path("dir/x.BIN")
+
+
+def test_ensure_file_extension_rejects():
+    with pytest.raises(ValueError, match=r"must have a \.bin extension"):
+        ensure_file_extension("dir/x.txt", "bin")
+
+
+def test_file_list_rejects_wrong_extension(tmp_path):
+    # PhaseBinList (FILE_EXT="bin") rejects a non-.bin path up front, before any
+    # decode -- the file need not even exist.
+    with pytest.raises(ValueError, match=r"must have a \.bin extension"):
+        PhaseBinList([tmp_path / "00000_phase.txt"])
 
 
 # ========================== #

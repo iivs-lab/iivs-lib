@@ -14,7 +14,7 @@ from kaparoo.data.sequences.templates import SingleFileSequence
 from kaparoo.filesystem import ensure_file_exists
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import FrameShapedMixin
+from iivs.dhm.data.common import FrameShapedMixin, ensure_file_extension
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:
@@ -164,11 +164,13 @@ class HologramRawFile(
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the header is invalid, or the file size does not match
-            the header (`HEADER_SIZE + frame_count * frame_nbytes`).
+        ValueError: If `path` does not have a `.raw` extension, the header is
+            invalid, or the file size does not match the header
+            (`HEADER_SIZE + frame_count * frame_nbytes`).
     """
 
     def __init__(self, path: StrPath) -> None:
+        ensure_file_extension(path, "raw")
         super().__init__(path)
 
         self._header = HologramRawHeader.from_file(self.path)

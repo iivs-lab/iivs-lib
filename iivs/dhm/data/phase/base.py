@@ -6,11 +6,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
-from kaparoo.data.sequences import DataSequence, FileListSequence
+from kaparoo.data.sequences import DataSequence
 from kaparoo.utils import replace_if_none
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import SequentialFileFolder
+from iivs.dhm.data.common import ExtensionCheckedFileList, SequentialFileFolder
 from iivs.dhm.data.phase.core import convert_phase_unit
 
 if TYPE_CHECKING:
@@ -61,7 +61,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
 
 
 class PhaseFileList(
-    FileListSequence[NDArray[np.float32], Path], PhaseFloatSequence[Path]
+    ExtensionCheckedFileList[NDArray[np.float32], Path], PhaseFloatSequence[Path]
 ):
     """Format-agnostic phase file list over a ``(read_header, decode)`` codec.
 

@@ -88,6 +88,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `read_npy_shape` — read a 2-D `.npy` array's `(height, width)` without
     loading its data (memory-mapped, `allow_pickle=False`); used to validate the
     `*NpyFolder`s cheaply.
+  - `ensure_file_extension` + `ExtensionCheckedFileList` — every `*List` now
+    rejects a path without the expected `.<FILE_EXT>` at construction (and the
+    `*File` single-file sources, `HologramRawFile` / `TimestampsTxtFile`, call
+    `ensure_file_extension` directly), so a wrong-format file fails up front
+    rather than on decode. `FILE_EXT` now lives on the concrete `*List` (the
+    auto-discovering `*Folder` inherits it).
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).

@@ -225,7 +225,12 @@ class IntensityBinList(IntensityFileList):
 
     Args:
         files: The `.bin` files to expose, in the given order.
+
+    Raises:
+        ValueError: If any path does not have a `.bin` extension.
     """
+
+    FILE_EXT: ClassVar[str] = "bin"
 
     @override
     def _read_header(self, path: StrPath) -> IntensityBinHeader:
@@ -264,5 +269,3 @@ class IntensityBinFolder(IntensityFileFolder, IntensityBinList):
             `root`.
         ValueError: If `validate` is set and the sequence fails validation.
     """
-
-    FILE_EXT: ClassVar[str] = "bin"

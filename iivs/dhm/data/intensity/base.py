@@ -10,10 +10,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
-from kaparoo.data.sequences import DataSequence, FileListSequence
+from kaparoo.data.sequences import DataSequence
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import SequentialFileFolder
+from iivs.dhm.data.common import ExtensionCheckedFileList, SequentialFileFolder
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -62,7 +62,7 @@ class IntensityImageSequence[M](IntensitySequence[NDArray[np.uint8], M]):
 
 
 class IntensityFileList(
-    FileListSequence[NDArray[np.float32], Path], IntensityFloatSequence[Path]
+    ExtensionCheckedFileList[NDArray[np.float32], Path], IntensityFloatSequence[Path]
 ):
     """Format-agnostic intensity file list over a ``(read_header, decode)`` codec.
 

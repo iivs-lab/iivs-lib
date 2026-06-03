@@ -174,6 +174,8 @@ class PhaseTxtList(PhaseFileList):
         target_unit: Unit to return images in (None keeps each file's stored).
     """
 
+    FILE_EXT: ClassVar[str] = "txt"
+
     @override
     def _read_header(self, path: StrPath) -> PhaseBinHeader:
         """Read the `Float/Txt` header."""
@@ -203,5 +205,3 @@ class PhaseTxtFolder(PhaseFileFolder, PhaseTxtList):
         target_unit: Unit to return loaded images in (None keeps the stored).
         validate: Validation level at construction, or None to skip.
     """
-
-    FILE_EXT: ClassVar[str] = "txt"

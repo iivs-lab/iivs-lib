@@ -33,6 +33,14 @@ def test_header_fields_and_layout(tmp_path):
     assert HologramRawHeader.HEADER_SIZE == 16
 
 
+def test_rejects_wrong_extension(tmp_path):
+    # A non-.raw path is rejected up front, regardless of contents.
+    path = tmp_path / "holo.bin"
+    _write_raw(path)
+    with pytest.raises(ValueError, match=r"must have a \.raw extension"):
+        HologramRawFile(path)
+
+
 def test_sequence_roundtrip(tmp_path):
     path = tmp_path / "holo.raw"
     frames = _write_raw(path, n=4, h=2, w=3)
