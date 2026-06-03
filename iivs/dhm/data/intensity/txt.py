@@ -52,9 +52,7 @@ class IntensityTxtHeader(KoalaTxtHeader[IntensityBinHeader]):
         path: StrPath,
     ) -> IntensityBinHeader:
         """Build straight from the geometry -- intensity has no extra header lines."""
-        return IntensityBinHeader(
-            width=width, height=height, pixel_size=pixel_size
-        )
+        return IntensityBinHeader(width=width, height=height, pixel_size=pixel_size)
 
 
 def read_intensity_txt_header(path: StrPath) -> IntensityBinHeader:
@@ -116,9 +114,7 @@ def load_intensity_txt(
     path = ensure_file_exists(path)
     lines = path.read_text().splitlines()
     header = IntensityTxtHeader.from_lines(lines, path)
-    data = parse_txt_grid(
-        lines[IntensityTxtHeader.HEADER_LINES :], shape=header.shape
-    )
+    data = parse_txt_grid(lines[IntensityTxtHeader.HEADER_LINES :], shape=header.shape)
     data = validate_float32_image(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
 

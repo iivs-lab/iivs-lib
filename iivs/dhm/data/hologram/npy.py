@@ -36,4 +36,6 @@ class HologramNpyFolder(ImageFileFolder, HologramSequence[Path]):
     @override
     def load_file(self, path: Path) -> NDArray[np.uint8]:
         """Load the `.npy` uint8 image at `path` (pickle disabled)."""
-        return validate_uint8_image(np.load(path, allow_pickle=False), allow_stack=False)
+        return validate_uint8_image(
+            np.load(path, allow_pickle=False), allow_stack=False
+        )

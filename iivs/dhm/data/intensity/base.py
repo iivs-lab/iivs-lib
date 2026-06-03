@@ -111,9 +111,7 @@ class IntensityFileList(
         raise NotImplementedError
 
 
-class IntensityFileFolder(
-    SequentialFileFolder[NDArray[np.float32]], IntensityFileList
-):
+class IntensityFileFolder(SequentialFileFolder[NDArray[np.float32]], IntensityFileList):
     """Format-agnostic intensity folder: numbered discovery + one shared header.
 
     The auto-discovered, same-shape specialization of `IntensityFileList`; it

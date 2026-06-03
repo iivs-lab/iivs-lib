@@ -538,9 +538,7 @@ class KoalaTxtHeader[H: KoalaBinHeader](ABC):
     HEADER_LINES: ClassVar[int]
     MODALITY: ClassVar[str]
     _HW_RE: ClassVar[re.Pattern[str]] = re.compile(r"h=(\d+)\s+w=(\d+)")
-    _PIXEL_SIZE_RE: ClassVar[re.Pattern[str]] = re.compile(
-        r"pixel size=([0-9.eE+-]+)"
-    )
+    _PIXEL_SIZE_RE: ClassVar[re.Pattern[str]] = re.compile(r"pixel size=([0-9.eE+-]+)")
 
     @classmethod
     def from_lines(cls, lines: list[str], path: StrPath) -> H:

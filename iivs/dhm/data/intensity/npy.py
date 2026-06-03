@@ -68,4 +68,6 @@ class IntensityNpyFolder(IntensityFileFolder):
     ) -> NDArray[np.float32]:
         """Load the `.npy` float32 image (pickle disabled)."""
         data = np.load(path, allow_pickle=False)
-        return validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
+        return validate_float32_image(
+            data, on_nonfinite=on_nonfinite, allow_stack=False
+        )

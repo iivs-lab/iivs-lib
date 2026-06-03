@@ -17,7 +17,9 @@ def _write(root, index, value=0.0, shape=(2, 3)):
 def test_lists_in_order_with_synthesized_header(tmp_path):
     for i in range(3):
         _write(tmp_path, i, i)
-    f = PhaseNpyFolder(tmp_path, pixel_size=2e-6, unit=PhaseUnit.RADIANS, height_scale=3e-7)
+    f = PhaseNpyFolder(
+        tmp_path, pixel_size=2e-6, unit=PhaseUnit.RADIANS, height_scale=3e-7
+    )
     assert isinstance(f, PhaseFloatSequence)
     assert isinstance(f, FrameShapedMixin)
     assert len(f) == 3
