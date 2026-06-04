@@ -5,6 +5,13 @@ item to a CHANGELOG entry once it lands.
 
 ## Open
 
+- **Add `PIXEL_SIZE_10X` / `PIXEL_SIZE_40X` constants.** Only the 20X
+  header-less fallback (`PIXEL_SIZE_20X = 2.84871e-7 m`) is defined. By
+  inverse-magnification scaling (pixel ∝ 1/M, nominal ratio 10:20:40 = 1:2:4)
+  the estimates are 10X ≈ 5.69742e-7 m and 40X ≈ 1.424355e-7 m, but the
+  effective magnification can deviate from nominal. Confirm each against a real
+  Koala `.bin` header (`read_phase_bin_header(path).pixel_size`) captured with
+  that objective before adding the constants.
 - **Add a dataset/acquisition opener.** Koala nests its export as
   `<Modality>/Float/Bin`, `<Modality>/Float/Txt`, `<Modality>/Image`, plus
   `Holograms/holo.raw`, `timestamps.txt`, and `phbounds.txt` at the root; today
