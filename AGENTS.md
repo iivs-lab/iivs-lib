@@ -61,7 +61,7 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   (a modality drops `core` when it has no format-agnostic logic of its own).
   Building blocks shared across modalities live in one data-root module,
   `common.py`: the `KoalaBinHeader` base + `.bin` pixel I/O (used by `phase`
-  and `intensity`), the `Float/Txt` header/grid readers (`KoalaTxtHeader`,
+  and `intensity`), the `Float/Txt` header/grid codecs (`KoalaTxtHeaderCodec`,
   `parse_txt_grid`), the uint8-image folder/list codec bases + `.tif` reader
   (`ImageFileFolder` / `ImageFileList`, `ImageTifFolder` / `ImageTifList`,
   `load_uint8_tif`), the `.npy` shape reader (`read_npy_shape`), the
@@ -127,7 +127,7 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   (like `__reduce__`) only "override" `object`, so the decorator is pure noise.
 - `@abstractmethod` (not a bare `raise NotImplementedError`) for hooks a
   subclass *must* implement -- the codec hooks (`_read_header` / `_decode` /
-  `load_file`), `frame_shape`, `KoalaTxtHeader._from_geometry`, and the
+  `load_file`), `frame_shape`, `KoalaTxtHeaderCodec._from_geometry`, and the
   `KoalaBinHeader` serializers -- so an incomplete subclass fails at
   construction, not at first call. Make the holder an ABC if it isn't already
   (e.g. `KoalaBinHeader(ABC)`). The exception is an *optional* hook like

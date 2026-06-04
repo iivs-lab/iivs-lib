@@ -2,8 +2,8 @@
 
 Holds the cross-modality primitives that the per-modality packages compose:
 the Koala `.bin` header/IO (`KoalaBinHeader`, `read_bin_pixels`, `write_bin`),
-the `Float/Txt` header/grid readers (`KoalaTxtHeader`, `parse_txt_grid`), the
-numbered-folder sequence base (`SequentialFileFolder`), the same-shape mixin
+the `Float/Txt` header/grid codecs (`KoalaTxtHeaderCodec`, `parse_txt_grid`),
+the numbered-folder sequence base (`SequentialFileFolder`), the same-shape mixin
 (`FrameShapedMixin`), and the image validators (`validate_float32_image`,
 `validate_uint8_image`).
 """
@@ -17,7 +17,7 @@ __all__ = (
     "ImageTifFolder",
     "ImageTifList",
     "KoalaBinHeader",
-    "KoalaTxtHeader",
+    "KoalaTxtHeaderCodec",
     "SequentialFileFolder",
     "ensure_file_extension",
     "load_uint8_tif",
@@ -572,7 +572,7 @@ def write_txt_grid(
     """Atomically write a Koala `Float/Txt` file: the `header` text then the grid.
 
     `header` is the already-serialized key=value header (see
-    `KoalaTxtHeader.to_lines`); `data` follows as ``%.8e`` whitespace rows. The
+    `KoalaTxtHeaderCodec.to_lines`); `data` follows as ``%.8e`` rows. The
     writer twin of `parse_txt_grid`, shared by the per-modality `save_*_txt`.
 
     Raises:
@@ -584,16 +584,22 @@ def write_txt_grid(
         np.savetxt(staged.file, data, fmt="%.8e")
 
 
-class KoalaTxtHeader[H: KoalaBinHeader](ABC):
-    """Reader and writer for the key=value header atop a Koala `Float/Txt` export.
+class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
+    """Stateless (de)serializer between a Koala `Float/Txt` header and a `KoalaBinHeader`.
 
-    The text twin of `KoalaBinHeader`'s binary parsing. The first two lines are
-    always ``h=<H> w=<W>`` and ``pixel size=<m> m``; a modality may add more
-    (phase carries a `data unit` and a `height conversion factor` line). A
-    subclass sets `HEADER_LINES` / `MODALITY` and bridges those extra lines both
-    ways -- `_from_geometry` parses them into `H`, `_extra_lines` serializes them
-    back -- so `phase` and `intensity` share the line-count check, the `h/w` +
-    `pixel size` regex, and the file read/write.
+    Not a header value object -- it is never instantiated and carries no state;
+    every method is a classmethod, and `from_lines` / `from_file` return the
+    modality's `KoalaBinHeader` (`H`), not a `KoalaTxtHeaderCodec`. It is the
+    text twin of the binary (de)serialization that lives on `KoalaBinHeader`
+    itself (`to_dtype` / `from_dtype`), kept separate so the header value class
+    stays free of text-format knowledge.
+
+    The first two lines are always ``h=<H> w=<W>`` and ``pixel size=<m> m``; a
+    modality may add more (phase carries a `data unit` and a `height conversion
+    factor` line). A subclass sets `HEADER_LINES` / `MODALITY` and bridges those
+    extra lines both ways -- `_from_geometry` parses them into `H`,
+    `_extra_lines` serializes them back -- so `phase` and `intensity` share the
+    line-count check, the `h/w` + `pixel size` regex, and the file read/write.
 
     Type Parameters:
         H: The header the subclass produces (e.g. `PhaseBinHeader`).

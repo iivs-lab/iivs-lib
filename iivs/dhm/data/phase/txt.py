@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, ClassVar, overload, override
 from kaparoo.filesystem import ensure_file_exists
 
 from iivs.dhm.data.common import (
-    KoalaTxtHeader,
+    KoalaTxtHeaderCodec,
     parse_txt_grid,
     validate_float32_image,
     with_file_extension,
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-class PhaseTxtHeader(KoalaTxtHeader[PhaseBinHeader]):
+class PhaseTxtHeaderCodec(KoalaTxtHeaderCodec[PhaseBinHeader]):
     """Reads a Koala `Float/Txt` phase header into a `PhaseBinHeader`.
 
     The 4-line header adds a `data unit` and a `height conversion factor` line
@@ -114,7 +114,7 @@ def read_phase_txt_header(path: StrPath) -> PhaseBinHeader:
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the header is missing or malformed.
     """
-    return PhaseTxtHeader.from_file(path)
+    return PhaseTxtHeaderCodec.from_file(path)
 
 
 @overload
@@ -168,8 +168,8 @@ def load_phase_txt(
     """
     path = ensure_file_exists(path)
     lines = path.read_text().splitlines()
-    header = PhaseTxtHeader.from_lines(lines, path)
-    data = parse_txt_grid(lines[PhaseTxtHeader.HEADER_LINES :], shape=header.shape)
+    header = PhaseTxtHeaderCodec.from_lines(lines, path)
+    data = parse_txt_grid(lines[PhaseTxtHeaderCodec.HEADER_LINES :], shape=header.shape)
     data = validate_float32_image(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
 
@@ -264,7 +264,9 @@ def save_phase_txt(
         height_scale=height_scale,
         unit=unit,
     )
-    write_txt_grid(path, PhaseTxtHeader.to_lines(header), data, overwrite=overwrite)
+    write_txt_grid(
+        path, PhaseTxtHeaderCodec.to_lines(header), data, overwrite=overwrite
+    )
 
 
 # ========================== #

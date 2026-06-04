@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, ClassVar, overload, override
 from kaparoo.filesystem import ensure_file_exists
 
 from iivs.dhm.data.common import (
-    KoalaTxtHeader,
+    KoalaTxtHeaderCodec,
     parse_txt_grid,
     validate_float32_image,
     with_file_extension,
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-class IntensityTxtHeader(KoalaTxtHeader[IntensityBinHeader]):
+class IntensityTxtHeaderCodec(KoalaTxtHeaderCodec[IntensityBinHeader]):
     """Reads a Koala `Float/Txt` intensity header into an `IntensityBinHeader`.
 
     The 2-line header is just the shared `h/w` + `pixel size` pair -- intensity
@@ -66,7 +66,7 @@ def read_intensity_txt_header(path: StrPath) -> IntensityBinHeader:
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the header is missing or malformed.
     """
-    return IntensityTxtHeader.from_file(path)
+    return IntensityTxtHeaderCodec.from_file(path)
 
 
 @overload
@@ -116,8 +116,10 @@ def load_intensity_txt(
     """
     path = ensure_file_exists(path)
     lines = path.read_text().splitlines()
-    header = IntensityTxtHeader.from_lines(lines, path)
-    data = parse_txt_grid(lines[IntensityTxtHeader.HEADER_LINES :], shape=header.shape)
+    header = IntensityTxtHeaderCodec.from_lines(lines, path)
+    data = parse_txt_grid(
+        lines[IntensityTxtHeaderCodec.HEADER_LINES :], shape=header.shape
+    )
     data = validate_float32_image(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
 
@@ -163,7 +165,9 @@ def save_intensity_txt(
     header = IntensityBinHeader(
         width=int(data.shape[1]), height=int(data.shape[0]), pixel_size=pixel_size
     )
-    write_txt_grid(path, IntensityTxtHeader.to_lines(header), data, overwrite=overwrite)
+    write_txt_grid(
+        path, IntensityTxtHeaderCodec.to_lines(header), data, overwrite=overwrite
+    )
 
 
 # ========================== #

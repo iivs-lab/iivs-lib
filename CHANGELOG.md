@@ -90,8 +90,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `parse_txt_grid` and `write_txt_grid` — parse / atomically write a Koala
     `Float/Txt` body (whitespace-separated float rows ↔ a float32 `(H, W)`
     array); shared by the `.txt` readers and `save_*_txt` writers.
-  - `KoalaTxtHeader` — the `Float/Txt` header reader and writer (the text twin
-    of `KoalaBinHeader`), with `from_file` / `from_lines` / `to_lines`. `phase`
+  - `KoalaTxtHeaderCodec` — the stateless `Float/Txt` header (de)serializer (the
+    text twin of `KoalaBinHeader`'s own `to_dtype` / `from_dtype`), with
+    `from_file` / `from_lines` / `to_lines`. `phase`
     and `intensity` subclass it to bridge their text header to/from the matching
     `*BinHeader` (`_from_geometry` / `_extra_lines`), sharing the line-count
     check and the `h/w` + `pixel size` regex.
