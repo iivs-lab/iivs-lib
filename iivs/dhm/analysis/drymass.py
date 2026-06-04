@@ -52,6 +52,7 @@ class DryMassCalculator:
     pixel_size: float
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT
     opd_converter: OPDConverter = field(default_factory=OPDConverter)
+
     # pg of dry mass per nm of OPD summed over pixels:
     _scale: float = field(init=False, repr=False, compare=False)
 
@@ -60,9 +61,11 @@ class DryMassCalculator:
         if self.pixel_size <= 0:
             msg = f"pixel_size must be positive (got {self.pixel_size})"
             raise ValueError(msg)
+
         if self.alpha <= 0:
             msg = f"alpha must be positive (got {self.alpha})"
             raise ValueError(msg)
+
         # pg per summed-nm OPD: px_area(m^2) * (nm->m 1e-9) * (kg->pg 1e15) / alpha.
         object.__setattr__(self, "_scale", self.pixel_size**2 * 1e6 / self.alpha)
 
@@ -71,8 +74,8 @@ class DryMassCalculator:
         cls,
         *,
         pixel_size: float,
-        alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
         wavelength: float = DEFAULT_WAVELENGTH,
+        alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     ) -> Self:
         """Build a calculator whose phase path uses `wavelength` (in m)."""
         return cls(
@@ -122,15 +125,19 @@ class DryMassCalculator:
         """
         if not reduce:
             if mask is not None:
-                index = (..., *((None,) * (mask.ndim - 2)), slice(None), slice(None))
-                opd = opd[index] * mask
+                if mask.ndim == 3:
+                    opd = opd[..., None, :, :]
+                opd = opd * mask
             return opd * self._scale
+
         if mask is None:
             return np.sum(opd, axis=(-2, -1), dtype=np.float64) * self._scale
-        # Fuse the masked sum over (H, W) in float64, so a (..., H, W) `opd` and
-        # an (N, H, W) `mask` never materialize the (..., N, H, W) product.
-        subscript = "...hw,hw->..." if mask.ndim == 2 else "...hw,nhw->...n"
-        total = np.einsum(subscript, opd, mask, dtype=np.float64)
+        # Contract (H, W) without building the (..., N, H, W) product. Cast to
+        # float64 to accumulate there (`tensordot` has no `dtype=`); a (H, W)
+        # mask yields shape (...), an (N, H, W) mask yields (..., N).
+        total = np.tensordot(
+            opd.astype(np.float64, copy=False), mask, axes=([-2, -1], [-2, -1])
+        )
         return total * self._scale
 
     def calc_from_phase(
