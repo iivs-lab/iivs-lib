@@ -44,6 +44,15 @@ def test_phbounds_roundtrip(tmp_path):
     assert read_phbounds(path) == bounds
 
 
+def test_phbounds_from_file_to_file_roundtrip(tmp_path):
+    # The free functions wrap these methods; exercise the methods directly.
+    path = tmp_path / "phbounds.txt"
+    bounds = PhaseBounds(min_nm=-1.0, max_nm=2.0)
+    bounds.to_file(path)
+    assert PhaseBounds.from_file(path) == bounds
+    assert PhaseBounds.UNIT_TAG == "[nm]"
+
+
 def test_phbounds_file_format(tmp_path):
     path = tmp_path / "phbounds.txt"
     write_phbounds(path, PhaseBounds(min_nm=-403.4911, max_nm=635.9849))
