@@ -24,14 +24,33 @@ authors = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Scientific/Engineering :: Physics",
     "Typing :: Typed",
+    # The license is declared via the `license` / `license-files` fields (PEP
+    # 639), so no `License ::` classifier (PyPI rejects declaring both).
     # See https://pypi.org/classifiers/ for more classifiers
 ]
-keywords = []
+keywords = [
+    "digital-holographic-microscopy",
+    "dhm",
+    "quantitative-phase-imaging",
+    "qpi",
+    "holography",
+    "microscopy",
+    "optical-path-difference",
+    "dry-mass",
+    "multi-modal-imaging",
+    "koala",
+    "lyncee-tec",
+]
 dependencies = [
     "kaparoo-python>=0.7.0",
     "natsort>=8.4.0",
