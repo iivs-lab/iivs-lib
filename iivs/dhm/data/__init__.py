@@ -1,9 +1,17 @@
 """Readers, writers, and sequences for Lyncée Tec Koala acquisition data.
 
-The phase / intensity ``.bin``, hologram ``.tif`` / ``.raw``, and
-``timestamps.txt`` formats originate from
-`Lyncée Tec <https://www.lynceetec.com/>`_'s Koala software. The ``.bin``
-layout was verified against their reference implementation,
+Each imaging modality is its own subpackage -- `phase` and `intensity`
+(quantitative float32 ``.bin`` / ``.txt`` / ``.npy``, plus uint8 ``.tif``
+previews), `hologram` (uint8 ``.raw`` / ``.tif`` / ``.npy``) -- alongside a
+`timestamp` module for ``timestamps.txt``. Within a modality, each file format
+is a codec module exposing a loader, a saver, and lazy sequence types, and a
+`convert` helper re-encodes a sequence from one format to another. Blocks shared
+across modalities live in `common`; `constants` holds the lab's default optical
+parameters.
+
+The ``.bin``, ``.tif`` / ``.raw``, and ``timestamps.txt`` formats originate from
+`Lyncée Tec <https://www.lynceetec.com/>`_'s Koala software. The ``.bin`` layout
+was verified against their reference implementation,
 `pyKoalaUtils <https://github.com/lynceetec/pyKoalaUtils>`_ (MIT); this package
 is an independent reimplementation and contains no code from it.
 """
