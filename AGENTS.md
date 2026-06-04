@@ -121,6 +121,12 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   (quantitative float32, from `Float/{Bin,Txt}`) and `PhaseImageSequence`
   (uint8 `Image/*.tif` preview) specialize it. A modality with a single
   representation (e.g. `Hologram`) keeps a flat `<Modality>Sequence`.
+- Domain fact (verified against real Koala data, not derivable from the code):
+  the uint8 `Image/*.tif` previews are normalized **per modality** —
+  **phase** previews use one **global** `[min, max]` (`phbounds.txt`), so a single
+  `PhaseBounds` round-trips them; **intensity** previews are normalized **per
+  frame**, so intensity intentionally has no bounds record and no `Image → Float`
+  path. Keep this asymmetry in mind before adding an intensity bounds API.
 - Name sequence classes by role vs backing. Abstract role types keep the
   `Sequence` suffix (`PhaseSequence`, `HologramSequence`,
   `TimestampSequence`); concrete types drop it and read

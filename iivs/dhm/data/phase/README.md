@@ -90,7 +90,12 @@ base classes.
 ## Display bounds (`phbounds.txt`)
 
 `PhaseBounds(min_nm, max_nm)` is the record Koala uses to map the float phase
-onto the 0–255 previews.
+onto the 0–255 previews. Verified against a real acquisition, Koala normalizes
+the phase previews **globally** — one `[min, max]` (from `phbounds.txt`) spans
+the whole acquisition, *not* per frame — so a single `PhaseBounds` is the right
+unit, and `decode_preview` / `encode_preview` match Koala's previews to within
+one 8-bit code. (Intensity previews differ: they are normalized per frame, which
+is why `intensity` has no bounds record — see its README.)
 
 - `PhaseBounds.from_file(path)` / `bounds.to_file(path)` — read / write a
   `phbounds.txt` (a `[nm]` tag then `min max`). `read_phbounds` / `write_phbounds`

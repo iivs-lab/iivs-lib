@@ -75,6 +75,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     NANOMETERS / METERS need no scale, RADIANS needs `height_scale` or
     `wavelength` + `refractive_delta`). The reconstruction view is built on
     `kaparoo`'s `TransformedSequence`; each view exposes `.source` / `.bounds`.
+    Verified against a real Koala acquisition: phase previews are *globally*
+    normalized via `phbounds.txt` (a single `PhaseBounds` spans the whole
+    acquisition, and decode/encode match Koala to within one 8-bit code), while
+    intensity previews are normalized *per frame* -- which is why intensity
+    carries no bounds record and no `to_float`.
   - `save_phase_txt` / `save_phase_npy` single-image writers (the `.txt` / `.npy`
     twins of `save_phase_bin`), and `convert_phase_folder` / `convert_phase_list`
     to re-encode phase between the lossless `bin` / `txt` / `npy` formats. The

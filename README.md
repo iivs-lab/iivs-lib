@@ -57,7 +57,9 @@ and `timestamp`),
 
 ### `iivs.dhm.data`
 
-Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
+Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data
+(validated end-to-end against a real Koala acquisition — every format, the
+sequences, and the round trips between them).
 
 - **`hologram`** — uint8 holograms: `.tif` via `load_hologram_tif` /
   `save_hologram_tif` with `HologramTifFolder` / `HologramTifList`; a single

@@ -19,6 +19,14 @@ exposing per-format `load_*` / `save_*` / `read_*_header` functions and lazy
 inherited sequence interface (`seq[i]`, `len`, iteration, `get_item` /
 `get_meta` / `get_pair`, and the modality-specific accessors).
 
+The readers/writers and sequences are validated end-to-end against a real Koala
+acquisition. One non-obvious finding worth recording: the uint8 `Image/*.tif`
+previews are normalized differently per modality — **phase** previews share one
+**global** `[min, max]` (`phbounds.txt`), so a single `PhaseBounds` reconstructs
+them; **intensity** previews are normalized **per frame**, so intensity has no
+bounds record and no `Image → Float` path. The `Float` data is the exact source
+for both.
+
 ## The `timestamp` module
 
 Per-frame acquisition timing, as its own `DataSequence` (each item is a

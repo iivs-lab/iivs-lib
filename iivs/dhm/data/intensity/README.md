@@ -26,6 +26,11 @@ phase-only bytes as a no-op sentinel), so there is no `PhaseUnit` analogue, no
 - The `Image/*.tif` previews are an 8-bit visualization
   (`IntensityImageSequence`), not the quantitative float source
   (`IntensityFloatSequence`); decoding them needs the `iivs-lib[image]` extra.
+  Verified against a real acquisition, Koala normalizes each intensity preview
+  **per frame** (its own min/max → 0–255), *not* globally — so there is no
+  bounds record and no `Image → Float` reconstruction here (unlike `phase`,
+  whose previews share one global `phbounds.txt`). Use the `Float` source for
+  quantitative intensity.
 - The phase and intensity `.bin` formats share the `common.KoalaBinHeader` base;
   `IntensityBinHeader` exposes `width`, `height`, `pixel_size`, and the
   geometry conveniences (`shape`, `field_of_view[_um]`, `pixel_size_um`, ...).
