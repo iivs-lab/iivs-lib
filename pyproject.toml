@@ -64,6 +64,11 @@ dev = [
 [tool.uv.build-backend]
 module-name = "iivs"
 module-root = ""
+# Per-package `README.md` docs are for browsing the source tree; keep them out
+# of the built sdist and wheel. The root `README.md` still ships, via
+# `project.readme` above (it is embedded in the distribution metadata).
+source-exclude = ["iivs/**/README.md"]
+wheel-exclude = ["iivs/**/README.md"]
 # See the following documentation for more information
 # https://docs.astral.sh/uv/concepts/build-backend/
 
