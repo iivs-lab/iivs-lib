@@ -26,29 +26,20 @@ class DryMassCalculator:
     Bind the pixel size, specific refractive increment, and -- for the phase
     path -- an `OPDConverter` once; the per-pixel mass factor is precomputed::
 
-        dmc = DryMassCalculator(pixel_size=header.pixel_size)  # defaults
+        dmc = DryMassCalculator(pixel_size=px)  # alpha, wavelength default
         dmc = DryMassCalculator.from_wavelength(pixel_size=px, wavelength=666e-9)
-        dmc = DryMassCalculator(
-            pixel_size=px, opd_converter=OPDConverter.from_wavelength_nm(666)
-        )
         mass = dmc.calc_from_opd(opd, mask=cell)  # opd in nm
         mass = dmc.calc_from_phase(phase, mask=cell)  # phase in rad
 
-    Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg, summed
-    over the last two axes (H, W). Inputs are batched: `opd` / `phase` have shape
-    ``(..., H, W)`` (any leading dims), so the result is one mass per image,
-    shape ``(...)``. A `mask` of shape ``(C, H, W)`` gives `C` masked masses,
-    shape ``(..., C)`` (a ``(H, W)`` mask adds no axis). The OPD must already be
-    background-corrected (≈ 0 outside the object); segmentation and background
-    estimation stay the caller's responsibility. The sum is accumulated in
-    float64. Pass ``reduce=False`` to get the per-pixel mass-density map instead
-    of the sum.
+    Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg, summed in
+    float64 over the last two axes (H, W). Inputs are batched (``(..., H, W)``)
+    and a ``(C, H, W)`` mask adds a trailing channel axis -- see `calc_from_opd`
+    for the shape / `reduce` details. The OPD must already be background-corrected
+    (≈ 0 outside the object); segmentation and background estimation stay the
+    caller's responsibility.
 
-    The module-level `calc_drymass` / `calc_drymass_from_phase` are one-shot
-    conveniences over this class.
-
-    The `calc_*` methods are NumPy-based; for PyTorch autograd, reduce tensors
-    with `drymass_scale` directly (e.g. ``opd[mask].sum() * calc.drymass_scale``).
+    The free `calc_drymass` / `calc_drymass_from_phase` are one-shot conveniences
+    over this class. For PyTorch, use `iivs.dhm.analysis.pytorch.DryMass`.
 
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
@@ -104,9 +95,8 @@ class DryMassCalculator:
     def drymass_scale(self) -> float:
         """pg of dry mass per nm of OPD summed over pixels.
 
-        The cached ``pixel_area / alpha`` factor (with unit bookkeeping):
-        ``mass == drymass_scale * sum(opd_nm)``. The OPD analogue is
-        `OPDConverter.opd_scale`.
+        The cached ``pixel_area / alpha`` factor: ``mass == drymass_scale *
+        sum(opd_nm)``. The OPD analogue is `OPDConverter.opd_scale`.
         """
         return self._scale
 
