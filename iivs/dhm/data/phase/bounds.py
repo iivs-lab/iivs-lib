@@ -58,16 +58,20 @@ class PhaseBounds:
         path = ensure_file_extension(path, "txt")
         path = ensure_file_exists(path)
         lines = [line.strip() for line in path.read_text().splitlines() if line.strip()]
+
         if len(lines) != 2:
             msg = f"{path}: expected 2 non-blank lines (got {len(lines)})"
             raise ValueError(msg)
+
         if lines[0] != cls.UNIT_TAG:
             msg = f"{path}: first line must be {cls.UNIT_TAG!r} (got {lines[0]!r})"
             raise ValueError(msg)
+
         parts = lines[1].split()
         if len(parts) != 2:
             msg = f"{path}: bounds line must be 'min max' (got {lines[1]!r})"
             raise ValueError(msg)
+
         return cls(min_nm=float(parts[0]), max_nm=float(parts[1]))
 
     def to_file(self, path: StrPath, *, overwrite: bool = False) -> None:
@@ -88,12 +92,35 @@ class PhaseBounds:
 
 
 def read_phbounds(path: StrPath) -> PhaseBounds:
-    """Read a Koala ``phbounds.txt`` into a `PhaseBounds`; wraps `PhaseBounds.from_file`."""
+    """Read a Koala ``phbounds.txt`` into a `PhaseBounds`.
+
+    The free-function alias for `PhaseBounds.from_file` (as `read_phase_bin_header`
+    is for `PhaseBinHeader.from_file`), for callers that prefer a functional API.
+
+    Raises:
+        As `PhaseBounds.from_file` (wrong extension, missing file, or a malformed
+        or unordered record).
+    """
     return PhaseBounds.from_file(path)
 
 
 def write_phbounds(
     path: StrPath, bounds: PhaseBounds, *, overwrite: bool = False
 ) -> None:
-    """Write `bounds` as a Koala ``phbounds.txt``; wraps `PhaseBounds.to_file`."""
+    """Write `bounds` to a Koala ``phbounds.txt``.
+
+    The free-function alias for `PhaseBounds.to_file`, for callers that prefer a
+    functional API.
+
+    Args:
+        path: The `.txt` file to write (``.txt`` is appended if `path` has no
+            suffix).
+        bounds: The display bounds to record.
+        overwrite: Whether to replace `path` if it already exists. Defaults to
+            False.
+
+    Raises:
+        As `PhaseBounds.to_file` (wrong extension, an existing target without
+        `overwrite`, or a missing parent directory).
+    """
     bounds.to_file(path, overwrite=overwrite)
