@@ -51,6 +51,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     shared by every frame; arrays load via `numpy.load(allow_pickle=False)`
     (pickle disabled). `resolve_height_scale` is the shared scale-or-wavelength
     helper it and `save_phase_bin` use.
+  - `PhaseBounds` with `read_phbounds` / `write_phbounds` — the Koala
+    `phbounds.txt` display-bounds record (a `[nm]` tag then `min max`), and
+    `PhaseFloatSequence.bounds_nm()` to recompute those bounds straight from the
+    float source (global min/max in nanometers, per-file `height_scale`).
 - `iivs.dhm.data.common`: the building blocks shared across the data
   modalities.
   - `KoalaBinHeader` — base for the packed 23-byte Lyncée Tec Koala `.bin`

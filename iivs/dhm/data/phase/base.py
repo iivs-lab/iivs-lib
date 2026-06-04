@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = ("PhaseFloatSequence", "PhaseImageSequence", "PhaseSequence")
 
+import math
 from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
@@ -12,7 +13,8 @@ from kaparoo.utils import replace_if_none
 from numpy.typing import NDArray
 
 from iivs.dhm.data.common import SequentialFileFolder, ensure_file_extension
-from iivs.dhm.data.phase.core import convert_phase_unit
+from iivs.dhm.data.phase.bounds import PhaseBounds
+from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -20,7 +22,6 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath, StrPaths
 
     from iivs.dhm.data.phase.bin import PhaseBinHeader
-    from iivs.dhm.data.phase.core import PhaseUnit
 
 
 class PhaseSequence[T, M](DataSequence[T, M]):
@@ -108,6 +109,35 @@ class PhaseFileList(
         return convert_phase_unit(
             image, source=header.unit, target=target, height_scale=header.height_scale
         )
+
+    def bounds_nm(self) -> PhaseBounds:
+        """Global phase display bounds over every frame, in nanometers.
+
+        Recomputes the `phbounds.txt` values straight from the float source:
+        each frame is converted to nanometers via its own `height_scale`, then
+        reduced to one global ``(min, max)``. Reads every file once, regardless
+        of `target_unit`.
+
+        Raises:
+            ValueError: If the sequence is empty, or a frame's stored unit
+                cannot be converted to nanometers (e.g. an UNKNOWN unit).
+        """
+        minimum, maximum = math.inf, -math.inf
+        for index in range(len(self)):
+            image, header = self._decode(self.get_file(index))
+            nm = convert_phase_unit(
+                image,
+                source=header.unit,
+                target=PhaseUnit.NANOMETERS,
+                height_scale=header.height_scale,
+            )
+            minimum = min(minimum, float(nm.min()))
+            maximum = max(maximum, float(nm.max()))
+
+        if minimum > maximum:
+            msg = "phase bounds are undefined for an empty sequence"
+            raise ValueError(msg)
+        return PhaseBounds(min_nm=minimum, max_nm=maximum)
 
     @abstractmethod
     def _read_header(self, path: StrPath) -> PhaseBinHeader:
