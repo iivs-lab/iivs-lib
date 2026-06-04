@@ -108,7 +108,7 @@ def convert_phase_list(
 
     for index, image in enumerate(sequence):
         path = sequence.get_file(index)
-        header = sequence.header_at(index)
+        header = sequence.get_header(index)
         writer(
             path.with_suffix(f".{ext}"),
             image,

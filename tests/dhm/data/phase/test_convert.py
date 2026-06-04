@@ -171,7 +171,7 @@ def test_convert_phase_list_rejects_unknown_format(tmp_path):
         convert_phase_list(src, ext="raw")
 
 
-def test_phase_file_list_header_at(tmp_path):
+def test_phase_file_list_get_header(tmp_path):
     src = _bin_list(tmp_path, [(1.0, 1e-6), (2.0, 3e-6)])
-    assert src.header_at(0).pixel_size == pytest.approx(1e-6)
-    assert src.header_at(1).pixel_size == pytest.approx(3e-6)
+    assert src.get_header(0).pixel_size == pytest.approx(1e-6)
+    assert src.get_header(1).pixel_size == pytest.approx(3e-6)

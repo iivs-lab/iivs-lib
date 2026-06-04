@@ -35,7 +35,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `PhaseBinList` — a `kaparoo.data.sequences.FileListSequence` over an
     explicit, arbitrary list of `.bin` files (any location, no naming or
     shared-header constraint); each file is read independently with per-file
-    unit conversion, and `header_at(index)` reads one file's header (the
+    unit conversion, and `get_header(index)` reads one file's header (the
     per-file twin of a folder's shared `header`).
   - `load_phase_txt` / `read_phase_txt_header`, with `PhaseTxtFolder` /
     `PhaseTxtList` — the text twins of the `.bin` readers over Koala's

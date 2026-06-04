@@ -90,11 +90,12 @@ class IntensityFileList(
         """Return the source path of the file at `index`."""
         return self.get_file(index)
 
-    def header_at(self, index: int) -> IntensityBinHeader:
+    def get_header(self, index: int) -> IntensityBinHeader:
         """Read the header of the file at `index`.
 
-        The per-file twin of a folder's shared `header`, for a list whose files
-        may each carry a different header.
+        The header accessor of the sequence protocol, beside `get_item` (the
+        image) and `get_meta` (the source path): the per-file twin of a folder's
+        shared `header`, for a list whose files may each carry a different one.
         """
         return self._read_header(self.get_file(index))
 
