@@ -115,6 +115,54 @@ def test_write_phbounds_rejects_wrong_extension(tmp_path):
 
 
 # ========================== #
+#   preview <-> nm mapping   #
+# ========================== #
+
+
+def test_decode_preview_endpoints_and_dtype():
+    bounds = PhaseBounds(min_nm=-100.0, max_nm=300.0)
+    preview = np.array([0, 255], dtype=np.uint8)
+    nm = bounds.decode_preview(preview)
+    assert nm.dtype == np.float32
+    assert nm[0] == pytest.approx(-100.0)
+    assert nm[1] == pytest.approx(300.0)
+
+
+def test_encode_preview_endpoints_and_dtype():
+    bounds = PhaseBounds(min_nm=-100.0, max_nm=300.0)
+    nm = np.array([-100.0, 300.0], dtype=np.float32)
+    preview = bounds.encode_preview(nm)
+    assert preview.dtype == np.uint8
+    assert preview[0] == 0
+    assert preview[1] == 255
+
+
+def test_encode_preview_clamps_out_of_range():
+    bounds = PhaseBounds(min_nm=0.0, max_nm=100.0)
+    preview = bounds.encode_preview(np.array([-50.0, 150.0], dtype=np.float32))
+    assert preview[0] == 0  # below min -> 0
+    assert preview[1] == 255  # above max -> 255
+
+
+def test_preview_roundtrip_within_quantization():
+    bounds = PhaseBounds(min_nm=-403.4911, max_nm=635.9849)
+    nm = np.linspace(bounds.min_nm, bounds.max_nm, 256, dtype=np.float32)
+    recovered = bounds.decode_preview(bounds.encode_preview(nm))
+    step = (bounds.max_nm - bounds.min_nm) / 255.0
+    assert np.max(np.abs(recovered - nm)) <= step  # 8-bit quantization only
+
+
+def test_degenerate_bounds_map_to_a_single_value():
+    bounds = PhaseBounds(min_nm=42.0, max_nm=42.0)
+    # decode: every pixel collapses to the single value (no division by span)
+    nm = bounds.decode_preview(np.array([0, 128, 255], dtype=np.uint8))
+    assert np.all(nm == np.float32(42.0))
+    # encode: zero span maps everything to 0 rather than dividing by zero
+    preview = bounds.encode_preview(np.array([42.0, 42.0], dtype=np.float32))
+    assert np.all(preview == 0)
+
+
+# ========================== #
 #    PhaseFileList.bounds_nm #
 # ========================== #
 

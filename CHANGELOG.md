@@ -61,6 +61,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     it when absent, matching the other single-file readers / writers. The I/O
     lives on the value object as `PhaseBounds.from_file` / `to_file` (the free
     functions are thin wrappers); the unit tag is `PhaseBounds.UNIT_TAG`.
+    `PhaseBounds.decode_preview` maps a uint8 `Image/*.tif` preview back toward
+    phase in nm (the inverse of Koala's `[min, max]`→`0–255` render — lossy,
+    8-bit quantized), and `encode_preview` is the forward render (rounded,
+    clamped); a degenerate `min == max` is handled without dividing by a zero
+    span.
   - `save_phase_txt` / `save_phase_npy` single-image writers (the `.txt` / `.npy`
     twins of `save_phase_bin`), and `convert_phase_folder` / `convert_phase_list`
     to re-encode phase between the lossless `bin` / `txt` / `npy` formats. The

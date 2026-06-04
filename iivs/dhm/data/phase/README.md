@@ -97,6 +97,11 @@ onto the 0–255 previews.
   are the free-function aliases.
 - `float_seq.bounds_nm()` recomputes the bounds straight from a quantitative
   source, so the previews are never the authoritative value.
+- `bounds.decode_preview(u8)` maps a uint8 `Image/*.tif` preview back toward
+  phase in nm (lossy — 8-bit quantized, step `(max−min)/255`); `bounds.encode_preview(nm)`
+  is the forward render (`[min, max]`→`0–255`, clamped) that mirrors Koala. Pair
+  a preview with a `PhaseBounds` from disk or the `Float` twin's `bounds_nm()`:
+  `bounds.decode_preview(preview_seq[i])`.
 
 ## Examples
 

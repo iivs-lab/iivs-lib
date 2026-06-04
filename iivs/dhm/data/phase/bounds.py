@@ -5,6 +5,7 @@ __all__ = ("PhaseBounds", "read_phbounds", "write_phbounds")
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
+import numpy as np
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 
 from iivs.dhm.data.common import ensure_file_extension, with_file_extension
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
     from typing import Self
 
     from kaparoo.filesystem.types import StrPath
+    from numpy.typing import NDArray
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,6 +91,42 @@ class PhaseBounds:
         content = f"{self.UNIT_TAG}\n{self.min_nm} {self.max_nm}\n"
         with StagedFile(path, overwrite=overwrite, encoding="utf-8") as staged:
             staged.write(content)
+
+    def decode_preview(self, preview: NDArray[np.uint8]) -> NDArray[np.float32]:
+        """Map a uint8 Koala preview back toward phase, in nanometers (lossy).
+
+        The inverse of Koala's display rendering: ``0`` maps to `min_nm`, ``255``
+        to `max_nm`, linearly. The result is 8-bit quantized -- a coarse
+        reconstruction with step ``(max_nm - min_nm) / 255``, never a substitute
+        for the quantitative `Float` source. A degenerate ``min_nm == max_nm``
+        maps every pixel to that single value.
+
+        Args:
+            preview: A uint8 preview image (or stack), values in ``0-255``.
+        """
+        step = np.float32((self.max_nm - self.min_nm) / 255.0)
+        return np.asarray(preview, dtype=np.float32) * step + np.float32(self.min_nm)
+
+    def encode_preview(self, phase_nm: NDArray[np.floating]) -> NDArray[np.uint8]:
+        """Render phase (nm) into a uint8 Koala-style preview (the forward map).
+
+        Linearly maps ``[min_nm, max_nm]`` onto ``0-255`` with rounding, clamping
+        out-of-range values to the ends -- how Koala renders `Image/*.tif`. The
+        round trip ``decode_preview(encode_preview(x))`` recovers `x` only up to
+        the 8-bit quantization. A degenerate ``min_nm == max_nm`` maps everything
+        to ``0`` (division by a zero span is avoided).
+
+        Args:
+            phase_nm: Phase image(s) in nanometers (e.g. a `Float` frame put in
+                nm via `convert_phase_unit`).
+        """
+        span = self.max_nm - self.min_nm
+        values = np.asarray(phase_nm, dtype=np.float64)
+        if span == 0:
+            normalized = np.zeros_like(values)
+        else:
+            normalized = np.clip((values - self.min_nm) / span, 0.0, 1.0)
+        return np.round(normalized * 255.0).astype(np.uint8)
 
 
 def read_phbounds(path: StrPath) -> PhaseBounds:
