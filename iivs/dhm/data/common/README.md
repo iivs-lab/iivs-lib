@@ -1,8 +1,8 @@
 # `iivs.dhm.data.common`
 
 Cross-modality building blocks the per-modality packages
-([`phase`](../phase/README.md), [`intensity`](../intensity/README.md),
-[`hologram`](../hologram/README.md)) compose. **Internal**: these are
+([`hologram`](../hologram/README.md), [`phase`](../phase/README.md),
+[`intensity`](../intensity/README.md)) compose. **Internal**: these are
 infrastructure for the modality code, not the user-facing API. Everything is
 re-exported from `common`, so `from iivs.dhm.data.common import X` reaches any
 submodule.

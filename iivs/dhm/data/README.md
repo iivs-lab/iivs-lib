@@ -8,9 +8,9 @@ imaging modality is its own subpackage; the `timestamp` module and the internal
 
 | Package | Modality | README |
 | --- | --- | --- |
+| [`hologram`](./hologram/README.md) | Raw uint8 holograms (`.raw` / `.tif` / `.npy`) | single-file stack + per-frame folders |
 | [`phase`](./phase/README.md) | Quantitative float32 phase + uint8 previews | per-format endpoints, units, `phbounds.txt` |
 | [`intensity`](./intensity/README.md) | Quantitative float32 intensity + uint8 previews | the phase twin, without units |
-| [`hologram`](./hologram/README.md) | Raw uint8 holograms (`.raw` / `.tif` / `.npy`) | single-file stack + per-frame folders |
 | [`common`](./common/README.md) | Cross-modality building blocks (**internal**) | architecture map for contributors |
 
 Each modality splits a format into per-format codec modules over a shared base,

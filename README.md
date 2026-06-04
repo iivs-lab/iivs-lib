@@ -46,17 +46,21 @@ mass_pg = calc.calc_from_phase(img, mask=cell_mask)
 
 Each package ships a detailed README in the source tree — the endpoints,
 examples, and the inherited sequence interface:
+[`hologram`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/data/hologram),
 [`phase`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/data/phase),
 [`intensity`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/data/intensity),
-[`hologram`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/data/hologram),
 [`data`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/data) (overview
-+ `timestamp`),
+and `timestamp`),
 [`analysis`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/analysis).
 
 ### `iivs.dhm.data`
 
 Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
 
+- **`hologram`** — uint8 holograms: `.tif` via `load_hologram_tif` /
+  `save_hologram_tif` with `HologramTifFolder` / `HologramTifList`; a single
+  multi-frame `.raw` via `HologramRawFile` (a lazy `np.memmap`) and
+  `read_hologram_raw_header`; header-less `.npy` frames via `HologramNpyFolder`.
 - **`phase`** — float32 `.bin` phase images: `load_phase_bin` /
   `save_phase_bin` / `read_phase_bin_header`, the typed `PhaseBinHeader` and
   `PhaseUnit`, and `convert_phase_unit`; folder/list sequences
@@ -74,10 +78,6 @@ Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data.
   uint8 `Image/*.tif` previews `IntensityTifFolder` / `IntensityTifList`, and
   header-less `.npy` frames via `IntensityNpyFolder` (`pixel_size` passed in).
   The phase and intensity `.bin` formats share the `common.KoalaBinHeader` base.
-- **`hologram`** — uint8 holograms: `.tif` via `load_hologram_tif` /
-  `save_hologram_tif` with `HologramTifFolder` / `HologramTifList`; a single
-  multi-frame `.raw` via `HologramRawFile` (a lazy `np.memmap`) and
-  `read_hologram_raw_header`; header-less `.npy` frames via `HologramNpyFolder`.
 - **`timestamp`** — per-frame acquisition timing: the `Timestamp` record,
   `TimestampsTxtFile` (Koala `timestamps.txt`), and `TimestampsFixedFPS`
   (synthesized from a frame rate).
