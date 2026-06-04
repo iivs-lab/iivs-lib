@@ -97,7 +97,7 @@ def convert_phase_list(
 
     for index, image in enumerate(sequence):
         path = sequence.get_file(index)
-        header = sequence._read_header(path)  # noqa: SLF001
+        header = sequence.header_at(index)
         writer(
             path.with_suffix(f".{ext}"),
             image,

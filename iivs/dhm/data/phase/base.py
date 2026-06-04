@@ -101,6 +101,14 @@ class PhaseFileList(
         """Return the source path of the file at `index`."""
         return self.get_file(index)
 
+    def header_at(self, index: int) -> PhaseBinHeader:
+        """Read the header of the file at `index`.
+
+        The per-file twin of a folder's shared `header`, for a list whose files
+        may each carry a different header.
+        """
+        return self._read_header(self.get_file(index))
+
     @override
     def load_file(self, path: Path) -> NDArray[np.float32]:
         """Load the image at `path`, converted to `target_unit` if one is set."""
