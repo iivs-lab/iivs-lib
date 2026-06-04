@@ -87,6 +87,24 @@ def test_read_phbounds_rejects_non_numeric(tmp_path):
         read_phbounds(path)
 
 
+def test_read_phbounds_rejects_wrong_extension(tmp_path):
+    path = tmp_path / "phbounds.bin"
+    path.write_text("[nm]\n0 1\n")
+    with pytest.raises(ValueError, match=r"must have a \.txt extension"):
+        read_phbounds(path)
+
+
+def test_write_phbounds_appends_extension(tmp_path):
+    # np.save-style: a suffix-less path gets `.txt` appended.
+    write_phbounds(tmp_path / "phbounds", PhaseBounds(0.0, 1.0))
+    assert (tmp_path / "phbounds.txt").exists()
+
+
+def test_write_phbounds_rejects_wrong_extension(tmp_path):
+    with pytest.raises(ValueError, match=r"must have a \.txt extension"):
+        write_phbounds(tmp_path / "phbounds.bin", PhaseBounds(0.0, 1.0))
+
+
 # ========================== #
 #    PhaseFileList.bounds_nm #
 # ========================== #

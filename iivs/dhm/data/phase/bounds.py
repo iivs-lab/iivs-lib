@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 
+from iivs.dhm.data.common import ensure_file_extension, with_file_extension
+
 if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
 
@@ -48,9 +50,11 @@ def read_phbounds(path: StrPath) -> PhaseBounds:
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the file is not a `[nm]` tag plus a numeric `min max`
-            line, or if the bounds are not ordered.
+        ValueError: If `path` does not have a `.txt` extension, the file is not
+            a `[nm]` tag plus a numeric `min max` line, or the bounds are not
+            ordered.
     """
+    path = ensure_file_extension(path, "txt")
     path = ensure_file_exists(path)
     lines = [line.strip() for line in path.read_text().splitlines() if line.strip()]
     if len(lines) != 2:
@@ -72,11 +76,14 @@ def write_phbounds(
     """Write `bounds` as a Koala ``phbounds.txt`` (a `[nm]` tag then `min max`).
 
     Written atomically: staged to a temp file and moved into place on success.
+    `np.save`-style: a path with no suffix gets ``.txt`` appended.
 
     Raises:
+        ValueError: If `path` has a non-`.txt` extension.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    path = with_file_extension(path, "txt")
     content = f"{_UNIT_TAG}\n{bounds.min_nm} {bounds.max_nm}\n"
     with StagedFile(path, overwrite=overwrite, encoding="utf-8") as staged:
         staged.write(content)

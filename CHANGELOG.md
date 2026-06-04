@@ -57,6 +57,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `phbounds.txt` display-bounds record (a `[nm]` tag then `min max`), and
     `PhaseFloatSequence.bounds_nm()` to recompute those bounds straight from the
     float source (global min/max in nanometers, per-file `height_scale`).
+    `read_phbounds` validates the `.txt` extension and `write_phbounds` appends
+    it when absent, matching the other single-file readers / writers.
   - `save_phase_txt` / `save_phase_npy` single-image writers (the `.txt` / `.npy`
     twins of `save_phase_bin`), and `convert_phase_folder` / `convert_phase_list`
     to re-encode phase between the lossless `bin` / `txt` / `npy` formats. The
