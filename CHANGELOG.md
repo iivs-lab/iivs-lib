@@ -69,9 +69,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `PhaseFileList.to_preview(bounds=None)` renders a `PhaseFloatSequence` into a
     uint8 `PhaseImageSequence` (each frame put in nm via its header first, so
     `target_unit` is irrelevant; `None` derives the bounds from `bounds_nm`), and
-    `PhaseImageSequence.to_phase_nm(bounds)` reconstructs a `PhaseFloatSequence`
-    from previews (8-bit-quantized — a reconstruction, *not* the quantitative
-    `Float` source). Each view exposes `.source` / `.bounds`.
+    `PhaseImageSequence.to_phase(bounds, *, target_unit=NANOMETERS, height_scale=…)`
+    reconstructs a `PhaseFloatSequence` from previews in the requested unit
+    (8-bit-quantized — a reconstruction, *not* the quantitative `Float` source;
+    NANOMETERS / METERS need no scale, RADIANS needs `height_scale` or
+    `wavelength` + `refractive_delta`). The reconstruction view is built on
+    `kaparoo`'s `TransformedSequence`; each view exposes `.source` / `.bounds`.
   - `save_phase_txt` / `save_phase_npy` single-image writers (the `.txt` / `.npy`
     twins of `save_phase_bin`), and `convert_phase_folder` / `convert_phase_list`
     to re-encode phase between the lossless `bin` / `txt` / `npy` formats. The

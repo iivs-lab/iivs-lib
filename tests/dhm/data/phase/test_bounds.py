@@ -220,7 +220,7 @@ def test_bounds_nm_rejects_unknown_unit(tmp_path):
 
 
 # ========================== #
-#   to_preview / to_phase_nm #
+#    to_preview / to_phase   #
 # ========================== #
 
 
@@ -261,11 +261,11 @@ def test_to_preview_meta_is_source_path(tmp_path):
     assert preview.source is folder
 
 
-def test_to_phase_nm_roundtrip_within_quantization(tmp_path):
+def test_to_phase_roundtrip_within_quantization(tmp_path):
     folder = _two_frame_folder(tmp_path, target_unit=PhaseUnit.NANOMETERS)
     bounds = folder.bounds_nm()
     # Float -> Image -> Float, all in memory (no .tif I/O needed).
-    recon = folder.to_preview(bounds).to_phase_nm(bounds)
+    recon = folder.to_preview(bounds).to_phase(bounds)
     assert isinstance(recon, PhaseFloatSequence)
     assert recon[0].dtype == np.float32
     step = (bounds.max_nm - bounds.min_nm) / 255.0
@@ -273,11 +273,39 @@ def test_to_phase_nm_roundtrip_within_quantization(tmp_path):
         assert np.max(np.abs(recon[index] - folder[index])) <= step
 
 
-def test_to_phase_nm_meta_and_source_passthrough(tmp_path):
+def test_to_phase_to_radians_uses_height_scale(tmp_path):
+    # frames 1.0 / 3.0 rad at height_scale 2e-7 -> 200 / 600 nm; bounds (200, 600).
+    folder = _two_frame_folder(tmp_path)  # default target_unit -> RADIANS
+    bounds = folder.bounds_nm()
+    recon = folder.to_preview(bounds).to_phase(
+        bounds, target_unit=PhaseUnit.RADIANS, height_scale=2e-7
+    )
+    step_rad = (bounds.max_nm - bounds.min_nm) / 255.0 * 1e-9 / 2e-7
+    for index in range(len(folder)):
+        assert np.max(np.abs(recon[index] - folder[index])) <= step_rad
+
+
+def test_to_phase_to_meters_needs_no_scale(tmp_path):
+    folder = _two_frame_folder(tmp_path)
+    bounds = PhaseBounds(min_nm=200.0, max_nm=600.0)
+    recon = folder.to_preview(bounds).to_phase(bounds, target_unit=PhaseUnit.METERS)
+    assert recon[0].dtype == np.float32
+    assert recon[0][0, 0] == pytest.approx(200e-9)  # 200 nm -> 2e-7 m
+    assert recon[1][0, 0] == pytest.approx(600e-9)
+
+
+def test_to_phase_to_radians_requires_scale(tmp_path):
+    folder = _two_frame_folder(tmp_path)
+    preview = folder.to_preview(PhaseBounds(min_nm=0.0, max_nm=600.0))
+    with pytest.raises(ValueError, match="give height_scale"):
+        preview.to_phase(PhaseBounds(min_nm=0.0, max_nm=600.0), target_unit=PhaseUnit.RADIANS)
+
+
+def test_to_phase_meta_and_source_passthrough(tmp_path):
     folder = _two_frame_folder(tmp_path)
     preview = folder.to_preview()
     bounds = PhaseBounds(min_nm=0.0, max_nm=1.0)
-    recon = preview.to_phase_nm(bounds)
+    recon = preview.to_phase(bounds)
     assert len(recon) == 2
     assert recon.get_meta(1) == folder.get_meta(1)
     assert recon.source is preview

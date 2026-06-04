@@ -105,9 +105,13 @@ onto the 0–255 previews.
 - Whole-sequence twins of that map (lazy — each frame is converted on access):
   `float_seq.to_preview(bounds=None)` returns a uint8 `PhaseImageSequence`
   (frames are put in nm via their header first, so `target_unit` is irrelevant;
-  `None` derives `bounds` from `bounds_nm()`), and `preview_seq.to_phase_nm(bounds)`
+  `None` derives `bounds` from `bounds_nm()`), and
+  `preview_seq.to_phase(bounds, *, target_unit=NANOMETERS, height_scale=…)`
   returns a float32 `PhaseFloatSequence` **reconstruction** — 8-bit-quantized,
-  *not* the quantitative `Float` source. Each view exposes `.source` / `.bounds`.
+  *not* the quantitative `Float` source. `target_unit` picks the output unit
+  (NANOMETERS / METERS need no scale; RADIANS needs `height_scale`, or
+  `wavelength` + `refractive_delta`). The reconstruction view is a `kaparoo`
+  `TransformedSequence`; each view exposes `.source` / `.bounds`.
 
 ## Examples
 
