@@ -130,12 +130,18 @@ class DryMassCalculator:
                 map (``opd * scale``, masked) without summing, shape
                 ``(..., H, W)`` (or ``(..., C, H, W)``).
         """
-        if mask is not None:
-            index = (..., *((None,) * (mask.ndim - 2)), slice(None), slice(None))
-            opd = opd[index] * mask
         if not reduce:
+            if mask is not None:
+                index = (..., *((None,) * (mask.ndim - 2)), slice(None), slice(None))
+                opd = opd[index] * mask
             return opd * self._scale
-        return np.sum(opd, axis=(-2, -1), dtype=np.float64) * self._scale
+        if mask is None:
+            return np.sum(opd, axis=(-2, -1), dtype=np.float64) * self._scale
+        # Fuse the masked sum over (H, W) in float64, so a (..., H, W) `opd` and
+        # a (C, H, W) `mask` never materialize the (..., C, H, W) product.
+        chans = "cdefg"[: mask.ndim - 2]  # label the mask's leading (channel) dims
+        total = np.einsum(f"...hw,{chans}hw->...{chans}", opd, mask, dtype=np.float64)
+        return total * self._scale
 
     def calc_from_phase(
         self,

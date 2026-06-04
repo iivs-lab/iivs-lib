@@ -70,6 +70,18 @@ def test_calc_drymass_reduce_false_returns_map():
     )
 
 
+def test_calc_drymass_reduce_false_with_mask():
+    # reduce=False + mask: per-pixel density with the mask applied (0 elsewhere).
+    opd = np.full((2, 2), 50.0, np.float32)
+    mask = np.array([[True, False], [False, False]])
+    density = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=mask, reduce=False)
+    assert density.shape == (2, 2)
+    assert density[0, 0] == pytest.approx(
+        float(calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=mask))
+    )
+    assert density.sum() == pytest.approx(density[0, 0])  # only the masked pixel
+
+
 def test_calc_drymass_from_phase_matches_two_step():
     phase = np.full((5, 5), 1.0, dtype=np.float32)
     direct = calc_drymass_from_phase(
