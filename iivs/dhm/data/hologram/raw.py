@@ -77,8 +77,7 @@ class HologramRawHeader:
             raise ValueError(msg)
 
         if self.bit_depth not in self.SUPPORTED_BIT_DEPTHS:
-            allowed = list(self.SUPPORTED_BIT_DEPTHS)
-            msg = f"bit_depth must be one of {allowed} (got {self.bit_depth})"
+            msg = f"bit_depth must be one of {self.SUPPORTED_BIT_DEPTHS} (got {self.bit_depth})"
             raise ValueError(msg)
 
     @property
@@ -178,8 +177,8 @@ def save_hologram_raw(
 
     Raises:
         ValueError: If `path` has a non-`.raw` extension, an array is not a 2D
-            image or an ``(N, H, W)`` stack, the sequence is empty, or its frames
-            are not same-shaped uint8.
+            image or an ``(N, H, W)`` stack, the sequence or stack is empty, or
+            its frames are not same-shaped uint8.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -203,6 +202,9 @@ def save_hologram_raw(
             raise ValueError(msg)
 
         count, height, width = stack.shape[0], stack.shape[1], stack.shape[2]
+        if count == 0:
+            msg = "cannot save an empty hologram stack to .raw"
+            raise ValueError(msg)
         frame_iter = stack
 
     header = HologramRawHeader(

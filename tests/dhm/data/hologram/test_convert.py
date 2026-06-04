@@ -115,6 +115,11 @@ def test_save_hologram_raw_rejects_empty_sequence(tmp_path):
         save_hologram_raw(tmp_path / "out.raw", HologramTifList([]))
 
 
+def test_save_hologram_raw_rejects_empty_stack(tmp_path):
+    with pytest.raises(ValueError, match="empty"):
+        save_hologram_raw(tmp_path / "out.raw", np.zeros((0, 2, 3), dtype=np.uint8))
+
+
 def test_save_hologram_raw_rejects_mismatched_frame_shapes(tmp_path):
     save_hologram_tif(tmp_path / "a.tif", np.zeros((2, 3), np.uint8))
     save_hologram_tif(tmp_path / "b.tif", np.zeros((2, 4), np.uint8))  # different width
