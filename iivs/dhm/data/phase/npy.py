@@ -6,7 +6,12 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
 
-from iivs.dhm.data.common import read_npy_shape, validate_float32_image, write_npy
+from iivs.dhm.data.common import (
+    read_npy_shape,
+    validate_float32_image,
+    with_file_extension,
+    write_npy,
+)
 from iivs.dhm.data.phase.base import PhaseFileFolder
 from iivs.dhm.data.phase.bin import PhaseBinHeader
 from iivs.dhm.data.phase.core import resolve_height_scale
@@ -34,11 +39,13 @@ def save_phase_npy(
     it when reading via `PhaseNpyFolder`). Written atomically.
 
     Raises:
-        ValueError: If `data` is not a single 2D float32 image, or holds
-            non-finite values while `on_nonfinite` is "raise".
+        ValueError: If `path` has a non-`.npy` extension, `data` is not a single
+            2D float32 image, or it holds non-finite values while `on_nonfinite`
+            is "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    path = with_file_extension(path, "npy")
     data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
     write_npy(path, data, overwrite=overwrite)
 

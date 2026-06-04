@@ -7,7 +7,12 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
 
-from iivs.dhm.data.common import ImageFileFolder, validate_uint8_image, write_npy
+from iivs.dhm.data.common import (
+    ImageFileFolder,
+    validate_uint8_image,
+    with_file_extension,
+    write_npy,
+)
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:
@@ -24,10 +29,12 @@ def save_hologram_npy(
     `[image]` extra). Written atomically.
 
     Raises:
-        ValueError: If `data` is not a 2D uint8 array.
+        ValueError: If `path` has a non-`.npy` extension, or `data` is not a 2D
+            uint8 array.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    path = with_file_extension(path, "npy")
     data = validate_uint8_image(data, allow_stack=False)
     write_npy(path, data, overwrite=overwrite)
 

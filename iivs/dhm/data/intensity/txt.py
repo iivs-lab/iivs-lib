@@ -16,6 +16,7 @@ from iivs.dhm.data.common import (
     KoalaTxtHeader,
     parse_txt_grid,
     validate_float32_image,
+    with_file_extension,
     write_txt_grid,
 )
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
@@ -141,11 +142,13 @@ def save_intensity_txt(
     Written atomically.
 
     Raises:
-        ValueError: If `data` is not a single 2D float32 image, or holds
-            non-finite values while `on_nonfinite` is "raise".
+        ValueError: If `path` has a non-`.txt` extension, `data` is not a single
+            2D float32 image, or it holds non-finite values while `on_nonfinite`
+            is "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    path = with_file_extension(path, "txt")
     data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
     header = IntensityBinHeader(
         width=int(data.shape[1]), height=int(data.shape[0]), pixel_size=pixel_size

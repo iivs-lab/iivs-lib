@@ -19,6 +19,7 @@ from iivs.dhm.data.common import (
     KoalaBinHeader,
     read_bin_pixels,
     validate_float32_image,
+    with_file_extension,
     write_bin,
 )
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
@@ -280,12 +281,13 @@ def save_phase_bin(
             ValueError.
 
     Raises:
-        ValueError: If neither or both scale forms are given, if `data` is
-            not a single 2D float32 image, or if `data` holds non-finite
-            values while `on_nonfinite` is "raise".
+        ValueError: If `path` has a non-`.bin` extension, neither or both scale
+            forms are given, `data` is not a single 2D float32 image, or it holds
+            non-finite values while `on_nonfinite` is "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    path = with_file_extension(path, "bin")
     height_scale = resolve_height_scale(height_scale, wavelength, refractive_delta)
 
     # save stores a single image (allow_stack=False), unlike the loaders.

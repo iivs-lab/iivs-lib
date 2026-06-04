@@ -19,6 +19,7 @@ from iivs.dhm.data.common import (
     FrameShapedMixin,
     ensure_file_extension,
     validate_uint8_image,
+    with_file_extension,
 )
 from iivs.dhm.data.hologram.base import HologramSequence
 
@@ -169,11 +170,14 @@ def save_hologram_raw(
     held in memory as a whole stack. Written atomically.
 
     Raises:
-        ValueError: If an array is not a 2D image or an ``(N, H, W)`` stack, the
-            sequence is empty, or its frames are not same-shaped uint8.
+        ValueError: If `path` has a non-`.raw` extension, an array is not a 2D
+            image or an ``(N, H, W)`` stack, the sequence is empty, or its frames
+            are not same-shaped uint8.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    path = with_file_extension(path, "raw")
+
     if isinstance(frames, HologramSequence):
         count = len(frames)
         if count == 0:

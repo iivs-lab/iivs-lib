@@ -10,10 +10,12 @@ from iivs.dhm.data.common import (
     FrameShapedMixin,
     ensure_file_extension,
     load_uint8_tif,
+    numbered_name,
     parse_txt_grid,
     read_npy_shape,
     validate_float32_image,
     validate_uint8_image,
+    with_file_extension,
 )
 from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
@@ -232,3 +234,41 @@ def test_heterogeneous_list_lacks_the_mixin(tmp_path):
     assert isinstance(seq, PhaseSequence)
     assert not isinstance(seq, FrameShapedMixin)
     assert not hasattr(seq, "frame_shape")
+
+
+# ========================== #
+#     numbered_name / ext    #
+# ========================== #
+
+
+def test_numbered_name():
+    assert numbered_name(7, stem="phase", ext="bin") == "00007_phase.bin"
+
+
+def test_with_file_extension_appends_when_absent(tmp_path):
+    assert (
+        with_file_extension(tmp_path / "00000_phase", "bin")
+        == tmp_path / "00000_phase.bin"
+    )
+
+
+def test_with_file_extension_keeps_matching(tmp_path):
+    path = tmp_path / "out.BIN"  # case-insensitive match
+    assert with_file_extension(path, "bin") == path
+
+
+def test_with_file_extension_rejects_mismatch(tmp_path):
+    with pytest.raises(ValueError, match=r"must have a \.bin extension"):
+        with_file_extension(tmp_path / "out.txt", "bin")
+
+
+def test_save_appends_extension_when_absent(tmp_path):
+    data = np.zeros((2, 2), dtype=np.float32)
+    save_phase_bin(tmp_path / "00000_phase", data, pixel_size=1e-6, height_scale=2e-7)
+    assert (tmp_path / "00000_phase.bin").exists()
+
+
+def test_save_rejects_wrong_extension(tmp_path):
+    data = np.zeros((2, 2), dtype=np.float32)
+    with pytest.raises(ValueError, match=r"must have a \.bin extension"):
+        save_phase_bin(tmp_path / "x.txt", data, pixel_size=1e-6, height_scale=2e-7)

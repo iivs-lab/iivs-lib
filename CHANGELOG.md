@@ -110,6 +110,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `.<FILE_EXT>` at construction, so a wrong-format file fails up front rather
     than on decode. `FILE_EXT` lives on the concrete `*List` (the
     auto-discovering `*Folder` inherits it).
+  - `with_file_extension` — the `np.save`-style writer twin of
+    `ensure_file_extension`: every `save_*` appends its extension when the path
+    has none (so ``out/00000_phase`` becomes ``out/00000_phase.bin``) and
+    rejects a mismatched one.
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).

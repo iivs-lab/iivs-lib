@@ -18,6 +18,7 @@ from iivs.dhm.data.common import (
     KoalaTxtHeader,
     parse_txt_grid,
     validate_float32_image,
+    with_file_extension,
     write_txt_grid,
 )
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
@@ -226,12 +227,13 @@ def save_phase_txt(
     stored as METERS, and UNKNOWN is stored but warns.
 
     Raises:
-        ValueError: If neither or both scale forms are given, `data` is not a
-            single 2D float32 image, or it holds non-finite values while
-            `on_nonfinite` is "raise".
+        ValueError: If `path` has a non-`.txt` extension, neither or both scale
+            forms are given, `data` is not a single 2D float32 image, or it holds
+            non-finite values while `on_nonfinite` is "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    path = with_file_extension(path, "txt")
     height_scale = resolve_height_scale(height_scale, wavelength, refractive_delta)
     data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
     data, unit = _to_storable_unit(data, unit, height_scale)

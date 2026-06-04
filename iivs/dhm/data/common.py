@@ -27,6 +27,7 @@ __all__ = (
     "read_npy_shape",
     "validate_float32_image",
     "validate_uint8_image",
+    "with_file_extension",
     "write_bin",
     "write_npy",
     "write_txt_grid",
@@ -342,6 +343,33 @@ def numbered_name(index: int, *, stem: str, ext: str) -> str:
     folder.
     """
     return f"{index:05d}_{stem}.{ext}"
+
+
+def with_file_extension(path: StrPath, ext: str) -> Path:
+    """Return `path` with a ``.<ext>`` suffix, appending it if absent.
+
+    `np.save`-style: a path with no suffix gets ``.<ext>`` appended, while a
+    path that already has one must match ``.<ext>`` (case-insensitive). Used by
+    the `save_*` writers, so ``out/00000_phase`` becomes
+    ``out/00000_phase.<ext>`` while a wrong extension fails fast.
+
+    Args:
+        path: The destination path, with or without an extension.
+        ext: The expected extension, without the leading dot (e.g. "bin").
+
+    Returns:
+        The path as a `Path`, guaranteed to end in ``.<ext>``.
+
+    Raises:
+        ValueError: If `path` has a suffix other than ``.<ext>``.
+    """
+    path = Path(path)
+    if not path.suffix:
+        return path.with_suffix(f".{ext}")
+    if path.suffix.lower() != f".{ext.lower()}":
+        msg = f"{path.name} must have a .{ext} extension (got {path.suffix})"
+        raise ValueError(msg)
+    return path
 
 
 # ========================== #

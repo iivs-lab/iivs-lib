@@ -19,6 +19,7 @@ from iivs.dhm.data.common import (
     ImageTifList,
     load_uint8_tif,
     validate_uint8_image,
+    with_file_extension,
 )
 from iivs.dhm.data.hologram.base import HologramSequence
 
@@ -56,10 +57,12 @@ def save_hologram_tif(
             to False.
 
     Raises:
-        ValueError: If `data` is not a 2D uint8 array.
+        ValueError: If `path` has a non-`.tif` extension, or `data` is not a 2D
+            uint8 array.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    path = with_file_extension(path, "tif")
     data = validate_uint8_image(data, allow_stack=False)
 
     # tifffile needs a named target, so encode in memory and stage the bytes.

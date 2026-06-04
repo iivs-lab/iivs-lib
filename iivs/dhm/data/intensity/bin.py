@@ -18,6 +18,7 @@ from iivs.dhm.data.common import (
     KoalaBinHeader,
     read_bin_pixels,
     validate_float32_image,
+    with_file_extension,
     write_bin,
 )
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
@@ -194,11 +195,14 @@ def save_intensity_bin(
             ValueError.
 
     Raises:
-        ValueError: If `data` is not a single 2D float32 image, or holds
-            non-finite values while `on_nonfinite` is "raise".
+        ValueError: If `path` has a non-`.bin` extension, `data` is not a single
+            2D float32 image, or it holds non-finite values while `on_nonfinite`
+            is "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    path = with_file_extension(path, "bin")
+
     # save stores a single image (allow_stack=False), unlike the loader.
     data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
 
