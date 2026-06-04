@@ -47,6 +47,7 @@ from kaparoo.data.sequences import FileFolderSequence, FileListSequence
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 from kaparoo.filesystem.search import search_files
 from kaparoo.filesystem.search.filters import Regex
+from kaparoo.utils import replace_if_none
 from natsort import natsorted
 from numpy.typing import NDArray
 
@@ -443,7 +444,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
             ValueError: If `level` is unsupported, the numbering is
                 non-contiguous, or `_validate_content` rejects the file.
         """
-        resolved = self.DEFAULT_LEVEL if level is None else level
+        resolved = replace_if_none(level, self.DEFAULT_LEVEL)
         if resolved not in self.LEVELS:
             msg = f"level must be one of {self.LEVELS} (got {resolved!r})"
             raise ValueError(msg)
