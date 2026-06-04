@@ -116,7 +116,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
                 height_scale=scale,
             )
 
-        return _PhaseReconstructedView(self, to_unit, bounds)
+        return PhaseFloatView(self, to_unit, bounds)
 
 
 class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Path]):
@@ -214,7 +214,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         """
         if bounds is None:
             bounds = self.bounds_nm()
-        return _PhasePreviewView(self, bounds)
+        return PhaseImageView(self, bounds)
 
 
 class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
@@ -260,7 +260,7 @@ class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
         )
 
 
-class _PhasePreviewView(PhaseImageSequence[Path]):
+class PhaseImageView(PhaseImageSequence[Path]):
     """A lazy uint8 preview over a quantitative phase list (the `to_preview` result).
 
     Wraps a `PhaseFileList`; `get_item` decodes the frame, converts it to nm, and
@@ -294,7 +294,7 @@ class _PhasePreviewView(PhaseImageSequence[Path]):
         return self._bounds.encode_preview(self._source._decode_nm(index))  # noqa: SLF001
 
 
-class _PhaseReconstructedView[M](
+class PhaseFloatView[M](
     TransformedSequence[NDArray[np.uint8], M, NDArray[np.float32], M],
     PhaseFloatSequence[M],
 ):
