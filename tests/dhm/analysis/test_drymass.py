@@ -89,7 +89,9 @@ def test_output_is_float32():
     mask3d = np.ones((3, 4, 4), dtype=bool)
     assert calc_drymass(opd, pixel_size=1e-7).dtype == np.float32  # sum, no mask
     assert calc_drymass(opd, pixel_size=1e-7, mask=mask2d).dtype == np.float32
-    assert calc_drymass(opd, pixel_size=1e-7, mask=mask3d).dtype == np.float32  # (N,...)
+    assert (
+        calc_drymass(opd, pixel_size=1e-7, mask=mask3d).dtype == np.float32
+    )  # (N,...)
     assert calc_drymass(opd, pixel_size=1e-7, reduce=False).dtype == np.float32  # map
 
 
