@@ -47,9 +47,23 @@ Defaults for `wavelength` and `alpha` come from
 
 ## Using with PyTorch (autograd)
 
-The `convert_*` / `calc_*` methods run on NumPy arrays. Inside a model, keep
-gradients by multiplying tensors with the cached scale factors (plain floats)
-using native ops instead:
+The `convert_*` / `calc_*` methods run on NumPy arrays. Install the
+`iivs-lib[torch]` extra for the `pytorch` subpackage — tensor-in / tensor-out
+twins (`pytorch.opd`, `pytorch.drymass`) that keep the input tensor's device and
+autograd graph. The physical calibration (the scale factors) is reused from the
+NumPy engines, so only the elementwise ops are torch-native:
+
+```python
+from iivs.dhm.analysis.pytorch.opd import phase_to_opd, opd_to_phase
+from iivs.dhm.analysis.pytorch.drymass import calc_drymass, calc_drymass_from_phase
+
+opd = phase_to_opd(phase, wavelength=666e-9)                    # Tensor (CPU/GPU), grad kept
+mass = calc_drymass_from_phase(phase, pixel_size=px, mask=cell) # 0-dim Tensor, grad kept
+```
+
+`calc_*` returns a 0-dim tensor (never a Python `float`), so it stays on-device
+and differentiable. Without the dependency, you can instead multiply by the
+cached scale factors (plain floats) with native ops yourself:
 
 ```python
 opd = phase * conv.opd_scale                  # phase: Tensor -> OPD (nm), grad kept

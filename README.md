@@ -108,9 +108,21 @@ precomputes its conversion factor (with one-shot function conveniences):
 
 #### Using with PyTorch (autograd)
 
-The `convert_*` / `calc_*` methods operate on NumPy arrays. Inside a model,
-keep gradients by multiplying tensors with the cached scale factors (plain
-floats) using native ops instead:
+The `convert_*` / `calc_*` methods operate on NumPy arrays. Install the
+`iivs-lib[torch]` extra for `iivs.dhm.analysis.pytorch` — tensor-in / tensor-out
+twins that keep the input tensor's device and autograd graph (the calibration
+scalars are shared with the NumPy engines):
+
+```python
+from iivs.dhm.analysis.pytorch.opd import phase_to_opd
+from iivs.dhm.analysis.pytorch.drymass import calc_drymass_from_phase
+
+opd = phase_to_opd(phase, wavelength=666e-9)                    # Tensor (CPU/GPU), grad kept
+mass = calc_drymass_from_phase(phase, pixel_size=px, mask=cell) # 0-dim Tensor, grad kept
+```
+
+Or, without the dependency, multiply by the cached scale factors (plain floats)
+with native ops yourself:
 
 ```python
 opd = phase * conv.opd_scale                  # phase: Tensor -> OPD (nm), grad kept

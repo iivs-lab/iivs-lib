@@ -48,6 +48,11 @@ GitHub = "https://www.github.com/iivs-lab/iivs-lib"
 image = [
     "imagecodecs>=2026.5.10",
 ]
+# Torch-native (CPU/GPU, autograd) `iivs.dhm.analysis.pytorch` helpers.
+# Install with `iivs-lib[torch]`.
+torch = [
+    "torch>=2.6",
+]
 
 # ========================== #
 #      [tool.*] Sections     #
@@ -59,6 +64,9 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.14",
     "ty>=0.0.40",
+    # The `[torch]` extra, so the `analysis.pytorch` module is tested and
+    # coverage-measured in the dev environment (CPU build is enough).
+    "torch>=2.6",
 ]
 
 [tool.uv.build-backend]

@@ -217,3 +217,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     shortcuts read the converter's. `drymass.calc_drymass` /
     `drymass.calc_drymass_from_phase` are one-shot conveniences over it.
     Segmentation and background estimation stay the caller's job.
+  - `analysis.pytorch` (the `iivs-lib[torch]` extra) — torch-native twins
+    `pytorch.opd.phase_to_opd` / `opd_to_phase` and
+    `pytorch.drymass.calc_drymass` / `calc_drymass_from_phase` that take and
+    return `torch.Tensor`s, preserving the input tensor's device and autograd
+    graph. The calibration scalars are reused from the NumPy engines, so only
+    the elementwise ops are torch-native; `calc_*` returns a 0-dim tensor (never
+    a Python `float`). Importing the subpackage without PyTorch raises a
+    pointer to the `[torch]` extra.
