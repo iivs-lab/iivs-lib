@@ -20,6 +20,14 @@ def test_module_forward_matches_convert():
     assert torch.allclose(conv(phase), conv.convert_to_opd(phase))  # forward path
 
 
+def test_from_wavelength_nm():
+    nm = OpticalPathDifference.from_wavelength_nm(666)
+    si = OpticalPathDifference(wavelength=666e-9)
+    assert nm.wavelength == pytest.approx(si.wavelength)
+    assert nm.wavelength_nm == pytest.approx(666)
+    assert nm.opd_scale == pytest.approx(si.opd_scale)
+
+
 def test_phase_to_opd_matches_numpy():
     phase = torch.tensor([[0.0, 1.0], [2.0, 3.0]], dtype=torch.float32)
     got = phase_to_opd(phase, wavelength=666e-9)

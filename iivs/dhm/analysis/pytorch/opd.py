@@ -6,10 +6,12 @@ from typing import TYPE_CHECKING
 
 from torch import nn
 
-from iivs.dhm.analysis.opd import OPDConverter as _NpOPDConverter
+from iivs.dhm.analysis.opd import OPDConverter
 from iivs.dhm.data.constants import DEFAULT_WAVELENGTH
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from torch import Tensor
 
 
@@ -19,7 +21,8 @@ class OpticalPathDifference(nn.Module):
     The torch twin of `iivs.dhm.analysis.opd.OPDConverter` (named for the
     quantity, per the `nn.Module` convention). Binds a wavelength and the cached
     `opd_scale` (nm of OPD per rad, a plain float reused from the NumPy engine,
-    so the physics is shared). The `convert_*` / `forward` methods are pure
+    so the physics is shared); `from_wavelength_nm` / `wavelength_nm` give its nm
+    form. The `convert_*` / `forward` methods are pure
     scalar multiplies, so they preserve the input tensor's dtype, device, and
     autograd graph.
 
@@ -33,8 +36,20 @@ class OpticalPathDifference(nn.Module):
 
     def __init__(self, wavelength: float = DEFAULT_WAVELENGTH) -> None:
         super().__init__()
-        self.wavelength = wavelength
-        self.opd_scale = _NpOPDConverter(wavelength=wavelength).opd_scale
+
+        converter = OPDConverter(wavelength=wavelength)
+        self.wavelength = converter.wavelength
+        self.opd_scale = converter.opd_scale
+
+    @classmethod
+    def from_wavelength_nm(cls, wavelength_nm: float) -> Self:
+        """Build a converter from a wavelength given in nm."""
+        return cls(wavelength=wavelength_nm * 1e-9)
+
+    @property
+    def wavelength_nm(self) -> float:
+        """The wavelength in nm."""
+        return self.wavelength * 1e9
 
     def convert_to_opd(self, phase: Tensor) -> Tensor:
         """Convert `phase` (rad) to OPD (nm)."""
