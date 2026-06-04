@@ -222,11 +222,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     Segmentation and background estimation stay the caller's job.
   - `analysis.pytorch` (the `iivs-lib[torch]` extra) — torch-native twins that
     take and return `torch.Tensor`s, preserving the input tensor's device and
-    autograd graph. Mirrors the NumPy layout: an `nn.Module` engine per quantity
-    (`pytorch.opd.OPDConverter`, `pytorch.drymass.DryMassCalculator`, the latter
+    autograd graph. Mirrors the NumPy layout: an `nn.Module` per quantity, named
+    for the quantity per the `nn.Module` convention
+    (`pytorch.opd.OpticalPathDifference`, `pytorch.drymass.DryMass`, the latter
     holding the former as a submodule) with one-shot free functions wrapping it
     (`phase_to_opd` / `opd_to_phase`, `calc_drymass` / `calc_drymass_from_phase`).
     The calibration scalars are reused from the NumPy engines, so only the
-    elementwise ops are torch-native; `calc_*` returns a 0-dim tensor (never a
-    Python `float`). Importing the subpackage without PyTorch raises a pointer to
-    the `[torch]` extra.
+    elementwise ops are torch-native; `calc_*` returns a tensor (never a Python
+    `float`). Importing the subpackage without PyTorch raises a pointer to the
+    `[torch]` extra.

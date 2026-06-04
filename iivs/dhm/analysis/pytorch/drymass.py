@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-__all__ = ("DryMassCalculator", "calc_drymass", "calc_drymass_from_phase")
+__all__ = ("DryMass", "calc_drymass", "calc_drymass_from_phase")
 
 from typing import TYPE_CHECKING
 
 from torch import float64, nn
 
 from iivs.dhm.analysis.drymass import DryMassCalculator as _NpDryMassCalculator
-from iivs.dhm.analysis.pytorch.opd import OPDConverter
+from iivs.dhm.analysis.pytorch.opd import OpticalPathDifference
 from iivs.dhm.data.constants import (
     DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     DEFAULT_WAVELENGTH,
@@ -19,24 +19,26 @@ if TYPE_CHECKING:
     from torch import Tensor
 
 
-class DryMassCalculator(nn.Module):
-    """Torch `nn.Module` twin of `iivs.dhm.analysis.drymass.DryMassCalculator`.
+class DryMass(nn.Module):
+    """Torch `nn.Module` for dry mass (pg) from OPD or phase.
 
-    Binds the pixel size, specific refractive increment, and an `OPDConverter`
-    (for the phase path) once; the per-pixel `drymass_scale` (a plain float) is
-    reused from the NumPy engine. `calc_from_opd` sums the masked OPD over the
-    last two axes (H, W) in ``float64`` and scales, returning a tensor -- never a
-    Python `float` -- so it stays on the input's device and in the autograd graph
-    (a `float()` cast would sync off-device and drop gradients). Inputs are
-    batched (``(..., H, W)``); a ``(C, H, W)`` mask adds a trailing channel axis
-    (``(..., C)``); ``reduce=False`` returns the per-pixel mass-density map
-    instead of the sum. The OPD must already be background-corrected.
+    The torch twin of `iivs.dhm.analysis.drymass.DryMassCalculator` (named for
+    the quantity, per the `nn.Module` convention). Binds the pixel size, specific
+    refractive increment, and an `OpticalPathDifference` (for the phase path)
+    once; the per-pixel `drymass_scale` (a plain float) is reused from the NumPy
+    engine. `calc_from_opd` sums the masked OPD over the last two axes (H, W) in
+    ``float64`` and scales, returning a tensor -- never a Python `float` -- so it
+    stays on the input's device and in the autograd graph (a `float()` cast would
+    sync off-device and drop gradients). Inputs are batched (``(..., H, W)``); a
+    ``(C, H, W)`` mask adds a trailing channel axis (``(..., C)``);
+    ``reduce=False`` returns the per-pixel mass-density map instead of the sum.
+    The OPD must already be background-corrected.
 
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        opd_converter: The `OPDConverter` used by `calc_from_phase` (a registered
-            submodule).
+        opd_converter: The `OpticalPathDifference` used by `calc_from_phase` (a
+            registered submodule).
         drymass_scale: pg of dry mass per nm of summed OPD (a plain float).
     """
 
@@ -45,13 +47,13 @@ class DryMassCalculator(nn.Module):
         *,
         pixel_size: float,
         alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
-        opd_converter: OPDConverter | None = None,
+        opd_converter: OpticalPathDifference | None = None,
     ) -> None:
         super().__init__()
         self.pixel_size = pixel_size
         self.alpha = alpha
         self.opd_converter = (
-            opd_converter if opd_converter is not None else OPDConverter()
+            opd_converter if opd_converter is not None else OpticalPathDifference()
         )
         self.drymass_scale = _NpDryMassCalculator(
             pixel_size=pixel_size, alpha=alpha
@@ -69,7 +71,7 @@ class DryMassCalculator(nn.Module):
         return cls(
             pixel_size=pixel_size,
             alpha=alpha,
-            opd_converter=OPDConverter(wavelength=wavelength),
+            opd_converter=OpticalPathDifference(wavelength=wavelength),
         )
 
     def calc_from_opd(
@@ -116,7 +118,7 @@ def calc_drymass(
     mask: Tensor | None = None,
     reduce: bool = True,
 ) -> Tensor:
-    """Dry mass [pg] from an OPD map (nm); a one-shot `DryMassCalculator`.
+    """Dry mass [pg] from an OPD map (nm); a one-shot `DryMass`.
 
     Keeps `opd`'s device and the autograd graph.
 
@@ -127,9 +129,9 @@ def calc_drymass(
         alpha: Specific refractive increment, in m^3/kg.
         mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)``.
         reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
-            mass-density map (False). See `DryMassCalculator.calc_from_opd`.
+            mass-density map (False). See `DryMass.calc_from_opd`.
     """
-    return DryMassCalculator(pixel_size=pixel_size, alpha=alpha).calc_from_opd(
+    return DryMass(pixel_size=pixel_size, alpha=alpha).calc_from_opd(
         opd, mask=mask, reduce=reduce
     )
 
@@ -143,7 +145,7 @@ def calc_drymass_from_phase(
     mask: Tensor | None = None,
     reduce: bool = True,
 ) -> Tensor:
-    """Dry mass [pg] from a phase map (rad); a one-shot `DryMassCalculator`.
+    """Dry mass [pg] from a phase map (rad); a one-shot `DryMass`.
 
     Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`;
     keeps the input's device and the autograd graph.
@@ -158,6 +160,6 @@ def calc_drymass_from_phase(
         reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
             mass-density map (False).
     """
-    return DryMassCalculator.from_wavelength(
+    return DryMass.from_wavelength(
         pixel_size=pixel_size, alpha=alpha, wavelength=wavelength
     ).calc_from_phase(phase, mask=mask, reduce=reduce)

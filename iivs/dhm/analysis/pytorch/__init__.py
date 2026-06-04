@@ -10,12 +10,12 @@ from __future__ import annotations
 
 try:
     from iivs.dhm.analysis.pytorch.drymass import (
-        DryMassCalculator,
+        DryMass,
         calc_drymass,
         calc_drymass_from_phase,
     )
     from iivs.dhm.analysis.pytorch.opd import (
-        OPDConverter,
+        OpticalPathDifference,
         opd_to_phase,
         phase_to_opd,
     )
@@ -28,8 +28,8 @@ except ModuleNotFoundError as exc:  # pragma: no cover
     raise ImportError(msg) from exc
 
 __all__ = (
-    "DryMassCalculator",
-    "OPDConverter",
+    "DryMass",
+    "OpticalPathDifference",
     "calc_drymass",
     "calc_drymass_from_phase",
     "opd_to_phase",

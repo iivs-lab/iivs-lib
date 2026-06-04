@@ -58,15 +58,17 @@ The `convert_*` / `calc_*` methods run on NumPy arrays. Install the
 twins that keep the input tensor's device and autograd graph. The physical
 calibration (the scale factors) is reused from the NumPy engines, so only the
 elementwise ops are torch-native. It mirrors the NumPy layout: an `nn.Module`
-engine per quantity, with one-shot free functions wrapping it.
+per quantity (named for the quantity, per the `nn.Module` convention —
+`OpticalPathDifference` / `DryMass`, not the NumPy engines'
+`OPDConverter` / `DryMassCalculator`), with one-shot free functions wrapping it.
 
 ```python
-from iivs.dhm.analysis.pytorch.opd import OPDConverter, phase_to_opd
-from iivs.dhm.analysis.pytorch.drymass import DryMassCalculator, calc_drymass_from_phase
+from iivs.dhm.analysis.pytorch.opd import OpticalPathDifference, phase_to_opd
+from iivs.dhm.analysis.pytorch.drymass import DryMass, calc_drymass_from_phase
 
-# nn.Module engines (compose in a model; the inner OPDConverter is a submodule):
-to_opd = OPDConverter(wavelength=666e-9)
-mass_head = DryMassCalculator.from_wavelength(pixel_size=px, wavelength=666e-9)
+# nn.Module layers (compose in a model; the inner OpticalPathDifference is a submodule):
+to_opd = OpticalPathDifference(wavelength=666e-9)
+mass_head = DryMass.from_wavelength(pixel_size=px, wavelength=666e-9)
 opd = to_opd(phase)                          # forward == convert_to_opd
 mass = mass_head.calc_from_phase(phase, mask=cell)
 
