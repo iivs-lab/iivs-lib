@@ -27,8 +27,8 @@ Dry mass `= (1 / alpha) * sum(OPD * pixel_area)` (the Barer relation), in **pg**
 summed over the last two axes (H, W). Inputs are **batched** — `opd` / `phase`
 have shape `(..., H, W)`, giving one mass per image (`(...)`). The OPD must
 already be background-corrected (≈ 0 outside the object); a boolean `mask` of
-shape `(H, W)` or `(C, H, W)` (for `C` objects, giving a trailing channel axis
-`(..., C)`) restricts the sum — segmentation and background estimation stay the
+shape `(H, W)` or `(N, H, W)` (for `N` objects, giving a trailing axis
+`(..., N)`) restricts the sum — segmentation and background estimation stay the
 caller's responsibility.
 
 - `DryMassCalculator(pixel_size, alpha=..., opd_converter=...)` — bind the pixel

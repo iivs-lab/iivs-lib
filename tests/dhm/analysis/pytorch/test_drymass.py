@@ -54,7 +54,7 @@ def test_channel_mask():
     opd = torch.full((2, 2), 50.0)
     masks = torch.tensor(
         [[[True, False], [False, False]], [[True, True], [False, False]]]
-    )  # (C=2, H=2, W=2)
+    )  # (N=2, H=2, W=2)
     out = calc_drymass(opd, pixel_size=1e-7, alpha=2e-4, mask=masks)
     assert out.shape == (2,)
     whole = calc_drymass(opd, pixel_size=1e-7, alpha=2e-4).item()

@@ -33,7 +33,7 @@ class DryMassCalculator:
 
     Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg, summed in
     float64 over the last two axes (H, W). Inputs are batched (``(..., H, W)``)
-    and a ``(C, H, W)`` mask adds a trailing channel axis -- see `calc_from_opd`
+    and a ``(N, H, W)`` mask adds a trailing channel axis -- see `calc_from_opd`
     for the shape / `reduce` details. The OPD must already be background-corrected
     (≈ 0 outside the object); segmentation and background estimation stay the
     caller's responsibility.
@@ -83,12 +83,12 @@ class DryMassCalculator:
 
     @property
     def wavelength(self) -> float:
-        """The bound OPD converter's wavelength, in m (shortcut)."""
+        """The bound OPD converter's wavelength, in m."""
         return self.opd_converter.wavelength
 
     @property
     def wavelength_nm(self) -> float:
-        """The bound OPD converter's wavelength, in nm (shortcut)."""
+        """The bound OPD converter's wavelength, in nm."""
         return self.opd_converter.wavelength_nm
 
     @property
@@ -111,14 +111,14 @@ class DryMassCalculator:
 
         Args:
             opd: OPD map(s), in nm, shape ``(..., H, W)``.
-            mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)`` for
-                `C` objects; multiplied in (broadcast), the 3-D form adding a
+            mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)`` for
+                `N` objects; multiplied in (broadcast), the 3-D form adding a
                 trailing channel axis.
             reduce: If True (default), sum the per-pixel mass over (H, W) and
-                return the dry mass, shape ``(...)`` (or ``(..., C)`` with a
-                ``(C, H, W)`` mask). If False, return the per-pixel mass-density
+                return the dry mass, shape ``(...)`` (or ``(..., N)`` with a
+                ``(N, H, W)`` mask). If False, return the per-pixel mass-density
                 map (``opd * scale``, masked) without summing, shape
-                ``(..., H, W)`` (or ``(..., C, H, W)``).
+                ``(..., H, W)`` (or ``(..., N, H, W)``).
         """
         if not reduce:
             if mask is not None:
@@ -128,9 +128,9 @@ class DryMassCalculator:
         if mask is None:
             return np.sum(opd, axis=(-2, -1), dtype=np.float64) * self._scale
         # Fuse the masked sum over (H, W) in float64, so a (..., H, W) `opd` and
-        # a (C, H, W) `mask` never materialize the (..., C, H, W) product.
-        chans = "cdefg"[: mask.ndim - 2]  # label the mask's leading (channel) dims
-        total = np.einsum(f"...hw,{chans}hw->...{chans}", opd, mask, dtype=np.float64)
+        # an (N, H, W) `mask` never materialize the (..., N, H, W) product.
+        subscript = "...hw,hw->..." if mask.ndim == 2 else "...hw,nhw->...n"
+        total = np.einsum(subscript, opd, mask, dtype=np.float64)
         return total * self._scale
 
     def calc_from_phase(
@@ -160,12 +160,12 @@ def calc_drymass(
             already background-corrected.
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)``.
+        mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)``.
         reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
             mass-density map (False). See `DryMassCalculator.calc_from_opd`.
 
     Returns:
-        Dry mass in pg, shape ``(...)`` (or ``(..., C)``); or the unreduced
+        Dry mass in pg, shape ``(...)`` (or ``(..., N)``); or the unreduced
         density map when `reduce` is False.
     """
     return DryMassCalculator(pixel_size=pixel_size, alpha=alpha).calc_from_opd(
@@ -192,12 +192,12 @@ def calc_drymass_from_phase(
         pixel_size: Physical size of one (square) pixel, in m.
         wavelength: Illumination wavelength, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)``.
+        mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)``.
         reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
             mass-density map (False).
 
     Returns:
-        Dry mass in pg, shape ``(...)`` (or ``(..., C)``); or the unreduced
+        Dry mass in pg, shape ``(...)`` (or ``(..., N)``); or the unreduced
         density map when `reduce` is False.
     """
     return DryMassCalculator.from_wavelength(

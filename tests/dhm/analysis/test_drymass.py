@@ -46,14 +46,14 @@ def test_calc_drymass_batched():
 
 
 def test_calc_drymass_channel_mask():
-    # (C, H, W) mask -> a trailing channel axis, shape (..., C).
+    # (N, H, W) mask -> a trailing axis, shape (..., N).
     opd = np.full((2, 2), 50.0, np.float32)
     masks = np.array(
         [
             [[True, False], [False, False]],  # 1 pixel
             [[True, True], [False, False]],  # 2 pixels
         ]
-    )  # (C=2, H=2, W=2)
+    )  # (N=2, H=2, W=2)
     out = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=masks)
     assert out.shape == (2,)
     whole = float(calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4))

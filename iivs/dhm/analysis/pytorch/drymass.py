@@ -30,7 +30,7 @@ class DryMass(nn.Module):
     ``float64`` and scales, returning a tensor -- never a Python `float` -- so it
     stays on the input's device and in the autograd graph (a `float()` cast would
     sync off-device and drop gradients). Inputs are batched (``(..., H, W)``); a
-    ``(C, H, W)`` mask adds a trailing channel axis (``(..., C)``);
+    ``(N, H, W)`` mask adds a trailing channel axis (``(..., N)``);
     ``reduce=False`` returns the per-pixel mass-density map instead of the sum.
     The OPD must already be background-corrected.
 
@@ -81,11 +81,11 @@ class DryMass(nn.Module):
 
         Args:
             opd: OPD map(s), in nm, shape ``(..., H, W)``.
-            mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)`` for
-                `C` objects; multiplied in (broadcast), the 3-D form adding a
+            mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)`` for
+                `N` objects; multiplied in (broadcast), the 3-D form adding a
                 trailing channel axis.
             reduce: If True (default), sum over (H, W) and return the dry mass,
-                shape ``(...)`` (or ``(..., C)`` with a ``(C, H, W)`` mask), as a
+                shape ``(...)`` (or ``(..., N)`` with a ``(N, H, W)`` mask), as a
                 tensor (0-dim for a single image). If False, return the per-pixel
                 mass-density map (``opd * scale``, masked) without summing.
         """
@@ -127,7 +127,7 @@ def calc_drymass(
             background-corrected.
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)``.
+        mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)``.
         reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
             mass-density map (False). See `DryMass.calc_from_opd`.
     """
@@ -156,7 +156,7 @@ def calc_drymass_from_phase(
         pixel_size: Physical size of one (square) pixel, in m.
         wavelength: Illumination wavelength, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)``.
+        mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)``.
         reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
             mass-density map (False).
     """
