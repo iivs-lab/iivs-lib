@@ -1,3 +1,10 @@
+"""Hologram sequences and I/O.
+
+Uint8 holograms in Koala's `.raw` stack, `.tif`, and `.npy` -- their
+readers/writers and lazy sequences, plus `convert_hologram_sequence` format
+conversion.
+"""
+
 from __future__ import annotations
 
 __all__ = (

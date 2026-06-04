@@ -1,3 +1,10 @@
+"""Intensity reconstruction sequences and I/O.
+
+Quantitative float32 intensity (`.bin` / `.txt` / `.npy`) and uint8 `.tif`
+previews, their readers/writers and lazy sequences, plus `convert_intensity_*`
+format conversion.
+"""
+
 from __future__ import annotations
 
 __all__ = (
