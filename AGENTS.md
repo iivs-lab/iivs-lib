@@ -70,8 +70,9 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   `read_npy_shape` + writer), `sequence` (the numbered-folder
   `SequentialFileFolder` template that every `*Folder` builds on, plus the
   `FrameShapedMixin`), `validation` (the float32/uint8 image validators), and
-  `extension` (the filename helpers `ensure_file_extension` /
-  `with_file_extension` / `numbered_name`). Keep the submodules acyclic
+  `extension` (the numbered-folder helper `numbered_name`; the path helper
+  `ensure_file_extension`, with its `add=True` suffix-appending mode, is
+  re-exported from `kaparoo.filesystem`). Keep the submodules acyclic
   (`extension`/`validation`/`bin`/`npy` are leaves; `sequence` → `extension`;
   `txt` → `bin`, `extension`; `image` → `validation`, `extension`,
   `sequence`). Prefer a shared base/template + a small mixin over copy-pasting

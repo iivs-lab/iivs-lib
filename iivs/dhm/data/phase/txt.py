@@ -16,9 +16,9 @@ from kaparoo.filesystem import ensure_file_exists
 
 from iivs.dhm.data.common import (
     KoalaTxtHeaderCodec,
+    ensure_file_extension,
     parse_txt_grid,
     validate_float32_image,
-    with_file_extension,
     write_txt_grid,
 )
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
@@ -248,7 +248,7 @@ def save_phase_txt(
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    path = with_file_extension(path, "txt")
+    path = ensure_file_extension(path, "txt", add=True)
     height_scale = resolve_height_scale(height_scale, wavelength, refractive_delta)
     data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
     data, unit = _to_storable_unit(data, unit, height_scale)

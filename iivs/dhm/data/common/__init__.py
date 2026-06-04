@@ -19,8 +19,9 @@ import X`` reaches any of them:
 - `sequence` — the numbered-folder base and same-shape mixin
   (`SequentialFileFolder`, `FrameShapedMixin`).
 - `validation` — the float32 / uint8 image validators.
-- `extension` — the filename helpers (`ensure_file_extension`,
-  `with_file_extension`, `numbered_name`).
+- `extension` — the numbered-folder filename helper (`numbered_name`); the path
+  helper `ensure_file_extension` (with its `add=True` mode) is re-exported from
+  `kaparoo.filesystem`.
 """
 
 from __future__ import annotations
@@ -44,18 +45,13 @@ __all__ = (
     "read_npy_shape",
     "validate_float32_image",
     "validate_uint8_image",
-    "with_file_extension",
     "write_bin",
     "write_npy",
     "write_txt_grid",
 )
 
 from iivs.dhm.data.common.bin import KoalaBinHeader, read_bin_pixels, write_bin
-from iivs.dhm.data.common.extension import (
-    ensure_file_extension,
-    numbered_name,
-    with_file_extension,
-)
+from iivs.dhm.data.common.extension import ensure_file_extension, numbered_name
 from iivs.dhm.data.common.float import KoalaFloatFileFolder, KoalaFloatFileList
 from iivs.dhm.data.common.image import (
     ImageFileFolder,

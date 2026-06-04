@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING, ClassVar, override
 import numpy as np
 
 from iivs.dhm.data.common import (
+    ensure_file_extension,
     read_npy_shape,
     validate_float32_image,
-    with_file_extension,
     write_npy,
 )
 from iivs.dhm.data.phase.base import PhaseFileFolder
@@ -54,7 +54,7 @@ def save_phase_npy(
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    path = with_file_extension(path, "npy")
+    path = ensure_file_extension(path, "npy", add=True)
     data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
     write_npy(path, data, overwrite=overwrite)
 

@@ -15,7 +15,6 @@ from iivs.dhm.data.common import (
     read_npy_shape,
     validate_float32_image,
     validate_uint8_image,
-    with_file_extension,
 )
 from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
@@ -251,21 +250,22 @@ def test_numbered_name():
     assert numbered_name(7, stem="phase", ext="bin") == "00007_phase.bin"
 
 
-def test_with_file_extension_appends_when_absent(tmp_path):
+def test_ensure_file_extension_add_appends_when_absent(tmp_path):
+    # add=True (kaparoo's, the former `with_file_extension`) appends a missing suffix.
     assert (
-        with_file_extension(tmp_path / "00000_phase", "bin")
+        ensure_file_extension(tmp_path / "00000_phase", "bin", add=True)
         == tmp_path / "00000_phase.bin"
     )
 
 
-def test_with_file_extension_keeps_matching(tmp_path):
+def test_ensure_file_extension_add_keeps_matching(tmp_path):
     path = tmp_path / "out.BIN"  # case-insensitive match
-    assert with_file_extension(path, "bin") == path
+    assert ensure_file_extension(path, "bin", add=True) == path
 
 
-def test_with_file_extension_rejects_mismatch(tmp_path):
+def test_ensure_file_extension_add_rejects_mismatch(tmp_path):
     with pytest.raises(ValueError, match=r"must have a \.bin extension"):
-        with_file_extension(tmp_path / "out.txt", "bin")
+        ensure_file_extension(tmp_path / "out.txt", "bin", add=True)
 
 
 def test_save_appends_extension_when_absent(tmp_path):

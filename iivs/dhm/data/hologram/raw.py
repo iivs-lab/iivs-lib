@@ -19,7 +19,6 @@ from iivs.dhm.data.common import (
     FrameShapedMixin,
     ensure_file_extension,
     validate_uint8_image,
-    with_file_extension,
 )
 from iivs.dhm.data.hologram.base import HologramSequence
 
@@ -182,7 +181,7 @@ def save_hologram_raw(
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    path = with_file_extension(path, "raw")
+    path = ensure_file_extension(path, "raw", add=True)
 
     if isinstance(frames, HologramSequence):
         count = len(frames)

@@ -135,15 +135,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `*NpyFolder`s cheaply.
   - `write_npy` — the shared atomic `.npy` writer behind every modality's
     `save_*_npy`.
-  - `ensure_file_extension` — the `*List` and single-file `*File` sequences
-    (`HologramRawFile`, `TimestampsTxtFile`) now validate each given path's
-    `.<FILE_EXT>` at construction, so a wrong-format file fails up front rather
-    than on decode. `FILE_EXT` lives on the concrete `*List` (the
-    auto-discovering `*Folder` inherits it).
-  - `with_file_extension` — the `np.save`-style writer twin of
-    `ensure_file_extension`: every `save_*` appends its extension when the path
-    has none (so ``out/00000_phase`` becomes ``out/00000_phase.bin``) and
-    rejects a mismatched one.
+  - `ensure_file_extension` (re-exported from `kaparoo.filesystem`, now `>=0.7.0`)
+    — the `*List` and single-file `*File` sequences (`HologramRawFile`,
+    `TimestampsTxtFile`) validate each given path's `.<FILE_EXT>` at construction,
+    so a wrong-format file fails up front rather than on decode (`FILE_EXT` lives
+    on the concrete `*List`; the auto-discovering `*Folder` inherits it). Every
+    `save_*` writer passes `add=True` for `np.save`-style behavior: a path with no
+    suffix gets its extension appended (``out/00000_phase`` ->
+    ``out/00000_phase.bin``), a mismatched one is rejected. (This `add=True` mode
+    replaces the former iivs `with_file_extension`.)
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).

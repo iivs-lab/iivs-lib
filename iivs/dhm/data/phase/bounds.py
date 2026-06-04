@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, ClassVar
 import numpy as np
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 
-from iivs.dhm.data.common import ensure_file_extension, with_file_extension
+from iivs.dhm.data.common import ensure_file_extension
 
 if TYPE_CHECKING:
     from typing import Self
@@ -87,7 +87,7 @@ class PhaseBounds:
             FileExistsError: If `path` exists and `overwrite` is False.
             FileNotFoundError: If the parent directory of `path` does not exist.
         """
-        path = with_file_extension(path, "txt")
+        path = ensure_file_extension(path, "txt", add=True)
         content = f"{self.UNIT_TAG}\n{self.min_nm} {self.max_nm}\n"
         with StagedFile(path, overwrite=overwrite, encoding="utf-8") as staged:
             staged.write(content)

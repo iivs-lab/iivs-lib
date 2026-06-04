@@ -16,9 +16,9 @@ from kaparoo.filesystem import ensure_file_exists
 
 from iivs.dhm.data.common import (
     KoalaBinHeader,
+    ensure_file_extension,
     read_bin_pixels,
     validate_float32_image,
-    with_file_extension,
     write_bin,
 )
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
@@ -201,7 +201,7 @@ def save_intensity_bin(
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    path = with_file_extension(path, "bin")
+    path = ensure_file_extension(path, "bin", add=True)
 
     # save stores a single image (allow_stack=False), unlike the loader.
     data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)

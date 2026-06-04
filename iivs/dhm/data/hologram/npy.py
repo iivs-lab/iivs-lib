@@ -9,8 +9,8 @@ import numpy as np
 
 from iivs.dhm.data.common import (
     ImageFileFolder,
+    ensure_file_extension,
     validate_uint8_image,
-    with_file_extension,
     write_npy,
 )
 from iivs.dhm.data.hologram.base import HologramSequence
@@ -40,7 +40,7 @@ def save_hologram_npy(
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    path = with_file_extension(path, "npy")
+    path = ensure_file_extension(path, "npy", add=True)
     data = validate_uint8_image(data, allow_stack=False)
     write_npy(path, data, overwrite=overwrite)
 
