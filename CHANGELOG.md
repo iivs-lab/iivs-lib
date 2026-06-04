@@ -8,6 +8,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-05
+
 ### Added
 
 - `iivs.dhm.data.phase`: read and write Koala (Lyncée Tec) float32 phase
@@ -147,8 +149,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     on the concrete `*List`; the auto-discovering `*Folder` inherits it). Every
     `save_*` writer passes `add=True` for `np.save`-style behavior: a path with no
     suffix gets its extension appended (``out/00000_phase`` ->
-    ``out/00000_phase.bin``), a mismatched one is rejected. (This `add=True` mode
-    replaces the former iivs `with_file_extension`.)
+    ``out/00000_phase.bin``), a mismatched one is rejected.
 - `iivs.dhm.data.intensity`: read and write Koala float32 `.bin` intensity
   images (the amplitude/intensity reconstruction Koala exports alongside
   phase).
