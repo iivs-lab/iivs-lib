@@ -107,10 +107,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     grid Koala wrote as `height` rows *or* as a single long line.
   - `KoalaTxtHeaderCodec` — the stateless `Float/Txt` header (de)serializer (the
     text twin of `KoalaBinHeader`'s own `to_dtype` / `from_dtype`), with
-    `from_file` / `from_lines` / `to_lines`. `phase`
-    and `intensity` subclass it to bridge their text header to/from the matching
-    `*BinHeader` (`_from_geometry` / `_extra_lines`), sharing the line-count
-    check and the `h/w` + `pixel size` regex.
+    `from_file` / `from_lines` / `to_lines`. `phase` and `intensity` subclass it
+    to bridge their text header to/from the matching `*BinHeader`
+    (`_from_geometry` / `_extra_lines`), sharing the line-count check and the
+    `h/w` + `pixel size` regex.
   - `load_uint8_tif`, with the `ImageFileList` / `ImageFileFolder` codec bases
     and their `.tif` concretes `ImageTifList` / `ImageTifFolder` — the
     modality-agnostic uint8 image folder/list bodies (a `load_file` codec +

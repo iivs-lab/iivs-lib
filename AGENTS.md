@@ -81,13 +81,14 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   `FileListSequence`) and reuses its `load_file`. `FileFolderSequence.__init__
   (root)` discovers the files and cooperatively calls the list's `__init__`
   down the MRO, so define the list *before* the folder in the module.
-- `FILE_EXT` lives on the concrete `*List`, not the folder. Each modality's
-  list base validates every path's `.<FILE_EXT>` in `__init__` via
+- `FILE_EXT` lives on the concrete `*List`, not the folder. The shared list
+  base does the check -- `KoalaFloatFileList` (float) and `ImageFileList`
+  (uint8) validate every given path's `.<FILE_EXT>` in `__init__` via
   `common.ensure_file_extension` (so a wrong-format file fails up front, not on
   decode); the `*Folder` inherits `FILE_EXT` for both discovery and that check.
-  A plain helper, not a shared list base -- the check is one line, so it does
-  not earn an `ExtensionChecked*` class in the MRO. Single-file `*File` sources
-  call `ensure_file_extension(path, ext)` in `__init__` themselves.
+  It is a one-line helper call in those bases, not a dedicated
+  `ExtensionChecked*` class in the MRO. Single-file `*File` sources call
+  `ensure_file_extension(path, ext)` in `__init__` themselves.
 - The float32 list/folder machinery (the `.<FILE_EXT>` check, `get_meta`,
   `get_header`, `load_with_header`, the `header` / `frame_shape` /
   `_validate_content` of a numbered folder) lives **once** in

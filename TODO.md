@@ -20,10 +20,11 @@ item to a CHANGELOG entry once it lands.
   (`Intensity/Float/Bin`), holograms (`Holograms/holo.raw`), and timestamps
   into one object, tolerating absent modalities.
 - **Use `phbounds.txt` to map previews to/from nm.** The `phbounds.txt` record
-  itself now lands: `PhaseBounds` plus `read_phbounds` / `write_phbounds` (a
-  `[nm]` tag then `min max`, e.g. `-403.4911 635.9849`), and
-  `PhaseFloatSequence.bounds_nm()` derives those bounds straight from the float
-  source (global min/max in nm), so the previews are never authoritative. What
+  itself now lands: `PhaseBounds.from_file` / `to_file` (the `read_phbounds` /
+  `write_phbounds` wrappers; a `[nm]` tag then `min max`, e.g.
+  `-403.4911 635.9849`), and `PhaseFloatSequence.bounds_nm()` derives those
+  bounds straight from the float source (global min/max in nm), so the previews
+  are never authoritative. What
   remains is the *mapping*: the uint8 `Image/*.tif` previews are read as raw
   8-bit values; use a `PhaseBounds` (read from disk, or `bounds_nm()` from the
   `Float` twin) to map a preview back toward nm (lossy, 8-bit quantized — the
