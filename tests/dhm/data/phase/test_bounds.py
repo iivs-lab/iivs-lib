@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from iivs.dhm.data.phase.base import PhaseFloatSequence, PhaseImageSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
 from iivs.dhm.data.phase.bounds import PhaseBounds, read_phbounds, write_phbounds
 from iivs.dhm.data.phase.core import PhaseUnit
@@ -216,3 +217,68 @@ def test_bounds_nm_rejects_unknown_unit(tmp_path):
         )
     with pytest.raises(ValueError, match="cannot convert"):
         PhaseBinList([path]).bounds_nm()
+
+
+# ========================== #
+#   to_preview / to_phase_nm #
+# ========================== #
+
+
+def _two_frame_folder(tmp_path, **kwargs):
+    # frame 0 = 1.0 rad (200 nm), frame 1 = 3.0 rad (600 nm) at height_scale 2e-7.
+    _save(tmp_path / "00000_phase.bin", np.full((2, 3), 1.0))
+    _save(tmp_path / "00001_phase.bin", np.full((2, 3), 3.0))
+    return PhaseBinFolder(tmp_path, **kwargs)
+
+
+def test_to_preview_is_image_sequence_with_endpoints(tmp_path):
+    folder = _two_frame_folder(tmp_path)
+    preview = folder.to_preview(PhaseBounds(min_nm=200.0, max_nm=600.0))
+    assert isinstance(preview, PhaseImageSequence)
+    assert len(preview) == 2
+    assert preview[0].dtype == np.uint8
+    assert np.all(preview[0] == 0)  # 200 nm -> min -> 0
+    assert np.all(preview[1] == 255)  # 600 nm -> max -> 255
+
+
+def test_to_preview_renders_nm_regardless_of_target_unit(tmp_path):
+    # target_unit=RADIANS, yet the preview must still map by nm (header-derived).
+    folder = _two_frame_folder(tmp_path, target_unit=PhaseUnit.RADIANS)
+    preview = folder.to_preview(PhaseBounds(min_nm=200.0, max_nm=600.0))
+    assert np.all(preview[0] == 0)
+    assert np.all(preview[1] == 255)
+
+
+def test_to_preview_default_bounds_use_bounds_nm(tmp_path):
+    folder = _two_frame_folder(tmp_path)
+    assert folder.to_preview().bounds == folder.bounds_nm()
+
+
+def test_to_preview_meta_is_source_path(tmp_path):
+    folder = _two_frame_folder(tmp_path)
+    preview = folder.to_preview()
+    assert preview.get_meta(0) == folder.get_meta(0)
+    assert preview.source is folder
+
+
+def test_to_phase_nm_roundtrip_within_quantization(tmp_path):
+    folder = _two_frame_folder(tmp_path, target_unit=PhaseUnit.NANOMETERS)
+    bounds = folder.bounds_nm()
+    # Float -> Image -> Float, all in memory (no .tif I/O needed).
+    recon = folder.to_preview(bounds).to_phase_nm(bounds)
+    assert isinstance(recon, PhaseFloatSequence)
+    assert recon[0].dtype == np.float32
+    step = (bounds.max_nm - bounds.min_nm) / 255.0
+    for index in range(len(folder)):
+        assert np.max(np.abs(recon[index] - folder[index])) <= step
+
+
+def test_to_phase_nm_meta_and_source_passthrough(tmp_path):
+    folder = _two_frame_folder(tmp_path)
+    preview = folder.to_preview()
+    bounds = PhaseBounds(min_nm=0.0, max_nm=1.0)
+    recon = preview.to_phase_nm(bounds)
+    assert len(recon) == 2
+    assert recon.get_meta(1) == folder.get_meta(1)
+    assert recon.source is preview
+    assert recon.bounds is bounds

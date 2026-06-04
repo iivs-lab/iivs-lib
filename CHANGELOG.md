@@ -65,7 +65,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     phase in nm (the inverse of Koala's `[min, max]`→`0–255` render — lossy,
     8-bit quantized), and `encode_preview` is the forward render (rounded,
     clamped); a degenerate `min == max` is handled without dividing by a zero
-    span.
+    span. Whole-sequence twins of that map run lazily (per frame, on access):
+    `PhaseFileList.to_preview(bounds=None)` renders a `PhaseFloatSequence` into a
+    uint8 `PhaseImageSequence` (each frame put in nm via its header first, so
+    `target_unit` is irrelevant; `None` derives the bounds from `bounds_nm`), and
+    `PhaseImageSequence.to_phase_nm(bounds)` reconstructs a `PhaseFloatSequence`
+    from previews (8-bit-quantized — a reconstruction, *not* the quantitative
+    `Float` source). Each view exposes `.source` / `.bounds`.
   - `save_phase_txt` / `save_phase_npy` single-image writers (the `.txt` / `.npy`
     twins of `save_phase_bin`), and `convert_phase_folder` / `convert_phase_list`
     to re-encode phase between the lossless `bin` / `txt` / `npy` formats. The

@@ -60,6 +60,21 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
     mix in `data.common.FrameShapedMixin` to expose `frame_shape`.
     """
 
+    def to_phase_nm(self, bounds: PhaseBounds) -> PhaseFloatSequence[M]:
+        """A lazy float32 phase-in-nm reconstruction of these previews (Image -> Float).
+
+        Each uint8 frame is run back through `bounds` (`PhaseBounds.decode_preview`)
+        on access. The result is a **lossy, 8-bit-quantized reconstruction**, not
+        the quantitative `Float` source it imitates -- use the real `Float`
+        sequence when the exact values matter. `bounds` must be supplied (a
+        preview cannot recover them); read it from the acquisition's
+        `phbounds.txt` or recompute it from the `Float` twin's `bounds_nm`.
+
+        Args:
+            bounds: The display bounds Koala used to render these previews.
+        """
+        return _PhaseReconstructedView(self, bounds)
+
 
 class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Path]):
     """Format-agnostic phase file list over a ``(read_header, decode)`` codec.
@@ -102,6 +117,21 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
             image, source=header.unit, target=target, height_scale=header.height_scale
         )
 
+    def _decode_nm(self, index: int) -> NDArray[np.float32]:
+        """Decode frame `index` and convert it to nanometers via its own header.
+
+        The unit-agnostic frame source for `bounds_nm` and `to_preview`: reads
+        the raw stored values (ignoring `target_unit`) and converts to nm with
+        that frame's `height_scale`.
+        """
+        image, header = self._decode(self.get_file(index))
+        return convert_phase_unit(
+            image,
+            source=header.unit,
+            target=PhaseUnit.NANOMETERS,
+            height_scale=header.height_scale,
+        )
+
     def bounds_nm(self) -> PhaseBounds:
         """Global phase display bounds over every frame, in nanometers.
 
@@ -116,13 +146,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         """
         minimum, maximum = math.inf, -math.inf
         for index in range(len(self)):
-            image, header = self._decode(self.get_file(index))
-            nm = convert_phase_unit(
-                image,
-                source=header.unit,
-                target=PhaseUnit.NANOMETERS,
-                height_scale=header.height_scale,
-            )
+            nm = self._decode_nm(index)
             minimum = min(minimum, float(nm.min()))
             maximum = max(maximum, float(nm.max()))
 
@@ -130,6 +154,24 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
             msg = "phase bounds are undefined for an empty sequence"
             raise ValueError(msg)
         return PhaseBounds(min_nm=minimum, max_nm=maximum)
+
+    def to_preview(self, bounds: PhaseBounds | None = None) -> PhaseImageSequence[Path]:
+        """A lazy uint8 Koala-style preview of this phase, in nm (Float -> Image).
+
+        Each frame is converted to nanometers via its own `height_scale` (so the
+        result is correct regardless of `target_unit`), then rendered through
+        `bounds` (`PhaseBounds.encode_preview`) on access. With ``bounds=None`` the
+        global `bounds_nm` is used, reading every file once up front (as Koala's
+        `phbounds.txt` spans the whole acquisition); pass `bounds` explicitly to
+        skip that pass or to match an existing `phbounds.txt`.
+
+        Args:
+            bounds: The display bounds to render against, or None to derive them
+                from this source via `bounds_nm`.
+        """
+        if bounds is None:
+            bounds = self.bounds_nm()
+        return _PhasePreviewView(self, bounds)
 
 
 class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
@@ -173,3 +215,72 @@ class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
             target=self._target_unit,
             height_scale=self._header.height_scale,
         )
+
+
+class _PhasePreviewView(PhaseImageSequence[Path]):
+    """A lazy uint8 preview over a quantitative phase list (the `to_preview` result).
+
+    Wraps a `PhaseFileList`; `get_item` decodes the frame, converts it to nm, and
+    renders it through the bound `PhaseBounds` on access. Per-frame metadata (the
+    source path) passes through unchanged.
+    """
+
+    def __init__(self, source: PhaseFileList, bounds: PhaseBounds) -> None:
+        self._source = source
+        self._bounds = bounds
+
+    @property
+    def source(self) -> PhaseFileList:
+        """The quantitative phase list being rendered (e.g. for `frame_shape`)."""
+        return self._source
+
+    @property
+    def bounds(self) -> PhaseBounds:
+        """The display bounds the previews are rendered against."""
+        return self._bounds
+
+    def __len__(self) -> int:
+        return len(self._source)
+
+    @override
+    def get_meta(self, index: int) -> Path:
+        return self._source.get_meta(index)
+
+    @override
+    def get_item(self, index: int) -> NDArray[np.uint8]:
+        return self._bounds.encode_preview(self._source._decode_nm(index))  # noqa: SLF001
+
+
+class _PhaseReconstructedView[M](PhaseFloatSequence[M]):
+    """A lazy nm reconstruction over a preview sequence (the `to_phase_nm` result).
+
+    Wraps a `PhaseImageSequence`; `get_item` maps each uint8 frame back to nm
+    through the bound `PhaseBounds` on access. The values are 8-bit-quantized --
+    a reconstruction, never the quantitative `Float` source. Per-frame metadata
+    passes through unchanged.
+    """
+
+    def __init__(self, source: PhaseImageSequence[M], bounds: PhaseBounds) -> None:
+        self._source = source
+        self._bounds = bounds
+
+    @property
+    def source(self) -> PhaseImageSequence[M]:
+        """The preview sequence being reconstructed (e.g. for `frame_shape`)."""
+        return self._source
+
+    @property
+    def bounds(self) -> PhaseBounds:
+        """The display bounds used to map previews back to nm."""
+        return self._bounds
+
+    def __len__(self) -> int:
+        return len(self._source)
+
+    @override
+    def get_meta(self, index: int) -> M:
+        return self._source.get_meta(index)
+
+    @override
+    def get_item(self, index: int) -> NDArray[np.float32]:
+        return self._bounds.decode_preview(self._source.get_item(index))

@@ -102,6 +102,12 @@ onto the 0–255 previews.
   is the forward render (`[min, max]`→`0–255`, clamped) that mirrors Koala. Pair
   a preview with a `PhaseBounds` from disk or the `Float` twin's `bounds_nm()`:
   `bounds.decode_preview(preview_seq[i])`.
+- Whole-sequence twins of that map (lazy — each frame is converted on access):
+  `float_seq.to_preview(bounds=None)` returns a uint8 `PhaseImageSequence`
+  (frames are put in nm via their header first, so `target_unit` is irrelevant;
+  `None` derives `bounds` from `bounds_nm()`), and `preview_seq.to_phase_nm(bounds)`
+  returns a float32 `PhaseFloatSequence` **reconstruction** — 8-bit-quantized,
+  *not* the quantitative `Float` source. Each view exposes `.source` / `.bounds`.
 
 ## Examples
 
