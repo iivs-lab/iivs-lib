@@ -10,13 +10,13 @@ __all__ = (
 
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-import numpy as np
-from kaparoo.filesystem import StagedFile, ensure_file_exists
+from kaparoo.filesystem import ensure_file_exists
 
 from iivs.dhm.data.common import (
     KoalaTxtHeader,
     parse_txt_grid,
     validate_float32_image,
+    write_txt_grid,
 )
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
@@ -24,6 +24,7 @@ from iivs.dhm.data.intensity.bin import IntensityBinHeader
 if TYPE_CHECKING:
     from typing import Literal
 
+    import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
@@ -125,20 +126,6 @@ def load_intensity_txt(
 # ========================== #
 
 
-def _write_intensity_txt(
-    path: StrPath,
-    header: IntensityBinHeader,
-    data: NDArray[np.float32],
-    *,
-    overwrite: bool,
-) -> None:
-    """Serialize an `IntensityBinHeader` and float grid as a Koala `Float/Txt` file."""
-    head = f"h={header.height} w={header.width}\npixel size={header.pixel_size} m\n"
-    with StagedFile(path, binary=True, overwrite=overwrite) as staged:
-        staged.write(head.encode("utf-8"))
-        np.savetxt(staged.file, data, fmt="%.8e")
-
-
 def save_intensity_txt(
     path: StrPath,
     data: NDArray[np.float32],
@@ -163,7 +150,7 @@ def save_intensity_txt(
     header = IntensityBinHeader(
         width=int(data.shape[1]), height=int(data.shape[0]), pixel_size=pixel_size
     )
-    _write_intensity_txt(path, header, data, overwrite=overwrite)
+    write_txt_grid(path, IntensityTxtHeader.to_lines(header), data, overwrite=overwrite)
 
 
 # ========================== #

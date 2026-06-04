@@ -28,6 +28,7 @@ __all__ = (
     "validate_uint8_image",
     "write_bin",
     "write_npy",
+    "write_txt_grid",
 )
 
 import re
@@ -521,16 +522,38 @@ def parse_txt_grid(lines: list[str], *, shape: tuple[int, int]) -> NDArray[np.fl
     return grid
 
 
+def write_txt_grid(
+    path: StrPath,
+    header: str,
+    data: NDArray[np.float32],
+    *,
+    overwrite: bool = False,
+) -> None:
+    """Atomically write a Koala `Float/Txt` file: the `header` text then the grid.
+
+    `header` is the already-serialized key=value header (see
+    `KoalaTxtHeader.to_lines`); `data` follows as ``%.8e`` whitespace rows. The
+    writer twin of `parse_txt_grid`, shared by the per-modality `save_*_txt`.
+
+    Raises:
+        FileExistsError: If `path` exists and `overwrite` is False.
+        FileNotFoundError: If the parent directory of `path` does not exist.
+    """
+    with StagedFile(path, binary=True, overwrite=overwrite) as staged:
+        staged.write(header.encode("utf-8"))
+        np.savetxt(staged.file, data, fmt="%.8e")
+
+
 class KoalaTxtHeader[H: KoalaBinHeader](ABC):
-    """Reader for the key=value header atop a Koala `Float/Txt` export.
+    """Reader and writer for the key=value header atop a Koala `Float/Txt` export.
 
     The text twin of `KoalaBinHeader`'s binary parsing. The first two lines are
     always ``h=<H> w=<W>`` and ``pixel size=<m> m``; a modality may add more
     (phase carries a `data unit` and a `height conversion factor` line). A
-    subclass sets `HEADER_LINES` / `MODALITY` and builds its header type `H`
-    from the shared geometry plus any extra lines in `_from_geometry`, so
-    `phase` and `intensity` share the line-count check, the `h/w` + `pixel size`
-    regex, and the file read.
+    subclass sets `HEADER_LINES` / `MODALITY` and bridges those extra lines both
+    ways -- `_from_geometry` parses them into `H`, `_extra_lines` serializes them
+    back -- so `phase` and `intensity` share the line-count check, the `h/w` +
+    `pixel size` regex, and the file read/write.
 
     Type Parameters:
         H: The header the subclass produces (e.g. `PhaseBinHeader`).
@@ -599,6 +622,23 @@ class KoalaTxtHeader[H: KoalaBinHeader](ABC):
         with path.open() as fb:
             lines = [fb.readline() for _ in range(cls.HEADER_LINES)]
         return cls.from_lines(lines, path)
+
+    @classmethod
+    def to_lines(cls, header: H) -> str:
+        """Serialize `header` to its `Float/Txt` header text (inverse of `from_lines`).
+
+        Emits the shared ``h/w`` + ``pixel size`` geometry, then any
+        modality-specific lines from `_extra_lines`.
+        """
+        geometry = (
+            f"h={header.height} w={header.width}\npixel size={header.pixel_size} m\n"
+        )
+        return geometry + cls._extra_lines(header)
+
+    @classmethod
+    def _extra_lines(cls, header: H) -> str:  # noqa: ARG003
+        """Modality-specific header lines after the shared geometry (default: none)."""
+        return ""
 
 
 def validate_uint8_image(

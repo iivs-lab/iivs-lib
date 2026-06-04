@@ -12,13 +12,13 @@ import re
 import warnings
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-import numpy as np
-from kaparoo.filesystem import StagedFile, ensure_file_exists
+from kaparoo.filesystem import ensure_file_exists
 
 from iivs.dhm.data.common import (
     KoalaTxtHeader,
     parse_txt_grid,
     validate_float32_image,
+    write_txt_grid,
 )
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
 from iivs.dhm.data.phase.bin import PhaseBinHeader, _to_storable_unit
@@ -27,6 +27,7 @@ from iivs.dhm.data.phase.core import PhaseUnit, resolve_height_scale
 if TYPE_CHECKING:
     from typing import Literal
 
+    import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
@@ -53,6 +54,11 @@ class PhaseTxtHeader(KoalaTxtHeader[PhaseBinHeader]):
         "rad": PhaseUnit.RADIANS,
         "m": PhaseUnit.METERS,
         "none": PhaseUnit.UNKNOWN,
+    }
+    _NAME_BY_UNIT: ClassVar[dict[PhaseUnit, str]] = {
+        PhaseUnit.RADIANS: "rad",
+        PhaseUnit.METERS: "m",
+        PhaseUnit.UNKNOWN: "none",
     }
 
     @classmethod
@@ -84,6 +90,15 @@ class PhaseTxtHeader(KoalaTxtHeader[PhaseBinHeader]):
             pixel_size=pixel_size,
             height_scale=float(hconv[1]),
             unit=unit,
+        )
+
+    @classmethod
+    @override
+    def _extra_lines(cls, header: PhaseBinHeader) -> str:
+        """Serialize phase's `data unit` and `height conversion factor` lines."""
+        return (
+            f"data unit={cls._NAME_BY_UNIT[header.unit]}\n"
+            f"height conversion factor (-> m)={header.height_scale}\n"
         )
 
 
@@ -163,28 +178,6 @@ def load_phase_txt(
 # ========================== #
 
 
-_UNIT_NAME: dict[PhaseUnit, str] = {
-    PhaseUnit.RADIANS: "rad",
-    PhaseUnit.METERS: "m",
-    PhaseUnit.UNKNOWN: "none",
-}
-
-
-def _write_phase_txt(
-    path: StrPath, header: PhaseBinHeader, data: NDArray[np.float32], *, overwrite: bool
-) -> None:
-    """Serialize a `PhaseBinHeader` and float grid as a Koala `Float/Txt` file."""
-    head = (
-        f"h={header.height} w={header.width}\n"
-        f"pixel size={header.pixel_size} m\n"
-        f"data unit={_UNIT_NAME[header.unit]}\n"
-        f"height conversion factor (-> m)={header.height_scale}\n"
-    )
-    with StagedFile(path, binary=True, overwrite=overwrite) as staged:
-        staged.write(head.encode("utf-8"))
-        np.savetxt(staged.file, data, fmt="%.8e")
-
-
 @overload
 def save_phase_txt(
     path: StrPath,
@@ -254,7 +247,7 @@ def save_phase_txt(
         height_scale=height_scale,
         unit=unit,
     )
-    _write_phase_txt(path, header, data, overwrite=overwrite)
+    write_txt_grid(path, PhaseTxtHeader.to_lines(header), data, overwrite=overwrite)
 
 
 # ========================== #
