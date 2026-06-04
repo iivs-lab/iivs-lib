@@ -101,18 +101,18 @@ class TimestampSequence(DataSequence[Timestamp, int]):
 
     @property
     def timestamps(self) -> tuple[Timestamp, ...]:
-        """The frames as an immutable tuple, in index order."""
+        """The per-frame `Timestamp`s, as an immutable tuple in index order."""
         return self._timestamps
 
     @property
     @abstractmethod
     def mean_interval_ms(self) -> float:
-        """Mean interval between consecutive frames, in ms."""
+        """The mean interval between consecutive frames, in ms."""
         raise NotImplementedError
 
     @property
     def mean_frame_rate(self) -> float:
-        """Mean frame rate in fps.
+        """The mean frame rate, in fps.
 
         Raises:
             ValueError: If the mean interval is zero, leaving the frame rate
@@ -150,14 +150,13 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
     )
 
     def __init__(self, path: StrPath) -> None:
-        ensure_file_extension(path, "txt")
         super().__init__(path)
         self._timestamps = self.parse(self.path)
 
     @cached_property
     @override
     def mean_interval_ms(self) -> float:
-        """Mean interval between consecutive frames, in ms.
+        """The mean interval between consecutive frames, in ms.
 
         Raises:
             ValueError: If the sequence has fewer than two frames.
@@ -180,10 +179,11 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
         Raises:
             FileNotFoundError: If `path` does not exist.
             NotAFileError: If `path` exists but is not a regular file.
-            ValueError: If a line does not match the expected format, the
-                frame indices are not contiguous from 0, or an elapsed time
-                decreases.
+            ValueError: If `path` does not have a `.txt` extension, a line does
+                not match the expected format, the frame indices are not
+                contiguous from 0, or an elapsed time decreases.
         """
+        path = ensure_file_extension(path, "txt")
         path = ensure_file_exists(path)
 
         elapsed_times_ms: list[float] = []
@@ -232,13 +232,13 @@ class TimestampsFixedFPS(TimestampSequence):
     @property
     @override
     def mean_frame_rate(self) -> float:
-        """The constant frame rate, in fps."""
+        """The mean frame rate, in fps -- the constant `frame_rate`."""
         return self._frame_rate
 
     @property
     @override
     def mean_interval_ms(self) -> float:
-        """The constant interval between frames, in ms."""
+        """The mean interval between consecutive frames, in ms -- the constant 1000 / fps."""
         return self._interval_ms
 
     @classmethod
