@@ -24,11 +24,13 @@ class DryMassCalculator(nn.Module):
 
     Binds the pixel size, specific refractive increment, and an `OPDConverter`
     (for the phase path) once; the per-pixel `drymass_scale` (a plain float) is
-    reused from the NumPy engine. `calc_from_opd` sums in ``float64`` and scales,
-    returning a 0-dim tensor -- never a Python `float` -- so it stays on the
-    input's device and in the autograd graph (a `float()` cast would sync
-    off-device and drop gradients). The OPD must already be background-corrected;
-    pass `mask` to restrict the sum to one segmented object.
+    reused from the NumPy engine. `calc_from_opd` sums the masked OPD over the
+    last two axes (H, W) in ``float64`` and scales, returning a tensor -- never a
+    Python `float` -- so it stays on the input's device and in the autograd graph
+    (a `float()` cast would sync off-device and drop gradients). Inputs are
+    batched (``(..., H, W)``); a ``(C, H, W)`` mask adds a trailing channel axis
+    (``(..., C)``); ``reduce=False`` returns the per-pixel mass-density map
+    instead of the sum. The OPD must already be background-corrected.
 
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
@@ -70,18 +72,40 @@ class DryMassCalculator(nn.Module):
             opd_converter=OPDConverter(wavelength=wavelength),
         )
 
-    def calc_from_opd(self, opd: Tensor, *, mask: Tensor | None = None) -> Tensor:
-        """Dry mass [pg] from an OPD map (nm), optionally masked, as a 0-dim tensor."""
-        selected = opd if mask is None else opd[mask]
-        return selected.sum(dtype=float64) * self.drymass_scale
+    def calc_from_opd(
+        self, opd: Tensor, *, mask: Tensor | None = None, reduce: bool = True
+    ) -> Tensor:
+        """Dry mass [pg] from an OPD map (nm), summed over the last two axes (H, W).
 
-    def calc_from_phase(self, phase: Tensor, *, mask: Tensor | None = None) -> Tensor:
+        Args:
+            opd: OPD map(s), in nm, shape ``(..., H, W)``.
+            mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)`` for
+                `C` objects; multiplied in (broadcast), the 3-D form adding a
+                trailing channel axis.
+            reduce: If True (default), sum over (H, W) and return the dry mass,
+                shape ``(...)`` (or ``(..., C)`` with a ``(C, H, W)`` mask), as a
+                tensor (0-dim for a single image). If False, return the per-pixel
+                mass-density map (``opd * scale``, masked) without summing.
+        """
+        if mask is not None:
+            index = (..., *((None,) * (mask.ndim - 2)), slice(None), slice(None))
+            opd = opd[index] * mask
+        if not reduce:
+            return opd * self.drymass_scale
+        return opd.sum(dim=(-2, -1), dtype=float64) * self.drymass_scale
+
+    def calc_from_phase(
+        self, phase: Tensor, *, mask: Tensor | None = None, reduce: bool = True
+    ) -> Tensor:
         """Dry mass [pg] from a phase map (rad): to OPD, then `calc_from_opd`."""
-        return self.calc_from_opd(self.opd_converter.convert_to_opd(phase), mask=mask)
+        opd = self.opd_converter.convert_to_opd(phase)
+        return self.calc_from_opd(opd, mask=mask, reduce=reduce)
 
-    def forward(self, opd: Tensor, *, mask: Tensor | None = None) -> Tensor:
+    def forward(
+        self, opd: Tensor, *, mask: Tensor | None = None, reduce: bool = True
+    ) -> Tensor:
         """Alias of `calc_from_opd`, so the module is callable."""
-        return self.calc_from_opd(opd, mask=mask)
+        return self.calc_from_opd(opd, mask=mask, reduce=reduce)
 
 
 def calc_drymass(
@@ -90,19 +114,23 @@ def calc_drymass(
     pixel_size: float,
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     mask: Tensor | None = None,
+    reduce: bool = True,
 ) -> Tensor:
     """Dry mass [pg] from an OPD map (nm); a one-shot `DryMassCalculator`.
 
-    Returns a 0-dim tensor on `opd`'s device, keeping the autograd graph.
+    Keeps `opd`'s device and the autograd graph.
 
     Args:
-        opd: OPD map (or batch), in nm, already background-corrected.
+        opd: OPD map(s), in nm, shape ``(..., H, W)``, already
+            background-corrected.
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean tensor selecting the object's pixels.
+        mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)``.
+        reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
+            mass-density map (False). See `DryMassCalculator.calc_from_opd`.
     """
     return DryMassCalculator(pixel_size=pixel_size, alpha=alpha).calc_from_opd(
-        opd, mask=mask
+        opd, mask=mask, reduce=reduce
     )
 
 
@@ -113,19 +141,23 @@ def calc_drymass_from_phase(
     wavelength: float = DEFAULT_WAVELENGTH,
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     mask: Tensor | None = None,
+    reduce: bool = True,
 ) -> Tensor:
     """Dry mass [pg] from a phase map (rad); a one-shot `DryMassCalculator`.
 
     Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`;
-    returns a 0-dim tensor on the input's device, keeping the autograd graph.
+    keeps the input's device and the autograd graph.
 
     Args:
-        phase: Phase map (or batch), in rad, already background-corrected.
+        phase: Phase map(s), in rad, shape ``(..., H, W)``, already
+            background-corrected.
         pixel_size: Physical size of one (square) pixel, in m.
         wavelength: Illumination wavelength, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean tensor selecting the object's pixels.
+        mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)``.
+        reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
+            mass-density map (False).
     """
     return DryMassCalculator.from_wavelength(
         pixel_size=pixel_size, alpha=alpha, wavelength=wavelength
-    ).calc_from_phase(phase, mask=mask)
+    ).calc_from_phase(phase, mask=mask, reduce=reduce)

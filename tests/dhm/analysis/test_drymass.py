@@ -33,6 +33,43 @@ def test_calc_drymass_scales_with_alpha():
     assert m2 == pytest.approx(m1 / 2)  # mass is inversely proportional to alpha
 
 
+def test_calc_drymass_batched():
+    # (N, H, W) batch -> one mass per image, shape (N,).
+    opd = np.stack(
+        [np.full((2, 2), 10.0, np.float32), np.full((2, 2), 20.0, np.float32)]
+    )
+    out = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4)
+    assert out.shape == (2,)
+    single = calc_drymass(opd[0], pixel_size=1e-7, alpha=2.0e-4)
+    assert out[0] == pytest.approx(float(single))
+    assert out[1] == pytest.approx(2 * float(single))
+
+
+def test_calc_drymass_channel_mask():
+    # (C, H, W) mask -> a trailing channel axis, shape (..., C).
+    opd = np.full((2, 2), 50.0, np.float32)
+    masks = np.array(
+        [
+            [[True, False], [False, False]],  # 1 pixel
+            [[True, True], [False, False]],  # 2 pixels
+        ]
+    )  # (C=2, H=2, W=2)
+    out = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=masks)
+    assert out.shape == (2,)
+    whole = float(calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4))
+    assert out[0] == pytest.approx(whole / 4)
+    assert out[1] == pytest.approx(whole / 2)
+
+
+def test_calc_drymass_reduce_false_returns_map():
+    opd = np.full((2, 2), 50.0, np.float32)
+    density = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, reduce=False)
+    assert density.shape == (2, 2)  # the per-pixel map, not summed
+    assert density.sum() == pytest.approx(
+        float(calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4))
+    )
+
+
 def test_calc_drymass_from_phase_matches_two_step():
     phase = np.full((5, 5), 1.0, dtype=np.float32)
     direct = calc_drymass_from_phase(

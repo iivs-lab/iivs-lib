@@ -24,7 +24,7 @@ def test_calc_drymass_matches_numpy():
     opd = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
     got = calc_drymass(opd, pixel_size=2.85e-7)
     expected = np_calc_drymass(opd.numpy(), pixel_size=2.85e-7)
-    assert got.item() == pytest.approx(expected)
+    assert got.item() == pytest.approx(float(expected))
 
 
 def test_returns_zerodim_tensor_not_float():
@@ -34,18 +34,50 @@ def test_returns_zerodim_tensor_not_float():
 
 
 def test_mask_matches_numpy():
-    opd = torch.tensor([1.0, 2.0, 3.0, 4.0])
-    mask = torch.tensor([True, False, True, False])
+    opd = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+    mask = torch.tensor([[True, False], [True, False]])
     got = calc_drymass(opd, pixel_size=1e-6, mask=mask)
     expected = np_calc_drymass(opd.numpy(), pixel_size=1e-6, mask=mask.numpy())
-    assert got.item() == pytest.approx(expected)
+    assert got.item() == pytest.approx(float(expected))
+
+
+def test_batched():
+    opd = torch.stack([torch.full((2, 2), 10.0), torch.full((2, 2), 20.0)])
+    out = calc_drymass(opd, pixel_size=1e-7, alpha=2e-4)
+    assert out.shape == (2,)
+    single = calc_drymass(opd[0], pixel_size=1e-7, alpha=2e-4).item()
+    assert out[0].item() == pytest.approx(single)
+    assert out[1].item() == pytest.approx(2 * single)
+
+
+def test_channel_mask():
+    opd = torch.full((2, 2), 50.0)
+    masks = torch.tensor(
+        [[[True, False], [False, False]], [[True, True], [False, False]]]
+    )  # (C=2, H=2, W=2)
+    out = calc_drymass(opd, pixel_size=1e-7, alpha=2e-4, mask=masks)
+    assert out.shape == (2,)
+    whole = calc_drymass(opd, pixel_size=1e-7, alpha=2e-4).item()
+    assert out[0].item() == pytest.approx(whole / 4)
+    assert out[1].item() == pytest.approx(whole / 2)
+
+
+def test_reduce_false_returns_map_and_keeps_grad():
+    phase = torch.ones(2, 2, requires_grad=True)
+    density = calc_drymass_from_phase(
+        phase, pixel_size=1e-6, wavelength=666e-9, reduce=False
+    )
+    assert density.shape == (2, 2)  # per-pixel map, not summed
+    assert density.requires_grad
+    density.sum().backward()
+    assert phase.grad is not None
 
 
 def test_from_phase_matches_numpy():
     phase = torch.tensor([[0.1, 0.2], [0.3, 0.4]])
     got = calc_drymass_from_phase(phase, pixel_size=2.85e-7, wavelength=666e-9)
     expected = np_calc_from_phase(phase.numpy(), pixel_size=2.85e-7, wavelength=666e-9)
-    assert got.item() == pytest.approx(expected)
+    assert got.item() == pytest.approx(float(expected))
 
 
 def test_from_phase_preserves_grad():

@@ -24,22 +24,28 @@ which additionally divides by the refractive-index difference).
 
 ## `drymass` — dry mass
 
-Dry mass `= (1 / alpha) * sum(OPD * pixel_area)` (the Barer relation), in **pg**.
-The OPD must already be background-corrected (≈ 0 outside the object); pass a
-boolean `mask` to restrict the sum to one segmented object — segmentation and
-background estimation stay the caller's responsibility.
+Dry mass `= (1 / alpha) * sum(OPD * pixel_area)` (the Barer relation), in **pg**,
+summed over the last two axes (H, W). Inputs are **batched** — `opd` / `phase`
+have shape `(..., H, W)`, giving one mass per image (`(...)`). The OPD must
+already be background-corrected (≈ 0 outside the object); a boolean `mask` of
+shape `(H, W)` or `(C, H, W)` (for `C` objects, giving a trailing channel axis
+`(..., C)`) restricts the sum — segmentation and background estimation stay the
+caller's responsibility.
 
 - `DryMassCalculator(pixel_size, alpha=..., opd_converter=...)` — bind the pixel
   size (m), specific refractive increment (m³/kg), and an `OPDConverter` (for the
   phase path) once.
   - `from_wavelength(pixel_size=..., wavelength=...)` — build the inner converter
     from a wavelength.
-  - `calc_from_opd(opd, *, mask=None)` — dry mass from an OPD map (nm).
-  - `calc_from_phase(phase, *, mask=None)` — dry mass from a phase map (rad).
+  - `calc_from_opd(opd, *, mask=None, reduce=True)` — dry mass from an OPD map
+    (nm). `reduce=False` returns the per-pixel mass-density map (`opd * scale`,
+    masked) instead of the sum.
+  - `calc_from_phase(phase, *, mask=None, reduce=True)` — dry mass from a phase
+    map (rad).
   - `drymass_scale` — the cached pg-per-summed-nm factor (a plain `float`).
   - `wavelength` / `wavelength_nm`.
-- `calc_drymass(opd, *, pixel_size, alpha=..., mask=None)` /
-  `calc_drymass_from_phase(phase, *, pixel_size, wavelength=..., alpha=..., mask=None)`
+- `calc_drymass(opd, *, pixel_size, alpha=..., mask=None, reduce=True)` /
+  `calc_drymass_from_phase(phase, *, pixel_size, wavelength=..., alpha=..., mask=None, reduce=True)`
   — the one-shot forms.
 
 Defaults for `wavelength` and `alpha` come from

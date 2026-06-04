@@ -14,7 +14,7 @@ from iivs.dhm.data.constants import (
 )
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Any, Self
 
     from numpy.typing import NDArray
 
@@ -34,11 +34,15 @@ class DryMassCalculator:
         mass = dmc.calc_from_opd(opd, mask=cell)  # opd in nm
         mass = dmc.calc_from_phase(phase, mask=cell)  # phase in rad
 
-    Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg.
-    The OPD must already be background-corrected (≈ 0 outside the object); pass
-    `mask` to restrict the sum to one segmented object -- segmentation and
-    background estimation stay the caller's responsibility. The sum is
-    accumulated in float64.
+    Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg, summed
+    over the last two axes (H, W). Inputs are batched: `opd` / `phase` have shape
+    ``(..., H, W)`` (any leading dims), so the result is one mass per image,
+    shape ``(...)``. A `mask` of shape ``(C, H, W)`` gives `C` masked masses,
+    shape ``(..., C)`` (a ``(H, W)`` mask adds no axis). The OPD must already be
+    background-corrected (≈ 0 outside the object); segmentation and background
+    estimation stay the caller's responsibility. The sum is accumulated in
+    float64. Pass ``reduce=False`` to get the per-pixel mass-density map instead
+    of the sum.
 
     The module-level `calc_drymass` / `calc_drymass_from_phase` are one-shot
     conveniences over this class (as `json.dumps` is over `json.JSONEncoder`).
@@ -107,17 +111,42 @@ class DryMassCalculator:
         return self._scale
 
     def calc_from_opd(
-        self, opd: NDArray[np.float32], *, mask: NDArray[np.bool_] | None = None
-    ) -> float:
-        """Dry mass [pg] from an OPD map (nm), optionally masked."""
-        selected = opd if mask is None else opd[mask]
-        return float(np.sum(selected, dtype=np.float64)) * self._scale
+        self,
+        opd: NDArray[np.float32],
+        *,
+        mask: NDArray[np.bool_] | None = None,
+        reduce: bool = True,
+    ) -> NDArray[np.floating[Any]]:
+        """Dry mass [pg] from an OPD map (nm), summed over the last two axes (H, W).
+
+        Args:
+            opd: OPD map(s), in nm, shape ``(..., H, W)``.
+            mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)`` for
+                `C` objects; multiplied in (broadcast), the 3-D form adding a
+                trailing channel axis.
+            reduce: If True (default), sum the per-pixel mass over (H, W) and
+                return the dry mass, shape ``(...)`` (or ``(..., C)`` with a
+                ``(C, H, W)`` mask). If False, return the per-pixel mass-density
+                map (``opd * scale``, masked) without summing, shape
+                ``(..., H, W)`` (or ``(..., C, H, W)``).
+        """
+        if mask is not None:
+            index = (..., *((None,) * (mask.ndim - 2)), slice(None), slice(None))
+            opd = opd[index] * mask
+        if not reduce:
+            return opd * self._scale
+        return np.sum(opd, axis=(-2, -1), dtype=np.float64) * self._scale
 
     def calc_from_phase(
-        self, phase: NDArray[np.float32], *, mask: NDArray[np.bool_] | None = None
-    ) -> float:
+        self,
+        phase: NDArray[np.float32],
+        *,
+        mask: NDArray[np.bool_] | None = None,
+        reduce: bool = True,
+    ) -> NDArray[np.floating[Any]]:
         """Dry mass [pg] from a phase map (rad): to OPD, then `calc_from_opd`."""
-        return self.calc_from_opd(self.opd_converter.convert_to_opd(phase), mask=mask)
+        opd = self.opd_converter.convert_to_opd(phase)
+        return self.calc_from_opd(opd, mask=mask, reduce=reduce)
 
 
 def calc_drymass(
@@ -126,21 +155,25 @@ def calc_drymass(
     pixel_size: float,
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     mask: NDArray[np.bool_] | None = None,
-) -> float:
-    """Dry mass [pg] of an OPD map (nm); one-shot `DryMassCalculator`.
+    reduce: bool = True,
+) -> NDArray[np.floating[Any]]:
+    """Dry mass [pg] of an OPD map (nm); one-shot `DryMassCalculator.calc_from_opd`.
 
     Args:
-        opd: Optical path difference, in nm (e.g. from `phase_to_opd`),
+        opd: OPD map(s), in nm (e.g. from `phase_to_opd`), shape ``(..., H, W)``,
             already background-corrected.
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean array selecting the object's pixels.
+        mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)``.
+        reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
+            mass-density map (False). See `DryMassCalculator.calc_from_opd`.
 
     Returns:
-        Dry mass in pg.
+        Dry mass in pg, shape ``(...)`` (or ``(..., C)``); or the unreduced
+        density map when `reduce` is False.
     """
     return DryMassCalculator(pixel_size=pixel_size, alpha=alpha).calc_from_opd(
-        opd, mask=mask
+        opd, mask=mask, reduce=reduce
     )
 
 
@@ -151,21 +184,26 @@ def calc_drymass_from_phase(
     wavelength: float = DEFAULT_WAVELENGTH,
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     mask: NDArray[np.bool_] | None = None,
-) -> float:
+    reduce: bool = True,
+) -> NDArray[np.floating[Any]]:
     """Dry mass [pg] from a phase map (rad); one-shot `DryMassCalculator`.
 
     Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`.
 
     Args:
-        phase: Phase map, in rad, already background-corrected.
+        phase: Phase map(s), in rad, shape ``(..., H, W)``, already
+            background-corrected.
         pixel_size: Physical size of one (square) pixel, in m.
         wavelength: Illumination wavelength, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean array selecting the object's pixels.
+        mask: Optional boolean mask, shape ``(H, W)`` or ``(C, H, W)``.
+        reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
+            mass-density map (False).
 
     Returns:
-        Dry mass in pg.
+        Dry mass in pg, shape ``(...)`` (or ``(..., C)``); or the unreduced
+        density map when `reduce` is False.
     """
     return DryMassCalculator.from_wavelength(
         pixel_size=pixel_size, alpha=alpha, wavelength=wavelength
-    ).calc_from_phase(phase, mask=mask)
+    ).calc_from_phase(phase, mask=mask, reduce=reduce)

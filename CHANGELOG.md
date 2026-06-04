@@ -212,7 +212,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     mass in pg (Barer), binding pixel size, specific refractive
     increment, and an injected `opd_converter` (for the phase path) once,
     precomputing the per-pixel factor (exposed as `drymass_scale`; sum in
-    float64). Build it from a wavelength with
+    float64). Inputs are batched `(..., H, W)` — the sum is over the last two
+    axes, giving one mass per image `(...)`; a `(C, H, W)` mask adds a trailing
+    channel axis `(..., C)`, and `reduce=False` returns the per-pixel
+    mass-density map instead of the sum. Build it from a wavelength with
     `DryMassCalculator.from_wavelength`; `wavelength` / `wavelength_nm`
     shortcuts read the converter's. `drymass.calc_drymass` /
     `drymass.calc_drymass_from_phase` are one-shot conveniences over it.
