@@ -153,9 +153,9 @@ def load_intensity_bin(
             "raise".
     """
     path = ensure_file_exists(path)
-    with path.open("rb") as fb:
-        header = IntensityBinHeader.from_stream(fb)
-        data = read_bin_pixels(fb, header)
+    with path.open("rb") as f:
+        header = IntensityBinHeader.from_stream(f)
+        data = read_bin_pixels(f, header)
 
     data = validate_float32_image(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data

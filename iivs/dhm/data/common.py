@@ -185,7 +185,7 @@ class KoalaBinHeader(ABC):
         raise NotImplementedError
 
     @classmethod
-    def read_record(cls, fb: IO[bytes]) -> np.void:
+    def read_record(cls, f: IO[bytes]) -> np.void:
         """Read and structurally validate the fixed-size header record.
 
         Checks the declared header size, version, and byte order, leaving the
@@ -196,7 +196,7 @@ class KoalaBinHeader(ABC):
             ValueError: If the stream is too small for a header, or declares
                 an unsupported header size, version, or byte order.
         """
-        raw = fb.read(cls.HEADER_SIZE)
+        raw = f.read(cls.HEADER_SIZE)
         if len(raw) < cls.HEADER_SIZE:
             msg = f"file must be at least {cls.HEADER_SIZE} bytes for a header (got {len(raw)})"
             raise ValueError(msg)
@@ -220,7 +220,7 @@ class KoalaBinHeader(ABC):
         return record
 
     @classmethod
-    def from_stream(cls, fb: IO[bytes]) -> Self:
+    def from_stream(cls, f: IO[bytes]) -> Self:
         """Read and validate a header from an open binary stream.
 
         Reads exactly the fixed-size header (works on any `IO[bytes]`,
@@ -231,7 +231,7 @@ class KoalaBinHeader(ABC):
             ValueError: As `read_record`, plus any field validation raised by
                 the subclass `from_dtype`.
         """
-        return cls.from_dtype(cls.read_record(fb))
+        return cls.from_dtype(cls.read_record(f))
 
     @classmethod
     def from_file(cls, path: StrPath) -> Self:
@@ -243,11 +243,11 @@ class KoalaBinHeader(ABC):
             ValueError: As `from_stream`.
         """
         path = ensure_file_exists(path)
-        with path.open("rb") as fb:
-            return cls.from_stream(fb)
+        with path.open("rb") as f:
+            return cls.from_stream(f)
 
 
-def read_bin_pixels(fb: IO[bytes], header: KoalaBinHeader) -> NDArray[np.float32]:
+def read_bin_pixels(f: IO[bytes], header: KoalaBinHeader) -> NDArray[np.float32]:
     """Read the float32 pixel block after the header as an (H, W) array.
 
     Validates that the remaining bytes match the pixel count declared by
@@ -256,7 +256,7 @@ def read_bin_pixels(fb: IO[bytes], header: KoalaBinHeader) -> NDArray[np.float32
     Raises:
         ValueError: If the byte count does not match `header.pixel_count`.
     """
-    raw = fb.read()
+    raw = f.read()
     expected = header.pixel_count * _PIXEL_DTYPE.itemsize
     if len(raw) != expected:
         msg = f"pixel count must be {header.pixel_count} ({expected} bytes), got {len(raw)}"
@@ -669,8 +669,8 @@ class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
             ValueError: If the header is missing or malformed.
         """
         path = ensure_file_exists(path)
-        with path.open() as fb:
-            lines = [fb.readline() for _ in range(cls.HEADER_LINES)]
+        with path.open() as f:
+            lines = [f.readline() for _ in range(cls.HEADER_LINES)]
         return cls.from_lines(lines, path)
 
     @classmethod

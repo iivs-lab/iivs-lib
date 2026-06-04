@@ -107,14 +107,14 @@ class HologramRawHeader:
         return self.frame_count * self.frame_nbytes
 
     @classmethod
-    def from_stream(cls, fb: IO[bytes]) -> Self:
+    def from_stream(cls, f: IO[bytes]) -> Self:
         """Read and validate a header from an open binary stream.
 
         Raises:
             ValueError: If the stream is too small for a header, or holds
                 invalid header fields.
         """
-        raw = fb.read(cls.HEADER_SIZE)
+        raw = f.read(cls.HEADER_SIZE)
         if len(raw) < cls.HEADER_SIZE:
             msg = f"file must be at least {cls.HEADER_SIZE} bytes for a header (got {len(raw)})"
             raise ValueError(msg)
@@ -137,8 +137,8 @@ class HologramRawHeader:
             ValueError: If the file is too small or holds invalid header fields.
         """
         path = ensure_file_exists(path)
-        with path.open("rb") as fb:
-            return cls.from_stream(fb)
+        with path.open("rb") as f:
+            return cls.from_stream(f)
 
     def to_dtype(self) -> NDArray[np.void]:
         """Serialize to a 1-element `HologramRawHeader.DTYPE` record array."""
