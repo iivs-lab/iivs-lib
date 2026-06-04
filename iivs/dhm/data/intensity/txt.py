@@ -5,11 +5,13 @@ __all__ = (
     "IntensityTxtList",
     "load_intensity_txt",
     "read_intensity_txt_header",
+    "save_intensity_txt",
 )
 
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-from kaparoo.filesystem import ensure_file_exists
+import numpy as np
+from kaparoo.filesystem import StagedFile, ensure_file_exists
 
 from iivs.dhm.data.common import (
     KoalaTxtHeader,
@@ -22,7 +24,6 @@ from iivs.dhm.data.intensity.bin import IntensityBinHeader
 if TYPE_CHECKING:
     from typing import Literal
 
-    import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
@@ -117,6 +118,52 @@ def load_intensity_txt(
     data = parse_txt_grid(lines[IntensityTxtHeader.HEADER_LINES :], shape=header.shape)
     data = validate_float32_image(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
+
+
+# ========================== #
+#          Writing           #
+# ========================== #
+
+
+def _write_intensity_txt(
+    path: StrPath,
+    header: IntensityBinHeader,
+    data: NDArray[np.float32],
+    *,
+    overwrite: bool,
+) -> None:
+    """Serialize an `IntensityBinHeader` and float grid as a Koala `Float/Txt` file."""
+    head = f"h={header.height} w={header.width}\npixel size={header.pixel_size} m\n"
+    with StagedFile(path, binary=True, overwrite=overwrite) as staged:
+        staged.write(head.encode("utf-8"))
+        np.savetxt(staged.file, data, fmt="%.8e")
+
+
+def save_intensity_txt(
+    path: StrPath,
+    data: NDArray[np.float32],
+    *,
+    pixel_size: float,
+    overwrite: bool = False,
+    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+) -> None:
+    """Save a 2D float32 intensity image as a Koala `Float/Txt` file.
+
+    The text twin of `save_intensity_bin`: a 2-line ``h/w`` + ``pixel size``
+    header (intensity carries no unit or height scale), then the float grid.
+    Written atomically.
+
+    Raises:
+        ValueError: If `data` is not a single 2D float32 image, or holds
+            non-finite values while `on_nonfinite` is "raise".
+        FileExistsError: If `path` exists and `overwrite` is False.
+        FileNotFoundError: If the parent directory of `path` does not exist.
+    """
+    data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    header = IntensityBinHeader(
+        width=int(data.shape[1]), height=int(data.shape[0]), pixel_size=pixel_size
+    )
+    _write_intensity_txt(path, header, data, overwrite=overwrite)
 
 
 # ========================== #

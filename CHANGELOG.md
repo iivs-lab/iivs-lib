@@ -55,6 +55,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `phbounds.txt` display-bounds record (a `[nm]` tag then `min max`), and
     `PhaseFloatSequence.bounds_nm()` to recompute those bounds straight from the
     float source (global min/max in nanometers, per-file `height_scale`).
+  - `save_phase_txt` / `save_phase_npy` single-image writers (the `.txt` / `.npy`
+    twins of `save_phase_bin`), and `convert_phase_folder(root, folder, *,
+    ext=...)` to re-encode a phase acquisition folder between the lossless `bin`
+    / `txt` / `npy` formats.
 - `iivs.dhm.data.common`: the building blocks shared across the data
   modalities.
   - `KoalaBinHeader` — base for the packed 23-byte Lyncée Tec Koala `.bin`
@@ -92,6 +96,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `read_npy_shape` — read a 2-D `.npy` array's `(height, width)` without
     loading its data (memory-mapped, `allow_pickle=False`); used to validate the
     `*NpyFolder`s cheaply.
+  - `write_npy` — the shared atomic `.npy` writer behind every modality's
+    `save_*_npy`.
   - `ensure_file_extension` — the `*List` and single-file `*File` sequences
     (`HologramRawFile`, `TimestampsTxtFile`) now validate each given path's
     `.<FILE_EXT>` at construction, so a wrong-format file fails up front rather
@@ -120,6 +126,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `IntensityNpyFolder` — a header-less `{index:05d}_intensity.npy` float32
     folder; `pixel_size` is passed to the constructor (intensity has no unit or
     height scale). Arrays load via `numpy.load(allow_pickle=False)`.
+  - `save_intensity_txt` / `save_intensity_npy` single-image writers, and
+    `convert_intensity_folder(root, folder, *, ext=...)` to re-encode an
+    intensity acquisition folder between the lossless `bin` / `txt` / `npy`
+    formats.
 - `iivs.dhm.data.timestamp`: per-frame acquisition timing.
   - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
     `Timestamp.series_from_elapsed_times`.
@@ -149,6 +159,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     frame copy, metadata is the frame index).
   - `HologramNpyFolder` — a header-less `{index:05d}_holo.npy` uint8 folder (no
     metadata needed); arrays load via `numpy.load(allow_pickle=False)`.
+  - `save_hologram_raw` (a multi-frame `.raw` stack writer, with
+    `HologramRawHeader.to_dtype`; accepts an array or a `HologramSequence` and
+    streams frame by frame, so a large source is never held in memory at once)
+    / `save_hologram_npy`, and `convert_hologram_sequence(dest, seq, *,
+    ext=...)` to re-encode a hologram sequence between `raw` (one stack file),
+    `tif`, and `npy` (per-frame folders).
 - `iivs.dhm.data.constants`: typical optical, geometric, and biophysical
   parameters for the lab's transmission setup — `DEFAULT_WAVELENGTH` (666 nm,
   in m) / `DEFAULT_WAVELENGTH_NM`, `DEFAULT_REFRACTIVE_DELTA` (0.5),

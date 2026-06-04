@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-__all__ = ("PhaseNpyFolder",)
+__all__ = ("PhaseNpyFolder", "save_phase_npy")
 
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
 
-from iivs.dhm.data.common import read_npy_shape, validate_float32_image
+from iivs.dhm.data.common import read_npy_shape, validate_float32_image, write_npy
 from iivs.dhm.data.phase.base import PhaseFileFolder
 from iivs.dhm.data.phase.bin import PhaseBinHeader
 from iivs.dhm.data.phase.core import resolve_height_scale
@@ -18,6 +18,29 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from iivs.dhm.data.phase.core import PhaseUnit
+
+
+def save_phase_npy(
+    path: StrPath,
+    data: NDArray[np.float32],
+    *,
+    overwrite: bool = False,
+    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+) -> None:
+    """Save a 2D float32 phase image as an uncompressed `.npy` file.
+
+    Header-less: `.npy` stores only the array, so the `pixel_size` / `unit` /
+    `height_scale` metadata the `.bin` / `.txt` formats carry is dropped (supply
+    it when reading via `PhaseNpyFolder`). Written atomically.
+
+    Raises:
+        ValueError: If `data` is not a single 2D float32 image, or holds
+            non-finite values while `on_nonfinite` is "raise".
+        FileExistsError: If `path` exists and `overwrite` is False.
+        FileNotFoundError: If the parent directory of `path` does not exist.
+    """
+    data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    write_npy(path, data, overwrite=overwrite)
 
 
 class PhaseNpyFolder(PhaseFileFolder):

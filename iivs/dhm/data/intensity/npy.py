@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-__all__ = ("IntensityNpyFolder",)
+__all__ = ("IntensityNpyFolder", "save_intensity_npy")
 
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
 
-from iivs.dhm.data.common import read_npy_shape, validate_float32_image
+from iivs.dhm.data.common import read_npy_shape, validate_float32_image, write_npy
 from iivs.dhm.data.intensity.base import IntensityFileFolder
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
 
@@ -15,6 +15,29 @@ if TYPE_CHECKING:
 
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
+
+
+def save_intensity_npy(
+    path: StrPath,
+    data: NDArray[np.float32],
+    *,
+    overwrite: bool = False,
+    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+) -> None:
+    """Save a 2D float32 intensity image as an uncompressed `.npy` file.
+
+    Header-less: only the array is stored, so the `pixel_size` the `.bin` /
+    `.txt` formats carry is dropped (supply it via `IntensityNpyFolder` on
+    read). Written atomically.
+
+    Raises:
+        ValueError: If `data` is not a single 2D float32 image, or holds
+            non-finite values while `on_nonfinite` is "raise".
+        FileExistsError: If `path` exists and `overwrite` is False.
+        FileNotFoundError: If the parent directory of `path` does not exist.
+    """
+    data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    write_npy(path, data, overwrite=overwrite)
 
 
 class IntensityNpyFolder(IntensityFileFolder):

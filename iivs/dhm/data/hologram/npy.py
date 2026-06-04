@@ -1,17 +1,35 @@
 from __future__ import annotations
 
-__all__ = ("HologramNpyFolder",)
+__all__ = ("HologramNpyFolder", "save_hologram_npy")
 
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
 
-from iivs.dhm.data.common import ImageFileFolder, validate_uint8_image
+from iivs.dhm.data.common import ImageFileFolder, validate_uint8_image, write_npy
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:
+    from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
+
+
+def save_hologram_npy(
+    path: StrPath, data: NDArray[np.uint8], *, overwrite: bool = False
+) -> None:
+    """Save a 2D uint8 hologram as an uncompressed `.npy` file.
+
+    The header-less, lossless twin of `save_hologram_tif` (no codec, no
+    `[image]` extra). Written atomically.
+
+    Raises:
+        ValueError: If `data` is not a 2D uint8 array.
+        FileExistsError: If `path` exists and `overwrite` is False.
+        FileNotFoundError: If the parent directory of `path` does not exist.
+    """
+    data = validate_uint8_image(data, allow_stack=False)
+    write_npy(path, data, overwrite=overwrite)
 
 
 class HologramNpyFolder(ImageFileFolder, HologramSequence[Path]):

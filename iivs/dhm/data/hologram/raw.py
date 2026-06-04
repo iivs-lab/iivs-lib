@@ -4,6 +4,7 @@ __all__ = (
     "HologramRawFile",
     "HologramRawHeader",
     "read_hologram_raw_header",
+    "save_hologram_raw",
 )
 
 from dataclasses import dataclass
@@ -11,10 +12,14 @@ from typing import TYPE_CHECKING, ClassVar, cast, override
 
 import numpy as np
 from kaparoo.data.sequences.templates import SingleFileSequence
-from kaparoo.filesystem import ensure_file_exists
+from kaparoo.filesystem import StagedFile, ensure_file_exists
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import FrameShapedMixin, ensure_file_extension
+from iivs.dhm.data.common import (
+    FrameShapedMixin,
+    ensure_file_extension,
+    validate_uint8_image,
+)
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:
@@ -134,10 +139,72 @@ class HologramRawHeader:
         with path.open("rb") as fb:
             return cls.from_stream(fb)
 
+    def to_dtype(self) -> NDArray[np.void]:
+        """Serialize to a 1-element `HologramRawHeader.DTYPE` record array."""
+        record = np.zeros(1, dtype=self.DTYPE)
+        record["width"] = self.width
+        record["height"] = self.height
+        record["bit_depth"] = self.bit_depth
+        record["frame_count"] = self.frame_count
+        return record
+
 
 def read_hologram_raw_header(path: StrPath) -> HologramRawHeader:
     """Read only the header of a Lyncée Tec Koala hologram `.raw` file, without the pixels."""
     return HologramRawHeader.from_file(path)
+
+
+def save_hologram_raw(
+    path: StrPath,
+    frames: NDArray[np.uint8] | HologramSequence[object],
+    *,
+    overwrite: bool = False,
+) -> None:
+    """Save uint8 holograms as a Lyncée Tec Koala `.raw` file.
+
+    `frames` is a single 2D image, an ``(N, H, W)`` stack array, or a
+    `HologramSequence`. It is written as a 16-byte `HologramRawHeader` (8-bit)
+    followed by the row-major frames. Frames are written one at a time, so a
+    large source (e.g. a memmapped `HologramRawFile` or a big folder) is never
+    held in memory as a whole stack. Written atomically.
+
+    Raises:
+        ValueError: If an array is not a 2D image or an ``(N, H, W)`` stack, the
+            sequence is empty, or its frames are not same-shaped uint8.
+        FileExistsError: If `path` exists and `overwrite` is False.
+        FileNotFoundError: If the parent directory of `path` does not exist.
+    """
+    if isinstance(frames, HologramSequence):
+        count = len(frames)
+        if count == 0:
+            msg = "cannot save an empty hologram sequence to .raw"
+            raise ValueError(msg)
+        shape = validate_uint8_image(frames[0], allow_stack=False).shape
+        height, width = shape[0], shape[1]
+        frame_iter = frames
+    else:
+        stack = validate_uint8_image(frames, allow_stack=True)
+        if stack.ndim == 2:
+            stack = stack[np.newaxis]
+        if stack.ndim != 3:
+            msg = f"frames array must be a 2D image or an (N, H, W) stack (got {stack.ndim}D)"
+            raise ValueError(msg)
+        count, height, width = stack.shape[0], stack.shape[1], stack.shape[2]
+        frame_iter = stack
+
+    header = HologramRawHeader(
+        width=width, height=height, bit_depth=8, frame_count=count
+    )
+    with StagedFile(path, binary=True, overwrite=overwrite) as staged:
+        header.to_dtype().tofile(staged.file)
+        for frame in frame_iter:
+            frame = validate_uint8_image(frame, allow_stack=False)
+            if frame.shape != (height, width):
+                msg = (
+                    f"all frames must have shape {(height, width)} (got {frame.shape})"
+                )
+                raise ValueError(msg)
+            np.ascontiguousarray(frame, dtype=np.uint8).tofile(staged.file)
 
 
 class HologramRawFile(

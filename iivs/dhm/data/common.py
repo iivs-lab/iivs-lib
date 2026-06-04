@@ -27,6 +27,7 @@ __all__ = (
     "validate_float32_image",
     "validate_uint8_image",
     "write_bin",
+    "write_npy",
 )
 
 import re
@@ -47,7 +48,7 @@ from natsort import natsorted
 from numpy.typing import NDArray
 
 if TYPE_CHECKING:
-    from typing import IO, Literal, Self
+    from typing import IO, Any, Literal, Self
 
     from kaparoo.filesystem.types import StrPath, StrPaths
 
@@ -805,3 +806,18 @@ def read_npy_shape(path: StrPath) -> tuple[int, int]:
         msg = f"{Path(path).name} must be a 2D array (got {len(shape)}D)"
         raise ValueError(msg)
     return (shape[0], shape[1])
+
+
+def write_npy(path: StrPath, data: NDArray[Any], *, overwrite: bool = False) -> None:
+    """Atomically write `data` as an uncompressed `.npy` file.
+
+    Content is staged to a temp file in the destination's directory and moved
+    into place on success. The shared writer behind the per-modality `.npy`
+    savers; `.npy` carries no Koala header, so only the raw array is stored.
+
+    Raises:
+        FileExistsError: If `path` exists and `overwrite` is False.
+        FileNotFoundError: If the parent directory of `path` does not exist.
+    """
+    with StagedFile(path, binary=True, overwrite=overwrite) as staged:
+        np.save(staged.file, data)

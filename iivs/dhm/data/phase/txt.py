@@ -5,12 +5,15 @@ __all__ = (
     "PhaseTxtList",
     "load_phase_txt",
     "read_phase_txt_header",
+    "save_phase_txt",
 )
 
 import re
+import warnings
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-from kaparoo.filesystem import ensure_file_exists
+import numpy as np
+from kaparoo.filesystem import StagedFile, ensure_file_exists
 
 from iivs.dhm.data.common import (
     KoalaTxtHeader,
@@ -18,13 +21,12 @@ from iivs.dhm.data.common import (
     validate_float32_image,
 )
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
-from iivs.dhm.data.phase.bin import PhaseBinHeader
-from iivs.dhm.data.phase.core import PhaseUnit
+from iivs.dhm.data.phase.bin import PhaseBinHeader, _to_storable_unit
+from iivs.dhm.data.phase.core import PhaseUnit, resolve_height_scale
 
 if TYPE_CHECKING:
     from typing import Literal
 
-    import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
@@ -154,6 +156,105 @@ def load_phase_txt(
     data = parse_txt_grid(lines[PhaseTxtHeader.HEADER_LINES :], shape=header.shape)
     data = validate_float32_image(data, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
+
+
+# ========================== #
+#          Writing           #
+# ========================== #
+
+
+_UNIT_NAME: dict[PhaseUnit, str] = {
+    PhaseUnit.RADIANS: "rad",
+    PhaseUnit.METERS: "m",
+    PhaseUnit.UNKNOWN: "none",
+}
+
+
+def _write_phase_txt(
+    path: StrPath, header: PhaseBinHeader, data: NDArray[np.float32], *, overwrite: bool
+) -> None:
+    """Serialize a `PhaseBinHeader` and float grid as a Koala `Float/Txt` file."""
+    head = (
+        f"h={header.height} w={header.width}\n"
+        f"pixel size={header.pixel_size} m\n"
+        f"data unit={_UNIT_NAME[header.unit]}\n"
+        f"height conversion factor (-> m)={header.height_scale}\n"
+    )
+    with StagedFile(path, binary=True, overwrite=overwrite) as staged:
+        staged.write(head.encode("utf-8"))
+        np.savetxt(staged.file, data, fmt="%.8e")
+
+
+@overload
+def save_phase_txt(
+    path: StrPath,
+    data: NDArray[np.float32],
+    *,
+    pixel_size: float,
+    height_scale: float,
+    unit: PhaseUnit = ...,
+    overwrite: bool = ...,
+    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+) -> None: ...
+
+
+@overload
+def save_phase_txt(
+    path: StrPath,
+    data: NDArray[np.float32],
+    *,
+    pixel_size: float,
+    wavelength: float,
+    refractive_delta: float,
+    unit: PhaseUnit = ...,
+    overwrite: bool = ...,
+    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+) -> None: ...
+
+
+def save_phase_txt(
+    path: StrPath,
+    data: NDArray[np.float32],
+    *,
+    pixel_size: float,
+    height_scale: float | None = None,
+    wavelength: float | None = None,
+    refractive_delta: float | None = None,
+    unit: PhaseUnit = PhaseUnit.RADIANS,
+    overwrite: bool = False,
+    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+) -> None:
+    """Save a 2D float32 phase image as a Koala `Float/Txt` file.
+
+    The text twin of `save_phase_bin`: a 4-line ``h/w`` + ``pixel size`` +
+    ``data unit`` + ``height conversion factor`` header, then the float grid.
+    The phase-to-height scale is given as `height_scale`, or as `wavelength` +
+    `refractive_delta` (exactly one form). Written atomically; NANOMETERS is
+    stored as METERS, and UNKNOWN is stored but warns.
+
+    Raises:
+        ValueError: If neither or both scale forms are given, `data` is not a
+            single 2D float32 image, or it holds non-finite values while
+            `on_nonfinite` is "raise".
+        FileExistsError: If `path` exists and `overwrite` is False.
+        FileNotFoundError: If the parent directory of `path` does not exist.
+    """
+    height_scale = resolve_height_scale(height_scale, wavelength, refractive_delta)
+    data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    data, unit = _to_storable_unit(data, unit, height_scale)
+
+    if unit is PhaseUnit.UNKNOWN:
+        msg = "saving with unit=UNKNOWN; physical interpretation is undefined"
+        warnings.warn(msg, stacklevel=2)
+
+    header = PhaseBinHeader(
+        width=int(data.shape[1]),
+        height=int(data.shape[0]),
+        pixel_size=pixel_size,
+        height_scale=height_scale,
+        unit=unit,
+    )
+    _write_phase_txt(path, header, data, overwrite=overwrite)
 
 
 # ========================== #
