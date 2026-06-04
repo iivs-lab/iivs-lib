@@ -163,11 +163,18 @@ def save_hologram_raw(
 ) -> None:
     """Save uint8 holograms as a Lyncée Tec Koala `.raw` file.
 
-    `frames` is a single 2D image, an ``(N, H, W)`` stack array, or a
-    `HologramSequence`. It is written as a 16-byte `HologramRawHeader` (8-bit)
-    followed by the row-major frames. Frames are written one at a time, so a
-    large source (e.g. a memmapped `HologramRawFile` or a big folder) is never
-    held in memory as a whole stack. Written atomically.
+    The file is a 16-byte `HologramRawHeader` (8-bit) followed by the row-major
+    frames. Frames are written one at a time, so a large source (a memmapped
+    `HologramRawFile` or a big folder) is never held in memory as a whole stack.
+    Written atomically.
+
+    Args:
+        path: The `.raw` file to write.
+        frames: The holograms to save -- a single 2D image, an ``(N, H, W)``
+            stack array, or a `HologramSequence`. All frames must share one
+            shape.
+        overwrite: Whether to replace `path` if it already exists. Defaults to
+            False.
 
     Raises:
         ValueError: If `path` has a non-`.raw` extension, an array is not a 2D

@@ -141,6 +141,16 @@ def save_intensity_txt(
     header (intensity carries no unit or height scale), then the float grid.
     Written atomically.
 
+    Args:
+        path: The `.txt` file to write.
+        data: The intensity image to save, of shape (H, W).
+        pixel_size: Physical size of one (square) pixel, in m.
+        overwrite: Whether to replace `path` if it already exists. Defaults to
+            False.
+        on_nonfinite: How to handle non-finite values, forwarded to
+            `validate_float32_image`: "ignore" accepts silently, "warn"
+            (default) emits a RuntimeWarning, "raise" rejects with a ValueError.
+
     Raises:
         ValueError: If `path` has a non-`.txt` extension, `data` is not a single
             2D float32 image, or it holds non-finite values while `on_nonfinite`

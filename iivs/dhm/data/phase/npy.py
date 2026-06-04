@@ -38,6 +38,15 @@ def save_phase_npy(
     `height_scale` metadata the `.bin` / `.txt` formats carry is dropped (supply
     it when reading via `PhaseNpyFolder`). Written atomically.
 
+    Args:
+        path: The `.npy` file to write.
+        data: The phase image to save, of shape (H, W).
+        overwrite: Whether to replace `path` if it already exists. Defaults to
+            False.
+        on_nonfinite: How to handle non-finite values, forwarded to
+            `validate_float32_image`: "ignore" accepts silently, "warn"
+            (default) emits a RuntimeWarning, "raise" rejects with a ValueError.
+
     Raises:
         ValueError: If `path` has a non-`.npy` extension, `data` is not a single
             2D float32 image, or it holds non-finite values while `on_nonfinite`

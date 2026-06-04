@@ -28,6 +28,12 @@ def save_hologram_npy(
     The header-less, lossless twin of `save_hologram_tif` (no codec, no
     `[image]` extra). Written atomically.
 
+    Args:
+        path: The `.npy` file to write.
+        data: The hologram image to save, of shape (H, W).
+        overwrite: Whether to replace `path` if it already exists. Defaults to
+            False.
+
     Raises:
         ValueError: If `path` has a non-`.npy` extension, or `data` is not a 2D
             uint8 array.

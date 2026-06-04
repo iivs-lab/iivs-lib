@@ -35,6 +35,15 @@ def save_intensity_npy(
     `.txt` formats carry is dropped (supply it via `IntensityNpyFolder` on
     read). Written atomically.
 
+    Args:
+        path: The `.npy` file to write.
+        data: The intensity image to save, of shape (H, W).
+        overwrite: Whether to replace `path` if it already exists. Defaults to
+            False.
+        on_nonfinite: How to handle non-finite values, forwarded to
+            `validate_float32_image`: "ignore" accepts silently, "warn"
+            (default) emits a RuntimeWarning, "raise" rejects with a ValueError.
+
     Raises:
         ValueError: If `path` has a non-`.npy` extension, `data` is not a single
             2D float32 image, or it holds non-finite values while `on_nonfinite`

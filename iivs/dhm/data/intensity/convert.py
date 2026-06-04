@@ -32,10 +32,17 @@ def convert_intensity_folder(
 ) -> None:
     """Re-encode an intensity `folder` into `root` in the `ext` format.
 
-    Writes one numbered file per frame, ``{index:05d}_{folder.FILE_STEM}.{ext}``,
-    sharing the folder's header. `bin` / `txt` keep `pixel_size`; the header-less
-    `npy` drops it. The output is built atomically -- staged, then moved into
-    place on success -- so a failed run leaves any existing `root` untouched.
+    Each frame becomes one numbered file sharing the folder's single header.
+    `bin` / `txt` preserve `pixel_size`; the header-less `npy` drops it. The new
+    folder is built atomically, so a failed run leaves any existing `root`
+    untouched.
+
+    Args:
+        root: Destination folder to create and fill with the re-encoded frames.
+        folder: Source intensity folder to read.
+        ext: Target format -- "bin", "txt", or "npy".
+        overwrite: Whether to replace `root` if it already exists. Defaults to
+            False.
 
     Raises:
         ValueError: If `ext` is not "bin", "txt", or "npy".
@@ -65,10 +72,16 @@ def convert_intensity_list(
 ) -> None:
     """Re-encode each file of an intensity `sequence` in place, changing the suffix.
 
-    A list's files may live anywhere, so each is rewritten as a sibling with the
-    new ``.{ext}`` suffix (same directory and stem), keeping its own
-    `pixel_size`; the header-less `npy` drops it. Each file is written
-    atomically, but the set is not one atomic folder.
+    A list's files may live anywhere, so each is rewritten beside the original
+    with the new ``.{ext}`` suffix, keeping its own `pixel_size`; the
+    header-less `npy` drops it. Each file is written atomically, but the set as
+    a whole is not.
+
+    Args:
+        sequence: Source intensity file list to re-encode in place.
+        ext: Target format -- "bin", "txt", or "npy".
+        overwrite: Whether to replace an existing target sibling. Defaults to
+            False.
 
     Raises:
         ValueError: If `ext` is not "bin", "txt", or "npy".

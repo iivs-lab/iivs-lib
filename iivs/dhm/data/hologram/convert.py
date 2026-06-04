@@ -29,12 +29,20 @@ def convert_hologram_sequence(
 ) -> None:
     """Re-encode a hologram `sequence` to `dest` in the `ext` format.
 
-    `sequence` is any `HologramSequence` (a single-file `HologramRawFile` or a
-    `HologramTifFolder` / `HologramNpyFolder` / `HologramTifList`). ``ext="raw"``
-    writes one multi-frame `.raw` stack at `dest`, streamed frame by frame;
-    ``"tif"`` / ``"npy"`` write ``{index:05d}_{stem}.{ext}`` (the source's
-    `FILE_STEM`, else ``holo``) into the `dest` folder. Both are written
-    atomically; every format is lossless uint8.
+    Every format is lossless uint8. ``ext="raw"`` writes a single multi-frame
+    `.raw` stack at `dest`, streamed frame by frame so a large source is never
+    held whole; ``"tif"`` / ``"npy"`` write one numbered file per frame into the
+    `dest` folder (named from the source's `FILE_STEM`, else ``holo``). Both
+    paths are written atomically.
+
+    Args:
+        dest: Destination -- the `.raw` file for "raw", else the folder to
+            create and fill.
+        sequence: Source hologram sequence to read (a `HologramRawFile`,
+            `HologramTifFolder`, `HologramNpyFolder`, or `HologramTifList`).
+        ext: Target format -- "raw", "tif", or "npy".
+        overwrite: Whether to replace an existing destination. Defaults to
+            False.
 
     Raises:
         ValueError: If `ext` is not "raw", "tif", or "npy".

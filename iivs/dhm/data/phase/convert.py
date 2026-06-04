@@ -33,11 +33,17 @@ def convert_phase_folder(
 ) -> None:
     """Re-encode a phase `folder` into `root` in the `ext` format.
 
-    Writes one numbered file per frame, ``{index:05d}_{folder.FILE_STEM}.{ext}``,
-    sharing the folder's header. `bin` / `txt` keep `pixel_size`, `height_scale`,
-    and the effective `unit`; the header-less `npy` drops them. The output is
-    built atomically -- staged, then moved into place on success -- so a failed
-    run leaves any existing `root` untouched.
+    Each frame becomes one numbered file sharing the folder's single header.
+    `bin` / `txt` preserve `pixel_size`, `height_scale`, and the effective
+    `unit`; the header-less `npy` drops them. The new folder is built
+    atomically, so a failed run leaves any existing `root` untouched.
+
+    Args:
+        root: Destination folder to create and fill with the re-encoded frames.
+        folder: Source phase folder to read.
+        ext: Target format -- "bin", "txt", or "npy".
+        overwrite: Whether to replace `root` if it already exists. Defaults to
+            False.
 
     Raises:
         ValueError: If `ext` is not "bin", "txt", or "npy".
@@ -73,11 +79,16 @@ def convert_phase_list(
 ) -> None:
     """Re-encode each file of a phase `sequence` in place, changing only the suffix.
 
-    A list's files may live anywhere, so each is rewritten as a sibling with the
-    new ``.{ext}`` suffix (same directory and stem), keeping its own
-    `pixel_size`, `height_scale`, and effective `unit`; the header-less `npy`
-    drops them. Each file is written atomically, but the set is not one atomic
-    folder.
+    A list's files may live anywhere, so each is rewritten beside the original
+    with the new ``.{ext}`` suffix, keeping its own `pixel_size`,
+    `height_scale`, and effective `unit`; the header-less `npy` drops them.
+    Each file is written atomically, but the set as a whole is not.
+
+    Args:
+        sequence: Source phase file list to re-encode in place.
+        ext: Target format -- "bin", "txt", or "npy".
+        overwrite: Whether to replace an existing target sibling. Defaults to
+            False.
 
     Raises:
         ValueError: If `ext` is not "bin", "txt", or "npy".
