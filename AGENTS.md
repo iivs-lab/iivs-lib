@@ -59,17 +59,23 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   format-agnostic `core` and a `base` holding the abstract sequence types —
   e.g. `phase/{core,base,bin,txt,tif,npy}.py`, `hologram/{base,tif,raw,npy}.py`
   (a modality drops `core` when it has no format-agnostic logic of its own).
-  Building blocks shared across modalities live in one data-root module,
-  `common.py`: the `KoalaBinHeader` base + `.bin` pixel I/O (used by `phase`
-  and `intensity`), the `Float/Txt` header/grid codecs (`KoalaTxtHeaderCodec`,
-  `parse_txt_grid`), the uint8-image folder/list codec bases + `.tif` reader
-  (`ImageFileFolder` / `ImageFileList`, `ImageTifFolder` / `ImageTifList`,
-  `load_uint8_tif`), the `.npy` shape reader (`read_npy_shape`), the
-  extension check (`ensure_file_extension`), the numbered-folder
-  `SequentialFileFolder` template (every `*Folder` builds on it), the
-  `FrameShapedMixin`, and the float32/uint8
-  image validators. Prefer a shared base/template + a small mixin over
-  copy-pasting across modalities.
+  Building blocks shared across modalities live in the data-root `common`
+  package, split by concern into submodules and all re-exported from `common`
+  (so `from iivs.dhm.data.common import X` reaches any of them): `bin` (the
+  `KoalaBinHeader` base + `.bin` pixel I/O, used by `phase` and `intensity`),
+  `txt` (the `Float/Txt` header/grid codecs `KoalaTxtHeaderCodec` /
+  `parse_txt_grid`), `image` (the uint8-image folder/list codec bases + `.tif`
+  reader: `ImageFileFolder` / `ImageFileList`, `ImageTifFolder` /
+  `ImageTifList`, `load_uint8_tif`), `npy` (the `.npy` shape reader
+  `read_npy_shape` + writer), `sequence` (the numbered-folder
+  `SequentialFileFolder` template that every `*Folder` builds on, plus the
+  `FrameShapedMixin`), `validation` (the float32/uint8 image validators), and
+  `extension` (the filename helpers `ensure_file_extension` /
+  `with_file_extension` / `numbered_name`). Keep the submodules acyclic
+  (`extension`/`validation`/`bin`/`npy` are leaves; `sequence` → `extension`;
+  `txt` → `bin`, `extension`; `image` → `validation`, `extension`,
+  `sequence`). Prefer a shared base/template + a small mixin over copy-pasting
+  across modalities.
 - A `*Folder` is the auto-discovered special case of its `*List`, so it
   *subclasses the list* (mirroring kaparoo's `FileFolderSequence` ⊂
   `FileListSequence`) and reuses its `load_file`. `FileFolderSequence.__init__
