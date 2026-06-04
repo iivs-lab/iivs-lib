@@ -54,9 +54,11 @@ Defaults for `wavelength` and `alpha` come from
 
 The `convert_*` / `calc_*` methods run on NumPy arrays. Install the
 `iivs-lib[torch]` extra for the `pytorch` subpackage — tensor-in / tensor-out
-twins that keep the input tensor's device and autograd graph. The physical
-calibration (the scale factors) is reused from the NumPy engines, so only the
-elementwise ops are torch-native. It mirrors the NumPy layout: an `nn.Module`
+twins that keep the input tensor's device, dtype, and autograd graph (the
+dry-mass sum still accumulates in float64, so f16 / bf16 / f64 are all kept,
+where the NumPy engine returns float32). The physical calibration (the scale
+factors) is reused from the NumPy engines, so only the elementwise ops are
+torch-native. It mirrors the NumPy layout: an `nn.Module`
 per quantity (named for the quantity, per the `nn.Module` convention —
 `OpticalPathDifference` / `DryMass`, not the NumPy engines'
 `OPDConverter` / `DryMassCalculator`), with one-shot free functions wrapping it.

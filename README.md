@@ -25,6 +25,8 @@ pip install iivs-lib
 
 The `[image]` extra adds `imagecodecs`, needed only to decode the
 LZW-compressed Koala `Image/*.tif` uint8 previews (`uv add "iivs-lib[image]"`).
+The `[torch]` extra adds PyTorch for `iivs.dhm.analysis.pytorch` — tensor-in /
+tensor-out OPD / dry-mass twins with autograd (`uv add "iivs-lib[torch]"`).
 
 ## 🚀 Quick start
 
@@ -110,8 +112,8 @@ precomputes its conversion factor (with one-shot function conveniences):
 
 The `convert_*` / `calc_*` methods operate on NumPy arrays. Install the
 `iivs-lib[torch]` extra for `iivs.dhm.analysis.pytorch` — tensor-in / tensor-out
-twins that keep the input tensor's device and autograd graph (the calibration
-scalars are shared with the NumPy engines):
+twins that keep the input tensor's device, dtype, and autograd graph (the
+calibration scalars are shared with the NumPy engines):
 
 ```python
 from iivs.dhm.analysis.pytorch.opd import phase_to_opd

@@ -199,30 +199,34 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT` (2.0e-4 m³/kg, for dry mass), and
   `PIXEL_SIZE_20X` (in m) / `PIXEL_SIZE_20X_UM` (~285 nm; Koala 20X) as a
   header-less fallback for `PhaseBinHeader.pixel_size`.
-- `iivs.dhm.analysis`: quantitative analysis derived from phase.
+- `iivs.dhm.analysis`: quantitative analysis derived from phase. The NumPy
+  engines and helpers are re-exported from the package root (the Torch twins are
+  not, so importing the package never requires PyTorch).
   - `opd.OPDConverter` — convert between phase and optical path difference
     (`OPD = phase * wavelength / (2*pi)`) at a fixed wavelength via
     `convert_to_opd` / `convert_to_phase`, with OPD in nm (the QPI
     convention) and the cached scale exposed as `opd_scale` (nm/rad); construct
     with m or `OPDConverter.from_wavelength_nm`. `opd.phase_to_opd` /
-    `opd.opd_to_phase` are one-shot conveniences over it (as `json.dumps` is
-    over `JSONEncoder`).
+    `opd.opd_to_phase` are one-shot conveniences over it.
   - `drymass.DryMassCalculator` — integrate a background-corrected, optionally
     masked OPD (`calc_from_opd`, in nm) or phase (`calc_from_phase`) into a dry
     mass in pg (Barer), binding pixel size, specific refractive
     increment, and an injected `opd_converter` (for the phase path) once,
     precomputing the per-pixel factor (exposed as `drymass_scale`; sum in
-    float64). Inputs are batched `(..., H, W)` — the sum is over the last two
-    axes, giving one mass per image `(...)`; a `(C, H, W)` mask adds a trailing
-    channel axis `(..., C)`, and `reduce=False` returns the per-pixel
+    float64, returned as float32). Inputs are batched `(..., H, W)` — the sum is
+    over the last two axes, giving one mass per image `(...)`; a `(N, H, W)` mask
+    (validated to `(H, W)` / `(N, H, W)`, matching `opd`'s `(H, W)`) adds a
+    trailing axis `(..., N)`, and `reduce=False` returns the per-pixel
     mass-density map instead of the sum. Build it from a wavelength with
     `DryMassCalculator.from_wavelength`; `wavelength` / `wavelength_nm`
     shortcuts read the converter's. `drymass.calc_drymass` /
     `drymass.calc_drymass_from_phase` are one-shot conveniences over it.
     Segmentation and background estimation stay the caller's job.
   - `analysis.pytorch` (the `iivs-lib[torch]` extra) — torch-native twins that
-    take and return `torch.Tensor`s, preserving the input tensor's device and
-    autograd graph. Mirrors the NumPy layout: an `nn.Module` per quantity, named
+    take and return `torch.Tensor`s, preserving the input tensor's device,
+    dtype, and autograd graph (the dry-mass sum still accumulates in float64 for
+    precision, then casts back -- so f16 / bf16 (AMP) and f64 are kept, where the
+    NumPy twin forces float32). Mirrors the NumPy layout: an `nn.Module` per quantity, named
     for the quantity per the `nn.Module` convention
     (`pytorch.opd.OpticalPathDifference`, `pytorch.drymass.DryMass`, the latter
     holding the former as a submodule) with one-shot free functions wrapping it
