@@ -8,9 +8,16 @@ from iivs.dhm.analysis.drymass import calc_drymass_from_phase as np_calc_from_ph
 torch = pytest.importorskip("torch")
 
 from iivs.dhm.analysis.pytorch.drymass import (  # noqa: E402
+    DryMassCalculator,
     calc_drymass,
     calc_drymass_from_phase,
 )
+
+
+def test_module_forward_matches_calc():
+    calc = DryMassCalculator(pixel_size=1e-6)
+    opd = torch.ones(3, 3)
+    assert torch.allclose(calc(opd), calc.calc_from_opd(opd))  # forward path
 
 
 def test_calc_drymass_matches_numpy():

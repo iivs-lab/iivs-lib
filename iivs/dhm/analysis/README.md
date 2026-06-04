@@ -49,14 +49,22 @@ Defaults for `wavelength` and `alpha` come from
 
 The `convert_*` / `calc_*` methods run on NumPy arrays. Install the
 `iivs-lib[torch]` extra for the `pytorch` subpackage — tensor-in / tensor-out
-twins (`pytorch.opd`, `pytorch.drymass`) that keep the input tensor's device and
-autograd graph. The physical calibration (the scale factors) is reused from the
-NumPy engines, so only the elementwise ops are torch-native:
+twins that keep the input tensor's device and autograd graph. The physical
+calibration (the scale factors) is reused from the NumPy engines, so only the
+elementwise ops are torch-native. It mirrors the NumPy layout: an `nn.Module`
+engine per quantity, with one-shot free functions wrapping it.
 
 ```python
-from iivs.dhm.analysis.pytorch.opd import phase_to_opd, opd_to_phase
-from iivs.dhm.analysis.pytorch.drymass import calc_drymass, calc_drymass_from_phase
+from iivs.dhm.analysis.pytorch.opd import OPDConverter, phase_to_opd
+from iivs.dhm.analysis.pytorch.drymass import DryMassCalculator, calc_drymass_from_phase
 
+# nn.Module engines (compose in a model; the inner OPDConverter is a submodule):
+to_opd = OPDConverter(wavelength=666e-9)
+mass_head = DryMassCalculator.from_wavelength(pixel_size=px, wavelength=666e-9)
+opd = to_opd(phase)                          # forward == convert_to_opd
+mass = mass_head.calc_from_phase(phase, mask=cell)
+
+# Or one-shot functions:
 opd = phase_to_opd(phase, wavelength=666e-9)                    # Tensor (CPU/GPU), grad kept
 mass = calc_drymass_from_phase(phase, pixel_size=px, mask=cell) # 0-dim Tensor, grad kept
 ```

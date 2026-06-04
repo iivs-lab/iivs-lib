@@ -7,7 +7,17 @@ from iivs.dhm.analysis.opd import phase_to_opd as np_phase_to_opd
 
 torch = pytest.importorskip("torch")
 
-from iivs.dhm.analysis.pytorch.opd import opd_to_phase, phase_to_opd  # noqa: E402
+from iivs.dhm.analysis.pytorch.opd import (  # noqa: E402
+    OPDConverter,
+    opd_to_phase,
+    phase_to_opd,
+)
+
+
+def test_module_forward_matches_convert():
+    conv = OPDConverter(wavelength=666e-9)
+    phase = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+    assert torch.allclose(conv(phase), conv.convert_to_opd(phase))  # forward path
 
 
 def test_phase_to_opd_matches_numpy():
