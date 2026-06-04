@@ -66,10 +66,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     8-bit quantized), and `encode_preview` is the forward render (rounded,
     clamped); a degenerate `min == max` is handled without dividing by a zero
     span. Whole-sequence twins of that map run lazily (per frame, on access):
-    `PhaseFileList.to_preview(bounds=None)` renders a `PhaseFloatSequence` into a
+    `PhaseFileList.to_image(bounds=None)` renders a `PhaseFloatSequence` into a
     uint8 `PhaseImageSequence` (each frame put in nm via its header first, so
     `target_unit` is irrelevant; `None` derives the bounds from `bounds_nm`), and
-    `PhaseImageSequence.to_phase(bounds, *, target_unit=NANOMETERS, height_scale=…)`
+    `PhaseImageSequence.to_float(bounds, *, target_unit=NANOMETERS, height_scale=…)`
     reconstructs a `PhaseFloatSequence` from previews in the requested unit
     (8-bit-quantized — a reconstruction, *not* the quantitative `Float` source;
     NANOMETERS / METERS need no scale, RADIANS needs `height_scale` or

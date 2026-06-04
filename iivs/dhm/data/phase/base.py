@@ -65,7 +65,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
     mix in `data.common.FrameShapedMixin` to expose `frame_shape`.
     """
 
-    def to_phase(
+    def to_float(
         self,
         bounds: PhaseBounds,
         *,
@@ -163,7 +163,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
     def _decode_nm(self, index: int) -> NDArray[np.float32]:
         """Decode frame `index` and convert it to nanometers via its own header.
 
-        The unit-agnostic frame source for `bounds_nm` and `to_preview`: reads
+        The unit-agnostic frame source for `bounds_nm` and `to_image`: reads
         the raw stored values (ignoring `target_unit`) and converts to nm with
         that frame's `height_scale`.
         """
@@ -198,7 +198,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
             raise ValueError(msg)
         return PhaseBounds(min_nm=minimum, max_nm=maximum)
 
-    def to_preview(self, bounds: PhaseBounds | None = None) -> PhaseImageSequence[Path]:
+    def to_image(self, bounds: PhaseBounds | None = None) -> PhaseImageSequence[Path]:
         """A lazy uint8 Koala-style preview of this phase, in nm (Float -> Image).
 
         Each frame is converted to nanometers via its own `height_scale` (so the
@@ -261,7 +261,7 @@ class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
 
 
 class PhaseImageView(PhaseImageSequence[Path]):
-    """A lazy uint8 preview over a quantitative phase list (the `to_preview` result).
+    """A lazy uint8 preview over a quantitative phase list (the `to_image` result).
 
     Wraps a `PhaseFileList`; `get_item` decodes the frame, converts it to nm, and
     renders it through the bound `PhaseBounds` on access. Per-frame metadata (the
@@ -298,7 +298,7 @@ class PhaseFloatView[M](
     TransformedSequence[NDArray[np.uint8], M, NDArray[np.float32], M],
     PhaseFloatSequence[M],
 ):
-    """A lazy phase reconstruction over a preview sequence (the `to_phase` result).
+    """A lazy phase reconstruction over a preview sequence (the `to_float` result).
 
     A `kaparoo` `TransformedSequence` that maps each uint8 preview back to float32
     phase via a `PhaseBounds`-derived transform, retyped as a `PhaseFloatSequence`.

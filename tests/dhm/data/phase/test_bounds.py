@@ -220,7 +220,7 @@ def test_bounds_nm_rejects_unknown_unit(tmp_path):
 
 
 # ========================== #
-#    to_preview / to_phase   #
+#    to_image / to_float   #
 # ========================== #
 
 
@@ -231,9 +231,9 @@ def _two_frame_folder(tmp_path, **kwargs):
     return PhaseBinFolder(tmp_path, **kwargs)
 
 
-def test_to_preview_is_image_sequence_with_endpoints(tmp_path):
+def test_to_image_is_image_sequence_with_endpoints(tmp_path):
     folder = _two_frame_folder(tmp_path)
-    preview = folder.to_preview(PhaseBounds(min_nm=200.0, max_nm=600.0))
+    preview = folder.to_image(PhaseBounds(min_nm=200.0, max_nm=600.0))
     assert isinstance(preview, PhaseImageSequence)
     assert len(preview) == 2
     assert preview[0].dtype == np.uint8
@@ -241,31 +241,31 @@ def test_to_preview_is_image_sequence_with_endpoints(tmp_path):
     assert np.all(preview[1] == 255)  # 600 nm -> max -> 255
 
 
-def test_to_preview_renders_nm_regardless_of_target_unit(tmp_path):
+def test_to_image_renders_nm_regardless_of_target_unit(tmp_path):
     # target_unit=RADIANS, yet the preview must still map by nm (header-derived).
     folder = _two_frame_folder(tmp_path, target_unit=PhaseUnit.RADIANS)
-    preview = folder.to_preview(PhaseBounds(min_nm=200.0, max_nm=600.0))
+    preview = folder.to_image(PhaseBounds(min_nm=200.0, max_nm=600.0))
     assert np.all(preview[0] == 0)
     assert np.all(preview[1] == 255)
 
 
-def test_to_preview_default_bounds_use_bounds_nm(tmp_path):
+def test_to_image_default_bounds_use_bounds_nm(tmp_path):
     folder = _two_frame_folder(tmp_path)
-    assert folder.to_preview().bounds == folder.bounds_nm()
+    assert folder.to_image().bounds == folder.bounds_nm()
 
 
-def test_to_preview_meta_is_source_path(tmp_path):
+def test_to_image_meta_is_source_path(tmp_path):
     folder = _two_frame_folder(tmp_path)
-    preview = folder.to_preview()
+    preview = folder.to_image()
     assert preview.get_meta(0) == folder.get_meta(0)
     assert preview.source is folder
 
 
-def test_to_phase_roundtrip_within_quantization(tmp_path):
+def test_to_float_roundtrip_within_quantization(tmp_path):
     folder = _two_frame_folder(tmp_path, target_unit=PhaseUnit.NANOMETERS)
     bounds = folder.bounds_nm()
     # Float -> Image -> Float, all in memory (no .tif I/O needed).
-    recon = folder.to_preview(bounds).to_phase(bounds)
+    recon = folder.to_image(bounds).to_float(bounds)
     assert isinstance(recon, PhaseFloatSequence)
     assert recon[0].dtype == np.float32
     step = (bounds.max_nm - bounds.min_nm) / 255.0
@@ -273,11 +273,11 @@ def test_to_phase_roundtrip_within_quantization(tmp_path):
         assert np.max(np.abs(recon[index] - folder[index])) <= step
 
 
-def test_to_phase_to_radians_uses_height_scale(tmp_path):
+def test_to_float_to_radians_uses_height_scale(tmp_path):
     # frames 1.0 / 3.0 rad at height_scale 2e-7 -> 200 / 600 nm; bounds (200, 600).
     folder = _two_frame_folder(tmp_path)  # default target_unit -> RADIANS
     bounds = folder.bounds_nm()
-    recon = folder.to_preview(bounds).to_phase(
+    recon = folder.to_image(bounds).to_float(
         bounds, target_unit=PhaseUnit.RADIANS, height_scale=2e-7
     )
     step_rad = (bounds.max_nm - bounds.min_nm) / 255.0 * 1e-9 / 2e-7
@@ -285,27 +285,27 @@ def test_to_phase_to_radians_uses_height_scale(tmp_path):
         assert np.max(np.abs(recon[index] - folder[index])) <= step_rad
 
 
-def test_to_phase_to_meters_needs_no_scale(tmp_path):
+def test_to_float_to_meters_needs_no_scale(tmp_path):
     folder = _two_frame_folder(tmp_path)
     bounds = PhaseBounds(min_nm=200.0, max_nm=600.0)
-    recon = folder.to_preview(bounds).to_phase(bounds, target_unit=PhaseUnit.METERS)
+    recon = folder.to_image(bounds).to_float(bounds, target_unit=PhaseUnit.METERS)
     assert recon[0].dtype == np.float32
     assert recon[0][0, 0] == pytest.approx(200e-9)  # 200 nm -> 2e-7 m
     assert recon[1][0, 0] == pytest.approx(600e-9)
 
 
-def test_to_phase_to_radians_requires_scale(tmp_path):
+def test_to_float_to_radians_requires_scale(tmp_path):
     folder = _two_frame_folder(tmp_path)
-    preview = folder.to_preview(PhaseBounds(min_nm=0.0, max_nm=600.0))
+    preview = folder.to_image(PhaseBounds(min_nm=0.0, max_nm=600.0))
     with pytest.raises(ValueError, match="give height_scale"):
-        preview.to_phase(PhaseBounds(min_nm=0.0, max_nm=600.0), target_unit=PhaseUnit.RADIANS)
+        preview.to_float(PhaseBounds(min_nm=0.0, max_nm=600.0), target_unit=PhaseUnit.RADIANS)
 
 
-def test_to_phase_meta_and_source_passthrough(tmp_path):
+def test_to_float_meta_and_source_passthrough(tmp_path):
     folder = _two_frame_folder(tmp_path)
-    preview = folder.to_preview()
+    preview = folder.to_image()
     bounds = PhaseBounds(min_nm=0.0, max_nm=1.0)
-    recon = preview.to_phase(bounds)
+    recon = preview.to_float(bounds)
     assert len(recon) == 2
     assert recon.get_meta(1) == folder.get_meta(1)
     assert recon.source is preview

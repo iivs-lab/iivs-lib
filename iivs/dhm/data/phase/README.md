@@ -103,10 +103,10 @@ onto the 0–255 previews.
   a preview with a `PhaseBounds` from disk or the `Float` twin's `bounds_nm()`:
   `bounds.decode_preview(preview_seq[i])`.
 - Whole-sequence twins of that map (lazy — each frame is converted on access):
-  `float_seq.to_preview(bounds=None)` returns a uint8 `PhaseImageSequence`
+  `float_seq.to_image(bounds=None)` returns a uint8 `PhaseImageSequence`
   (frames are put in nm via their header first, so `target_unit` is irrelevant;
   `None` derives `bounds` from `bounds_nm()`), and
-  `preview_seq.to_phase(bounds, *, target_unit=NANOMETERS, height_scale=…)`
+  `image_seq.to_float(bounds, *, target_unit=NANOMETERS, height_scale=…)`
   returns a float32 `PhaseFloatSequence` **reconstruction** — 8-bit-quantized,
   *not* the quantitative `Float` source. `target_unit` picks the output unit
   (NANOMETERS / METERS need no scale; RADIANS needs `height_scale`, or
