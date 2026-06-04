@@ -14,7 +14,7 @@ from iivs.dhm.data.constants import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Self
+    from typing import Self
 
     from numpy.typing import NDArray
 
@@ -32,7 +32,8 @@ class DryMassCalculator:
         mass = dmc.calc_from_phase(phase, mask=cell)  # phase in rad
 
     Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg, summed in
-    float64 over the last two axes (H, W). Inputs are batched (``(..., H, W)``)
+    float64 over the last two axes (H, W) and returned as float32. Inputs are
+    batched (``(..., H, W)``)
     and a ``(N, H, W)`` mask adds a trailing channel axis -- see `calc_from_opd`
     for the shape / `reduce` details. The OPD must already be background-corrected
     (≈ 0 outside the object); segmentation and background estimation stay the
@@ -109,7 +110,7 @@ class DryMassCalculator:
         *,
         mask: NDArray[np.bool_] | None = None,
         reduce: bool = True,
-    ) -> NDArray[np.floating[Any]]:
+    ) -> NDArray[np.float32]:
         """Dry mass [pg] from an OPD map (nm), summed over the last two axes (H, W).
 
         Args:
@@ -128,17 +129,19 @@ class DryMassCalculator:
                 if mask.ndim == 3:
                     opd = opd[..., None, :, :]
                 opd = opd * mask
-            return opd * self._scale
+            return (opd * self._scale).astype(np.float32, copy=False)
 
         if mask is None:
-            return np.sum(opd, axis=(-2, -1), dtype=np.float64) * self._scale
-        # Contract (H, W) without building the (..., N, H, W) product. Cast to
-        # float64 to accumulate there (`tensordot` has no `dtype=`); a (H, W)
-        # mask yields shape (...), an (N, H, W) mask yields (..., N).
-        total = np.tensordot(
-            opd.astype(np.float64, copy=False), mask, axes=([-2, -1], [-2, -1])
-        )
-        return total * self._scale
+            total = np.sum(opd, axis=(-2, -1), dtype=np.float64)
+        else:
+            # Contract (H, W) without building the (..., N, H, W) product; cast
+            # to float64 to accumulate there (`tensordot` has no `dtype=`).
+            total = np.tensordot(
+                opd.astype(np.float64, copy=False), mask, axes=([-2, -1], [-2, -1])
+            )
+        # Accumulate in float64 (above) but return float32, like the rest of the
+        # package (cf. `opd.OPDConverter.convert_to_opd`).
+        return (total * self._scale).astype(np.float32, copy=False)
 
     def calc_from_phase(
         self,
@@ -146,7 +149,7 @@ class DryMassCalculator:
         *,
         mask: NDArray[np.bool_] | None = None,
         reduce: bool = True,
-    ) -> NDArray[np.floating[Any]]:
+    ) -> NDArray[np.float32]:
         """Dry mass [pg] from a phase map (rad): to OPD, then `calc_from_opd`."""
         opd = self.opd_converter.convert_to_opd(phase)
         return self.calc_from_opd(opd, mask=mask, reduce=reduce)
@@ -159,7 +162,7 @@ def calc_drymass(
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     mask: NDArray[np.bool_] | None = None,
     reduce: bool = True,
-) -> NDArray[np.floating[Any]]:
+) -> NDArray[np.float32]:
     """Dry mass [pg] of an OPD map (nm); one-shot `DryMassCalculator.calc_from_opd`.
 
     Args:
@@ -188,7 +191,7 @@ def calc_drymass_from_phase(
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     mask: NDArray[np.bool_] | None = None,
     reduce: bool = True,
-) -> NDArray[np.floating[Any]]:
+) -> NDArray[np.float32]:
     """Dry mass [pg] from a phase map (rad); one-shot `DryMassCalculator`.
 
     Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`.

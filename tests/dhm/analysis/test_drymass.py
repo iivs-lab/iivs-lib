@@ -82,6 +82,17 @@ def test_calc_drymass_reduce_false_with_mask():
     assert density.sum() == pytest.approx(density[0, 0])  # only the masked pixel
 
 
+def test_output_is_float32():
+    # Accumulate in float64 internally, but every path returns float32.
+    opd = np.full((4, 4), 50.0, dtype=np.float32)
+    mask2d = np.ones((4, 4), dtype=bool)
+    mask3d = np.ones((3, 4, 4), dtype=bool)
+    assert calc_drymass(opd, pixel_size=1e-7).dtype == np.float32  # sum, no mask
+    assert calc_drymass(opd, pixel_size=1e-7, mask=mask2d).dtype == np.float32
+    assert calc_drymass(opd, pixel_size=1e-7, mask=mask3d).dtype == np.float32  # (N,...)
+    assert calc_drymass(opd, pixel_size=1e-7, reduce=False).dtype == np.float32  # map
+
+
 def test_calc_drymass_from_phase_matches_two_step():
     phase = np.full((5, 5), 1.0, dtype=np.float32)
     direct = calc_drymass_from_phase(
