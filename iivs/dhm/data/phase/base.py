@@ -4,7 +4,7 @@ __all__ = ("PhaseFloatSequence", "PhaseImageSequence", "PhaseSequence")
 
 import math
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, overload, override
 
 import numpy as np
 from kaparoo.data.sequences import DataSequence, TransformedSequence
@@ -65,6 +65,30 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
     mix in `data.common.FrameShapedMixin` to expose `frame_shape`.
     """
 
+    @overload
+    def to_float(
+        self,
+        bounds: PhaseBounds,
+        *,
+        target_unit: Literal[PhaseUnit.NANOMETERS, PhaseUnit.METERS] = ...,
+    ) -> PhaseFloatSequence[M]: ...
+    @overload
+    def to_float(
+        self,
+        bounds: PhaseBounds,
+        *,
+        target_unit: Literal[PhaseUnit.RADIANS],
+        height_scale: float,
+    ) -> PhaseFloatSequence[M]: ...
+    @overload
+    def to_float(
+        self,
+        bounds: PhaseBounds,
+        *,
+        target_unit: Literal[PhaseUnit.RADIANS],
+        wavelength: float,
+        refractive_delta: float,
+    ) -> PhaseFloatSequence[M]: ...
     def to_float(
         self,
         bounds: PhaseBounds,
