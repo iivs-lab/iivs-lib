@@ -154,7 +154,6 @@ def test_convert_phase_is_atomic_on_failure(tmp_path, monkeypatch):
 def test_convert_phase_list_converts_each_file_in_place(tmp_path):
     src = _bin_list(tmp_path, [(1.0, 1e-6), (2.0, 3e-6)])  # f0.bin, f1.bin
     convert_phase_list(src, ext="txt")  # -> f0.txt, f1.txt (siblings, same names)
-    # each file keeps its own pixel_size
     assert read_phase_txt_header(tmp_path / "f0.txt").pixel_size == pytest.approx(1e-6)
     assert read_phase_txt_header(tmp_path / "f1.txt").pixel_size == pytest.approx(3e-6)
     np.testing.assert_allclose(load_phase_txt(tmp_path / "f0.txt"), src[0], rtol=1e-5)

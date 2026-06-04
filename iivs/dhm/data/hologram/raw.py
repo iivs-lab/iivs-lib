@@ -179,6 +179,7 @@ def save_hologram_raw(
         if count == 0:
             msg = "cannot save an empty hologram sequence to .raw"
             raise ValueError(msg)
+
         shape = validate_uint8_image(frames[0], allow_stack=False).shape
         height, width = shape[0], shape[1]
         frame_iter = frames
@@ -189,14 +190,17 @@ def save_hologram_raw(
         if stack.ndim != 3:
             msg = f"frames array must be a 2D image or an (N, H, W) stack (got {stack.ndim}D)"
             raise ValueError(msg)
+
         count, height, width = stack.shape[0], stack.shape[1], stack.shape[2]
         frame_iter = stack
 
     header = HologramRawHeader(
         width=width, height=height, bit_depth=8, frame_count=count
     )
+
     with StagedFile(path, binary=True, overwrite=overwrite) as staged:
         header.to_dtype().tofile(staged.file)
+
         for frame in frame_iter:
             frame = validate_uint8_image(frame, allow_stack=False)
             if frame.shape != (height, width):
@@ -204,6 +208,7 @@ def save_hologram_raw(
                     f"all frames must have shape {(height, width)} (got {frame.shape})"
                 )
                 raise ValueError(msg)
+
             np.ascontiguousarray(frame, dtype=np.uint8).tofile(staged.file)
 
 

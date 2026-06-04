@@ -30,21 +30,16 @@ def convert_phase_folder(
     ext: Literal["bin", "txt", "npy"],
     overwrite: bool = False,
 ) -> None:
-    """Re-encode every frame of a phase `folder` into `root` in the `ext` format.
+    """Re-encode a phase `folder` into `root` in the `ext` format.
 
-    `folder` is a `PhaseFileFolder` (`PhaseBinFolder` / `PhaseTxtFolder` /
-    `PhaseNpyFolder`) -- a numbered, same-shape acquisition sharing one header.
-    Each frame is written as ``{index:05d}_{folder.FILE_STEM}.{ext}``. `bin` and
-    `txt` carry the shared `pixel_size`, `height_scale`, and effective `unit`;
-    `npy` is header-less, so that metadata is dropped (the float pixels stay
-    exact -- resupply it via `PhaseNpyFolder` on read).
-
-    The output folder is built atomically: frames are staged in a temp directory
-    and moved into place only on success, so a reader never sees a half-built
-    folder and a failed conversion leaves any existing `root` untouched.
+    Writes one numbered file per frame, ``{index:05d}_{folder.FILE_STEM}.{ext}``,
+    sharing the folder's header. `bin` / `txt` keep `pixel_size`, `height_scale`,
+    and the effective `unit`; the header-less `npy` drops them. The output is
+    built atomically -- staged, then moved into place on success -- so a failed
+    run leaves any existing `root` untouched.
 
     Raises:
-        ValueError: If `ext` is not one of "bin", "txt", "npy".
+        ValueError: If `ext` is not "bin", "txt", or "npy".
         FileExistsError: If `root` exists and `overwrite` is False.
     """
     if ext not in ("bin", "txt", "npy"):
@@ -64,6 +59,7 @@ def convert_phase_folder(
         )
 
     template = f"{{index:05d}}_{folder.FILE_STEM}.{ext}"
+
     with StagedDirectory(root, overwrite=overwrite) as staged:
         for index, image in enumerate(folder):
             save(staged.workdir / template.format(index=index), image)
@@ -75,20 +71,16 @@ def convert_phase_list(
     ext: Literal["bin", "txt", "npy"],
     overwrite: bool = False,
 ) -> None:
-    """Re-encode each file of an arbitrary phase `sequence` in place.
+    """Re-encode each file of a phase `sequence` in place, changing only the suffix.
 
-    A `PhaseFileList` (`PhaseBinList` / `PhaseTxtList`) is a flat set of files
-    that may live anywhere, so there is no shared `root` or numbering: each
-    source file is rewritten as a sibling with the new ``.{ext}`` suffix (same
-    directory and stem). Every frame keeps *its own* `pixel_size`,
-    `height_scale`, and effective `unit` (read per file), so a mixed-metadata
-    list converts faithfully; `npy` is header-less, so that metadata is dropped.
-
-    Each file is written atomically, but -- unlike `convert_phase_folder` -- the
-    set is not built as one atomic folder.
+    A list's files may live anywhere, so each is rewritten as a sibling with the
+    new ``.{ext}`` suffix (same directory and stem), keeping its own
+    `pixel_size`, `height_scale`, and effective `unit`; the header-less `npy`
+    drops them. Each file is written atomically, but the set is not one atomic
+    folder.
 
     Raises:
-        ValueError: If `ext` is not one of "bin", "txt", "npy".
+        ValueError: If `ext` is not "bin", "txt", or "npy".
         FileExistsError: If a target sibling exists and `overwrite` is False.
     """
     if ext not in ("bin", "txt", "npy"):
@@ -102,6 +94,7 @@ def convert_phase_list(
         return
 
     writer = save_phase_bin if ext == "bin" else save_phase_txt
+
     for index, image in enumerate(sequence):
         path = sequence.get_file(index)
         header = sequence._read_header(path)  # noqa: SLF001
