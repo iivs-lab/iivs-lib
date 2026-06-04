@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = ("OPDConverter", "opd_to_phase", "phase_to_opd")
 
+import math
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -53,7 +54,7 @@ class OPDConverter:
         if self.wavelength <= 0:
             msg = f"wavelength must be positive (got {self.wavelength})"
             raise ValueError(msg)
-        object.__setattr__(self, "_scale", self.wavelength / (2.0 * np.pi) * 1e9)
+        object.__setattr__(self, "_scale", self.wavelength / math.tau * 1e9)
 
     @classmethod
     def from_wavelength_nm(cls, wavelength_nm: float) -> Self:

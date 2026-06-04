@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = ("PhaseUnit", "convert_phase_unit", "resolve_height_scale")
 
+import math
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
@@ -46,7 +47,7 @@ def resolve_height_scale(
         case scale, None, None if scale is not None:
             return scale
         case None, wave, delta if wave is not None and delta is not None:
-            return wave / (2.0 * np.pi * delta)
+            return wave / (math.tau * delta)
         case _:
             msg = "give height_scale, or wavelength and refractive_delta (not both)"
             raise ValueError(msg)
