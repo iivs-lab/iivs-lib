@@ -26,21 +26,13 @@ class OPDConverter:
         opd = conv.convert_to_opd(phase)
         phase = conv.convert_to_phase(opd)
 
-    ``OPD = phase * wavelength / (2 * pi)`` -- independent of any refractive
-    index, and distinct from the physical height `PhaseUnit.METERS` represents
-    (height additionally divides by the refractive-index difference).
-
-    OPD is expressed in **nm** (the quantitative-phase-imaging
-    convention), while the input `wavelength` is SI (m) like the rest of
-    the package -- use `from_wavelength_nm` / `wavelength_nm` for its nm
-    form. The scale (in nm of OPD per rad) is cached once and exposed as
-    `opd_scale`.
-
-    The module-level `phase_to_opd` / `opd_to_phase` are one-shot conveniences
-    over this class (as `json.dumps` is over `json.JSONEncoder`).
-
-    The `convert_*` methods are NumPy-based; for PyTorch autograd, multiply
-    tensors by `opd_scale` directly (a plain float, so gradients are kept).
+    ``OPD = phase * wavelength / (2 * pi)``, independent of refractive index --
+    distinct from the height `PhaseUnit.METERS` represents, which additionally
+    divides by the refractive-index difference. OPD is in **nm** (the QPI
+    convention) while `wavelength` is SI (m); the per-rad scale is cached as
+    `opd_scale`. The free `phase_to_opd` / `opd_to_phase` are one-shot
+    conveniences over this class. For PyTorch, use
+    `iivs.dhm.analysis.pytorch.OpticalPathDifference`.
 
     Attributes:
         wavelength: Illumination wavelength, in m.
@@ -71,8 +63,7 @@ class OPDConverter:
         """nm of OPD per rad of phase (``wavelength / (2 * pi)`` in nm).
 
         OPD's canonical unit here is nm, so this needs no suffix (cf.
-        `wavelength` vs `wavelength_nm`). It is the nm analogue of
-        `PhaseBinHeader.height_scale_nm`: ``height_scale_nm = opd_scale / delta_n``.
+        `wavelength` vs `wavelength_nm`).
         """
         return self._scale
 
@@ -90,9 +81,7 @@ def phase_to_opd(
 ) -> NDArray[np.float32]:
     """Convert phase (rad) to OPD (nm); a one-shot `OPDConverter`.
 
-    ``OPD = phase * wavelength / (2 * pi)``, in nm, independent of any
-    refractive index. For repeated conversions at one wavelength, reuse an
-    `OPDConverter`.
+    For repeated conversions at one wavelength, reuse an `OPDConverter`.
 
     Args:
         phase: Phase image or stack, in rad.
@@ -109,9 +98,8 @@ def opd_to_phase(
 ) -> NDArray[np.float32]:
     """Convert OPD (nm) to phase (rad); a one-shot `OPDConverter`.
 
-    The inverse of `phase_to_opd`: ``phase = opd / (wavelength / (2 * pi))``,
-    with `opd` in nm. For repeated conversions at one wavelength, reuse an
-    `OPDConverter`.
+    The inverse of `phase_to_opd`. For repeated conversions at one wavelength,
+    reuse an `OPDConverter`.
 
     Args:
         opd: OPD image or stack, in nm.

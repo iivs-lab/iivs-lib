@@ -2,8 +2,7 @@
 
 Physical quantities derived from reconstructed phase. Each quantity has an
 **engine object** that binds its parameters once and precomputes a single scalar
-conversion factor, plus **one-shot free functions** for convenience (as
-`json.dumps` is to `json.JSONEncoder`).
+conversion factor, plus **one-shot free functions** for convenience.
 
 These operate on plain NumPy arrays; they are not sequences. For PyTorch, see
 [Using with PyTorch](#using-with-pytorch-autograd).

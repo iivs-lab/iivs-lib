@@ -45,7 +45,7 @@ class DryMassCalculator:
     of the sum.
 
     The module-level `calc_drymass` / `calc_drymass_from_phase` are one-shot
-    conveniences over this class (as `json.dumps` is over `json.JSONEncoder`).
+    conveniences over this class.
 
     The `calc_*` methods are NumPy-based; for PyTorch autograd, reduce tensors
     with `drymass_scale` directly (e.g. ``opd[mask].sum() * calc.drymass_scale``).
