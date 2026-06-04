@@ -106,5 +106,17 @@ def phase_to_opd(
 def opd_to_phase(
     opd: NDArray[np.float32], *, wavelength: float = DEFAULT_WAVELENGTH
 ) -> NDArray[np.float32]:
-    """Inverse of `phase_to_opd`; one-shot `OPDConverter.convert_to_phase` (nm)."""
+    """Convert OPD (nm) to phase (rad); a one-shot `OPDConverter`.
+
+    The inverse of `phase_to_opd`: ``phase = opd / (wavelength / (2 * pi))``,
+    with `opd` in nm. For repeated conversions at one wavelength, reuse an
+    `OPDConverter`.
+
+    Args:
+        opd: OPD image or stack, in nm.
+        wavelength: Illumination wavelength, in m.
+
+    Returns:
+        Phase as a float32 array of the same shape, in rad.
+    """
     return OPDConverter(wavelength=wavelength).convert_to_phase(opd)

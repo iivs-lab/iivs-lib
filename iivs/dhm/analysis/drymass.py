@@ -152,7 +152,20 @@ def calc_drymass_from_phase(
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     mask: NDArray[np.bool_] | None = None,
 ) -> float:
-    """Dry mass [pg] from phase; one-shot `DryMassCalculator` over the phase path."""
+    """Dry mass [pg] from a phase map (rad); one-shot `DryMassCalculator`.
+
+    Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`.
+
+    Args:
+        phase: Phase map, in rad, already background-corrected.
+        pixel_size: Physical size of one (square) pixel, in m.
+        wavelength: Illumination wavelength, in m.
+        alpha: Specific refractive increment, in m^3/kg.
+        mask: Optional boolean array selecting the object's pixels.
+
+    Returns:
+        Dry mass in pg.
+    """
     return DryMassCalculator.from_wavelength(
         pixel_size=pixel_size, alpha=alpha, wavelength=wavelength
     ).calc_from_phase(phase, mask=mask)
