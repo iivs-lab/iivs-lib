@@ -26,7 +26,32 @@ pip install iivs-lib
 The `[image]` extra adds `imagecodecs`, needed only to decode the
 LZW-compressed Koala `Image/*.tif` uint8 previews (`uv add "iivs-lib[image]"`).
 
+## 🚀 Quick start
+
+```python
+from iivs.dhm.data.phase import PhaseBinFolder, PhaseUnit
+from iivs.dhm.analysis import DryMassCalculator
+
+# Lazily open a phase acquisition (a folder of numbered .bin frames).
+phase = PhaseBinFolder("scan/Phase/Float/Bin", target_unit=PhaseUnit.RADIANS)
+phase.frame_shape          # (H, W), shared across frames
+img = phase[0]             # first frame as a float32 array (decoded on access)
+
+# Per-frame dry mass over a segmented cell:
+calc = DryMassCalculator(pixel_size=phase.header.pixel_size)
+mass_pg = calc.calc_from_phase(img, mask=cell_mask)
+```
+
 ## 🧩 Modules
+
+Each package ships a detailed README in the source tree — the endpoints,
+examples, and the inherited sequence interface:
+[`phase`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/data/phase),
+[`intensity`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/data/intensity),
+[`hologram`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/data/hologram),
+[`data`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/data) (overview
++ `timestamp`),
+[`analysis`](https://github.com/iivs-lab/iivs-lib/tree/main/iivs/dhm/analysis).
 
 ### `iivs.dhm.data`
 
