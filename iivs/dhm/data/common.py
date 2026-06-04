@@ -540,26 +540,30 @@ def validate_float32_image(
 
 
 def parse_txt_grid(lines: list[str], *, shape: tuple[int, int]) -> NDArray[np.float32]:
-    """Parse whitespace-separated float rows into a float32 (H, W) array.
+    """Parse whitespace-separated floats into a float32 (H, W) array, layout-agnostic.
 
     Used by the Koala `Float/Txt` readers: a modality's text export is a small
-    key=value header followed by `height` rows of `width` floats. Blank lines
-    are ignored.
+    key=value header followed by the grid values. Koala may write those values
+    as `height` rows of `width` floats *or* as a single long line, so the values
+    are read in row-major order and reshaped to `shape` rather than relying on
+    the line breaks. Any rectangular layout (including one line) is accepted;
+    blank lines are ignored.
 
     Raises:
-        ValueError: If the parsed grid does not match `shape`, or a row is
-            malformed.
+        ValueError: If a value is malformed, the lines are raggedly shaped, or
+            the value count does not fill `shape`.
     """
-    rows = [line for line in lines if line.strip()]
+    height, width = shape
     try:
-        grid = np.loadtxt(rows, dtype=np.float32, ndmin=2)
+        grid = np.loadtxt(lines, dtype=np.float32, ndmin=1)
     except ValueError as exc:
         msg = f"malformed txt grid: {exc}"
         raise ValueError(msg) from exc
-    if grid.shape != shape:
-        msg = f"txt grid must be {shape} (got {grid.shape})"
+    flat = np.ravel(grid)
+    if flat.size != height * width:
+        msg = f"txt grid must hold {height * width} values (got {flat.size})"
         raise ValueError(msg)
-    return grid
+    return flat.reshape(height, width)
 
 
 def write_txt_grid(

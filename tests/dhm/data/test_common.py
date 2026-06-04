@@ -106,8 +106,14 @@ def test_parse_txt_grid_ok():
     assert grid.dtype == np.float32
 
 
+def test_parse_txt_grid_single_line():
+    # Koala may write the whole grid on one line; row-major reshape handles it.
+    grid = parse_txt_grid(["1 2 3 4 5 6"], shape=(2, 3))
+    np.testing.assert_array_equal(grid, [[1, 2, 3], [4, 5, 6]])
+
+
 def test_parse_txt_grid_rejects_shape_mismatch():
-    with pytest.raises(ValueError, match="txt grid must be"):
+    with pytest.raises(ValueError, match="txt grid must hold"):
         parse_txt_grid(["1 2 3", "4 5 6"], shape=(2, 2))
 
 

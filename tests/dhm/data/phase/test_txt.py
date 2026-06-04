@@ -49,6 +49,18 @@ def test_load_roundtrip(tmp_path):
     assert header.height_scale == pytest.approx(3e-7)
 
 
+def test_load_single_line_grid(tmp_path):
+    # A real Koala export may put the whole grid on one line after the header.
+    path = tmp_path / "00000_phase.txt"
+    path.write_text(
+        "h=2 w=3\npixel size=1 m\ndata unit=rad\n"
+        "height conversion factor (-> m)=2e-07\n"
+        "0.1 0.2 0.3 0.4 0.5 0.6\n"
+    )
+    image = load_phase_txt(path)
+    np.testing.assert_allclose(image, [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], atol=1e-6)
+
+
 def test_unit_meters_mapping(tmp_path):
     data = np.zeros((2, 2), dtype=np.float32)
     path = tmp_path / "00000_phase.txt"

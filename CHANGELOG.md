@@ -88,8 +88,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     True; pass False to require a single 2-D image), used by the `save_*`
     writers. phase/intensity validate float32, holograms uint8.
   - `parse_txt_grid` and `write_txt_grid` — parse / atomically write a Koala
-    `Float/Txt` body (whitespace-separated float rows ↔ a float32 `(H, W)`
-    array); shared by the `.txt` readers and `save_*_txt` writers.
+    `Float/Txt` body (whitespace-separated floats ↔ a float32 `(H, W)` array);
+    shared by the `.txt` readers and `save_*_txt` writers. `parse_txt_grid` is
+    layout-agnostic: it reshapes the values in row-major order, so it reads a
+    grid Koala wrote as `height` rows *or* as a single long line.
   - `KoalaTxtHeaderCodec` — the stateless `Float/Txt` header (de)serializer (the
     text twin of `KoalaBinHeader`'s own `to_dtype` / `from_dtype`), with
     `from_file` / `from_lines` / `to_lines`. `phase`
