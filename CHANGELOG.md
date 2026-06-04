@@ -196,9 +196,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `iivs.dhm.data.constants`: typical optical, geometric, and biophysical
   parameters for the lab's transmission setup — `DEFAULT_WAVELENGTH` (666 nm,
   in m) / `DEFAULT_WAVELENGTH_NM`, `DEFAULT_REFRACTIVE_DELTA` (0.5),
-  `DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT` (2.0e-4 m³/kg, for dry mass), and
-  `PIXEL_SIZE_20X` (in m) / `PIXEL_SIZE_20X_UM` (~285 nm; Koala 20X) as a
-  header-less fallback for `PhaseBinHeader.pixel_size`.
+  `DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT` (2.0e-4 m³/kg, for dry mass), and the
+  measured per-objective pixel sizes `PIXEL_SIZE_10X` / `PIXEL_SIZE_20X` /
+  `PIXEL_SIZE_40X` (in m) with their `*_UM` twins (~580 / 285 / 144 nm; Koala
+  10X / 20X / 40X) as a header-less fallback for `PhaseBinHeader.pixel_size`.
 - `iivs.dhm.analysis`: quantitative analysis derived from phase. The NumPy
   engines and helpers are re-exported from the package root (the Torch twins are
   not, so importing the package never requires PyTorch).

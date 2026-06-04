@@ -8,8 +8,12 @@ from iivs.dhm.data.constants import (
     DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     DEFAULT_WAVELENGTH,
     DEFAULT_WAVELENGTH_NM,
+    PIXEL_SIZE_10X,
+    PIXEL_SIZE_10X_UM,
     PIXEL_SIZE_20X,
     PIXEL_SIZE_20X_UM,
+    PIXEL_SIZE_40X,
+    PIXEL_SIZE_40X_UM,
 )
 from iivs.dhm.data.phase import read_phase_bin_header, save_phase_bin
 
@@ -23,11 +27,24 @@ def test_default_optical_parameters():
     assert pytest.approx(DEFAULT_WAVELENGTH * 1e9) == DEFAULT_WAVELENGTH_NM
 
 
-def test_20x_pixel_size():
-    # 20X pixel size as recorded by Koala (~285 nm).
-    assert PIXEL_SIZE_20X == 2.84871e-7  # m
-    # the m and um forms describe the same pixel size
-    assert pytest.approx(PIXEL_SIZE_20X * 1e6) == PIXEL_SIZE_20X_UM
+@pytest.mark.parametrize(
+    ("pixel_m", "pixel_um"),
+    (
+        (PIXEL_SIZE_10X, PIXEL_SIZE_10X_UM),
+        (PIXEL_SIZE_20X, PIXEL_SIZE_20X_UM),
+        (PIXEL_SIZE_40X, PIXEL_SIZE_40X_UM),
+    ),
+)
+def test_pixel_size_m_and_um_agree(pixel_m, pixel_um):
+    # the m and um forms describe the same measured pixel size
+    assert pytest.approx(pixel_m * 1e6) == pixel_um
+
+
+def test_pixel_size_scales_with_magnification():
+    # higher magnification -> smaller pixel (10X > 20X > 40X)
+    assert PIXEL_SIZE_10X > PIXEL_SIZE_20X > PIXEL_SIZE_40X
+    # measured values, ~144 / 285 / 580 nm
+    assert PIXEL_SIZE_20X == 2.84871392e-7  # m
 
 
 def test_defaults_drive_a_valid_height_scale(tmp_path):
