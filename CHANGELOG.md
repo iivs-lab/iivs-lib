@@ -56,9 +56,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `PhaseFloatSequence.bounds_nm()` to recompute those bounds straight from the
     float source (global min/max in nanometers, per-file `height_scale`).
   - `save_phase_txt` / `save_phase_npy` single-image writers (the `.txt` / `.npy`
-    twins of `save_phase_bin`), and `convert_phase_folder(root, folder, *,
-    ext=...)` to re-encode a phase acquisition folder between the lossless `bin`
-    / `txt` / `npy` formats.
+    twins of `save_phase_bin`), and `convert_phase_folder` / `convert_phase_list`
+    to re-encode phase between the lossless `bin` / `txt` / `npy` formats. The
+    `folder` form writes a new numbered folder under `root` (shared header); the
+    `list` form rewrites each file in place -- a sibling with the new extension,
+    keeping per-file metadata.
 - `iivs.dhm.data.common`: the building blocks shared across the data
   modalities.
   - `KoalaBinHeader` — base for the packed 23-byte Lyncée Tec Koala `.bin`
@@ -127,9 +129,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     folder; `pixel_size` is passed to the constructor (intensity has no unit or
     height scale). Arrays load via `numpy.load(allow_pickle=False)`.
   - `save_intensity_txt` / `save_intensity_npy` single-image writers, and
-    `convert_intensity_folder(root, folder, *, ext=...)` to re-encode an
-    intensity acquisition folder between the lossless `bin` / `txt` / `npy`
-    formats.
+    `convert_intensity_folder` / `convert_intensity_list` to re-encode intensity
+    between the lossless `bin` / `txt` / `npy` formats (`folder` writes a new
+    numbered folder under `root`; `list` rewrites each file in place, keeping
+    per-file metadata).
 - `iivs.dhm.data.timestamp`: per-frame acquisition timing.
   - `Timestamp` — `elapsed_ms` / `interval_ms` for one frame, with
     `Timestamp.series_from_elapsed_times`.

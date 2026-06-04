@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-__all__ = ("convert_intensity_folder",)
+__all__ = (
+    "convert_intensity_folder",
+    "convert_intensity_list",
+)
 
 from functools import partial
 from typing import TYPE_CHECKING
@@ -16,7 +19,7 @@ if TYPE_CHECKING:
 
     from kaparoo.filesystem.types import StrPath
 
-    from iivs.dhm.data.intensity.base import IntensityFileFolder
+    from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
 
 
 def convert_intensity_folder(
@@ -57,3 +60,46 @@ def convert_intensity_folder(
     with StagedDirectory(root, overwrite=overwrite) as staged:
         for index, image in enumerate(folder):
             save(staged.workdir / template.format(index=index), image)
+
+
+def convert_intensity_list(
+    sequence: IntensityFileList,
+    *,
+    ext: Literal["bin", "txt", "npy"],
+    overwrite: bool = False,
+) -> None:
+    """Re-encode each file of an arbitrary intensity `sequence` in place.
+
+    An `IntensityFileList` (`IntensityBinList` / `IntensityTxtList`) is a flat
+    set of files that may live anywhere, so there is no shared `root` or
+    numbering: each source file is rewritten as a sibling with the new ``.{ext}``
+    suffix (same directory and stem). Every frame keeps *its own* `pixel_size`
+    (read per file); `npy` is header-less, so that metadata is dropped.
+
+    Each file is written atomically, but -- unlike `convert_intensity_folder` --
+    the set is not built as one atomic folder.
+
+    Raises:
+        ValueError: If `ext` is not one of "bin", "txt", "npy".
+        FileExistsError: If a target sibling exists and `overwrite` is False.
+    """
+    if ext not in ("bin", "txt", "npy"):
+        msg = f"ext must be 'bin', 'txt', or 'npy' (got {ext!r})"
+        raise ValueError(msg)
+
+    if ext == "npy":
+        save = partial(save_intensity_npy, overwrite=overwrite)
+        for index, image in enumerate(sequence):
+            save(sequence.get_file(index).with_suffix(f".{ext}"), image)
+        return
+
+    writer = save_intensity_bin if ext == "bin" else save_intensity_txt
+    for index, image in enumerate(sequence):
+        path = sequence.get_file(index)
+        header = sequence._read_header(path)  # noqa: SLF001
+        writer(
+            path.with_suffix(f".{ext}"),
+            image,
+            pixel_size=header.pixel_size,
+            overwrite=overwrite,
+        )

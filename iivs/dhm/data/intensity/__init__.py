@@ -13,6 +13,7 @@ __all__ = (
     "IntensityTxtFolder",
     "IntensityTxtList",
     "convert_intensity_folder",
+    "convert_intensity_list",
     "load_intensity_bin",
     "load_intensity_txt",
     "read_intensity_bin_header",
@@ -35,7 +36,10 @@ from iivs.dhm.data.intensity.bin import (
     read_intensity_bin_header,
     save_intensity_bin,
 )
-from iivs.dhm.data.intensity.convert import convert_intensity_folder
+from iivs.dhm.data.intensity.convert import (
+    convert_intensity_folder,
+    convert_intensity_list,
+)
 from iivs.dhm.data.intensity.npy import IntensityNpyFolder, save_intensity_npy
 from iivs.dhm.data.intensity.tif import IntensityTifFolder, IntensityTifList
 from iivs.dhm.data.intensity.txt import (
