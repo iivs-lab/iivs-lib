@@ -17,9 +17,9 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class PhaseBounds:
-    """The phase display bounds Koala records in ``phbounds.txt``, in nanometers.
+    """The phase display bounds in a Lyncée Tec Koala ``phbounds.txt``, in nanometers.
 
-    Koala renders the quantitative float phase into the uint8 `Image/*.tif`
+    Lyncée Tec Koala renders the quantitative float phase into the uint8 `Image/*.tif`
     previews by linearly mapping ``[min_nm, max_nm]`` onto ``0-255``; these are
     the global min and max of that phase over the acquisition. A
     `PhaseFloatSequence` can recompute them straight from its `Float` source via
@@ -43,7 +43,7 @@ class PhaseBounds:
 
     @classmethod
     def from_file(cls, path: StrPath) -> Self:
-        """Read a Koala ``phbounds.txt`` into a `PhaseBounds`.
+        """Read a Lyncée Tec Koala ``phbounds.txt`` into a `PhaseBounds`.
 
         The file is a ``[nm]`` unit-tag line followed by a ``min max`` line (e.g.
         ``-403.4911 635.9849``).
@@ -75,7 +75,7 @@ class PhaseBounds:
         return cls(min_nm=float(parts[0]), max_nm=float(parts[1]))
 
     def to_file(self, path: StrPath, *, overwrite: bool = False) -> None:
-        """Write to a Koala ``phbounds.txt`` (a `[nm]` tag then `min max`).
+        """Write to a Lyncée Tec Koala ``phbounds.txt`` (a `[nm]` tag then `min max`).
 
         Written atomically: staged to a temp file and moved into place on
         success. `np.save`-style: a path with no suffix gets ``.txt`` appended.
@@ -92,7 +92,7 @@ class PhaseBounds:
 
 
 def read_phbounds(path: StrPath) -> PhaseBounds:
-    """Read a Koala ``phbounds.txt`` into a `PhaseBounds`.
+    """Read a Lyncée Tec Koala ``phbounds.txt`` into a `PhaseBounds`.
 
     The free-function alias for `PhaseBounds.from_file` (as `read_phase_bin_header`
     is for `PhaseBinHeader.from_file`), for callers that prefer a functional API.
@@ -107,7 +107,7 @@ def read_phbounds(path: StrPath) -> PhaseBounds:
 def write_phbounds(
     path: StrPath, bounds: PhaseBounds, *, overwrite: bool = False
 ) -> None:
-    """Write `bounds` to a Koala ``phbounds.txt``.
+    """Write `bounds` to a Lyncée Tec Koala ``phbounds.txt``.
 
     The free-function alias for `PhaseBounds.to_file`, for callers that prefer a
     functional API.
