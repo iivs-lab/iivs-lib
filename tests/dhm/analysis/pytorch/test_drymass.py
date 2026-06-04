@@ -62,6 +62,40 @@ def test_channel_mask():
     assert out[1].item() == pytest.approx(whole / 2)
 
 
+def test_rejects_bad_shapes():
+    calc = DryMass(pixel_size=1e-7)
+    opd = torch.zeros(3, 4, 4)
+    with pytest.raises(ValueError, match="at least 2D"):
+        calc.calc_from_opd(torch.zeros(4))
+    with pytest.raises(ValueError, match="loop over the extra"):  # (T, N, H, W)
+        calc.calc_from_opd(opd, mask=torch.ones(3, 2, 4, 4, dtype=torch.bool))
+    with pytest.raises(ValueError, match="must match"):  # (H, W) mismatch
+        calc.calc_from_opd(opd, mask=torch.ones(4, 5, dtype=torch.bool))
+
+
+def test_preserves_input_dtype():
+    calc = DryMass(pixel_size=1e-7)
+    mask = torch.ones(4, 4, dtype=torch.bool)
+    for dt in (torch.float32, torch.float64):
+        opd = torch.ones(4, 4, dtype=dt)
+        assert calc.calc_from_opd(opd).dtype == dt  # reduce, no mask
+        assert calc.calc_from_opd(opd, mask=mask).dtype == dt  # reduce + mask
+        assert calc.calc_from_opd(opd, reduce=False).dtype == dt  # density map
+
+
+def test_reduce_false_with_mask():
+    calc = DryMass(pixel_size=1e-7)
+    opd = torch.full((2, 2), 50.0)
+    m2 = torch.tensor([[True, False], [False, False]])  # (H, W)
+    d2 = calc.calc_from_opd(opd, mask=m2, reduce=False)
+    assert d2.shape == (2, 2)
+    assert d2.sum().item() == pytest.approx(calc.calc_from_opd(opd, mask=m2).item())
+    m3 = torch.tensor(  # (N, H, W) -> per-object density maps
+        [[[True, False], [False, False]], [[True, True], [False, False]]]
+    )
+    assert calc.calc_from_opd(opd, mask=m3, reduce=False).shape == (2, 2, 2)
+
+
 def test_reduce_false_returns_map_and_keeps_grad():
     phase = torch.ones(2, 2, requires_grad=True)
     density = calc_drymass_from_phase(
