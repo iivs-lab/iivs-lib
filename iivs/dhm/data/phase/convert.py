@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from kaparoo.filesystem import StagedDirectory
 from kaparoo.utils import replace_if_none
 
+from iivs.dhm.data.common import numbered_name
 from iivs.dhm.data.phase.bin import save_phase_bin
 from iivs.dhm.data.phase.npy import save_phase_npy
 from iivs.dhm.data.phase.txt import save_phase_txt
@@ -58,11 +59,10 @@ def convert_phase_folder(
             overwrite=overwrite,
         )
 
-    template = f"{{index:05d}}_{folder.FILE_STEM}.{ext}"
-
     with StagedDirectory(root, overwrite=overwrite) as staged:
         for index, image in enumerate(folder):
-            save(staged.workdir / template.format(index=index), image)
+            name = numbered_name(index, stem=folder.FILE_STEM, ext=ext)
+            save(staged.workdir / name, image)
 
 
 def convert_phase_list(

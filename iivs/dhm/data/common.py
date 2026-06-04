@@ -21,6 +21,7 @@ __all__ = (
     "SequentialFileFolder",
     "ensure_file_extension",
     "load_uint8_tif",
+    "numbered_name",
     "parse_txt_grid",
     "read_bin_pixels",
     "read_npy_shape",
@@ -333,6 +334,16 @@ def ensure_file_extension(path: StrPath, ext: str) -> Path:
     return path
 
 
+def numbered_name(index: int, *, stem: str, ext: str) -> str:
+    """The contiguous Koala filename ``{index:05d}_{stem}.{ext}``.
+
+    The single source of truth for the numbered-folder naming convention, used
+    both to discover/validate a `SequentialFileFolder` and to write a converted
+    folder.
+    """
+    return f"{index:05d}_{stem}.{ext}"
+
+
 # ========================== #
 #       Folder sequence      #
 # ========================== #
@@ -380,7 +391,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
 
     def expected_name(self, index: int) -> str:
         """The contiguous filename expected at `index`."""
-        return f"{index:05d}_{self.FILE_STEM}.{self.FILE_EXT}"
+        return numbered_name(index, stem=self.FILE_STEM, ext=self.FILE_EXT)
 
     def validate(
         self, *, level: Literal["names", "headers", "data"] | None = None

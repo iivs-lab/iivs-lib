@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from kaparoo.filesystem import StagedDirectory
 
+from iivs.dhm.data.common import numbered_name
 from iivs.dhm.data.intensity.bin import save_intensity_bin
 from iivs.dhm.data.intensity.npy import save_intensity_npy
 from iivs.dhm.data.intensity.txt import save_intensity_txt
@@ -50,11 +51,10 @@ def convert_intensity_folder(
         writer = save_intensity_bin if ext == "bin" else save_intensity_txt
         save = partial(writer, pixel_size=folder.header.pixel_size, overwrite=overwrite)
 
-    template = f"{{index:05d}}_{folder.FILE_STEM}.{ext}"
-
     with StagedDirectory(root, overwrite=overwrite) as staged:
         for index, image in enumerate(folder):
-            save(staged.workdir / template.format(index=index), image)
+            name = numbered_name(index, stem=folder.FILE_STEM, ext=ext)
+            save(staged.workdir / name, image)
 
 
 def convert_intensity_list(

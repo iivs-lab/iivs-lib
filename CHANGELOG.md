@@ -73,7 +73,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `FILE_EXT` / `LEVELS` / `DEFAULT_LEVEL` and a `_validate_content` hook;
     numbered discovery (`list_files`), `get_meta`, the contiguity-checked
     `validate` / `validate_file`, and `FrameShapedMixin` come for free. Every
-    modality `*Folder` builds on it.
+    modality `*Folder` builds on it. `numbered_name(index, *, stem, ext)` is
+    the one source of that naming convention, shared by `expected_name` and the
+    folder converters.
   - `FrameShapedMixin` — a mixin that forces a uniform `frame_shape`. There is
     no per-modality `Uniform*Sequence`: a same-shape source is
     `<Modality>Sequence` + `FrameShapedMixin`, so "a uniform phase sequence" is

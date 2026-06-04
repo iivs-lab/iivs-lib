@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from kaparoo.filesystem import StagedDirectory
 
+from iivs.dhm.data.common import numbered_name
 from iivs.dhm.data.hologram.npy import save_hologram_npy
 from iivs.dhm.data.hologram.raw import save_hologram_raw
 from iivs.dhm.data.hologram.tif import save_hologram_tif
@@ -50,8 +51,7 @@ def convert_hologram_sequence(
     writer = save_hologram_tif if ext == "tif" else save_hologram_npy
     save = partial(writer, overwrite=overwrite)
     stem = getattr(sequence, "FILE_STEM", "holo")
-    template = f"{{index:05d}}_{stem}.{ext}"
 
     with StagedDirectory(dest, overwrite=overwrite) as staged:
         for index, image in enumerate(sequence):
-            save(staged.workdir / template.format(index=index), image)
+            save(staged.workdir / numbered_name(index, stem=stem, ext=ext), image)
