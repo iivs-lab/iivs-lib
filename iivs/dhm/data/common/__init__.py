@@ -60,13 +60,6 @@ from iivs.dhm.data.common.image import (
 )
 from iivs.dhm.data.common.npy import read_npy_shape, write_npy
 from iivs.dhm.data.common.sequence import FrameShapedMixin, SequentialFileFolder
-from iivs.dhm.data.common.txt import (
-    KoalaTxtHeaderCodec,
-    parse_txt_grid,
-    write_txt_grid,
-)
+from iivs.dhm.data.common.txt import KoalaTxtHeaderCodec, parse_txt_grid, write_txt_grid
 from iivs.dhm.data.common.utils import numbered_name
-from iivs.dhm.data.common.validation import (
-    validate_float32_image,
-    validate_uint8_image,
-)
+from iivs.dhm.data.common.validation import validate_float32_image, validate_uint8_image

@@ -22,7 +22,7 @@ from iivs.dhm.data.common import (
 )
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
 from iivs.dhm.data.phase.bin import PhaseBinHeader, _to_storable_unit
-from iivs.dhm.data.phase.core import PhaseUnit, resolve_height_scale
+from iivs.dhm.data.phase.unit import PhaseUnit, resolve_height_scale
 
 if TYPE_CHECKING:
     from typing import Literal

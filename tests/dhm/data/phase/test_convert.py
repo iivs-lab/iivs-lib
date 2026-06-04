@@ -5,7 +5,6 @@ import pytest
 
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
 from iivs.dhm.data.phase.convert import convert_phase_folder, convert_phase_list
-from iivs.dhm.data.phase.core import PhaseUnit
 from iivs.dhm.data.phase.npy import PhaseNpyFolder, save_phase_npy
 from iivs.dhm.data.phase.txt import (
     PhaseTxtFolder,
@@ -13,6 +12,7 @@ from iivs.dhm.data.phase.txt import (
     read_phase_txt_header,
     save_phase_txt,
 )
+from iivs.dhm.data.phase.unit import PhaseUnit
 
 
 def _bin_list(tmp_path, specs):

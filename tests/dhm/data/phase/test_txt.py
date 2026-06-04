@@ -4,13 +4,13 @@ import numpy as np
 import pytest
 
 from iivs.dhm.data.phase.bin import PhaseBinHeader
-from iivs.dhm.data.phase.core import PhaseUnit
 from iivs.dhm.data.phase.txt import (
     PhaseTxtFolder,
     PhaseTxtList,
     load_phase_txt,
     read_phase_txt_header,
 )
+from iivs.dhm.data.phase.unit import PhaseUnit
 
 
 def _write_phase_txt(path, data, *, pixel_size=1e-6, height_scale=2e-7, unit="rad"):

@@ -6,7 +6,7 @@ import pytest
 from iivs.dhm.data.phase.base import PhaseFloatSequence, PhaseImageSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
 from iivs.dhm.data.phase.bounds import PhaseBounds, read_phbounds, write_phbounds
-from iivs.dhm.data.phase.core import PhaseUnit
+from iivs.dhm.data.phase.unit import PhaseUnit
 
 
 def _save(path, data, *, height_scale=2e-7):

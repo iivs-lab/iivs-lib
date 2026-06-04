@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit
+from iivs.dhm.data.phase.unit import PhaseUnit, convert_phase_unit
 
 
 def test_convert_phase_unit_radians_to_meters():

@@ -6,8 +6,8 @@ import pytest
 from iivs.dhm.data.common import FrameShapedMixin
 from iivs.dhm.data.phase.base import PhaseFloatSequence
 from iivs.dhm.data.phase.bin import PhaseBinHeader
-from iivs.dhm.data.phase.core import PhaseUnit
 from iivs.dhm.data.phase.npy import PhaseNpyFolder
+from iivs.dhm.data.phase.unit import PhaseUnit
 
 
 def _write(root, index, value=0.0, shape=(2, 3)):

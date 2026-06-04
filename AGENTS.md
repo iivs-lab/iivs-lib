@@ -56,9 +56,11 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
 - Group data-format code by modality, then by file format. Each modality
   under `iivs.dhm.data` (`phase`, `intensity`, `hologram`, `timestamp`)
   splits a multi-format modality into per-format modules plus a
-  format-agnostic `core` and a `base` holding the abstract sequence types —
-  e.g. `phase/{core,base,bin,txt,tif,npy}.py`, `hologram/{base,tif,raw,npy}.py`
-  (a modality drops `core` when it has no format-agnostic logic of its own).
+  format-agnostic module named for its concept and a `base` holding the abstract
+  sequence types — e.g. `phase/{unit,base,bin,txt,tif,npy}.py` (its
+  format-agnostic logic is the `PhaseUnit` system, hence `unit`),
+  `hologram/{base,tif,raw,npy}.py` (a modality omits the format-agnostic module
+  when it has none of its own).
   Building blocks shared across modalities live in the data-root `common`
   package, split by concern into submodules and all re-exported from `common`
   (so `from iivs.dhm.data.common import X` reaches any of them): `bin` (the

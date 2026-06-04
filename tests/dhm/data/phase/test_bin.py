@@ -14,7 +14,7 @@ from iivs.dhm.data.phase.bin import (
     read_phase_bin_header,
     save_phase_bin,
 )
-from iivs.dhm.data.phase.core import PhaseUnit
+from iivs.dhm.data.phase.unit import PhaseUnit
 
 
 def _valid_header_bytes() -> bytearray:
