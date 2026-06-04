@@ -3,16 +3,15 @@ from __future__ import annotations
 __all__ = ("PhaseFloatSequence", "PhaseImageSequence", "PhaseSequence")
 
 import math
-from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
-from kaparoo.data.sequences import DataSequence, FileListSequence
+from kaparoo.data.sequences import DataSequence
 from kaparoo.utils import replace_if_none
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import SequentialFileFolder, ensure_file_extension
+from iivs.dhm.data.common import KoalaFloatFileFolder, KoalaFloatFileList
 from iivs.dhm.data.phase.bounds import PhaseBounds
 from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit
 
@@ -62,15 +61,14 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
     """
 
 
-class PhaseFileList(
-    FileListSequence[NDArray[np.float32], Path], PhaseFloatSequence[Path]
-):
+class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Path]):
     """Format-agnostic phase file list over a ``(read_header, decode)`` codec.
 
-    Holds the list machinery -- per-file unit conversion, `target_unit`,
-    `get_meta`, the `.<FILE_EXT>` check -- once; a concrete subclass
+    Inherits the float-list machinery from `KoalaFloatFileList` (the `.<FILE_EXT>`
+    check, `get_meta`, `get_header`, `load_with_header`); a concrete subclass
     (`PhaseBinList`, `PhaseTxtList`) supplies only `FILE_EXT` and the
-    `_read_header` / `_decode` codec for its on-disk format. `PhaseFileFolder`
+    `_read_header` / `_decode` codec. This adds the phase layer: `target_unit`
+    plus the per-file unit conversion done in `_postprocess`. `PhaseFileFolder`
     is the auto-discovered, same-shape specialization.
 
     Args:
@@ -83,12 +81,10 @@ class PhaseFileList(
         ValueError: If any path does not have the subclass `.<FILE_EXT>` suffix.
     """
 
-    FILE_EXT: ClassVar[str]
-
     def __init__(
         self, files: StrPaths, *, target_unit: PhaseUnit | None = None
     ) -> None:
-        super().__init__([ensure_file_extension(f, self.FILE_EXT) for f in files])
+        super().__init__(files)
         self._target_unit = target_unit
 
     @property
@@ -97,25 +93,11 @@ class PhaseFileList(
         return self._target_unit
 
     @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
-
-    def get_header(self, index: int) -> PhaseBinHeader:
-        """Read the header of the file at `index`.
-
-        A header accessor named to sit beside the sequence's `get_item` (the
-        image) and `get_meta` (the source path), though not part of kaparoo's
-        `get_item` / `get_meta` protocol. The per-file twin of a folder's shared
-        `header`, for a list whose files may each carry a different one.
-        """
-        return self._read_header(self.get_file(index))
-
-    @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`, converted to `target_unit` if one is set."""
-        image, header = self._decode(path)
-        target = self._target_unit if self._target_unit is not None else header.unit
+    def _postprocess(
+        self, image: NDArray[np.float32], header: PhaseBinHeader
+    ) -> NDArray[np.float32]:
+        """Convert the decoded image to `target_unit` via the file's `height_scale`."""
+        target = replace_if_none(self._target_unit, header.unit)
         return convert_phase_unit(
             image, source=header.unit, target=target, height_scale=header.height_scale
         )
@@ -149,29 +131,15 @@ class PhaseFileList(
             raise ValueError(msg)
         return PhaseBounds(min_nm=minimum, max_nm=maximum)
 
-    @abstractmethod
-    def _read_header(self, path: StrPath) -> PhaseBinHeader:
-        """Read the format's header (subclass codec)."""
-        raise NotImplementedError
 
-    @abstractmethod
-    def _decode(
-        self,
-        path: StrPath,
-        *,
-        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
-    ) -> tuple[NDArray[np.float32], PhaseBinHeader]:
-        """Decode the format's image and its header (subclass codec)."""
-        raise NotImplementedError
-
-
-class PhaseFileFolder(SequentialFileFolder[NDArray[np.float32]], PhaseFileList):
+class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
     """Format-agnostic phase folder: numbered discovery + one shared header.
 
-    The auto-discovered, same-shape specialization of `PhaseFileList`; it
-    reuses that list's `load_file` codec. Concrete folders (`PhaseBinFolder`,
-    `PhaseTxtFolder`) set only `FILE_EXT` -- the `(read_header, decode)` codec
-    comes from the matching `*List` they also inherit.
+    The auto-discovered, same-shape specialization of `PhaseFileList`; it reuses
+    that list's `load_file` codec and adds the shared acquisition `header`.
+    Concrete folders (`PhaseBinFolder`, `PhaseTxtFolder`) set only `FILE_EXT` --
+    the `(read_header, decode)` codec comes from the matching `*List` they also
+    inherit. `target_unit` defaults to the shared header's stored unit.
 
     Args:
         root: The folder to scan.
@@ -179,8 +147,6 @@ class PhaseFileFolder(SequentialFileFolder[NDArray[np.float32]], PhaseFileList):
         validate: Validation level at construction, or None to skip.
     """
 
-    LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")
-    DEFAULT_LEVEL: ClassVar[str] = "headers"
     FILE_STEM: ClassVar[str] = "phase"
 
     def __init__(
@@ -190,42 +156,20 @@ class PhaseFileFolder(SequentialFileFolder[NDArray[np.float32]], PhaseFileList):
         target_unit: PhaseUnit | None = None,
         validate: Literal["names", "headers", "data"] | None = "headers",
     ) -> None:
-        # super().__init__(root) discovers the files and, via the cooperative
-        # MRO, runs PhaseFileList.__init__ (target_unit defaults to None here);
-        # the resolved unit is set below once the shared header is known.
-        super().__init__(root)
+        # Stashed for _after_header, which resolves it once the shared header is
+        # known (the cooperative PhaseFileList.__init__ sets target_unit to None).
+        self._init_target_unit = target_unit
+        super().__init__(root, validate=validate)
 
-        self._header = self._read_header(self.get_file(0))
-        self._target_unit = replace_if_none(target_unit, self._header.unit)
+    @override
+    def _after_header(self) -> None:
+        """Resolve `target_unit` against the shared header and fail fast if unreachable."""
+        self._target_unit = replace_if_none(self._init_target_unit, self._header.unit)
 
-        # Fail fast on an unreachable target unit (empty array -> pure pair check).
+        # Empty array -> a pure source/target pair check, no pixel work.
         convert_phase_unit(
             np.empty((0, 0), dtype=np.float32),
             source=self._header.unit,
             target=self._target_unit,
             height_scale=self._header.height_scale,
         )
-
-        if validate is not None:
-            self.validate(level=validate)
-
-    @property
-    def header(self) -> PhaseBinHeader:
-        """The shared acquisition header, read from the first file."""
-        return self._header
-
-    @property
-    @override
-    def frame_shape(self) -> tuple[int, int]:
-        """The (height, width) of each image, from the shared header."""
-        return self._header.shape
-
-    @override
-    def _validate_content(self, path: Path, *, level: str) -> None:
-        """Check `path`'s header matches the reference; at "data", decode too."""
-        if self._read_header(path) != self.header:
-            msg = f"header of {path.name} differs from the first file"
-            raise ValueError(msg)
-
-        if level == "data":
-            self._decode(path, on_nonfinite="raise")

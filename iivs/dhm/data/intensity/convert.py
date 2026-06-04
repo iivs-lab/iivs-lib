@@ -99,11 +99,11 @@ def convert_intensity_list(
 
     writer = save_intensity_bin if ext == "bin" else save_intensity_txt
 
-    for index, image in enumerate(sequence):
-        path = sequence.get_file(index)
-        header = sequence.get_header(index)
+    for index in range(len(sequence)):
+        # decode + header in one read, rather than get_item + a separate get_header.
+        image, header = sequence.load_with_header(index)
         writer(
-            path.with_suffix(f".{ext}"),
+            sequence.get_file(index).with_suffix(f".{ext}"),
             image,
             pixel_size=header.pixel_size,
             overwrite=overwrite,

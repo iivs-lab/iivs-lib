@@ -6,22 +6,20 @@ __all__ = (
     "IntensitySequence",
 )
 
-from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
-from kaparoo.data.sequences import DataSequence, FileListSequence
+from kaparoo.data.sequences import DataSequence
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import SequentialFileFolder, ensure_file_extension
+from iivs.dhm.data.common import KoalaFloatFileFolder, KoalaFloatFileList
 
 if TYPE_CHECKING:
-    from typing import Literal
-
-    from kaparoo.filesystem.types import StrPath, StrPaths
-
-    from iivs.dhm.data.intensity.bin import IntensityBinHeader
+    # Binds `H` via the string forward-ref in the class bases below. ruff does
+    # not count a class-base string subscript as a use, but `ty` resolves it;
+    # a runtime import would cycle (`bin` imports the list/folder from here).
+    from iivs.dhm.data.intensity.bin import IntensityBinHeader  # noqa: F401
 
 
 class IntensitySequence[T, M](DataSequence[T, M]):
@@ -63,109 +61,26 @@ class IntensityImageSequence[M](IntensitySequence[NDArray[np.uint8], M]):
 
 
 class IntensityFileList(
-    FileListSequence[NDArray[np.float32], Path], IntensityFloatSequence[Path]
+    KoalaFloatFileList["IntensityBinHeader"], IntensityFloatSequence[Path]
 ):
     """Format-agnostic intensity file list over a ``(read_header, decode)`` codec.
 
-    Holds the list machinery (and the `.<FILE_EXT>` check) once; a concrete
-    subclass (`IntensityBinList`, `IntensityTxtList`) supplies only `FILE_EXT`
-    and the `_read_header` / `_decode` codec for its on-disk format. Intensity
-    carries no unit, so `load_file` is the bare decode. `IntensityFileFolder` is
-    the auto-discovered, same-shape specialization.
-
-    Args:
-        files: The files to expose, in the given order.
-
-    Raises:
-        ValueError: If any path does not have the subclass `.<FILE_EXT>` suffix.
+    Inherits the float-list machinery from `KoalaFloatFileList` (the `.<FILE_EXT>`
+    check, `get_meta`, `get_header`, `load_with_header`); a concrete subclass
+    (`IntensityBinList`, `IntensityTxtList`) supplies only `FILE_EXT` and the
+    `_read_header` / `_decode` codec. Intensity carries no unit, so the decoded
+    image needs no post-processing. `IntensityFileFolder` is the auto-discovered,
+    same-shape specialization.
     """
 
-    FILE_EXT: ClassVar[str]
 
-    def __init__(self, files: StrPaths) -> None:
-        super().__init__([ensure_file_extension(f, self.FILE_EXT) for f in files])
-
-    @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
-
-    def get_header(self, index: int) -> IntensityBinHeader:
-        """Read the header of the file at `index`.
-
-        A header accessor named to sit beside the sequence's `get_item` (the
-        image) and `get_meta` (the source path), though not part of kaparoo's
-        `get_item` / `get_meta` protocol. The per-file twin of a folder's shared
-        `header`, for a list whose files may each carry a different one.
-        """
-        return self._read_header(self.get_file(index))
-
-    @override
-    def load_file(self, path: Path) -> NDArray[np.float32]:
-        """Load the image at `path`."""
-        return self._decode(path)
-
-    @abstractmethod
-    def _read_header(self, path: StrPath) -> IntensityBinHeader:
-        """Read the format's header (subclass codec)."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def _decode(
-        self,
-        path: StrPath,
-        *,
-        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
-    ) -> NDArray[np.float32]:
-        """Decode the format's image (subclass codec)."""
-        raise NotImplementedError
-
-
-class IntensityFileFolder(SequentialFileFolder[NDArray[np.float32]], IntensityFileList):
+class IntensityFileFolder(
+    KoalaFloatFileFolder["IntensityBinHeader"], IntensityFileList
+):
     """Format-agnostic intensity folder: numbered discovery + one shared header.
 
     The auto-discovered, same-shape specialization of `IntensityFileList`; it
     reuses that list's `load_file` codec. Concrete folders set only `FILE_EXT`.
-
-    Args:
-        root: The folder to scan.
-        validate: Validation level at construction, or None to skip.
     """
 
-    LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")
-    DEFAULT_LEVEL: ClassVar[str] = "headers"
     FILE_STEM: ClassVar[str] = "intensity"
-
-    def __init__(
-        self,
-        root: StrPath,
-        *,
-        validate: Literal["names", "headers", "data"] | None = "headers",
-    ) -> None:
-        super().__init__(root)  # discovers the files; rejects an empty folder
-
-        self._header = self._read_header(self.get_file(0))
-
-        if validate is not None:
-            self.validate(level=validate)
-
-    @property
-    def header(self) -> IntensityBinHeader:
-        """The shared acquisition header, read from the first file."""
-        return self._header
-
-    @property
-    @override
-    def frame_shape(self) -> tuple[int, int]:
-        """The (height, width) of each image, from the shared header."""
-        return self._header.shape
-
-    @override
-    def _validate_content(self, path: Path, *, level: str) -> None:
-        """Check `path`'s header matches the reference; at "data", decode too."""
-        if self._read_header(path) != self.header:
-            msg = f"header of {path.name} differs from the first file"
-            raise ValueError(msg)
-
-        if level == "data":
-            self._decode(path, on_nonfinite="raise")

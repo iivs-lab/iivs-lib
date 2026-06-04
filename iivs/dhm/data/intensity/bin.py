@@ -247,9 +247,9 @@ class IntensityBinList(IntensityFileList):
         path: StrPath,
         *,
         on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
-    ) -> NDArray[np.float32]:
-        """Decode the `.bin` image."""
-        return load_intensity_bin(path, on_nonfinite=on_nonfinite)
+    ) -> tuple[NDArray[np.float32], IntensityBinHeader]:
+        """Decode the `.bin` image and its header."""
+        return load_intensity_bin(path, return_header=True, on_nonfinite=on_nonfinite)
 
 
 class IntensityBinFolder(IntensityFileFolder, IntensityBinList):

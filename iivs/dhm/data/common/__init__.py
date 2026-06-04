@@ -11,6 +11,9 @@ import X`` reaches any of them:
 - `image` — the uint8 image folder/list bases and `.tif` reader
   (`ImageFileFolder` / `ImageFileList`, `ImageTifFolder` / `ImageTifList`,
   `load_uint8_tif`).
+- `float` — the float32 file list/folder bases over a ``(read_header, decode)``
+  codec, generic in the header type (`KoalaFloatFileList`,
+  `KoalaFloatFileFolder`; shared by phase and intensity).
 - `npy` — the header-less `.npy` shape reader and writer (`read_npy_shape`,
   `write_npy`).
 - `sequence` — the numbered-folder base and same-shape mixin
@@ -29,6 +32,8 @@ __all__ = (
     "ImageTifFolder",
     "ImageTifList",
     "KoalaBinHeader",
+    "KoalaFloatFileFolder",
+    "KoalaFloatFileList",
     "KoalaTxtHeaderCodec",
     "SequentialFileFolder",
     "ensure_file_extension",
@@ -51,6 +56,7 @@ from iivs.dhm.data.common.extension import (
     numbered_name,
     with_file_extension,
 )
+from iivs.dhm.data.common.float import KoalaFloatFileFolder, KoalaFloatFileList
 from iivs.dhm.data.common.image import (
     ImageFileFolder,
     ImageFileList,

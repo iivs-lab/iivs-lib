@@ -35,8 +35,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `PhaseBinList` — a `kaparoo.data.sequences.FileListSequence` over an
     explicit, arbitrary list of `.bin` files (any location, no naming or
     shared-header constraint); each file is read independently with per-file
-    unit conversion, and `get_header(index)` reads one file's header (the
-    per-file twin of a folder's shared `header`).
+    unit conversion; `get_header(index)` reads one file's header (the per-file
+    twin of a folder's shared `header`), and `load_with_header(index)` returns
+    the decoded image and its header in a single read.
   - `load_phase_txt` / `read_phase_txt_header`, with `PhaseTxtFolder` /
     `PhaseTxtList` — the text twins of the `.bin` readers over Koala's
     `Float/Txt` export (a 4-line header + float grid carrying the same
@@ -82,6 +83,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `isinstance(x, PhaseSequence) and isinstance(x, FrameShapedMixin)`. Numbered
     folders get it via `SequentialFileFolder`; single-file sources
     (`HologramRawFile`) mix it in directly.
+  - `KoalaFloatFileList` / `KoalaFloatFileFolder` — the float32 list/folder
+    machinery (the `.<FILE_EXT>` check, `get_meta` / `get_header` /
+    `load_with_header`, and a folder's shared `header` / `frame_shape` /
+    `_validate_content`), generic in the header type over a ``(read_header,
+    decode)`` codec whose `_decode` returns ``(image, header)``. Phase and
+    intensity bind it and add only modality-specific bits (phase's unit
+    conversion / `target_unit`), so the per-modality list/folder bodies are no
+    longer duplicated.
   - `validate_float32_image` / `validate_uint8_image` — the shared,
     modality-agnostic image/stack validators (dtype, dimensionality, and -- for
     float32 -- the `on_nonfinite` policy). Both take `allow_stack` (default

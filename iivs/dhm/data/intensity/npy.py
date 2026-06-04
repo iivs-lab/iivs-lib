@@ -104,9 +104,15 @@ class IntensityNpyFolder(IntensityFileFolder):
         path: StrPath,
         *,
         on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
-    ) -> NDArray[np.float32]:
-        """Load the `.npy` float32 image (pickle disabled)."""
+    ) -> tuple[NDArray[np.float32], IntensityBinHeader]:
+        """Load the `.npy` float32 image (pickle disabled) and synthesize its header."""
         data = np.load(path, allow_pickle=False)
-        return validate_float32_image(
+        data = validate_float32_image(
             data, on_nonfinite=on_nonfinite, allow_stack=False
         )
+        header = IntensityBinHeader(
+            width=int(data.shape[1]),
+            height=int(data.shape[0]),
+            pixel_size=self._pixel_size,
+        )
+        return data, header

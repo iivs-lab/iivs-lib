@@ -200,9 +200,9 @@ class IntensityTxtList(IntensityFileList):
         path: StrPath,
         *,
         on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
-    ) -> NDArray[np.float32]:
-        """Decode the `Float/Txt` image."""
-        return load_intensity_txt(path, on_nonfinite=on_nonfinite)
+    ) -> tuple[NDArray[np.float32], IntensityBinHeader]:
+        """Decode the `Float/Txt` image and its header."""
+        return load_intensity_txt(path, return_header=True, on_nonfinite=on_nonfinite)
 
 
 class IntensityTxtFolder(IntensityFileFolder, IntensityTxtList):

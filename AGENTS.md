@@ -88,16 +88,23 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   A plain helper, not a shared list base -- the check is one line, so it does
   not earn an `ExtensionChecked*` class in the MRO. Single-file `*File` sources
   call `ensure_file_extension(path, ext)` in `__init__` themselves.
-- Hoist each modality's format-agnostic list/folder bodies into a
+- The float32 list/folder machinery (the `.<FILE_EXT>` check, `get_meta`,
+  `get_header`, `load_with_header`, the `header` / `frame_shape` /
+  `_validate_content` of a numbered folder) lives **once** in
+  `data.common.float`: `KoalaFloatFileList[H]` / `KoalaFloatFileFolder[H]`,
+  generic in the header type `H` over an abstract ``(read_header, decode)``
+  codec where `_decode` returns ``(image, header)``. Each modality's
   `<Modality>FileList` / `<Modality>FileFolder` base (in the modality's
-  `base.py`, left out of `__all__` -- internal but underscore-free, since
-  Python has no true private) over an abstract ``(read_header, decode)`` codec.
-  The concrete `*BinList` / `*TxtList` supply that codec *and* `FILE_EXT`; the
-  `*BinFolder` / `*TxtFolder` just combine `<Modality>FileFolder` with their
-  `*List`, inheriting everything. So a new format is a couple of codec methods,
-  not a copied list+folder. (The folder's header type annotation references the
-  format
-  modules, so import it under `TYPE_CHECKING` to avoid a cycle.)
+  `base.py`, left out of `__all__` -- internal but underscore-free) just binds
+  `H` and adds modality-only bits: phase overrides `_postprocess` for unit
+  conversion and `_after_header` to resolve `target_unit`; intensity adds
+  nothing. The concrete `*BinList` / `*TxtList` supply the codec *and*
+  `FILE_EXT`; the `*BinFolder` / `*TxtFolder` just combine `<Modality>FileFolder`
+  with their `*List`. So a new format is a couple of codec methods, not a copied
+  list+folder. (Bind `H` with a **string** subscript -- `KoalaFloatFileList
+  ["PhaseBinHeader"]` -- so the header import stays under `TYPE_CHECKING` and the
+  `base` ↔ `bin` cycle is avoided; ruff cannot see the string as a use, so that
+  one `TYPE_CHECKING` import carries `# noqa: F401`.)
 - Mark cross-cutting capabilities with a mixin, not a class per modality.
   `data.common.SequentialFileFolder` mixes in `data.common.FrameShapedMixin`
   (forces `frame_shape`) for every numbered folder; a single-file source like
