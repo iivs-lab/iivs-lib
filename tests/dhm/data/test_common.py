@@ -135,6 +135,33 @@ def test_load_uint8_tif_rejects_non_uint8(tmp_path):
         load_uint8_tif(path)
 
 
+def test_load_uint8_tif_without_imagecodecs_raises_importerror(tmp_path, monkeypatch):
+    # Writing LZW also needs imagecodecs, so simulate tifffile's missing-codec error.
+    path = tmp_path / "00000_phase.tif"
+    path.write_bytes(b"")  # content is irrelevant; imread is mocked
+
+    def _raise(_):
+        msg = "<COMPRESSION.LZW: 5> requires the 'imagecodecs' package"
+        raise KeyError(msg)
+
+    monkeypatch.setattr(tifffile, "imread", _raise)
+    with pytest.raises(ImportError, match=r"iivs-lib\[image\]"):
+        load_uint8_tif(path)
+
+
+def test_load_uint8_tif_reraises_unrelated_keyerror(tmp_path, monkeypatch):
+    path = tmp_path / "00000_phase.tif"
+    path.write_bytes(b"")
+
+    def _raise(_):
+        msg = "unrelated"
+        raise KeyError(msg)
+
+    monkeypatch.setattr(tifffile, "imread", _raise)
+    with pytest.raises(KeyError, match="unrelated"):
+        load_uint8_tif(path)
+
+
 # ========================== #
 #     file extensions        #
 # ========================== #
