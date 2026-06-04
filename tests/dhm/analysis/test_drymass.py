@@ -93,6 +93,17 @@ def test_output_is_float32():
     assert calc_drymass(opd, pixel_size=1e-7, reduce=False).dtype == np.float32  # map
 
 
+def test_rejects_bad_shapes():
+    dmc = DryMassCalculator(pixel_size=1e-7)
+    opd = np.zeros((3, 4, 4), dtype=np.float32)
+    with pytest.raises(ValueError, match="at least 2D"):  # opd needs (H, W)
+        dmc.calc_from_opd(np.zeros(4, dtype=np.float32))
+    with pytest.raises(ValueError, match="loop over the extra"):  # (T, N, H, W) mask
+        dmc.calc_from_opd(opd, mask=np.ones((3, 2, 4, 4), dtype=bool))
+    with pytest.raises(ValueError, match="must match"):  # (H, W) mismatch
+        dmc.calc_from_opd(opd, mask=np.ones((4, 5), dtype=bool))
+
+
 def test_calc_drymass_from_phase_matches_two_step():
     phase = np.full((5, 5), 1.0, dtype=np.float32)
     direct = calc_drymass_from_phase(

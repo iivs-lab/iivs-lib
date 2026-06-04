@@ -123,25 +123,43 @@ class DryMassCalculator:
                 ``(N, H, W)`` mask). If False, return the per-pixel mass-density
                 map (``opd * scale``, masked) without summing, shape
                 ``(..., H, W)`` (or ``(..., N, H, W)``).
-        """
-        if not reduce:
-            if mask is not None:
-                if mask.ndim == 3:
-                    opd = opd[..., None, :, :]
-                opd = opd * mask
-            return (opd * self._scale).astype(np.float32, copy=False)
 
-        if mask is None:
-            total = np.sum(opd, axis=(-2, -1), dtype=np.float64)
+        Raises:
+            ValueError: If `opd` is not at least 2-D ``(..., H, W)``; if `mask`
+                is not 2-D ``(H, W)`` or 3-D ``(N, H, W)`` (a per-frame /
+                higher-rank mask like ``(T, N, H, W)`` is unsupported -- loop
+                over its leading axes); or if `mask`'s ``(H, W)`` does not match
+                `opd`'s.
+        """
+        if opd.ndim < 2:
+            msg = f"opd must be at least 2D (..., H, W) (got {opd.ndim}D)"
+            raise ValueError(msg)
+
+        use_mask = mask is not None
+
+        if use_mask:
+            if mask.ndim not in (2, 3):
+                msg = f"mask must be (H, W) or (N, H, W) (got {mask.ndim}D); loop over the extra (e.g. time) axis"
+                raise ValueError(msg)
+            if mask.shape[-2:] != opd.shape[-2:]:
+                msg = f"opd and mask (H, W) must match (got {opd.shape[-2:]} vs {mask.shape[-2:]})"
+                raise ValueError(msg)
+
+        if reduce:
+            opd = opd.astype(np.float64, copy=False)
+            if use_mask:
+                result = np.tensordot(opd, mask, axes=([-2, -1], [-2, -1]))
+            else:
+                result = np.sum(opd, axis=(-2, -1))
+        elif use_mask:
+            if mask.ndim == 3:  # (N, H, W): object axis before (H, W)
+                opd = opd[..., None, :, :]
+            result = opd * mask
         else:
-            # Contract (H, W) without building the (..., N, H, W) product; cast
-            # to float64 to accumulate there (`tensordot` has no `dtype=`).
-            total = np.tensordot(
-                opd.astype(np.float64, copy=False), mask, axes=([-2, -1], [-2, -1])
-            )
-        # Accumulate in float64 (above) but return float32, like the rest of the
-        # package (cf. `opd.OPDConverter.convert_to_opd`).
-        return (total * self._scale).astype(np.float32, copy=False)
+            result = opd
+
+        # OPD (nm) -> dry mass (pg); accumulated in float64, returned as float32.
+        return (result * self._scale).astype(np.float32, copy=False)
 
     def calc_from_phase(
         self,
