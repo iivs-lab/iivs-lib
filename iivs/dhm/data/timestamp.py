@@ -232,13 +232,13 @@ class TimestampsFixedFPS(TimestampSequence):
     @property
     @override
     def mean_frame_rate(self) -> float:
-        """The mean frame rate, in fps -- the constant `frame_rate`."""
+        """The mean frame rate, in fps (constant: the bound `frame_rate`)."""
         return self._frame_rate
 
     @property
     @override
     def mean_interval_ms(self) -> float:
-        """The mean interval between consecutive frames, in ms -- the constant 1000 / fps."""
+        """The mean interval between consecutive frames, in ms (constant 1000 / fps)."""
         return self._interval_ms
 
     @classmethod
