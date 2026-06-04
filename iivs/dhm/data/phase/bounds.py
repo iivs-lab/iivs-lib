@@ -6,9 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
-from kaparoo.filesystem import StagedFile, ensure_file_exists
-
-from iivs.dhm.data.common import ensure_file_extension
+from kaparoo.filesystem import StagedFile, ensure_file_exists, ensure_file_extension
 
 if TYPE_CHECKING:
     from typing import Self

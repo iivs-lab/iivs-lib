@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-__all__ = (
-    "IntensityFloatSequence",
-    "IntensityImageSequence",
-    "IntensitySequence",
-)
+__all__ = ("IntensityFloatSequence", "IntensityImageSequence", "IntensitySequence")
 
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar

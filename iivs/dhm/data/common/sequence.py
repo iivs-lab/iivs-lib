@@ -12,7 +12,7 @@ from kaparoo.filesystem.search.filters import Regex
 from kaparoo.utils import replace_if_none
 from natsort import natsorted
 
-from iivs.dhm.data.common.extension import numbered_name
+from iivs.dhm.data.common.utils import numbered_name
 
 if TYPE_CHECKING:
     from typing import Literal

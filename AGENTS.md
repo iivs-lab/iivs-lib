@@ -70,12 +70,13 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   `read_npy_shape` + writer), `sequence` (the numbered-folder
   `SequentialFileFolder` template that every `*Folder` builds on, plus the
   `FrameShapedMixin`), `validation` (the float32/uint8 image validators), and
-  `extension` (the numbered-folder helper `numbered_name`; the path helper
-  `ensure_file_extension`, with its `add=True` suffix-appending mode, is
-  re-exported from `kaparoo.filesystem`). Keep the submodules acyclic
-  (`extension`/`validation`/`bin`/`npy` are leaves; `sequence` → `extension`;
-  `txt` → `bin`, `extension`; `image` → `validation`, `extension`,
-  `sequence`). Prefer a shared base/template + a small mixin over copy-pasting
+  `utils` (the numbered-folder filename helper `numbered_name`). The path helper
+  `ensure_file_extension` (with its `add=True` suffix-appending mode) is imported
+  directly from `kaparoo.filesystem` wherever needed, not re-exported. Keep the
+  submodules acyclic
+  (`utils`/`validation`/`bin`/`npy` are leaves; `sequence` → `utils`;
+  `txt` → `bin`; `image`/`float` → `validation` / `bin`, `sequence`). Prefer a
+  shared base/template + a small mixin over copy-pasting
   across modalities.
 - A `*Folder` is the auto-discovered special case of its `*List`, so it
   *subclasses the list* (mirroring kaparoo's `FileFolderSequence` ⊂

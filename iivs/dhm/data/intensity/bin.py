@@ -12,11 +12,10 @@ __all__ = (
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-from kaparoo.filesystem import ensure_file_exists
+from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
 from iivs.dhm.data.common import (
     KoalaBinHeader,
-    ensure_file_extension,
     read_bin_pixels,
     validate_float32_image,
     write_bin,

@@ -1,11 +1,6 @@
 from __future__ import annotations
 
-__all__ = (
-    "Timestamp",
-    "TimestampSequence",
-    "TimestampsFixedFPS",
-    "TimestampsTxtFile",
-)
+__all__ = ("Timestamp", "TimestampSequence", "TimestampsFixedFPS", "TimestampsTxtFile")
 
 import itertools
 import re
@@ -16,9 +11,7 @@ from typing import TYPE_CHECKING, override
 
 from kaparoo.data.sequences.base import DataSequence
 from kaparoo.data.sequences.templates import SingleFileSequence
-from kaparoo.filesystem import ensure_file_exists
-
-from iivs.dhm.data.common import ensure_file_extension
+from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

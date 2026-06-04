@@ -5,10 +5,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 import tifffile
+from kaparoo.filesystem import ensure_file_extension
 
 from iivs.dhm.data.common import (
     FrameShapedMixin,
-    ensure_file_extension,
     load_uint8_tif,
     numbered_name,
     parse_txt_grid,

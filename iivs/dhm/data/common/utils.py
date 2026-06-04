@@ -1,11 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("ensure_file_extension", "numbered_name")
-
-# `ensure_file_extension` (incl. its `add=True` suffix-appending mode, the former
-# `with_file_extension`) lives in `kaparoo.filesystem`; re-exported here so the
-# modality modules keep reaching it through `iivs.dhm.data.common`.
-from kaparoo.filesystem import ensure_file_extension
+__all__ = ("numbered_name",)
 
 
 def numbered_name(index: int, *, stem: str, ext: str) -> str:

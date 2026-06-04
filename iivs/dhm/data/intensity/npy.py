@@ -5,9 +5,9 @@ __all__ = ("IntensityNpyFolder", "save_intensity_npy")
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
+from kaparoo.filesystem import ensure_file_extension
 
 from iivs.dhm.data.common import (
-    ensure_file_extension,
     read_npy_shape,
     validate_float32_image,
     write_npy,

@@ -13,21 +13,16 @@ import warnings
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-from kaparoo.filesystem import ensure_file_exists
+from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
 from iivs.dhm.data.common import (
     KoalaBinHeader,
-    ensure_file_extension,
     read_bin_pixels,
     validate_float32_image,
     write_bin,
 )
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
-from iivs.dhm.data.phase.core import (
-    PhaseUnit,
-    convert_phase_unit,
-    resolve_height_scale,
-)
+from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit, resolve_height_scale
 
 if TYPE_CHECKING:
     from typing import Literal, Self

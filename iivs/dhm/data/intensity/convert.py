@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-__all__ = (
-    "convert_intensity_folder",
-    "convert_intensity_list",
-)
+__all__ = ("convert_intensity_folder", "convert_intensity_list")
 
 from functools import partial
 from typing import TYPE_CHECKING

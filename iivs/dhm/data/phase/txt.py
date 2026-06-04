@@ -12,11 +12,10 @@ import re
 import warnings
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-from kaparoo.filesystem import ensure_file_exists
+from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
 from iivs.dhm.data.common import (
     KoalaTxtHeaderCodec,
-    ensure_file_extension,
     parse_txt_grid,
     validate_float32_image,
     write_txt_grid,

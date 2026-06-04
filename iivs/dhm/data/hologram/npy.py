@@ -6,13 +6,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
+from kaparoo.filesystem import ensure_file_extension
 
-from iivs.dhm.data.common import (
-    ImageFileFolder,
-    ensure_file_extension,
-    validate_uint8_image,
-    write_npy,
-)
+from iivs.dhm.data.common import ImageFileFolder, validate_uint8_image, write_npy
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:

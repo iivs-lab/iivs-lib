@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-__all__ = (
-    "convert_phase_folder",
-    "convert_phase_list",
-)
+__all__ = ("convert_phase_folder", "convert_phase_list")
 
 from functools import partial
 from typing import TYPE_CHECKING

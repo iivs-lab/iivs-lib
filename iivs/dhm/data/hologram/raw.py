@@ -12,14 +12,10 @@ from typing import TYPE_CHECKING, ClassVar, cast, override
 
 import numpy as np
 from kaparoo.data.sequences.templates import SingleFileSequence
-from kaparoo.filesystem import StagedFile, ensure_file_exists
+from kaparoo.filesystem import StagedFile, ensure_file_exists, ensure_file_extension
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import (
-    FrameShapedMixin,
-    ensure_file_extension,
-    validate_uint8_image,
-)
+from iivs.dhm.data.common import FrameShapedMixin, validate_uint8_image
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:

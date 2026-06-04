@@ -13,11 +13,7 @@ from numpy.typing import NDArray
 
 from iivs.dhm.data.common import KoalaFloatFileFolder, KoalaFloatFileList
 from iivs.dhm.data.phase.bounds import PhaseBounds
-from iivs.dhm.data.phase.core import (
-    PhaseUnit,
-    convert_phase_unit,
-    resolve_height_scale,
-)
+from iivs.dhm.data.phase.core import PhaseUnit, convert_phase_unit, resolve_height_scale
 
 if TYPE_CHECKING:
     from collections.abc import Callable

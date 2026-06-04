@@ -16,10 +16,9 @@ from typing import TYPE_CHECKING, ClassVar, override
 import numpy as np
 import tifffile
 from kaparoo.data.sequences import FileListSequence
-from kaparoo.filesystem import ensure_file_exists
+from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common.extension import ensure_file_extension
 from iivs.dhm.data.common.sequence import SequentialFileFolder
 from iivs.dhm.data.common.validation import validate_uint8_image
 

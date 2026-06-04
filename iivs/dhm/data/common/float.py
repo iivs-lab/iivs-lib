@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
 from kaparoo.data.sequences import FileListSequence
+from kaparoo.filesystem import ensure_file_extension
 from numpy.typing import NDArray
 
 from iivs.dhm.data.common.bin import KoalaBinHeader
-from iivs.dhm.data.common.extension import ensure_file_extension
 from iivs.dhm.data.common.sequence import SequentialFileFolder
 
 if TYPE_CHECKING:

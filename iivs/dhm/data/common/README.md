@@ -21,7 +21,7 @@ READMEs.
 | `npy` | `read_npy_shape` (shape from a `.npy` header) + `write_npy`. |
 | `sequence` | `SequentialFileFolder` (numbered `{index:05d}_<stem>.<ext>` discovery + validation) + the `FrameShapedMixin` (forces `frame_shape`). |
 | `validation` | `validate_float32_image` / `validate_uint8_image`. |
-| `extension` | `numbered_name`; re-exports `kaparoo.filesystem`'s `ensure_file_extension` (incl. its `add=True` suffix-appending mode). |
+| `utils` | `numbered_name` (the `{index:05d}_<stem>.<ext>` builder). The path helper `ensure_file_extension` is imported directly from `kaparoo.filesystem`. |
 
 ## Design notes
 

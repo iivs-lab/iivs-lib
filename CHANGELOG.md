@@ -135,8 +135,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `*NpyFolder`s cheaply.
   - `write_npy` — the shared atomic `.npy` writer behind every modality's
     `save_*_npy`.
-  - `ensure_file_extension` (re-exported from `kaparoo.filesystem`, now `>=0.7.0`)
-    — the `*List` and single-file `*File` sequences (`HologramRawFile`,
+  - `ensure_file_extension` (imported directly from `kaparoo.filesystem`, now
+    `>=0.7.0`) — the `*List` and single-file `*File` sequences (`HologramRawFile`,
     `TimestampsTxtFile`) validate each given path's `.<FILE_EXT>` at construction,
     so a wrong-format file fails up front rather than on decode (`FILE_EXT` lives
     on the concrete `*List`; the auto-discovering `*Folder` inherits it). Every

@@ -12,12 +12,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 import tifffile
-from kaparoo.filesystem import StagedFile
+from kaparoo.filesystem import StagedFile, ensure_file_extension
 
 from iivs.dhm.data.common import (
     ImageTifFolder,
     ImageTifList,
-    ensure_file_extension,
     load_uint8_tif,
     validate_uint8_image,
 )
