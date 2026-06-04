@@ -104,9 +104,10 @@ class PhaseFileList(
     def get_header(self, index: int) -> PhaseBinHeader:
         """Read the header of the file at `index`.
 
-        The header accessor of the sequence protocol, beside `get_item` (the
-        image) and `get_meta` (the source path): the per-file twin of a folder's
-        shared `header`, for a list whose files may each carry a different one.
+        A header accessor named to sit beside the sequence's `get_item` (the
+        image) and `get_meta` (the source path), though not part of kaparoo's
+        `get_item` / `get_meta` protocol. The per-file twin of a folder's shared
+        `header`, for a list whose files may each carry a different one.
         """
         return self._read_header(self.get_file(index))
 
