@@ -10,7 +10,7 @@ from kaparoo.data.sequences import FileFolderSequence
 from kaparoo.filesystem.search import search_files
 from kaparoo.filesystem.search.filters import Regex
 from kaparoo.utils import replace_if_none
-from natsort import natsorted
+from natsort import natsorted, ns
 
 from iivs.dhm.data.common.utils import numbered_name
 
@@ -70,7 +70,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         if not files:
             msg = f"no NNNNN_{self.FILE_STEM}.{self.FILE_EXT} files found in {root}"
             raise FileNotFoundError(msg)
-        return natsorted(files)
+        return natsorted(files, alg=ns.PATH)
 
     @override
     def get_meta(self, index: int) -> Path:
