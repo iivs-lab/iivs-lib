@@ -66,11 +66,3 @@ abbreviations (`visualization`, not `viz`). Shared layers are pure infra and
   size / resolution. Shared OME-TIFF / Micro-Manager / channel I/O lives in
   `confocal.data.common` (over `common.data`); fluorescence / bright-field are
   contrast sub-modules; the `rcm` resolution variant is thin.
-- **(Optional) Upstream the most-generic file machinery to `kaparoo`.** The
-  numbered-folder naming + open-index discovery (a `Numbered` filter unifying
-  today's `numbered_name` + discovery regex) and the acquisition-tree spec
-  (`kaparoo.filesystem.hierarchy`, usable as a `search` predicate via
-  `conforms`) are general enough to live in `kaparoo`; `common.data` would then
-  build on them. Pending a `kaparoo` release — these are in its post-0.7.0
-  unreleased set, which also moves the filter DSL to `kaparoo.filters` (update
-  the `Regex` import then).
