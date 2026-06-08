@@ -61,8 +61,8 @@ elapsed = ts[10].elapsed_ms   # ms since acquisition start
 
 ## Acknowledgement
 
-The `.bin`, `.tif` / `.raw`, and `timestamps.txt` formats originate from
-[Lyncée Tec](https://www.lynceetec.com/)'s Koala software; the `.bin` layout was
-cross-checked against [`pyKoalaUtils`](https://github.com/lynceetec/pyKoalaUtils)
-(MIT). This package is an independent reimplementation and contains no code from
-it.
+The `.bin`, `.tif` / `.raw`, and `timestamps.txt` formats are
+[Lyncée Tec](https://www.lynceetec.com/)'s proprietary Koala formats; the `.bin`
+container (float32, shared by phase and intensity) was cross-checked against
+[`pyKoalaUtils`](https://github.com/lynceetec/pyKoalaUtils) (MIT). This package
+is an independent reimplementation and contains no code from it.

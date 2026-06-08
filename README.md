@@ -143,9 +143,10 @@ See [CHANGELOG.md](./CHANGELOG.md) for the version history.
 
 ## 🙏 Acknowledgements
 
-The Koala file formats read and written by `iivs.dhm.data` originate from
-[Lyncée Tec](https://www.lynceetec.com/)'s Koala software. The phase `.bin`
-format was cross-checked against their reference implementation,
+The file formats read and written by `iivs.dhm.data` are
+[Lyncée Tec](https://www.lynceetec.com/)'s proprietary Koala formats. The `.bin`
+format — Koala's float32 binary container, shared by the phase and intensity
+reconstructions — was cross-checked against their reference implementation,
 [`pyKoalaUtils`](https://github.com/lynceetec/pyKoalaUtils) (MIT). iivs-lib is
 an independent reimplementation and contains no code from it.
 

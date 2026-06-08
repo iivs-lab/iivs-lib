@@ -9,9 +9,10 @@ is a codec module exposing a loader, a saver, and lazy sequence types, and a
 across modalities live in `common`; `constants` holds the lab's default optical
 parameters.
 
-The ``.bin``, ``.tif`` / ``.raw``, and ``timestamps.txt`` formats originate from
-`Lyncée Tec <https://www.lynceetec.com/>`_'s Koala software. The ``.bin`` layout
-was verified against their reference implementation,
+The ``.bin``, ``.tif`` / ``.raw``, and ``timestamps.txt`` formats are
+`Lyncée Tec <https://www.lynceetec.com/>`_'s proprietary Koala formats. The
+``.bin`` container (float32, shared by phase and intensity) was verified against
+their reference implementation,
 `pyKoalaUtils <https://github.com/lynceetec/pyKoalaUtils>`_ (MIT); this package
 is an independent reimplementation and contains no code from it.
 """
