@@ -13,18 +13,17 @@ from iivs.dhm.data.phase.bin import PhaseBinHeader
 from iivs.dhm.data.phase.unit import resolve_height_scale
 
 if TYPE_CHECKING:
-    from typing import Literal
-
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
+    from iivs.dhm.data.common import OnNonFinite, ValidationLevel
     from iivs.dhm.data.phase.unit import PhaseUnit
 
 
 def load_phase_npy(
     path: StrPath,
     *,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+    on_nonfinite: OnNonFinite = "ignore",
 ) -> NDArray[np.float32]:
     """Load a header-less `.npy` float32 phase image.
 
@@ -58,7 +57,7 @@ def save_phase_npy(
     data: NDArray[np.float32],
     *,
     overwrite: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+    on_nonfinite: OnNonFinite = "warn",
 ) -> None:
     """Save a 2D float32 phase image as an uncompressed `.npy` file.
 
@@ -127,7 +126,7 @@ class PhaseNpyFolder(PhaseFileFolder):
         wavelength: float | None = None,
         refractive_delta: float | None = None,
         target_unit: PhaseUnit | None = None,
-        validate: Literal["names", "headers", "data"] | None = "headers",
+        validate: ValidationLevel | None = "headers",
     ) -> None:
         # Set the synthesized-header metadata before super().__init__, which
         # reads the first file's header via _read_header (uses these).
@@ -159,7 +158,7 @@ class PhaseNpyFolder(PhaseFileFolder):
         self,
         path: StrPath,
         *,
-        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+        on_nonfinite: OnNonFinite = "ignore",
     ) -> tuple[NDArray[np.float32], PhaseBinHeader]:
         """Load the `.npy` float32 image and synthesize its header from the shape."""
         data = load_phase_npy(path, on_nonfinite=on_nonfinite)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("FrameShapedMixin", "SequentialFileFolder")
+__all__ = ("FrameShapedMixin", "SequentialFileFolder", "ValidationLevel")
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -16,6 +16,10 @@ from iivs.dhm.data.common.utils import numbered_name
 
 if TYPE_CHECKING:
     from typing import Literal
+
+
+type ValidationLevel = Literal["names", "headers", "data"]
+"""How deeply a numbered folder checks each file: name, header, or full data."""
 
 
 class FrameShapedMixin(ABC):
@@ -81,9 +85,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         """The contiguous filename expected at `index`."""
         return numbered_name(index, stem=self.FILE_STEM, ext=self.FILE_EXT)
 
-    def validate(
-        self, *, level: Literal["names", "headers", "data"] | None = None
-    ) -> None:
+    def validate(self, *, level: ValidationLevel | None = None) -> None:
         """Validate every file to `level` (defaults to `DEFAULT_LEVEL`)."""
         for index in range(len(self)):
             self.validate_file(index, level=level)
@@ -92,7 +94,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         self,
         index: int,
         *,
-        level: Literal["names", "headers", "data"] | None = None,
+        level: ValidationLevel | None = None,
     ) -> None:
         """Validate the file at `index` to `level` (defaults to `DEFAULT_LEVEL`).
 

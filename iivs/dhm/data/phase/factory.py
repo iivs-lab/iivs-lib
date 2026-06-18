@@ -9,9 +9,14 @@ __all__ = (
 )
 
 import warnings
-from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
+from iivs.dhm.data.common import (
+    FLOAT_FORMATS,
+    detect_numbered_format,
+    file_extension,
+    unsupported_extension,
+)
 from iivs.dhm.data.phase.bin import (
     PhaseBinFolder,
     PhaseBinList,
@@ -30,35 +35,21 @@ from iivs.dhm.data.phase.txt import (
 from iivs.dhm.data.phase.unit import PhaseUnit, resolve_height_scale
 
 if TYPE_CHECKING:
-    from typing import Literal
+    from collections.abc import Sequence
 
     import numpy as np
     from kaparoo.filesystem.types import StrPath, StrPaths
     from numpy.typing import NDArray
 
+    from iivs.dhm.data.common import FloatFormat, OnNonFinite, ValidationLevel
     from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
     from iivs.dhm.data.phase.bin import PhaseBinHeader
-
-# The float phase formats this package dispatches over, by file extension.
-_FORMATS = ("bin", "txt", "npy")
-
-
-def _ext(path: StrPath) -> str:
-    """The lower-case extension of `path`, without the leading dot."""
-    return Path(path).suffix.casefold().removeprefix(".")
-
-
-def _unsupported(ext: str) -> ValueError:
-    """A `ValueError` for an extension that is none of the phase formats."""
-    return ValueError(
-        f"unsupported phase extension {ext!r} (expected bin, txt, or npy)"
-    )
 
 
 def load_phase(
     path: StrPath,
     *,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+    on_nonfinite: OnNonFinite = "ignore",
 ) -> NDArray[np.float32]:
     """Load a float32 phase image, picking the reader by `path`'s extension.
 
@@ -71,14 +62,14 @@ def load_phase(
         ValueError: If `path`'s extension is not bin, txt, or npy (plus the
             per-format errors of the chosen reader).
     """
-    ext = _ext(path)
+    ext = file_extension(path)
     if ext == "bin":
         return load_phase_bin(path, on_nonfinite=on_nonfinite)
     if ext == "txt":
         return load_phase_txt(path, on_nonfinite=on_nonfinite)
     if ext == "npy":
         return load_phase_npy(path, on_nonfinite=on_nonfinite)
-    raise _unsupported(ext)
+    raise unsupported_extension(ext, kind="phase", formats=FLOAT_FORMATS)
 
 
 def read_phase_header(path: StrPath) -> PhaseBinHeader:
@@ -91,7 +82,7 @@ def read_phase_header(path: StrPath) -> PhaseBinHeader:
         ValueError: If `path` is `.npy` (header-less) or its extension is not
             bin or txt.
     """
-    ext = _ext(path)
+    ext = file_extension(path)
     if ext == "bin":
         return read_phase_bin_header(path)
     if ext == "txt":
@@ -99,7 +90,44 @@ def read_phase_header(path: StrPath) -> PhaseBinHeader:
     if ext == "npy":
         msg = "`.npy` is header-less; supply metadata via PhaseNpyFolder"
         raise ValueError(msg)
-    raise _unsupported(ext)
+    raise unsupported_extension(ext, kind="phase", formats=FLOAT_FORMATS)
+
+
+@overload
+def save_phase(
+    path: StrPath,
+    data: NDArray[np.float32],
+    *,
+    pixel_size: float,
+    height_scale: float,
+    unit: PhaseUnit = ...,
+    overwrite: bool = ...,
+    on_nonfinite: OnNonFinite = ...,
+) -> None: ...
+
+
+@overload
+def save_phase(
+    path: StrPath,
+    data: NDArray[np.float32],
+    *,
+    pixel_size: float,
+    wavelength: float,
+    refractive_delta: float,
+    unit: PhaseUnit = ...,
+    overwrite: bool = ...,
+    on_nonfinite: OnNonFinite = ...,
+) -> None: ...
+
+
+@overload
+def save_phase(
+    path: StrPath,
+    data: NDArray[np.float32],
+    *,
+    overwrite: bool = ...,
+    on_nonfinite: OnNonFinite = ...,
+) -> None: ...
 
 
 def save_phase(
@@ -112,7 +140,7 @@ def save_phase(
     refractive_delta: float | None = None,
     unit: PhaseUnit = PhaseUnit.RADIANS,
     overwrite: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+    on_nonfinite: OnNonFinite = "warn",
 ) -> None:
     """Save a 2D float32 phase image, picking the writer by `path`'s extension.
 
@@ -127,7 +155,7 @@ def save_phase(
             `.txt`, if `pixel_size` is missing or neither/both scale forms are
             given.
     """
-    ext = _ext(path)
+    ext = file_extension(path)
     if ext in ("bin", "txt"):
         if pixel_size is None:
             msg = "pixel_size is required for .bin / .txt"
@@ -158,7 +186,7 @@ def save_phase(
             warnings.warn(msg, stacklevel=2)
         save_phase_npy(path, data, overwrite=overwrite, on_nonfinite=on_nonfinite)
         return
-    raise _unsupported(ext)
+    raise unsupported_extension(ext, kind="phase", formats=FLOAT_FORMATS)
 
 
 def phase_list(
@@ -181,7 +209,7 @@ def phase_list(
         msg = "files must be non-empty"
         raise ValueError(msg)
 
-    exts = {_ext(f) for f in files}
+    exts = {file_extension(f) for f in files}
     if len(exts) != 1:
         msg = f"all files must share one extension (got {sorted(exts)})"
         raise ValueError(msg)
@@ -194,7 +222,44 @@ def phase_list(
     if ext == "npy":
         msg = "no .npy phase list; use PhaseNpyFolder (npy is header-less)"
         raise ValueError(msg)
-    raise _unsupported(ext)
+    raise unsupported_extension(ext, kind="phase", formats=FLOAT_FORMATS)
+
+
+@overload
+def phase_folder(
+    root: StrPath,
+    *,
+    pixel_size: float,
+    unit: PhaseUnit,
+    height_scale: float,
+    target_unit: PhaseUnit | None = ...,
+    validate: ValidationLevel | None = ...,
+    prefer: FloatFormat | Sequence[FloatFormat] | None = ...,
+) -> PhaseFileFolder: ...
+
+
+@overload
+def phase_folder(
+    root: StrPath,
+    *,
+    pixel_size: float,
+    unit: PhaseUnit,
+    wavelength: float,
+    refractive_delta: float,
+    target_unit: PhaseUnit | None = ...,
+    validate: ValidationLevel | None = ...,
+    prefer: FloatFormat | Sequence[FloatFormat] | None = ...,
+) -> PhaseFileFolder: ...
+
+
+@overload
+def phase_folder(
+    root: StrPath,
+    *,
+    target_unit: PhaseUnit | None = ...,
+    validate: ValidationLevel | None = ...,
+    prefer: FloatFormat | Sequence[FloatFormat] | None = ...,
+) -> PhaseFileFolder: ...
 
 
 def phase_folder(
@@ -206,36 +271,37 @@ def phase_folder(
     wavelength: float | None = None,
     refractive_delta: float | None = None,
     target_unit: PhaseUnit | None = None,
-    validate: Literal["names", "headers", "data"] | None = "headers",
+    validate: ValidationLevel | None = "headers",
+    prefer: FloatFormat | Sequence[FloatFormat] | None = None,
 ) -> PhaseFileFolder:
     """Open a numbered phase folder, picking the class by the format it holds.
 
-    Scans `root` for `{index:05d}_phase.<ext>` files and dispatches to
-    `PhaseBinFolder` / `PhaseTxtFolder` / `PhaseNpyFolder`. The `.bin` / `.txt`
-    folders read their metadata from the files, so the `pixel_size` / `unit` /
-    scale args must be omitted for them; the header-less `.npy` folder instead
-    **requires** `pixel_size` and `unit` (and a scale form).
+    Discovers the `{index:05d}_phase.<ext>` files under `root` (via
+    `data.common.detect_numbered_format`) and dispatches to `PhaseBinFolder` /
+    `PhaseTxtFolder` / `PhaseNpyFolder`. The `.bin` / `.txt` folders read their
+    metadata from the files, so the `pixel_size` / `unit` / scale args must be
+    omitted for them; the header-less `.npy` folder instead **requires**
+    `pixel_size` and `unit` (and a scale form).
+
+    Args:
+        root: The folder to scan.
+        pixel_size, unit, height_scale, wavelength, refractive_delta: The
+            metadata for a `.npy` folder (omit for `.bin` / `.txt`).
+        target_unit: Unit to return loaded images in (None keeps the stored).
+        validate: Validation level at construction, or None to skip.
+        prefer: How to resolve a `root` that holds more than one format -- `None`
+            (default) raises, while a format or a priority sequence picks the
+            first present one (e.g. `prefer=("bin", "txt")`).
 
     Raises:
         FileNotFoundError: If `root` holds no `NNNNN_phase.{bin,txt,npy}` files.
-        ValueError: If `root` mixes formats, if metadata args are given for a
-            `.bin` / `.txt` folder, or if a `.npy` folder is missing
-            `pixel_size` / `unit`.
+        ValueError: If `root` mixes formats and `prefer` does not resolve it, if
+            metadata args are given for a `.bin` / `.txt` folder, or if a `.npy`
+            folder is missing `pixel_size` / `unit`.
     """
-    root_path = Path(root)
-    present = [
-        ext
-        for ext in _FORMATS
-        if next(root_path.glob(f"*_phase.{ext}"), None) is not None
-    ]
-    if not present:
-        msg = f"no NNNNN_phase.(bin|txt|npy) files found in {root}"
-        raise FileNotFoundError(msg)
-    if len(present) > 1:
-        msg = f"ambiguous: {root} holds multiple phase formats ({present})"
-        raise ValueError(msg)
-
-    ext = present[0]
+    ext = detect_numbered_format(
+        root, stem="phase", formats=FLOAT_FORMATS, prefer=prefer
+    )
     if ext in ("bin", "txt"):
         if any(
             arg is not None

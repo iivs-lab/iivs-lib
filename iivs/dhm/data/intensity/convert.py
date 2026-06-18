@@ -13,19 +13,19 @@ from typing import TYPE_CHECKING
 from kaparoo.filesystem import StagedDirectory
 from kaparoo.utils import ensure_one_of
 
-from iivs.dhm.data.common import numbered_name
+from iivs.dhm.data.common import FLOAT_FORMATS, numbered_name
 from iivs.dhm.data.intensity.bin import save_intensity_bin
 from iivs.dhm.data.intensity.npy import save_intensity_npy
 from iivs.dhm.data.intensity.txt import save_intensity_txt
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Literal
 
     import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
+    from iivs.dhm.data.common import FloatFormat
     from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
 
 
@@ -33,7 +33,7 @@ def save_intensity_folder(
     root: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
-    ext: Literal["bin", "txt", "npy"],
+    ext: FloatFormat,
     pixel_size: float | None = None,
     stem: str = "intensity",
     overwrite: bool = False,
@@ -67,7 +67,7 @@ def save_intensity_folder(
             "txt") `pixel_size` is missing.
         FileExistsError: If `root` exists and `overwrite` is False.
     """
-    ensure_one_of(ext, ("bin", "txt", "npy"), name="ext")
+    ensure_one_of(ext, FLOAT_FORMATS, name="ext")
 
     if ext == "npy":
         if pixel_size is not None:
@@ -90,7 +90,7 @@ def convert_intensity_folder(
     root: StrPath,
     folder: IntensityFileFolder,
     *,
-    ext: Literal["bin", "txt", "npy"],
+    ext: FloatFormat,
     overwrite: bool = False,
 ) -> None:
     """Re-encode an intensity `folder` into `root` in the `ext` format.
@@ -132,7 +132,7 @@ def convert_intensity_folder(
 def convert_intensity_list(
     sequence: IntensityFileList,
     *,
-    ext: Literal["bin", "txt", "npy"],
+    ext: FloatFormat,
     overwrite: bool = False,
 ) -> None:
     """Re-encode each file of an intensity `sequence` in place, changing the suffix.
@@ -152,7 +152,7 @@ def convert_intensity_list(
         ValueError: If `ext` is not "bin", "txt", or "npy".
         FileExistsError: If a target sibling exists and `overwrite` is False.
     """
-    ensure_one_of(ext, ("bin", "txt", "npy"), name="ext")
+    ensure_one_of(ext, FLOAT_FORMATS, name="ext")
 
     if ext == "npy":
         save = partial(save_intensity_npy, overwrite=overwrite)

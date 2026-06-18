@@ -4,12 +4,12 @@ __all__ = ("convert_phase_folder", "convert_phase_list", "save_phase_folder")
 
 import warnings
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from kaparoo.filesystem import StagedDirectory
 from kaparoo.utils import ensure_one_of, replace_if_none
 
-from iivs.dhm.data.common import numbered_name
+from iivs.dhm.data.common import FLOAT_FORMATS, numbered_name
 from iivs.dhm.data.phase.bin import save_phase_bin
 from iivs.dhm.data.phase.npy import save_phase_npy
 from iivs.dhm.data.phase.txt import save_phase_txt
@@ -17,20 +17,60 @@ from iivs.dhm.data.phase.unit import PhaseUnit, resolve_height_scale
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Literal
 
     import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
+    from iivs.dhm.data.common import FloatFormat
     from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
+
+
+@overload
+def save_phase_folder(
+    root: StrPath,
+    images: Iterable[NDArray[np.float32]],
+    *,
+    ext: FloatFormat,
+    pixel_size: float,
+    height_scale: float,
+    unit: PhaseUnit = ...,
+    stem: str = ...,
+    overwrite: bool = ...,
+) -> None: ...
+
+
+@overload
+def save_phase_folder(
+    root: StrPath,
+    images: Iterable[NDArray[np.float32]],
+    *,
+    ext: FloatFormat,
+    pixel_size: float,
+    wavelength: float,
+    refractive_delta: float,
+    unit: PhaseUnit = ...,
+    stem: str = ...,
+    overwrite: bool = ...,
+) -> None: ...
+
+
+@overload
+def save_phase_folder(
+    root: StrPath,
+    images: Iterable[NDArray[np.float32]],
+    *,
+    ext: FloatFormat,
+    stem: str = ...,
+    overwrite: bool = ...,
+) -> None: ...
 
 
 def save_phase_folder(
     root: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
-    ext: Literal["bin", "txt", "npy"],
+    ext: FloatFormat,
     pixel_size: float | None = None,
     height_scale: float | None = None,
     wavelength: float | None = None,
@@ -76,7 +116,7 @@ def save_phase_folder(
             "txt") `pixel_size` is missing or neither/both scale forms are given.
         FileExistsError: If `root` exists and `overwrite` is False.
     """
-    ensure_one_of(ext, ("bin", "txt", "npy"), name="ext")
+    ensure_one_of(ext, FLOAT_FORMATS, name="ext")
 
     if ext == "npy":
         if (
@@ -112,7 +152,7 @@ def convert_phase_folder(
     root: StrPath,
     folder: PhaseFileFolder,
     *,
-    ext: Literal["bin", "txt", "npy"],
+    ext: FloatFormat,
     overwrite: bool = False,
 ) -> None:
     """Re-encode a phase `folder` into `root` in the `ext` format.
@@ -157,7 +197,7 @@ def convert_phase_folder(
 def convert_phase_list(
     sequence: PhaseFileList,
     *,
-    ext: Literal["bin", "txt", "npy"],
+    ext: FloatFormat,
     overwrite: bool = False,
 ) -> None:
     """Re-encode each file of a phase `sequence` in place, changing only the suffix.
@@ -177,7 +217,7 @@ def convert_phase_list(
         ValueError: If `ext` is not "bin", "txt", or "npy".
         FileExistsError: If a target sibling exists and `overwrite` is False.
     """
-    ensure_one_of(ext, ("bin", "txt", "npy"), name="ext")
+    ensure_one_of(ext, FLOAT_FORMATS, name="ext")
 
     if ext == "npy":
         save = partial(save_phase_npy, overwrite=overwrite)

@@ -202,3 +202,11 @@ def test_intensity_folder_rejects_ambiguous_formats(tmp_path):
     _save(root / "00000_intensity.txt", "txt")
     with pytest.raises(ValueError, match="multiple intensity formats"):
         intensity_folder(root)
+
+
+def test_intensity_folder_prefer_resolves_conflict(tmp_path):
+    root = tmp_path / "acq"
+    root.mkdir()
+    _save(root / "00000_intensity.bin", "bin")
+    _save(root / "00000_intensity.txt", "txt")
+    assert isinstance(intensity_folder(root, prefer="bin"), IntensityBinFolder)

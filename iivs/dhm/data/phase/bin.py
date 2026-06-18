@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
+    from iivs.dhm.data.common import OnNonFinite
+
 
 # ========================== #
 #           Header           #
@@ -121,7 +123,7 @@ def load_phase_bin(
     path: StrPath,
     *,
     return_header: Literal[False] = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32]: ...
 
 
@@ -130,7 +132,7 @@ def load_phase_bin(
     path: StrPath,
     *,
     return_header: Literal[True],
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> tuple[NDArray[np.float32], PhaseBinHeader]: ...
 
 
@@ -139,7 +141,7 @@ def load_phase_bin(
     path: StrPath,
     *,
     return_header: bool,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]: ...
 
 
@@ -147,7 +149,7 @@ def load_phase_bin(
     path: StrPath,
     *,
     return_header: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+    on_nonfinite: OnNonFinite = "ignore",
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]:
     """Load a Lyncée Tec Koala float32 .bin phase image, and optionally its header.
 
@@ -214,7 +216,7 @@ def save_phase_bin(
     height_scale: float,
     unit: PhaseUnit = ...,
     overwrite: bool = ...,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> None: ...
 
 
@@ -228,7 +230,7 @@ def save_phase_bin(
     refractive_delta: float,
     unit: PhaseUnit = ...,
     overwrite: bool = ...,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> None: ...
 
 
@@ -242,7 +244,7 @@ def save_phase_bin(
     refractive_delta: float | None = None,
     unit: PhaseUnit = PhaseUnit.RADIANS,
     overwrite: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+    on_nonfinite: OnNonFinite = "warn",
 ) -> None:
     """Save a 2D float32 phase image as a Lyncée Tec Koala .bin file.
 
@@ -339,7 +341,7 @@ class PhaseBinList(PhaseFileList):
         self,
         path: StrPath,
         *,
-        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+        on_nonfinite: OnNonFinite = "ignore",
     ) -> tuple[NDArray[np.float32], PhaseBinHeader]:
         """Decode the `.bin` image and its header."""
         return load_phase_bin(path, return_header=True, on_nonfinite=on_nonfinite)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("convert_hologram_sequence",)
+__all__ = ("HOLOGRAM_FORMATS", "HologramFormat", "convert_hologram_sequence")
 
 from functools import partial
 from typing import TYPE_CHECKING
@@ -22,11 +22,18 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
+type HologramFormat = Literal["raw", "tif", "npy"]
+"""A hologram's on-disk format -- the multi-frame `.raw` stack, or `.tif` / `.npy`."""
+
+HOLOGRAM_FORMATS: tuple[HologramFormat, ...] = ("raw", "tif", "npy")
+"""The hologram formats, for runtime membership checks (the `HologramFormat` values)."""
+
+
 def convert_hologram_sequence(
     dest: StrPath,
     sequence: DataSequence[NDArray[np.uint8], object],
     *,
-    ext: Literal["raw", "tif", "npy"],
+    ext: HologramFormat,
     overwrite: bool = False,
 ) -> None:
     """Re-encode a hologram `sequence` to `dest` in the `ext` format.
@@ -55,7 +62,7 @@ def convert_hologram_sequence(
         ValueError: If `ext` is not "raw", "tif", or "npy".
         FileExistsError: If a destination exists and `overwrite` is False.
     """
-    ensure_one_of(ext, ("raw", "tif", "npy"), name="ext")
+    ensure_one_of(ext, HOLOGRAM_FORMATS, name="ext")
 
     if ext == "raw":
         save_hologram_raw(dest, sequence, overwrite=overwrite)

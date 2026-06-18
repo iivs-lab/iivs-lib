@@ -9,9 +9,14 @@ __all__ = (
 )
 
 import warnings
-from pathlib import Path
 from typing import TYPE_CHECKING
 
+from iivs.dhm.data.common import (
+    FLOAT_FORMATS,
+    detect_numbered_format,
+    file_extension,
+    unsupported_extension,
+)
 from iivs.dhm.data.intensity.bin import (
     IntensityBinFolder,
     IntensityBinList,
@@ -33,35 +38,21 @@ from iivs.dhm.data.intensity.txt import (
 )
 
 if TYPE_CHECKING:
-    from typing import Literal
+    from collections.abc import Sequence
 
     import numpy as np
     from kaparoo.filesystem.types import StrPath, StrPaths
     from numpy.typing import NDArray
 
+    from iivs.dhm.data.common import FloatFormat, OnNonFinite, ValidationLevel
     from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
     from iivs.dhm.data.intensity.bin import IntensityBinHeader
-
-# The float intensity formats this package dispatches over, by file extension.
-_FORMATS = ("bin", "txt", "npy")
-
-
-def _ext(path: StrPath) -> str:
-    """The lower-case extension of `path`, without the leading dot."""
-    return Path(path).suffix.casefold().removeprefix(".")
-
-
-def _unsupported(ext: str) -> ValueError:
-    """A `ValueError` for an extension that is none of the intensity formats."""
-    return ValueError(
-        f"unsupported intensity extension {ext!r} (expected bin, txt, or npy)"
-    )
 
 
 def load_intensity(
     path: StrPath,
     *,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+    on_nonfinite: OnNonFinite = "ignore",
 ) -> NDArray[np.float32]:
     """Load a float32 intensity image, picking the reader by `path`'s extension.
 
@@ -74,14 +65,14 @@ def load_intensity(
     Raises:
         ValueError: If `path`'s extension is not bin, txt, or npy.
     """
-    ext = _ext(path)
+    ext = file_extension(path)
     if ext == "bin":
         return load_intensity_bin(path, on_nonfinite=on_nonfinite)
     if ext == "txt":
         return load_intensity_txt(path, on_nonfinite=on_nonfinite)
     if ext == "npy":
         return load_intensity_npy(path, on_nonfinite=on_nonfinite)
-    raise _unsupported(ext)
+    raise unsupported_extension(ext, kind="intensity", formats=FLOAT_FORMATS)
 
 
 def read_intensity_header(path: StrPath) -> IntensityBinHeader:
@@ -95,7 +86,7 @@ def read_intensity_header(path: StrPath) -> IntensityBinHeader:
         ValueError: If `path` is `.npy` (header-less) or its extension is not
             bin or txt.
     """
-    ext = _ext(path)
+    ext = file_extension(path)
     if ext == "bin":
         return read_intensity_bin_header(path)
     if ext == "txt":
@@ -103,7 +94,7 @@ def read_intensity_header(path: StrPath) -> IntensityBinHeader:
     if ext == "npy":
         msg = "`.npy` is header-less; supply metadata via IntensityNpyFolder"
         raise ValueError(msg)
-    raise _unsupported(ext)
+    raise unsupported_extension(ext, kind="intensity", formats=FLOAT_FORMATS)
 
 
 def save_intensity(
@@ -112,7 +103,7 @@ def save_intensity(
     *,
     pixel_size: float | None = None,
     overwrite: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+    on_nonfinite: OnNonFinite = "warn",
 ) -> None:
     """Save a 2D float32 intensity image, picking the writer by `path`'s extension.
 
@@ -125,7 +116,7 @@ def save_intensity(
         ValueError: If `path`'s extension is not bin, txt, or npy; or, for
             `.bin` / `.txt`, if `pixel_size` is missing.
     """
-    ext = _ext(path)
+    ext = file_extension(path)
     if ext in ("bin", "txt"):
         if pixel_size is None:
             msg = "pixel_size is required for .bin / .txt"
@@ -145,7 +136,7 @@ def save_intensity(
             warnings.warn(msg, stacklevel=2)
         save_intensity_npy(path, data, overwrite=overwrite, on_nonfinite=on_nonfinite)
         return
-    raise _unsupported(ext)
+    raise unsupported_extension(ext, kind="intensity", formats=FLOAT_FORMATS)
 
 
 def intensity_list(files: StrPaths) -> IntensityFileList:
@@ -164,7 +155,7 @@ def intensity_list(files: StrPaths) -> IntensityFileList:
         msg = "files must be non-empty"
         raise ValueError(msg)
 
-    exts = {_ext(f) for f in files}
+    exts = {file_extension(f) for f in files}
     if len(exts) != 1:
         msg = f"all files must share one extension (got {sorted(exts)})"
         raise ValueError(msg)
@@ -177,43 +168,42 @@ def intensity_list(files: StrPaths) -> IntensityFileList:
     if ext == "npy":
         msg = "no .npy intensity list; use IntensityNpyFolder (npy is header-less)"
         raise ValueError(msg)
-    raise _unsupported(ext)
+    raise unsupported_extension(ext, kind="intensity", formats=FLOAT_FORMATS)
 
 
 def intensity_folder(
     root: StrPath,
     *,
     pixel_size: float | None = None,
-    validate: Literal["names", "headers", "data"] | None = "headers",
+    validate: ValidationLevel | None = "headers",
+    prefer: FloatFormat | Sequence[FloatFormat] | None = None,
 ) -> IntensityFileFolder:
     """Open a numbered intensity folder, picking the class by the format it holds.
 
-    Scans `root` for `{index:05d}_intensity.<ext>` files and dispatches to
-    `IntensityBinFolder` / `IntensityTxtFolder` / `IntensityNpyFolder`. The
-    `.bin` / `.txt` folders read `pixel_size` from the files, so it must be
-    omitted for them; the header-less `.npy` folder instead **requires**
-    `pixel_size`.
+    Discovers the `{index:05d}_intensity.<ext>` files under `root` (via
+    `data.common.detect_numbered_format`) and dispatches to `IntensityBinFolder`
+    / `IntensityTxtFolder` / `IntensityNpyFolder`. The `.bin` / `.txt` folders
+    read `pixel_size` from the files, so it must be omitted for them; the
+    header-less `.npy` folder instead **requires** `pixel_size`.
+
+    Args:
+        root: The folder to scan.
+        pixel_size: The pixel size for a `.npy` folder (omit for `.bin` / `.txt`).
+        validate: Validation level at construction, or None to skip.
+        prefer: How to resolve a `root` that holds more than one format -- `None`
+            (default) raises, while a format or a priority sequence picks the
+            first present one (e.g. `prefer=("bin", "txt")`).
 
     Raises:
         FileNotFoundError: If `root` holds no `NNNNN_intensity.{bin,txt,npy}`
             files.
-        ValueError: If `root` mixes formats, if `pixel_size` is given for a
-            `.bin` / `.txt` folder, or if a `.npy` folder is missing it.
+        ValueError: If `root` mixes formats and `prefer` does not resolve it, if
+            `pixel_size` is given for a `.bin` / `.txt` folder, or if a `.npy`
+            folder is missing it.
     """
-    root_path = Path(root)
-    present = [
-        ext
-        for ext in _FORMATS
-        if next(root_path.glob(f"*_intensity.{ext}"), None) is not None
-    ]
-    if not present:
-        msg = f"no NNNNN_intensity.(bin|txt|npy) files found in {root}"
-        raise FileNotFoundError(msg)
-    if len(present) > 1:
-        msg = f"ambiguous: {root} holds multiple intensity formats ({present})"
-        raise ValueError(msg)
-
-    ext = present[0]
+    ext = detect_numbered_format(
+        root, stem="intensity", formats=FLOAT_FORMATS, prefer=prefer
+    )
     if ext in ("bin", "txt"):
         if pixel_size is not None:
             msg = f".{ext} folders read pixel_size from the files; drop the argument"

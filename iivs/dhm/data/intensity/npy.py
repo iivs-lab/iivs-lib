@@ -12,16 +12,16 @@ from iivs.dhm.data.intensity.base import IntensityFileFolder
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
 
 if TYPE_CHECKING:
-    from typing import Literal
-
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
+
+    from iivs.dhm.data.common import OnNonFinite, ValidationLevel
 
 
 def load_intensity_npy(
     path: StrPath,
     *,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+    on_nonfinite: OnNonFinite = "ignore",
 ) -> NDArray[np.float32]:
     """Load a header-less `.npy` float32 intensity image.
 
@@ -54,7 +54,7 @@ def save_intensity_npy(
     data: NDArray[np.float32],
     *,
     overwrite: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+    on_nonfinite: OnNonFinite = "warn",
 ) -> None:
     """Save a 2D float32 intensity image as an uncompressed `.npy` file.
 
@@ -110,7 +110,7 @@ class IntensityNpyFolder(IntensityFileFolder):
         root: StrPath,
         *,
         pixel_size: float,
-        validate: Literal["names", "headers", "data"] | None = "headers",
+        validate: ValidationLevel | None = "headers",
     ) -> None:
         # Set the synthesized-header metadata before super().__init__, which
         # reads the first file's header via _read_header (uses it).
@@ -130,7 +130,7 @@ class IntensityNpyFolder(IntensityFileFolder):
         self,
         path: StrPath,
         *,
-        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+        on_nonfinite: OnNonFinite = "ignore",
     ) -> tuple[NDArray[np.float32], IntensityBinHeader]:
         """Load the `.npy` float32 image and synthesize its header from the shape."""
         data = load_intensity_npy(path, on_nonfinite=on_nonfinite)

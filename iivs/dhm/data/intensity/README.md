@@ -48,6 +48,11 @@ right symbol for you, over `.bin` / `.txt` / `.npy`:
 | `intensity_list(files)` | `Intensity{Bin,Txt}List` by the files' shared extension |
 | `intensity_folder(root)` | `Intensity{Bin,Txt,Npy}Folder` by the folder's contents (an `.npy` folder needs `pixel_size`) |
 
+`intensity_folder` discovers the format with `kaparoo`'s `search_files` + a
+`RegexFilter`, and takes the same `prefer` argument as `phase_folder` to resolve
+a folder holding more than one format (`None` raises; a format or priority
+sequence picks the first present one).
+
 ## The sequence interface
 
 Every intensity sequence is a `kaparoo.data.sequences.DataSequence`. Most of what

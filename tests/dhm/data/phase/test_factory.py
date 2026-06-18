@@ -206,3 +206,29 @@ def test_phase_folder_rejects_ambiguous_formats(tmp_path):
     _save(root / "00000_phase.txt", "txt")
     with pytest.raises(ValueError, match="multiple phase formats"):
         phase_folder(root)
+
+
+def _mixed_folder(root):
+    root.mkdir()
+    _save(root / "00000_phase.bin", "bin")
+    _save(root / "00000_phase.txt", "txt")
+
+
+def test_phase_folder_prefer_single_format(tmp_path):
+    root = tmp_path / "acq"
+    _mixed_folder(root)
+    assert isinstance(phase_folder(root, prefer="txt"), PhaseTxtFolder)
+
+
+def test_phase_folder_prefer_priority_sequence(tmp_path):
+    root = tmp_path / "acq"
+    _mixed_folder(root)
+    # bin precedes txt in the priority order, so it wins.
+    assert isinstance(phase_folder(root, prefer=("bin", "txt")), PhaseBinFolder)
+
+
+def test_phase_folder_prefer_absent_format_raises(tmp_path):
+    root = tmp_path / "acq"
+    _mixed_folder(root)
+    with pytest.raises(ValueError, match="selects none of the present"):
+        phase_folder(root, prefer="npy")
