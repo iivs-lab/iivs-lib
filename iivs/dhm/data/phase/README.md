@@ -13,7 +13,7 @@ quantitative float32 phase reconstruction and its uint8 display preview.
 | --- | --- | --- |
 | `Float/Bin` (float32, with header) | `load_phase_bin` / `save_phase_bin` / `read_phase_bin_header` | `PhaseBinList` / `PhaseBinFolder` |
 | `Float/Txt` (float32, with header) | `load_phase_txt` / `save_phase_txt` / `read_phase_txt_header` | `PhaseTxtList` / `PhaseTxtFolder` |
-| `.npy` (float32, **header-less**) | `save_phase_npy` | `PhaseNpyFolder` |
+| `.npy` (float32, **header-less**) | `load_phase_npy` / `save_phase_npy` | `PhaseNpyFolder` |
 | `Image/*.tif` (**uint8 preview**, not quantitative) | — | `PhaseTifList` / `PhaseTifFolder` |
 
 - A **`*List`** wraps an explicit, arbitrary list of files (any location, no
@@ -27,6 +27,19 @@ quantitative float32 phase reconstruction and its uint8 display preview.
 - The `Image/*.tif` previews are an 8-bit visualization (`PhaseImageSequence`),
   **not** a substitute for the quantitative float source (`PhaseFloatSequence`).
   Decoding the LZW-compressed previews needs the `iivs-lib[image]` extra.
+
+### Format-agnostic entry points
+
+When the format is only known at runtime (from a path's suffix), these pick the
+right symbol for you, over `.bin` / `.txt` / `.npy`:
+
+| Factory | Picks |
+| --- | --- |
+| `load_phase(path)` | `load_phase_{bin,txt,npy}` — image only |
+| `read_phase_header(path)` | `read_phase_{bin,txt}_header` (**`.npy` excluded** — header-less) |
+| `save_phase(path, data, ...)` | `save_phase_{bin,txt,npy}` (`.npy` ignores the header metadata, with a warning) |
+| `phase_list(files)` | `Phase{Bin,Txt}List` by the files' shared extension |
+| `phase_folder(root)` | `Phase{Bin,Txt,Npy}Folder` by the folder's contents (an `.npy` folder needs `pixel_size` + `unit`) |
 
 ## Units & calibration
 
@@ -139,4 +152,12 @@ for frame in acq:             # lazy iteration
 # Re-encode the acquisition to the text format (new numbered folder):
 from iivs.dhm.data.phase import convert_phase_folder
 convert_phase_folder("scan/Phase/Float/Txt", acq, ext="txt")
+
+# Export a composed / transformed sequence (no folder header) to a new folder.
+# `convert_phase_*` need a file-backed source; `save_phase_folder` takes any
+# image sequence plus explicit metadata, so it works with kaparoo composers:
+from kaparoo.data.sequences import ConcatSequence
+from iivs.dhm.data.phase import save_phase_folder
+combined = ConcatSequence(PhaseBinFolder("run1/.../Bin"), PhaseBinFolder("run2/.../Bin"))
+save_phase_folder("merged/Bin", combined, ext="bin", pixel_size=2.84e-7, height_scale=2.1e-7)
 ```

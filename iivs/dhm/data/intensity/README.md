@@ -15,7 +15,7 @@ phase-only bytes as a no-op sentinel), so there is no `PhaseUnit` analogue, no
 | --- | --- | --- |
 | `Float/Bin` (float32, with header) | `load_intensity_bin` / `save_intensity_bin` / `read_intensity_bin_header` | `IntensityBinList` / `IntensityBinFolder` |
 | `Float/Txt` (float32, with header) | `load_intensity_txt` / `save_intensity_txt` / `read_intensity_txt_header` | `IntensityTxtList` / `IntensityTxtFolder` |
-| `.npy` (float32, **header-less**) | `save_intensity_npy` | `IntensityNpyFolder` |
+| `.npy` (float32, **header-less**) | `load_intensity_npy` / `save_intensity_npy` | `IntensityNpyFolder` |
 | `Image/*.tif` (**uint8 preview**) | — | `IntensityTifList` / `IntensityTifFolder` |
 
 - A **`*List`** wraps an explicit, arbitrary list of files; a **`*Folder`**
@@ -34,6 +34,19 @@ phase-only bytes as a no-op sentinel), so there is no `PhaseUnit` analogue, no
 - The phase and intensity `.bin` formats share the `common.KoalaBinHeader` base;
   `IntensityBinHeader` exposes `width`, `height`, `pixel_size`, and the
   geometry conveniences (`shape`, `field_of_view[_um]`, `pixel_size_um`, ...).
+
+### Format-agnostic entry points
+
+When the format is only known at runtime (from a path's suffix), these pick the
+right symbol for you, over `.bin` / `.txt` / `.npy`:
+
+| Factory | Picks |
+| --- | --- |
+| `load_intensity(path)` | `load_intensity_{bin,txt,npy}` — image only |
+| `read_intensity_header(path)` | `read_intensity_{bin,txt}_header` (**`.npy` excluded** — header-less) |
+| `save_intensity(path, data, ...)` | `save_intensity_{bin,txt,npy}` (`.npy` ignores `pixel_size`, with a warning) |
+| `intensity_list(files)` | `Intensity{Bin,Txt}List` by the files' shared extension |
+| `intensity_folder(root)` | `Intensity{Bin,Txt,Npy}Folder` by the folder's contents (an `.npy` folder needs `pixel_size`) |
 
 ## The sequence interface
 
@@ -76,6 +89,12 @@ listed here so you do not have to chase base classes.
 numbered folder under `root`; `convert_intensity_list(sequence, *, ext)`
 rewrites each list file in place with the new suffix. Targets: `"bin"` / `"txt"`
 / `"npy"` (all lossless float32).
+
+For a composed or transformed sequence (a `kaparoo` `ConcatSequence`, a sliced
+view, …) — which has no folder header — use
+`save_intensity_folder(root, images, *, ext, pixel_size=...)`, supplying
+`pixel_size` explicitly; `convert_intensity_folder` is the file-folder
+convenience that reads it off the header for you.
 
 ## Example
 

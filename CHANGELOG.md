@@ -8,7 +8,47 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `iivs.dhm.data.phase`: extension-dispatch entry points that pick the format
+  by a path's suffix, so callers need not hand-pick the per-format symbol.
+  - `load_phase(path)` — dispatch `.bin` / `.txt` / `.npy` to
+    `load_phase_bin` / `load_phase_txt` / `load_phase_npy`; returns the image
+    only (uniform across formats).
+  - `read_phase_header(path)` — dispatch `.bin` / `.txt` to their header
+    readers. `.npy` is excluded (it is header-less).
+  - `save_phase(path, data, ...)` — dispatch the writers; for `.npy` the
+    header metadata (`pixel_size` / `unit` / scale) does not apply and is
+    dropped with a warning if given.
+  - `phase_list(files)` / `phase_folder(root)` — build the matching
+    `Phase*List` / `Phase*Folder` by the files' shared extension / the folder's
+    contents. `phase_folder` requires `pixel_size` + `unit` for an `.npy`
+    folder (header-less) and rejects those args for `.bin` / `.txt`.
+  - `load_phase_npy(path)` — the previously missing standalone `.npy` loader
+    (image only), filling out the `load_phase_{bin,txt,npy}` set.
+- `iivs.dhm.data.phase.save_phase_folder(root, images, *, ext, ...)` — write any
+  phase image sequence to a numbered folder. Unlike `convert_phase_folder` (which
+  reads `pixel_size` / `height_scale` / `unit` off a file folder's header), it
+  takes that metadata explicitly, so it accepts header-less sources — `kaparoo`
+  composers (`ConcatSequence`, sliced/windowed views), `to_float` / `to_image`
+  reconstructions, or a plain list of arrays. `convert_phase_folder` now delegates
+  to it.
+- `iivs.dhm.data.intensity`: the same suffix-dispatch entry points as `phase`
+  (`load_intensity`, `read_intensity_header`, `save_intensity`, `intensity_list`,
+  `intensity_folder`, the standalone `load_intensity_npy`), plus
+  `save_intensity_folder(root, images, *, ext, pixel_size=..., ...)` for writing
+  any intensity image sequence (composer outputs, …) to a numbered folder.
+  Intensity's only header field is `pixel_size`. `convert_intensity_folder` now
+  delegates to `save_intensity_folder`.
+- `iivs.dhm.data.hologram.load_hologram_npy(path)` — the standalone `.npy` uint8
+  reader, the twin of `load_hologram_tif`.
+
 ### Changed
+
+- `iivs.dhm.data.hologram`: `convert_hologram_sequence` and `save_hologram_raw`
+  now accept any uint8 `DataSequence`, not just a `HologramSequence`, so a
+  `kaparoo` composer (e.g. a `ConcatSequence` of acquisitions) can be re-encoded
+  or written to `.raw` directly.
 
 - Require `kaparoo-python>=0.8.0`. Its filter classes moved to a top-level
   `kaparoo.filters` package and `Regex` was renamed `RegexFilter`; the

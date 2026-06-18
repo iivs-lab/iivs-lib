@@ -24,12 +24,19 @@ __all__ = (
     "convert_phase_folder",
     "convert_phase_list",
     "convert_phase_unit",
+    "load_phase",
     "load_phase_bin",
+    "load_phase_npy",
     "load_phase_txt",
+    "phase_folder",
+    "phase_list",
     "read_phase_bin_header",
+    "read_phase_header",
     "read_phase_txt_header",
     "read_phbounds",
+    "save_phase",
     "save_phase_bin",
+    "save_phase_folder",
     "save_phase_npy",
     "save_phase_txt",
     "write_phbounds",
@@ -49,8 +56,19 @@ from iivs.dhm.data.phase.bin import (
     save_phase_bin,
 )
 from iivs.dhm.data.phase.bounds import PhaseBounds, read_phbounds, write_phbounds
-from iivs.dhm.data.phase.convert import convert_phase_folder, convert_phase_list
-from iivs.dhm.data.phase.npy import PhaseNpyFolder, save_phase_npy
+from iivs.dhm.data.phase.convert import (
+    convert_phase_folder,
+    convert_phase_list,
+    save_phase_folder,
+)
+from iivs.dhm.data.phase.factory import (
+    load_phase,
+    phase_folder,
+    phase_list,
+    read_phase_header,
+    save_phase,
+)
+from iivs.dhm.data.phase.npy import PhaseNpyFolder, load_phase_npy, save_phase_npy
 from iivs.dhm.data.phase.tif import PhaseTifFolder, PhaseTifList
 from iivs.dhm.data.phase.txt import (
     PhaseTxtFolder,

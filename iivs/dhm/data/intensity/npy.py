@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-__all__ = ("IntensityNpyFolder", "save_intensity_npy")
+__all__ = ("IntensityNpyFolder", "load_intensity_npy", "save_intensity_npy")
 
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
-from kaparoo.filesystem import ensure_file_extension
+from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
 from iivs.dhm.data.common import read_npy_shape, validate_float32_image, write_npy
 from iivs.dhm.data.intensity.base import IntensityFileFolder
@@ -16,6 +16,37 @@ if TYPE_CHECKING:
 
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
+
+
+def load_intensity_npy(
+    path: StrPath,
+    *,
+    on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+) -> NDArray[np.float32]:
+    """Load a header-less `.npy` float32 intensity image.
+
+    The `.npy` twin of `load_intensity_bin` / `load_intensity_txt`, but **image
+    only**: a `.npy` carries no Koala header, so there is no `return_header`
+    form and no `read_intensity_npy_header` -- the `pixel_size` metadata must be
+    supplied separately (e.g. via `IntensityNpyFolder`). Loaded with
+    `numpy.load(allow_pickle=False)`, so a pickled object array is rejected.
+
+    Args:
+        path: The `.npy` file to read.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
+            forwarded to `validate_float32_image`: "ignore" (default) accepts
+            silently, "warn" emits a RuntimeWarning, "raise" raises a
+            ValueError.
+
+    Raises:
+        FileNotFoundError: If `path` does not exist.
+        NotAFileError: If `path` exists but is not a regular file.
+        ValueError: If the array is pickled, not a single 2D float32 image, or
+            holds non-finite values while `on_nonfinite` is "raise".
+    """
+    path = ensure_file_exists(path)
+    data = np.load(path, allow_pickle=False)
+    return validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
 
 
 def save_intensity_npy(
@@ -101,11 +132,8 @@ class IntensityNpyFolder(IntensityFileFolder):
         *,
         on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
     ) -> tuple[NDArray[np.float32], IntensityBinHeader]:
-        """Load the `.npy` float32 image (pickle disabled) and synthesize its header."""
-        data = np.load(path, allow_pickle=False)
-        data = validate_float32_image(
-            data, on_nonfinite=on_nonfinite, allow_stack=False
-        )
+        """Load the `.npy` float32 image and synthesize its header from the shape."""
+        data = load_intensity_npy(path, on_nonfinite=on_nonfinite)
         header = IntensityBinHeader(
             width=int(data.shape[1]),
             height=int(data.shape[0]),

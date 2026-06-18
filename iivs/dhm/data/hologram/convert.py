@@ -16,14 +16,15 @@ from iivs.dhm.data.hologram.tif import save_hologram_tif
 if TYPE_CHECKING:
     from typing import Literal
 
+    import numpy as np
+    from kaparoo.data.sequences import DataSequence
     from kaparoo.filesystem.types import StrPath
-
-    from iivs.dhm.data.hologram.base import HologramSequence
+    from numpy.typing import NDArray
 
 
 def convert_hologram_sequence(
     dest: StrPath,
-    sequence: HologramSequence[object],
+    sequence: DataSequence[NDArray[np.uint8], object],
     *,
     ext: Literal["raw", "tif", "npy"],
     overwrite: bool = False,
@@ -36,11 +37,16 @@ def convert_hologram_sequence(
     `dest` folder (named from the source's `FILE_STEM`, else ``holo``). Both
     paths are written atomically.
 
+    Accepts any uint8 image sequence, not just a file-backed `HologramSequence`:
+    a `kaparoo` composer (`ConcatSequence`, a sliced or windowed view) works too,
+    falling back to the ``holo`` stem when it has no `FILE_STEM`.
+
     Args:
         dest: Destination -- the `.raw` file for "raw", else the folder to
             create and fill.
-        sequence: Source hologram sequence to read (a `HologramRawFile`,
-            `HologramTifFolder`, `HologramNpyFolder`, or `HologramTifList`).
+        sequence: Source hologram sequence to read -- a `HologramRawFile`,
+            `HologramTifFolder`, `HologramNpyFolder`, `HologramTifList`, or any
+            uint8 `DataSequence` (e.g. a composed sequence).
         ext: Target format -- "raw", "tif", or "npy".
         overwrite: Whether to replace an existing destination. Defaults to
             False.

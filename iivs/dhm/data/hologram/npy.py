@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-__all__ = ("HologramNpyFolder", "save_hologram_npy")
+__all__ = ("HologramNpyFolder", "load_hologram_npy", "save_hologram_npy")
 
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
-from kaparoo.filesystem import ensure_file_extension
+from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
 from iivs.dhm.data.common import ImageFileFolder, validate_uint8_image, write_npy
 from iivs.dhm.data.hologram.base import HologramSequence
@@ -14,6 +14,22 @@ from iivs.dhm.data.hologram.base import HologramSequence
 if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
+
+
+def load_hologram_npy(path: StrPath) -> NDArray[np.uint8]:
+    """Load a header-less `.npy` uint8 hologram image.
+
+    The `.npy` twin of `load_hologram_tif`: the lossless, codec-free single-frame
+    reader. Loaded with `numpy.load(allow_pickle=False)`, so a pickled object
+    array is rejected.
+
+    Raises:
+        FileNotFoundError: If `path` does not exist.
+        NotAFileError: If `path` exists but is not a regular file.
+        ValueError: If the array is pickled or is not a 2D uint8 image.
+    """
+    path = ensure_file_exists(path)
+    return validate_uint8_image(np.load(path, allow_pickle=False), allow_stack=False)
 
 
 def save_hologram_npy(
@@ -63,6 +79,4 @@ class HologramNpyFolder(ImageFileFolder, HologramSequence[Path]):
     @override
     def load_file(self, path: Path) -> NDArray[np.uint8]:
         """Load the `.npy` uint8 image at `path` (pickle disabled)."""
-        return validate_uint8_image(
-            np.load(path, allow_pickle=False), allow_stack=False
-        )
+        return load_hologram_npy(path)
