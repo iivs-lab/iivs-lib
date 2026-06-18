@@ -6,6 +6,7 @@ import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
+from kaparoo.utils import ensure_one_of
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -61,14 +62,9 @@ def validate_float32_image(
         msg = f"data must be float32 (got {data.dtype})"
         raise ValueError(msg)
 
-    match on_nonfinite:
-        case "ignore":
-            return data
-        case "warn" | "raise":
-            pass
-        case _:
-            msg = f"on_nonfinite must be 'ignore', 'warn', or 'raise' (got {on_nonfinite!r})"
-            raise ValueError(msg)
+    ensure_one_of(on_nonfinite, ("ignore", "warn", "raise"), name="on_nonfinite")
+    if on_nonfinite == "ignore":
+        return data
 
     if not np.all(np.isfinite(data)):
         nan = int(np.isnan(data).sum())

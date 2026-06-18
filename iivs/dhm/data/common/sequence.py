@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from kaparoo.data.sequences import FileFolderSequence
 from kaparoo.filesystem.search import search_files
-from kaparoo.filesystem.search.filters import Regex
-from kaparoo.utils import replace_if_none
+from kaparoo.filters import RegexFilter
+from kaparoo.utils import ensure_one_of, replace_if_none
 from natsort import natsorted, ns
 
 from iivs.dhm.data.common.utils import numbered_name
@@ -66,7 +66,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     def list_files(self, root: Path) -> list[Path]:
         """List the `NNNNN_<stem>.<ext>` files under `root`, in index order."""
         pattern = rf"\d{{5}}_{self.FILE_STEM}\.{self.FILE_EXT}"
-        files = search_files(root, name_filter=Regex(pattern), max_depth=1)
+        files = search_files(root, name_filter=RegexFilter(pattern), max_depth=1)
         if not files:
             msg = f"no NNNNN_{self.FILE_STEM}.{self.FILE_EXT} files found in {root}"
             raise FileNotFoundError(msg)
@@ -104,9 +104,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
                 non-contiguous, or `_validate_content` rejects the file.
         """
         resolved = replace_if_none(level, self.DEFAULT_LEVEL)
-        if resolved not in self.LEVELS:
-            msg = f"level must be one of {self.LEVELS} (got {resolved!r})"
-            raise ValueError(msg)
+        resolved = ensure_one_of(resolved, self.LEVELS, name="level")
 
         path = self.get_file(index)
         expected = self.expected_name(index)

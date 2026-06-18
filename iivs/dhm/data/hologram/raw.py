@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, ClassVar, cast, override
 import numpy as np
 from kaparoo.data.sequences.templates import SingleFileSequence
 from kaparoo.filesystem import StagedFile, ensure_file_exists, ensure_file_extension
+from kaparoo.utils import ensure_one_of
 from numpy.typing import NDArray
 
 from iivs.dhm.data.common import FrameShapedMixin, validate_uint8_image
@@ -71,9 +72,7 @@ class HologramRawHeader:
             msg = f"frame_count must be non-negative (got {self.frame_count})"
             raise ValueError(msg)
 
-        if self.bit_depth not in self.SUPPORTED_BIT_DEPTHS:
-            msg = f"bit_depth must be one of {self.SUPPORTED_BIT_DEPTHS} (got {self.bit_depth})"
-            raise ValueError(msg)
+        ensure_one_of(self.bit_depth, self.SUPPORTED_BIT_DEPTHS, name="bit_depth")
 
     @property
     def shape(self) -> tuple[int, int]:

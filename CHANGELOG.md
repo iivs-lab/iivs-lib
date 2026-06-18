@@ -8,6 +8,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Require `kaparoo-python>=0.8.0`. Its filter classes moved to a top-level
+  `kaparoo.filters` package and `Regex` was renamed `RegexFilter`; the
+  numbered-folder discovery in `data.common.sequence` now imports
+  `RegexFilter` from there.
+- Membership-validation guards now use 0.8.0's `kaparoo.utils.ensure_one_of`
+  (the `ext` checks in the `convert` modules, the folder `validate` level, and
+  `HologramRawHeader.bit_depth`). The rejection message wording changes
+  slightly (e.g. `ext must be one of [...]`).
+
 ## [0.1.0] - 2026-06-05
 
 ### Added

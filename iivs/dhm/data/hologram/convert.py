@@ -6,6 +6,7 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from kaparoo.filesystem import StagedDirectory
+from kaparoo.utils import ensure_one_of
 
 from iivs.dhm.data.common import numbered_name
 from iivs.dhm.data.hologram.npy import save_hologram_npy
@@ -48,9 +49,7 @@ def convert_hologram_sequence(
         ValueError: If `ext` is not "raw", "tif", or "npy".
         FileExistsError: If a destination exists and `overwrite` is False.
     """
-    if ext not in ("raw", "tif", "npy"):
-        msg = f"ext must be 'raw', 'tif', or 'npy' (got {ext!r})"
-        raise ValueError(msg)
+    ensure_one_of(ext, ("raw", "tif", "npy"), name="ext")
 
     if ext == "raw":
         save_hologram_raw(dest, sequence, overwrite=overwrite)

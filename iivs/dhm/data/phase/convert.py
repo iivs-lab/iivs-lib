@@ -6,7 +6,7 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from kaparoo.filesystem import StagedDirectory
-from kaparoo.utils import replace_if_none
+from kaparoo.utils import ensure_one_of, replace_if_none
 
 from iivs.dhm.data.common import numbered_name
 from iivs.dhm.data.phase.bin import save_phase_bin
@@ -46,9 +46,7 @@ def convert_phase_folder(
         ValueError: If `ext` is not "bin", "txt", or "npy".
         FileExistsError: If `root` exists and `overwrite` is False.
     """
-    if ext not in ("bin", "txt", "npy"):
-        msg = f"ext must be 'bin', 'txt', or 'npy' (got {ext!r})"
-        raise ValueError(msg)
+    ensure_one_of(ext, ("bin", "txt", "npy"), name="ext")
 
     if ext == "npy":
         save = partial(save_phase_npy, overwrite=overwrite)
@@ -91,9 +89,7 @@ def convert_phase_list(
         ValueError: If `ext` is not "bin", "txt", or "npy".
         FileExistsError: If a target sibling exists and `overwrite` is False.
     """
-    if ext not in ("bin", "txt", "npy"):
-        msg = f"ext must be 'bin', 'txt', or 'npy' (got {ext!r})"
-        raise ValueError(msg)
+    ensure_one_of(ext, ("bin", "txt", "npy"), name="ext")
 
     if ext == "npy":
         save = partial(save_phase_npy, overwrite=overwrite)
