@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-__all__ = ("PhaseNpyFolder", "save_phase_npy")
+__all__ = ("PhaseNpyFolder", "load_phase_npy", "save_phase_npy")
 
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
-from kaparoo.filesystem import ensure_file_extension
+from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
 from iivs.dhm.data.common import read_npy_shape, validate_float32_image, write_npy
 from iivs.dhm.data.phase.base import PhaseFileFolder
@@ -13,12 +13,43 @@ from iivs.dhm.data.phase.bin import PhaseBinHeader
 from iivs.dhm.data.phase.unit import resolve_height_scale
 
 if TYPE_CHECKING:
-    from typing import Literal
-
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
+    from iivs.dhm.data.common import OnNonFinite, ValidationLevel
     from iivs.dhm.data.phase.unit import PhaseUnit
+
+
+def load_phase_npy(
+    path: StrPath,
+    *,
+    on_nonfinite: OnNonFinite = "ignore",
+) -> NDArray[np.float32]:
+    """Load a header-less `.npy` float32 phase image.
+
+    The `.npy` twin of `load_phase_bin` / `load_phase_txt`, but **image only**:
+    a `.npy` carries no Koala header, so there is no `return_header` form and no
+    `read_phase_npy_header` -- the `pixel_size` / `unit` / `height_scale`
+    metadata must be supplied separately (e.g. via `PhaseNpyFolder`). Loaded
+    with `numpy.load(allow_pickle=False)`, so a pickled object array is
+    rejected.
+
+    Args:
+        path: The `.npy` file to read.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
+            forwarded to `validate_float32_image`: "ignore" (default) accepts
+            silently, "warn" emits a RuntimeWarning, "raise" raises a
+            ValueError.
+
+    Raises:
+        FileNotFoundError: If `path` does not exist.
+        NotAFileError: If `path` exists but is not a regular file.
+        ValueError: If the array is pickled, not a single 2D float32 image, or
+            holds non-finite values while `on_nonfinite` is "raise".
+    """
+    path = ensure_file_exists(path)
+    data = np.load(path, allow_pickle=False)
+    return validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
 
 
 def save_phase_npy(
@@ -26,7 +57,7 @@ def save_phase_npy(
     data: NDArray[np.float32],
     *,
     overwrite: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+    on_nonfinite: OnNonFinite = "warn",
 ) -> None:
     """Save a 2D float32 phase image as an uncompressed `.npy` file.
 
@@ -95,7 +126,7 @@ class PhaseNpyFolder(PhaseFileFolder):
         wavelength: float | None = None,
         refractive_delta: float | None = None,
         target_unit: PhaseUnit | None = None,
-        validate: Literal["names", "headers", "data"] | None = "headers",
+        validate: ValidationLevel | None = "headers",
     ) -> None:
         # Set the synthesized-header metadata before super().__init__, which
         # reads the first file's header via _read_header (uses these).
@@ -127,11 +158,8 @@ class PhaseNpyFolder(PhaseFileFolder):
         self,
         path: StrPath,
         *,
-        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+        on_nonfinite: OnNonFinite = "ignore",
     ) -> tuple[NDArray[np.float32], PhaseBinHeader]:
-        """Load the `.npy` float32 image (pickle disabled) and its header."""
-        data = np.load(path, allow_pickle=False)
-        data = validate_float32_image(
-            data, on_nonfinite=on_nonfinite, allow_stack=False
-        )
+        """Load the `.npy` float32 image and synthesize its header from the shape."""
+        data = load_phase_npy(path, on_nonfinite=on_nonfinite)
         return data, self._header_for(data.shape[0], data.shape[1])

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from kaparoo.data.sequences import ConcatSequence
 
 from iivs.dhm.data.intensity.bin import (
     IntensityBinFolder,
@@ -11,6 +12,7 @@ from iivs.dhm.data.intensity.bin import (
 from iivs.dhm.data.intensity.convert import (
     convert_intensity_folder,
     convert_intensity_list,
+    save_intensity_folder,
 )
 from iivs.dhm.data.intensity.npy import IntensityNpyFolder, save_intensity_npy
 from iivs.dhm.data.intensity.txt import (
@@ -136,3 +138,56 @@ def test_intensity_file_list_load_with_header(tmp_path):
     image, header = src.load_with_header(1)
     np.testing.assert_array_equal(image, src[1])
     assert header.pixel_size == pytest.approx(3e-6)
+
+
+# --- save_intensity_folder (composer-compatible export) ---
+
+
+def test_save_intensity_folder_from_concat_sequence(tmp_path):
+    a = _bin_folder(tmp_path / "a", [0.0, 1.0])
+    b = _bin_folder(tmp_path / "b", [10.0, 11.0])
+    combined = ConcatSequence(a, b)
+    out = tmp_path / "out"
+    save_intensity_folder(out, combined, ext="bin", pixel_size=1e-6)
+    reopened = IntensityBinFolder(out)
+    assert len(reopened) == 4
+    for i, value in enumerate((0.0, 1.0, 10.0, 11.0)):
+        np.testing.assert_allclose(reopened[i], np.full((2, 3), value), rtol=1e-5)
+
+
+@pytest.mark.parametrize("ext", ("bin", "txt", "npy"))
+def test_save_intensity_folder_writes_numbered_files(tmp_path, ext):
+    images = [np.full((2, 2), float(i), np.float32) for i in range(3)]
+    out = tmp_path / "out"
+    if ext == "npy":
+        save_intensity_folder(out, images, ext=ext)
+    else:
+        save_intensity_folder(out, images, ext=ext, pixel_size=1e-6)
+    assert sorted(p.name for p in out.iterdir()) == [
+        f"{i:05d}_intensity.{ext}" for i in range(3)
+    ]
+
+
+def test_save_intensity_folder_requires_pixel_size(tmp_path):
+    images = [np.zeros((2, 2), np.float32)]
+    with pytest.raises(ValueError, match="pixel_size is required"):
+        save_intensity_folder(tmp_path / "out", images, ext="bin")
+
+
+def test_save_intensity_folder_npy_warns_on_pixel_size(tmp_path):
+    images = [np.zeros((2, 2), np.float32)]
+    with pytest.warns(UserWarning, match="header-less"):
+        save_intensity_folder(tmp_path / "out", images, ext="npy", pixel_size=1e-6)
+
+
+def test_save_intensity_folder_stem_override(tmp_path):
+    images = [np.zeros((2, 2), np.float32)]
+    out = tmp_path / "out"
+    save_intensity_folder(out, images, ext="npy", stem="custom")
+    assert (out / "00000_custom.npy").exists()
+
+
+def test_save_intensity_folder_rejects_unknown_format(tmp_path):
+    images = [np.zeros((2, 2), np.float32)]
+    with pytest.raises(ValueError, match="ext must be"):
+        save_intensity_folder(tmp_path / "out", images, ext="raw")

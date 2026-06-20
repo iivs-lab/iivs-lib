@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-__all__ = ("KoalaFloatFileFolder", "KoalaFloatFileList")
+__all__ = (
+    "FLOAT_FORMATS",
+    "FloatFormat",
+    "KoalaFloatFileFolder",
+    "KoalaFloatFileList",
+)
 
 from abc import abstractmethod
 from pathlib import Path
@@ -18,6 +23,16 @@ if TYPE_CHECKING:
     from typing import Literal
 
     from kaparoo.filesystem.types import StrPath, StrPaths
+
+    from iivs.dhm.data.common.sequence import ValidationLevel
+    from iivs.dhm.data.common.validation import OnNonFinite
+
+
+type FloatFormat = Literal["bin", "txt", "npy"]
+"""A Koala float32 modality's on-disk format (`phase` / `intensity`)."""
+
+FLOAT_FORMATS: tuple[FloatFormat, ...] = ("bin", "txt", "npy")
+"""The float formats, for runtime membership checks (the `FloatFormat` values)."""
 
 
 class KoalaFloatFileList[H: KoalaBinHeader](
@@ -97,7 +112,7 @@ class KoalaFloatFileList[H: KoalaBinHeader](
         self,
         path: StrPath,
         *,
-        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+        on_nonfinite: OnNonFinite = "ignore",
     ) -> tuple[NDArray[np.float32], H]:
         """Decode the format's image and its header (subclass codec)."""
         raise NotImplementedError
@@ -123,7 +138,7 @@ class KoalaFloatFileFolder[H: KoalaBinHeader](
         self,
         root: StrPath,
         *,
-        validate: Literal["names", "headers", "data"] | None = "headers",
+        validate: ValidationLevel | None = "headers",
     ) -> None:
         super().__init__(root)  # discovers the files; rejects an empty folder
         self._header = self._read_header(self.get_file(0))

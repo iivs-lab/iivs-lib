@@ -15,7 +15,7 @@ no float header, no `get_header` / `load_with_header`, and no unit handling.
 | --- | --- | --- |
 | `Holograms/*.raw` (one multi-frame stack) | `read_hologram_raw_header` / `save_hologram_raw` | `HologramRawFile` |
 | `.tif` (one uint8 image per file) | `load_hologram_tif` / `save_hologram_tif` | `HologramTifList` / `HologramTifFolder` |
-| `.npy` (one uint8 image per file) | `save_hologram_npy` | `HologramNpyFolder` |
+| `.npy` (one uint8 image per file) | `load_hologram_npy` / `save_hologram_npy` | `HologramNpyFolder` |
 
 - **`HologramRawFile`** wraps a single `.raw` file (a 16-byte
   `HologramRawHeader` then row-major frames) as a lazy, read-only `np.memmap`,
@@ -23,8 +23,9 @@ no float header, no `get_header` / `load_with_header`, and no unit handling.
 - A **`*List`** wraps an arbitrary list of `.tif` files (any location, may even
   differ in shape); a **`*Folder`** auto-discovers `{index:05d}_holo.<ext>`
   files under one root and shares one `frame_shape`.
-- `save_hologram_raw` accepts a single image, an `(N, H, W)` stack, or any
-  `HologramSequence`, and streams frames one at a time (so re-encoding a big
+- `save_hologram_raw` accepts a single image, an `(N, H, W)` stack, or any uint8
+  `DataSequence` (a `HologramSequence`, or a `kaparoo` composer such as a
+  `ConcatSequence`), and streams frames one at a time (so re-encoding a big
   folder never materializes the whole stack).
 
 ## The sequence interface
@@ -70,7 +71,10 @@ sequence to `dest`:
   frame).
 - `ext="tif"` / `"npy"` → one numbered file per frame in the `dest` folder.
 
-Every format is lossless uint8.
+Every format is lossless uint8. The `sequence` may be any uint8 `DataSequence`,
+not just a file-backed `HologramSequence` — a `kaparoo` composer (e.g. a
+`ConcatSequence` of acquisitions) works too, so holograms need no separate
+`save_hologram_folder`.
 
 ## Example
 

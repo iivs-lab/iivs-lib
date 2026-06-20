@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from kaparoo.data.sequences import ConcatSequence
 
 from iivs.dhm.data.hologram.convert import convert_hologram_sequence
 from iivs.dhm.data.hologram.npy import HologramNpyFolder, save_hologram_npy
@@ -126,3 +127,33 @@ def test_save_hologram_raw_rejects_mismatched_frame_shapes(tmp_path):
     seq = HologramTifList([tmp_path / "a.tif", tmp_path / "b.tif"])
     with pytest.raises(ValueError, match="all frames must have"):
         save_hologram_raw(tmp_path / "out.raw", seq)
+
+
+# --- composer compatibility ---
+
+
+def test_save_hologram_raw_accepts_composed_sequence(tmp_path):
+    # A ConcatSequence is not a HologramSequence, but save_hologram_raw takes
+    # any uint8 DataSequence.
+    a = _raw_source(tmp_path / "a.raw")
+    b = _raw_source(tmp_path / "b.raw", _stack() + 100)
+    combined = ConcatSequence(a, b)
+    save_hologram_raw(tmp_path / "out.raw", combined)
+    out = HologramRawFile(tmp_path / "out.raw")
+    assert len(out) == 4
+    np.testing.assert_array_equal(out[0], a[0])
+    np.testing.assert_array_equal(out[3], b[1])
+
+
+def test_convert_hologram_sequence_accepts_composed_sequence(tmp_path):
+    a = _raw_source(tmp_path / "a.raw")
+    b = _raw_source(tmp_path / "b.raw", _stack() + 100)
+    combined = ConcatSequence(a, b)
+
+    convert_hologram_sequence(tmp_path / "out.raw", combined, ext="raw")
+    assert len(HologramRawFile(tmp_path / "out.raw")) == 4
+
+    convert_hologram_sequence(tmp_path / "tif", combined, ext="tif")
+    assert sorted(p.name for p in (tmp_path / "tif").iterdir()) == [
+        f"{i:05d}_holo.tif" for i in range(4)
+    ]

@@ -5,7 +5,7 @@ import pytest
 
 from iivs.dhm.data.common import FrameShapedMixin
 from iivs.dhm.data.hologram.base import HologramSequence
-from iivs.dhm.data.hologram.npy import HologramNpyFolder
+from iivs.dhm.data.hologram.npy import HologramNpyFolder, load_hologram_npy
 
 
 def _write(root, index, value=1, shape=(4, 4)):
@@ -35,3 +35,29 @@ def test_validate_rejects_shape_mismatch(tmp_path):
     _write(tmp_path, 1, shape=(4, 5))
     with pytest.raises(ValueError, match="must match"):
         HologramNpyFolder(tmp_path, validate="data")
+
+
+# --- load_hologram_npy (standalone) ---
+
+
+def test_load_hologram_npy_roundtrip(tmp_path):
+    img = np.arange(12, dtype=np.uint8).reshape(3, 4)
+    path = tmp_path / "x.npy"
+    np.save(path, img)
+    out = load_hologram_npy(path)
+    np.testing.assert_array_equal(out, img)
+    assert out.dtype == np.uint8
+
+
+def test_load_hologram_npy_rejects_pickled_object_array(tmp_path):
+    path = tmp_path / "x.npy"
+    np.save(path, np.array([{"x": 1}], dtype=object), allow_pickle=True)
+    with pytest.raises(ValueError, match="allow_pickle"):
+        load_hologram_npy(path)
+
+
+def test_load_hologram_npy_rejects_non_uint8(tmp_path):
+    path = tmp_path / "x.npy"
+    np.save(path, np.zeros((2, 2), dtype=np.float32))
+    with pytest.raises(ValueError, match="uint8"):
+        load_hologram_npy(path)

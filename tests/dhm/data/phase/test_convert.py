@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from kaparoo.data.sequences import ConcatSequence
 
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
-from iivs.dhm.data.phase.convert import convert_phase_folder, convert_phase_list
+from iivs.dhm.data.phase.convert import (
+    convert_phase_folder,
+    convert_phase_list,
+    save_phase_folder,
+)
 from iivs.dhm.data.phase.npy import PhaseNpyFolder, save_phase_npy
 from iivs.dhm.data.phase.txt import (
     PhaseTxtFolder,
@@ -184,3 +189,72 @@ def test_phase_file_list_load_with_header(tmp_path):
     image, header = src.load_with_header(1)
     np.testing.assert_array_equal(image, src[1])
     assert header.pixel_size == pytest.approx(3e-6)
+
+
+# --- save_phase_folder (composer-compatible export) ---
+
+
+def test_save_phase_folder_from_concat_sequence(tmp_path):
+    # A composed sequence has no folder header, so convert_phase_folder cannot
+    # take it; save_phase_folder writes it with explicit metadata.
+    a = _bin_folder(tmp_path / "a", [0.0, 1.0])
+    b = _bin_folder(tmp_path / "b", [10.0, 11.0])
+    combined = ConcatSequence(a, b)
+    out = tmp_path / "out"
+    save_phase_folder(out, combined, ext="bin", pixel_size=1e-6, height_scale=2e-7)
+    reopened = PhaseBinFolder(out)
+    assert len(reopened) == 4
+    for i, value in enumerate((0.0, 1.0, 10.0, 11.0)):
+        np.testing.assert_allclose(reopened[i], np.full((2, 3), value), rtol=1e-5)
+
+
+@pytest.mark.parametrize("ext", ("bin", "txt", "npy"))
+def test_save_phase_folder_writes_numbered_files(tmp_path, ext):
+    images = [np.full((2, 2), float(i), np.float32) for i in range(3)]
+    out = tmp_path / "out"
+    if ext == "npy":
+        save_phase_folder(out, images, ext=ext)
+    else:
+        save_phase_folder(out, images, ext=ext, pixel_size=1e-6, height_scale=2e-7)
+    assert sorted(p.name for p in out.iterdir()) == [
+        f"{i:05d}_phase.{ext}" for i in range(3)
+    ]
+
+
+def test_save_phase_folder_accepts_plain_list_via_load_phase(tmp_path):
+    images = [np.full((2, 2), float(i), np.float32) for i in range(2)]
+    out = tmp_path / "out"
+    save_phase_folder(out, images, ext="bin", pixel_size=1e-6, height_scale=2e-7)
+    folder = PhaseBinFolder(out)
+    np.testing.assert_allclose(folder[1], np.full((2, 2), 1.0), rtol=1e-5)
+
+
+def test_save_phase_folder_requires_pixel_size(tmp_path):
+    images = [np.zeros((2, 2), np.float32)]
+    with pytest.raises(ValueError, match="pixel_size is required"):
+        save_phase_folder(tmp_path / "out", images, ext="bin")
+
+
+def test_save_phase_folder_requires_a_scale_form(tmp_path):
+    images = [np.zeros((2, 2), np.float32)]
+    with pytest.raises(ValueError, match="height_scale, or wavelength"):
+        save_phase_folder(tmp_path / "out", images, ext="bin", pixel_size=1e-6)
+
+
+def test_save_phase_folder_npy_warns_on_metadata(tmp_path):
+    images = [np.zeros((2, 2), np.float32)]
+    with pytest.warns(UserWarning, match="header-less"):
+        save_phase_folder(tmp_path / "out", images, ext="npy", pixel_size=1e-6)
+
+
+def test_save_phase_folder_stem_override(tmp_path):
+    images = [np.zeros((2, 2), np.float32)]
+    out = tmp_path / "out"
+    save_phase_folder(out, images, ext="npy", stem="custom")
+    assert (out / "00000_custom.npy").exists()
+
+
+def test_save_phase_folder_rejects_unknown_format(tmp_path):
+    images = [np.zeros((2, 2), np.float32)]
+    with pytest.raises(ValueError, match="ext must be"):
+        save_phase_folder(tmp_path / "out", images, ext="raw")

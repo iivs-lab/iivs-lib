@@ -28,6 +28,8 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
+    from iivs.dhm.data.common import OnNonFinite
+
 
 class IntensityTxtHeaderCodec(KoalaTxtHeaderCodec[IntensityBinHeader]):
     """Reads a Koala `Float/Txt` intensity header into an `IntensityBinHeader`.
@@ -73,7 +75,7 @@ def load_intensity_txt(
     path: StrPath,
     *,
     return_header: Literal[False] = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32]: ...
 
 
@@ -82,7 +84,7 @@ def load_intensity_txt(
     path: StrPath,
     *,
     return_header: Literal[True],
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> tuple[NDArray[np.float32], IntensityBinHeader]: ...
 
 
@@ -91,7 +93,7 @@ def load_intensity_txt(
     path: StrPath,
     *,
     return_header: bool,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], IntensityBinHeader]: ...
 
 
@@ -99,7 +101,7 @@ def load_intensity_txt(
     path: StrPath,
     *,
     return_header: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+    on_nonfinite: OnNonFinite = "ignore",
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], IntensityBinHeader]:
     """Load a Koala `Float/Txt` intensity image, and optionally its header.
 
@@ -134,7 +136,7 @@ def save_intensity_txt(
     *,
     pixel_size: float,
     overwrite: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+    on_nonfinite: OnNonFinite = "warn",
 ) -> None:
     """Save a 2D float32 intensity image as a Koala `Float/Txt` file.
 
@@ -198,7 +200,7 @@ class IntensityTxtList(IntensityFileList):
         self,
         path: StrPath,
         *,
-        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+        on_nonfinite: OnNonFinite = "ignore",
     ) -> tuple[NDArray[np.float32], IntensityBinHeader]:
         """Decode the `Float/Txt` image and its header."""
         return load_intensity_txt(path, return_header=True, on_nonfinite=on_nonfinite)

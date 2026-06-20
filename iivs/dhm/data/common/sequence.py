@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("FrameShapedMixin", "SequentialFileFolder")
+__all__ = ("FrameShapedMixin", "SequentialFileFolder", "ValidationLevel")
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -8,14 +8,18 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from kaparoo.data.sequences import FileFolderSequence
 from kaparoo.filesystem.search import search_files
-from kaparoo.filesystem.search.filters import Regex
-from kaparoo.utils import replace_if_none
+from kaparoo.filters import RegexFilter
+from kaparoo.utils import ensure_one_of, replace_if_none
 from natsort import natsorted, ns
 
 from iivs.dhm.data.common.utils import numbered_name
 
 if TYPE_CHECKING:
     from typing import Literal
+
+
+type ValidationLevel = Literal["names", "headers", "data"]
+"""How deeply a numbered folder checks each file: name, header, or full data."""
 
 
 class FrameShapedMixin(ABC):
@@ -66,7 +70,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     def list_files(self, root: Path) -> list[Path]:
         """List the `NNNNN_<stem>.<ext>` files under `root`, in index order."""
         pattern = rf"\d{{5}}_{self.FILE_STEM}\.{self.FILE_EXT}"
-        files = search_files(root, name_filter=Regex(pattern), max_depth=1)
+        files = search_files(root, name_filter=RegexFilter(pattern), max_depth=1)
         if not files:
             msg = f"no NNNNN_{self.FILE_STEM}.{self.FILE_EXT} files found in {root}"
             raise FileNotFoundError(msg)
@@ -81,9 +85,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         """The contiguous filename expected at `index`."""
         return numbered_name(index, stem=self.FILE_STEM, ext=self.FILE_EXT)
 
-    def validate(
-        self, *, level: Literal["names", "headers", "data"] | None = None
-    ) -> None:
+    def validate(self, *, level: ValidationLevel | None = None) -> None:
         """Validate every file to `level` (defaults to `DEFAULT_LEVEL`)."""
         for index in range(len(self)):
             self.validate_file(index, level=level)
@@ -92,7 +94,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         self,
         index: int,
         *,
-        level: Literal["names", "headers", "data"] | None = None,
+        level: ValidationLevel | None = None,
     ) -> None:
         """Validate the file at `index` to `level` (defaults to `DEFAULT_LEVEL`).
 
@@ -104,9 +106,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
                 non-contiguous, or `_validate_content` rejects the file.
         """
         resolved = replace_if_none(level, self.DEFAULT_LEVEL)
-        if resolved not in self.LEVELS:
-            msg = f"level must be one of {self.LEVELS} (got {resolved!r})"
-            raise ValueError(msg)
+        resolved = ensure_one_of(resolved, self.LEVELS, name="level")
 
         path = self.get_file(index)
         expected = self.expected_name(index)

@@ -6,7 +6,7 @@ import pytest
 from iivs.dhm.data.common import FrameShapedMixin
 from iivs.dhm.data.phase.base import PhaseFloatSequence
 from iivs.dhm.data.phase.bin import PhaseBinHeader
-from iivs.dhm.data.phase.npy import PhaseNpyFolder
+from iivs.dhm.data.phase.npy import PhaseNpyFolder, load_phase_npy
 from iivs.dhm.data.phase.unit import PhaseUnit
 
 
@@ -120,3 +120,36 @@ def test_rejects_pickled_object_array(tmp_path):
         PhaseNpyFolder(
             tmp_path, pixel_size=1e-6, unit=PhaseUnit.RADIANS, height_scale=2e-7
         )
+
+
+# --- load_phase_npy (standalone, header-less) ---
+
+
+def test_load_phase_npy_roundtrip(tmp_path):
+    img = np.arange(6, dtype=np.float32).reshape(2, 3)
+    path = tmp_path / "x.npy"
+    np.save(path, img)
+    out = load_phase_npy(path)
+    np.testing.assert_array_equal(out, img)
+    assert out.dtype == np.float32
+
+
+def test_load_phase_npy_rejects_pickled_object_array(tmp_path):
+    path = tmp_path / "x.npy"
+    np.save(path, np.array([{"x": 1}], dtype=object), allow_pickle=True)
+    with pytest.raises(ValueError, match="allow_pickle"):
+        load_phase_npy(path)
+
+
+def test_load_phase_npy_rejects_non_2d(tmp_path):
+    path = tmp_path / "x.npy"
+    np.save(path, np.zeros((2, 2, 2), dtype=np.float32))
+    with pytest.raises(ValueError, match="2D image"):
+        load_phase_npy(path)
+
+
+def test_load_phase_npy_raises_on_nonfinite(tmp_path):
+    path = tmp_path / "x.npy"
+    np.save(path, np.array([[np.nan, 1.0]], dtype=np.float32))
+    with pytest.raises(ValueError, match="finite"):
+        load_phase_npy(path, on_nonfinite="raise")

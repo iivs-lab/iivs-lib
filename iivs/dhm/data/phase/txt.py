@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
+    from iivs.dhm.data.common import OnNonFinite
+
 
 class PhaseTxtHeaderCodec(KoalaTxtHeaderCodec[PhaseBinHeader]):
     """Reads a Koala `Float/Txt` phase header into a `PhaseBinHeader`.
@@ -121,7 +123,7 @@ def load_phase_txt(
     path: StrPath,
     *,
     return_header: Literal[False] = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32]: ...
 
 
@@ -130,7 +132,7 @@ def load_phase_txt(
     path: StrPath,
     *,
     return_header: Literal[True],
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> tuple[NDArray[np.float32], PhaseBinHeader]: ...
 
 
@@ -139,7 +141,7 @@ def load_phase_txt(
     path: StrPath,
     *,
     return_header: bool,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]: ...
 
 
@@ -147,7 +149,7 @@ def load_phase_txt(
     path: StrPath,
     *,
     return_header: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+    on_nonfinite: OnNonFinite = "ignore",
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]:
     """Load a Koala `Float/Txt` phase image, and optionally its header.
 
@@ -187,7 +189,7 @@ def save_phase_txt(
     height_scale: float,
     unit: PhaseUnit = ...,
     overwrite: bool = ...,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> None: ...
 
 
@@ -201,7 +203,7 @@ def save_phase_txt(
     refractive_delta: float,
     unit: PhaseUnit = ...,
     overwrite: bool = ...,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = ...,
+    on_nonfinite: OnNonFinite = ...,
 ) -> None: ...
 
 
@@ -215,7 +217,7 @@ def save_phase_txt(
     refractive_delta: float | None = None,
     unit: PhaseUnit = PhaseUnit.RADIANS,
     overwrite: bool = False,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+    on_nonfinite: OnNonFinite = "warn",
 ) -> None:
     """Save a 2D float32 phase image as a Koala `Float/Txt` file.
 
@@ -298,7 +300,7 @@ class PhaseTxtList(PhaseFileList):
         self,
         path: StrPath,
         *,
-        on_nonfinite: Literal["ignore", "warn", "raise"] = "ignore",
+        on_nonfinite: OnNonFinite = "ignore",
     ) -> tuple[NDArray[np.float32], PhaseBinHeader]:
         """Decode the `Float/Txt` image and its header."""
         return load_phase_txt(path, return_header=True, on_nonfinite=on_nonfinite)

@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
     from kaparoo.filesystem.types import StrPath, StrPaths
 
+    from iivs.dhm.data.common import ValidationLevel
     from iivs.dhm.data.phase.bin import PhaseBinHeader
 
 
@@ -259,7 +260,7 @@ class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
         root: StrPath,
         *,
         target_unit: PhaseUnit | None = None,
-        validate: Literal["names", "headers", "data"] | None = "headers",
+        validate: ValidationLevel | None = "headers",
     ) -> None:
         # Stashed for _after_header, which resolves it once the shared header is
         # known (the cooperative PhaseFileList.__init__ sets target_unit to None).

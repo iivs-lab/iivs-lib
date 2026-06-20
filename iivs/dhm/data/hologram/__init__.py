@@ -8,6 +8,8 @@ conversion.
 from __future__ import annotations
 
 __all__ = (
+    "HOLOGRAM_FORMATS",
+    "HologramFormat",
     "HologramNpyFolder",
     "HologramRawFile",
     "HologramRawHeader",
@@ -15,6 +17,7 @@ __all__ = (
     "HologramTifFolder",
     "HologramTifList",
     "convert_hologram_sequence",
+    "load_hologram_npy",
     "load_hologram_tif",
     "read_hologram_raw_header",
     "save_hologram_npy",
@@ -23,8 +26,16 @@ __all__ = (
 )
 
 from iivs.dhm.data.hologram.base import HologramSequence
-from iivs.dhm.data.hologram.convert import convert_hologram_sequence
-from iivs.dhm.data.hologram.npy import HologramNpyFolder, save_hologram_npy
+from iivs.dhm.data.hologram.convert import (
+    HOLOGRAM_FORMATS,
+    HologramFormat,
+    convert_hologram_sequence,
+)
+from iivs.dhm.data.hologram.npy import (
+    HologramNpyFolder,
+    load_hologram_npy,
+    save_hologram_npy,
+)
 from iivs.dhm.data.hologram.raw import (
     HologramRawFile,
     HologramRawHeader,

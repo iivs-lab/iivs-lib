@@ -1,16 +1,21 @@
 from __future__ import annotations
 
-__all__ = ("validate_float32_image", "validate_uint8_image")
+__all__ = ("OnNonFinite", "validate_float32_image", "validate_uint8_image")
 
 import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
+from kaparoo.utils import ensure_one_of
 
 if TYPE_CHECKING:
     from typing import Literal
 
     from numpy.typing import NDArray
+
+
+type OnNonFinite = Literal["ignore", "warn", "raise"]
+"""How a float32 image validator treats non-finite values (NaN, +/-inf)."""
 
 
 def _validate_image_dims(data: NDArray[np.generic], *, allow_stack: bool) -> None:
@@ -31,7 +36,7 @@ def _validate_image_dims(data: NDArray[np.generic], *, allow_stack: bool) -> Non
 def validate_float32_image(
     data: NDArray[np.float32],
     *,
-    on_nonfinite: Literal["ignore", "warn", "raise"] = "warn",
+    on_nonfinite: OnNonFinite = "warn",
     allow_stack: bool = True,
 ) -> NDArray[np.float32]:
     """Validate a float32 image (or stack) and return it.
@@ -61,14 +66,9 @@ def validate_float32_image(
         msg = f"data must be float32 (got {data.dtype})"
         raise ValueError(msg)
 
-    match on_nonfinite:
-        case "ignore":
-            return data
-        case "warn" | "raise":
-            pass
-        case _:
-            msg = f"on_nonfinite must be 'ignore', 'warn', or 'raise' (got {on_nonfinite!r})"
-            raise ValueError(msg)
+    ensure_one_of(on_nonfinite, ("ignore", "warn", "raise"), name="on_nonfinite")
+    if on_nonfinite == "ignore":
+        return data
 
     if not np.all(np.isfinite(data)):
         nan = int(np.isnan(data).sum())

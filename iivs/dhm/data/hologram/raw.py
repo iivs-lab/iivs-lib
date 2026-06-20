@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, ClassVar, cast, override
 import numpy as np
 from kaparoo.data.sequences.templates import SingleFileSequence
 from kaparoo.filesystem import StagedFile, ensure_file_exists, ensure_file_extension
+from kaparoo.utils import ensure_one_of
 from numpy.typing import NDArray
 
 from iivs.dhm.data.common import FrameShapedMixin, validate_uint8_image
@@ -21,6 +22,7 @@ from iivs.dhm.data.hologram.base import HologramSequence
 if TYPE_CHECKING:
     from typing import IO, Self
 
+    from kaparoo.data.sequences import DataSequence
     from kaparoo.filesystem.types import StrPath
 
 
@@ -71,9 +73,7 @@ class HologramRawHeader:
             msg = f"frame_count must be non-negative (got {self.frame_count})"
             raise ValueError(msg)
 
-        if self.bit_depth not in self.SUPPORTED_BIT_DEPTHS:
-            msg = f"bit_depth must be one of {self.SUPPORTED_BIT_DEPTHS} (got {self.bit_depth})"
-            raise ValueError(msg)
+        ensure_one_of(self.bit_depth, self.SUPPORTED_BIT_DEPTHS, name="bit_depth")
 
     @property
     def shape(self) -> tuple[int, int]:
@@ -151,7 +151,7 @@ def read_hologram_raw_header(path: StrPath) -> HologramRawHeader:
 
 def save_hologram_raw(
     path: StrPath,
-    frames: NDArray[np.uint8] | HologramSequence[object],
+    frames: NDArray[np.uint8] | DataSequence[NDArray[np.uint8], object],
     *,
     overwrite: bool = False,
 ) -> None:
@@ -165,8 +165,9 @@ def save_hologram_raw(
     Args:
         path: The `.raw` file to write.
         frames: The holograms to save -- a single 2D image, an ``(N, H, W)``
-            stack array, or a `HologramSequence`. All frames must share one
-            shape.
+            stack array, or any uint8 `DataSequence` (a `HologramSequence`, or a
+            `kaparoo` composer such as a `ConcatSequence`). All frames must share
+            one shape.
         overwrite: Whether to replace `path` if it already exists. Defaults to
             False.
 
@@ -179,17 +180,12 @@ def save_hologram_raw(
     """
     path = ensure_file_extension(path, "raw", add=True)
 
-    if isinstance(frames, HologramSequence):
-        count = len(frames)
-        if count == 0:
-            msg = "cannot save an empty hologram sequence to .raw"
-            raise ValueError(msg)
-
-        shape = validate_uint8_image(frames[0], allow_stack=False).shape
-        height, width = shape[0], shape[1]
-        frame_iter = frames
-    else:
-        stack = validate_uint8_image(frames, allow_stack=True)
+    if isinstance(frames, np.ndarray):
+        # `cast` away the `DataSequence & ndarray` residual ty forms when
+        # narrowing the generic union by `isinstance` (both are non-final).
+        stack = validate_uint8_image(
+            cast("NDArray[np.uint8]", frames), allow_stack=True
+        )
         if stack.ndim == 2:
             stack = stack[np.newaxis]
         if stack.ndim != 3:
@@ -201,6 +197,15 @@ def save_hologram_raw(
             msg = "cannot save an empty hologram stack to .raw"
             raise ValueError(msg)
         frame_iter = stack
+    else:
+        count = len(frames)
+        if count == 0:
+            msg = "cannot save an empty hologram sequence to .raw"
+            raise ValueError(msg)
+
+        shape = validate_uint8_image(frames[0], allow_stack=False).shape
+        height, width = shape[0], shape[1]
+        frame_iter = frames
 
     header = HologramRawHeader(
         width=width, height=height, bit_depth=8, frame_count=count
