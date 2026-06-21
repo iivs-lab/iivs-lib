@@ -45,6 +45,24 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
 - Mirror the package layout under `tests/`: `iivs/sub/mod.py`
   is tested by `tests/sub/test_mod.py`. Keep `__init__.py` markers in
   test subpackages (matches the `INP` ruff rule).
+- Test layout: flat module-level `def test_*` functions by default;
+  reach for a plain `class TestX:` (grouping only, no inheritance) to
+  organize a large or multi-feature surface. Don't mix the two styles
+  within one file.
+- Not every source file needs a dedicated test file — types-only
+  modules, re-export `__init__.py` markers, and details covered through
+  a public-facing module are intentional exceptions.
+- Cross-module test helpers live in `tests/<pkg>/helpers.py`; shared
+  fixtures and per-package config go in `conftest.py` (see the fixtures
+  note below).
+- Test quality: assertions check concrete return values AND side
+  effects, not merely "no exception raised"; error paths use
+  `pytest.raises(..., match=...)`; verify numbers against independently
+  computed values (not the implementation's own output); make timing /
+  IO deterministic (an injected clock, fault injection) rather than
+  flaky. A good test fails on *subtle* breakage, not just obvious
+  breakage. When a contract is "one batched call per source", verify it
+  with a spy, not only by the result.
 - Name modules after their primary concept — usually a **singular**
   noun (`header.py`, `sequence.py`, `timestamp.py`), even when the
   module manages many instances (a sequence module is still
@@ -180,32 +198,59 @@ applying it by hand.
   way). Within a group `import X` precedes `from X import Y`; entries are
   alphabetical.
 - Docstrings are optional — write them where they clarify intent, not
-  mechanically on every function, class, or method. When written,
-  document *intent and contracts, not mechanism*:
+  mechanically. "Mechanically" targets two habits to avoid: comments
+  (or docstrings) that merely restate the code, and a base class whose
+  docstring explains itself in terms of its specific subclasses —
+  except a *closed* hierarchy's base, which may name its subclasses as
+  a deliberate family map. It is *not* a licence to leave a consumed
+  method bare. When written, document *intent and contracts, not
+  mechanism*:
   - Lead with a one-line summary — a declarative noun phrase for
     classes ("An ordered, read-only view over ..."), an imperative
     verb phrase for functions and methods ("Yield successive windows
-    from `items`.").
+    from `items`."). Two kinds take a noun phrase instead: a property
+    getter ("The reporting unit ...") and a boolean-returning *method*,
+    which leads with "Whether ..." ("Whether `path` exists."). A
+    boolean *function* stays imperative ("Test whether a path exists.").
+  - A concrete public method a caller consumes must be self-explainable
+    from its own docstring and signature — never lean on an inherited
+    parent docstring. Abstract base methods document only the generic
+    contract and never name a specific subclass.
   - Surface what callers cannot infer from the signature alone:
     invariants, edge cases, what subclasses must override, policy
     trade-offs. Skip restating what the code already shows.
   - Use [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)
     sections (`Args:`, `Returns:`, `Yields:`, `Raises:`,
     `Type Parameters:`); omit types from `Args:` since the signature
-    already carries them. Custom sections (`Example:`, and ad-hoc
-    labels) are welcome when they clarify a real pitfall or pattern.
+    already carries them. Custom sections (`Example:`, `Truth table:`,
+    and ad-hoc labels) are welcome when they clarify a real pitfall or
+    pattern.
+  - Add an `Args:` / `Returns:` block only for what the summary and
+    signature cannot already convey. When they make the behaviour
+    obvious (a no-arg getter, a self-evident one-liner), the summary
+    *is* the whole docstring; a `Returns:` that merely restates it is
+    the mechanical habit above. Document an edge case shared across a
+    family once on the class.
   - Reference identifiers in backticks (`my_method`, `param`,
-    `MyClass.method`).
+    `MyClass.method`). Literal option values get backticks too
+    (`"merge"`, `"error"`), as identifiers do.
 - Exception messages use a terse, lower-case house style: no leading
   capital, no trailing period. Prefer `f"<subject> must be <constraint>
   (got {value})"` for validation, or a short imperative for
   mutually-exclusive options (`"give height_scale, or wavelength and
-  refractive_delta (not both)"`). Keep each message on one line — if it
-  would wrap, shorten it or hoist a value to a local rather than splitting
-  the string literal.
+  refractive_delta (not both)"`). Name the valid set or the fix, not
+  just the failure (`"unsupported extension 'X': expected bin, txt"`),
+  so the message tells the caller what to do next. Keep each message on
+  one line — if it would wrap, shorten it or hoist a value to a local
+  rather than splitting the string literal.
 - Comments must earn their place: delete ones that restate the code. When
   an implementation note states intent or a contract, prefer promoting it
   to a docstring.
+- Within a function body, separate logical groups with a single blank
+  line and put a blank line before the final `return`; leave a tightly
+  coupled one- or two-line body unbroken.
+- In a long module, group related definitions under a boxed comment
+  banner — a centred title between two `#`-bordered rules.
 - Standalone runnable scripts carry PEP 723 inline metadata (the
   `# /// script` block). `uv` manages it (`uv add --script`); add or edit
   it by hand only when explicitly asked.
@@ -267,10 +312,15 @@ Releases publish automatically via GitHub Actions **Trusted Publishing**
    `git tag -a vX.Y.Z -m "🔖 Release version X.Y.Z" && git push origin vX.Y.Z`.
 
 The `v*.*.*` tag triggers `.github/workflows/publish.yml`: it reruns
-CI across the OS matrix, builds the distributions once and uploads
-them as an artifact, publishes them to TestPyPI as a staging
-rehearsal, then — once you approve the `pypi` environment gate —
-publishes the same artifacts to PyPI via OIDC. Keeping `build`
+CI across the OS matrix, then `build` first **verifies the tag matches
+`pyproject.toml`'s version** (a mismatch fails fast) before building
+the distributions once and uploading them as an artifact. It publishes
+them to TestPyPI as a staging rehearsal (`skip-existing`, so a rerun is
+safe), then — once you approve the `pypi` environment gate — publishes
+the same artifacts to PyPI via OIDC. Finally a `github-release` job
+**creates the GitHub Release automatically** — using the matching
+`CHANGELOG.md` section as the notes and attaching the sdist + wheel —
+so there is no manual release step after the PyPI gate. Keeping `build`
 separate from publish keeps the `id-token: write` permission scoped
 to the publish jobs only.
 
