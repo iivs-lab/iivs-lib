@@ -5,6 +5,16 @@ item to a CHANGELOG entry once it lands.
 
 ## Open
 
+- **Exercise the real LZW `Image/*.tif` decode path in tests.** Today the
+  `load_uint8_tif` LZW branch is only covered via a monkeypatched
+  `tifffile.imread` (`tests/dhm/data/test_common.py`); the actual `imagecodecs`
+  decode is never run. Add a test that round-trips a genuinely LZW-compressed
+  uint8 tif — either a small generated fixture
+  (`tifffile.imwrite(path, data, compression="lzw")`, no proprietary data to
+  ship) or a minimal real Koala `Image/*.tif` sample asset (mind size and the
+  Lyncée Tec data-redistribution question; keep it out of the built
+  sdist/wheel). The `dev` group already pulls `iivs-lib[image]`, so the codec
+  is present in CI.
 - **Add a dataset/acquisition opener.** Koala nests its export as
   `<Modality>/Float/Bin`, `<Modality>/Float/Txt`, `<Modality>/Image`, plus
   `Holograms/holo.raw`, `timestamps.txt`, and `phbounds.txt` at the root (this

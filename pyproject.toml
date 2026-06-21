@@ -52,7 +52,7 @@ keywords = [
     "lyncee-tec",
 ]
 dependencies = [
-    "kaparoo-python>=0.8.0",
+    "kaparoo-python>=0.9.0",
     "natsort>=8.4.0",
     "numpy>=2.4.6",
     "tifffile>=2026.6.1",
@@ -62,15 +62,14 @@ dependencies = [
 GitHub = "https://www.github.com/iivs-lab/iivs-lib"
 
 [project.optional-dependencies]
-# Decoders for the LZW-compressed Koala `Image/*.tif` uint8 previews
-# (`PhaseTifFolder` / `IntensityTifFolder`). Install with `iivs-lib[image]`.
+# Decoders for Koala's LZW-compressed `Image/*.tif` uint8 previews.
 image = [
     "imagecodecs>=2026.5.10",
 ]
-# Torch-native (CPU/GPU, autograd) `iivs.dhm.analysis.pytorch` helpers.
-# Install with `iivs-lib[torch]`.
+# Torch-native `analysis.pytorch` helpers. Floor 2.9 = first cp314 wheels
+# (needed for requires-python >=3.14); pairs with NumPy 2.x.
 torch = [
-    "torch>=2.6",
+    "torch>=2.9",
 ]
 
 # ========================== #
@@ -83,26 +82,23 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.14",
     "ty>=0.0.40",
-    # The `[torch]` extra, so the `analysis.pytorch` module is tested and
-    # coverage-measured in the dev environment (CPU build is enough).
-    "torch>=2.6",
+    # Self-referenced extras: test their runtime paths (`[torch]`
+    # `analysis.pytorch`, `[image]` LZW decode) and keep floors single-sourced.
+    "iivs-lib[image,torch]",
 ]
 
 [tool.uv.build-backend]
 module-name = "iivs"
 module-root = ""
-# Per-package `README.md` docs are for browsing the source tree; keep them out
-# of the built sdist and wheel. The root `README.md` still ships, via
-# `project.readme` above (it is embedded in the distribution metadata).
+# Per-package READMEs are for browsing the tree only; the root README still
+# ships via `project.readme`.
 source-exclude = ["iivs/**/README.md"]
 wheel-exclude = ["iivs/**/README.md"]
 # See the following documentation for more information
 # https://docs.astral.sh/uv/concepts/build-backend/
 
-# Named publish indexes — `uv publish --index testpypi` for the staging
-# upload, then `--index pypi` for the real release. Tokens live in the
-# OS keyring under the `publish-url` keys; `testpypi` is `explicit = true`
-# so it stays out of dependency resolution.
+# Publish targets: `uv publish --index testpypi` (staging), then `--index pypi`.
+# `testpypi` is `explicit` so it stays out of dependency resolution.
 [[tool.uv.index]]
 name = "pypi"
 url = "https://pypi.org/simple/"
