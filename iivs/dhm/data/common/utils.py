@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from kaparoo.filesystem import file_extension
 from kaparoo.filesystem.search import search_files
-from kaparoo.filters import RegexFilter
+from kaparoo.filters import Regex
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -34,7 +34,7 @@ def detect_numbered_format(
     """Return which of `formats` the ``{index:05d}_{stem}.<ext>`` files in `root` use.
 
     Scans `root` at depth 1 for the numbered ``{stem}`` files with `search_files`
-    and a `RegexFilter`, then resolves a single format. When more than one format
+    and a `Regex`, then resolves a single format. When more than one format
     is present, `prefer` decides -- mirroring `kaparoo`'s
     `hierarchy.Exclusive(on_conflict=...)`:
 
@@ -56,7 +56,7 @@ def detect_numbered_format(
     """
     alternation = "|".join(formats)
     hits = search_files(
-        root, name_filter=RegexFilter(rf"\d{{5}}_{stem}\.({alternation})"), max_depth=1
+        root, name_filter=Regex(rf"\d{{5}}_{stem}\.({alternation})"), max_depth=1
     )
     found = {file_extension(hit) for hit in hits}
     present = [fmt for fmt in formats if fmt in found]

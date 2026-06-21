@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from kaparoo.data.sequences import FileFolderSequence
 from kaparoo.filesystem.search import search_files
-from kaparoo.filters import RegexFilter
+from kaparoo.filters import Regex
 from kaparoo.utils import ensure_one_of, replace_if_none
 from natsort import natsorted, ns
 
@@ -70,7 +70,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     def list_files(self, root: Path) -> list[Path]:
         """List the `NNNNN_<stem>.<ext>` files under `root`, in index order."""
         pattern = rf"\d{{5}}_{self.FILE_STEM}\.{self.FILE_EXT}"
-        files = search_files(root, name_filter=RegexFilter(pattern), max_depth=1)
+        files = search_files(root, name_filter=Regex(pattern), max_depth=1)
         if not files:
             msg = f"no NNNNN_{self.FILE_STEM}.{self.FILE_EXT} files found in {root}"
             raise FileNotFoundError(msg)
