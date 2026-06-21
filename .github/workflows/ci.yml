@@ -6,10 +6,15 @@ on:
   pull_request:
   workflow_call:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     name: Lint, type-check, test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
 
     strategy:
       fail-fast: false
@@ -25,7 +30,7 @@ jobs:
           enable-cache: true
 
       - name: Sync dependencies
-        run: uv sync --group dev
+        run: uv sync --group dev --locked
 
       - name: Ruff format check
         run: uv run ruff format --check .

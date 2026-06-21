@@ -21,6 +21,15 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Verify tag matches project version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(uv version --short)"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag 'v$tag' does not match project version '$version'"
+            exit 1
+          fi
+
       - name: Build sdist and wheel
         run: uv build
 
@@ -51,6 +60,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
           print-hash: true
           attestations: true
 
@@ -73,3 +83,36 @@ jobs:
         with:
           print-hash: true
           attestations: true
+
+  github-release:
+    name: Create GitHub release
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download distributions
+        uses: actions/download-artifact@v7
+        with:
+          name: distributions
+          path: dist/
+
+      - name: Extract release notes from CHANGELOG
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v ver="$version" '
+            index($0, "## [" ver "]") == 1 { flag = 1; next }
+            /^## / { if (flag) exit }
+            flag { print }
+          ' CHANGELOG.md > release-notes.md
+          cat release-notes.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release-notes.md
