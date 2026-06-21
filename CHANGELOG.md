@@ -15,7 +15,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`"names"`/`"headers"`/`"data"`) type aliases, the `FloatFormat` alias with its
   `FLOAT_FORMATS` tuple, and `detect_numbered_format(root, *, stem, formats,
   prefer)` — which discovers a numbered folder's format with `kaparoo`'s
-  `search_files` + a `RegexFilter` (no `Path.glob`) and resolves a multi-format
+  `search_files` + a `Regex` (no `Path.glob`) and resolves a multi-format
   conflict via `prefer` (the per-modality factories now share these instead of
   each defining their own). `iivs.dhm.data.hologram` adds the matching
   `HologramFormat` / `HOLOGRAM_FORMATS`.
@@ -68,16 +68,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   behavior is unchanged.
 
 - Require `kaparoo-python>=0.9.0`. Its filter classes moved to a top-level
-  `kaparoo.filters` package and `Regex` was renamed `RegexFilter` (the
-  numbered-folder discovery in `data.common.sequence` imports `RegexFilter`
-  from there); the per-modality factories dispatch on `kaparoo.filesystem`'s
-  `file_extension` and raise its `UnsupportedExtensionError` (a `ValueError`
-  subclass) for an unknown suffix, in place of this package's own short-lived
-  `file_extension` / `unsupported_extension` helpers.
+  `kaparoo.filters` package; the numbered-folder discovery in
+  `data.common.sequence` imports `Regex` from there. The per-modality
+  factories dispatch on `kaparoo.filesystem`'s `file_extension` and raise its
+  `UnsupportedExtensionError` (a `ValueError` subclass) for an unknown suffix,
+  in place of this package's own short-lived `file_extension` /
+  `unsupported_extension` helpers.
 - Membership-validation guards now use `kaparoo.utils.ensure_one_of` (the `ext`
   checks in the `convert` modules, the folder `validate` level, and
   `HologramRawHeader.bit_depth`). The rejection message wording changes
   slightly (e.g. `ext must be one of [...]`).
+- Raise the `iivs-lib[torch]` extra's floor to `torch>=2.9` — the first release
+  with CPython 3.14 (cp314) wheels, which the project's `requires-python >=3.14`
+  needs (2.6–2.8 ship none); resolved installs on 3.14 are unaffected.
 
 ## [0.1.0] - 2026-06-05
 
