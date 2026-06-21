@@ -33,6 +33,42 @@ item to a CHANGELOG entry once it lands.
   giving up the invertible 255-level map — the `Float` data stays the exact
   source regardless.
 
+## Finalize the WIP dispatch / composer features
+
+Landed as WIP (the two `🚧 WIP` commits since `v0.1.0`) and not yet complete.
+They are uneven across modalities and under-tested/-documented; finish each to
+parity before the next release.
+
+- **Extension-based dispatch — bring `hologram` to parity and surface at the
+  data root.** `phase` and `intensity` have full suffix-dispatch factories
+  (`load_*`, `read_*_header`, `save_*`, `*_list`, `*_folder`), but `hologram`
+  has *none* — it ships only the `HologramFormat` / `HOLOGRAM_FORMATS`
+  vocabulary, with no `load_hologram` / `hologram_folder` / `hologram_list` /
+  `save_hologram` (`.tif` / `.raw` / `.npy`). Add the `hologram` factory, then
+  re-export the per-modality entry points from `iivs.dhm.data` (the package root
+  currently surfaces none of them), so a caller reaches dispatch without diving
+  into submodules.
+- **Composer-friendly folder export — confirm cross-modality coverage.**
+  `save_phase_folder` / `save_intensity_folder` accept any image sequence
+  (`kaparoo` composers, `to_float` / `to_image` views, plain lists). Verify the
+  hologram side reaches the same place: `convert_hologram_sequence` /
+  `save_hologram_raw` already take any uint8 `DataSequence`, but there is no
+  `save_hologram_folder` twin for the per-frame `.tif` / `.npy` folders. Add it
+  (or document why `raw` is the only stack target) and add the missing
+  composer-input tests.
+- **`common` shared dispatch — stabilize and test now that the local helpers are
+  gone.** `file_extension` / `unsupported_extension` were replaced by
+  `kaparoo.filesystem.file_extension` / `UnsupportedExtensionError`; make sure
+  every factory dispatches through them consistently, and add direct unit tests
+  for `detect_numbered_format` (single/multi-format folders, the `prefer`
+  policies, the empty/ambiguous error paths) and the `FloatFormat` /
+  `HologramFormat` aliases.
+- **Hologram composer support — close the gap with `phase` / `intensity`.**
+  The composer acceptance on `convert_hologram_sequence` / `save_hologram_raw`
+  is the first half; the modality still lacks the dispatch factory and the
+  folder-export twin above. Track these together so `hologram` ends up with the
+  same composer-in / dispatch-out surface as the float modalities.
+
 ## Planned module structure (future `confocal` / `rcm`, shared `common`, viz)
 
 Design decisions reached for growing `iivs` beyond `dhm`. The governing rule:

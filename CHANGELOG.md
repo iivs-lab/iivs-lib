@@ -13,12 +13,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `iivs.dhm.data.common`: shared vocabulary for the repeated dispatch literals —
   the `OnNonFinite` (`"ignore"`/`"warn"`/`"raise"`) and `ValidationLevel`
   (`"names"`/`"headers"`/`"data"`) type aliases, the `FloatFormat` alias with its
-  `FLOAT_FORMATS` tuple, the `file_extension(path)` / `unsupported_extension(
-  ext, *, kind, formats)` dispatch helpers, and `detect_numbered_format(root, *,
-  stem, formats, prefer)` — which discovers a numbered folder's format with
-  `kaparoo`'s `search_files` + a `RegexFilter` (no `Path.glob`) and resolves a
-  multi-format conflict via `prefer` (the per-modality factories now share these
-  instead of each defining their own). `iivs.dhm.data.hologram` adds the matching
+  `FLOAT_FORMATS` tuple, and `detect_numbered_format(root, *, stem, formats,
+  prefer)` — which discovers a numbered folder's format with `kaparoo`'s
+  `search_files` + a `RegexFilter` (no `Path.glob`) and resolves a multi-format
+  conflict via `prefer` (the per-modality factories now share these instead of
+  each defining their own). `iivs.dhm.data.hologram` adds the matching
   `HologramFormat` / `HOLOGRAM_FORMATS`.
 - `iivs.dhm.data.phase`: extension-dispatch entry points that pick the format
   by a path's suffix, so callers need not hand-pick the per-format symbol.
@@ -68,12 +67,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   metadata), matching the per-format `save_phase_bin` / `save_phase_txt`. Runtime
   behavior is unchanged.
 
-- Require `kaparoo-python>=0.8.0`. Its filter classes moved to a top-level
-  `kaparoo.filters` package and `Regex` was renamed `RegexFilter`; the
-  numbered-folder discovery in `data.common.sequence` now imports
-  `RegexFilter` from there.
-- Membership-validation guards now use 0.8.0's `kaparoo.utils.ensure_one_of`
-  (the `ext` checks in the `convert` modules, the folder `validate` level, and
+- Require `kaparoo-python>=0.9.0`. Its filter classes moved to a top-level
+  `kaparoo.filters` package and `Regex` was renamed `RegexFilter` (the
+  numbered-folder discovery in `data.common.sequence` imports `RegexFilter`
+  from there); the per-modality factories dispatch on `kaparoo.filesystem`'s
+  `file_extension` and raise its `UnsupportedExtensionError` (a `ValueError`
+  subclass) for an unknown suffix, in place of this package's own short-lived
+  `file_extension` / `unsupported_extension` helpers.
+- Membership-validation guards now use `kaparoo.utils.ensure_one_of` (the `ext`
+  checks in the `convert` modules, the folder `validate` level, and
   `HologramRawHeader.bit_depth`). The rejection message wording changes
   slightly (e.g. `ext must be one of [...]`).
 
