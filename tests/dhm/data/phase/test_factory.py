@@ -45,7 +45,7 @@ def test_load_phase_dispatches_by_extension(tmp_path, ext):
 
 
 def test_load_phase_rejects_unknown_extension(tmp_path):
-    with pytest.raises(ValueError, match="unsupported phase extension"):
+    with pytest.raises(ValueError, match=r"unsupported extension .* for phase"):
         load_phase(tmp_path / "x.foo")
 
 
@@ -68,7 +68,7 @@ def test_read_phase_header_rejects_npy(tmp_path):
 
 
 def test_read_phase_header_rejects_unknown_extension(tmp_path):
-    with pytest.raises(ValueError, match="unsupported phase extension"):
+    with pytest.raises(ValueError, match=r"unsupported extension .* for phase"):
         read_phase_header(tmp_path / "x.foo")
 
 
@@ -114,7 +114,7 @@ def test_save_phase_bin_requires_a_scale_form(tmp_path):
 
 
 def test_save_phase_rejects_unknown_extension(tmp_path):
-    with pytest.raises(ValueError, match="unsupported phase extension"):
+    with pytest.raises(ValueError, match=r"unsupported extension .* for phase"):
         save_phase(tmp_path / "x.foo", IMG, pixel_size=1e-6, height_scale=2e-7)
 
 
@@ -149,7 +149,7 @@ def test_phase_list_rejects_empty():
 
 
 def test_phase_list_rejects_unknown_extension(tmp_path):
-    with pytest.raises(ValueError, match="unsupported phase extension"):
+    with pytest.raises(ValueError, match=r"unsupported extension .* for phase"):
         phase_list([tmp_path / "a.foo"])
 
 

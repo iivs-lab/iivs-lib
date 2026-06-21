@@ -19,8 +19,10 @@ import X`` reaches any of them:
 - `sequence` — the numbered-folder base and same-shape mixin
   (`SequentialFileFolder`, `FrameShapedMixin`).
 - `validation` — the float32 / uint8 image validators.
-- `utils` — the numbered-folder filename helper (`numbered_name`). The path
-  helper `ensure_file_extension` (with its `add=True` mode) is imported directly
+- `utils` — the numbered-folder helpers (`numbered_name`,
+  `detect_numbered_format`). The extension helpers `file_extension`,
+  `ensure_file_extension` (with its `add=True` mode), and the
+  `UnsupportedExtensionError` raised on a bad extension are imported directly
   from `kaparoo.filesystem` where needed, not re-exported here.
 """
 
@@ -42,13 +44,11 @@ __all__ = (
     "SequentialFileFolder",
     "ValidationLevel",
     "detect_numbered_format",
-    "file_extension",
     "load_uint8_tif",
     "numbered_name",
     "parse_txt_grid",
     "read_bin_pixels",
     "read_npy_shape",
-    "unsupported_extension",
     "validate_float32_image",
     "validate_uint8_image",
     "write_bin",
@@ -77,12 +77,7 @@ from iivs.dhm.data.common.sequence import (
     ValidationLevel,
 )
 from iivs.dhm.data.common.txt import KoalaTxtHeaderCodec, parse_txt_grid, write_txt_grid
-from iivs.dhm.data.common.utils import (
-    detect_numbered_format,
-    file_extension,
-    numbered_name,
-    unsupported_extension,
-)
+from iivs.dhm.data.common.utils import detect_numbered_format, numbered_name
 from iivs.dhm.data.common.validation import (
     OnNonFinite,
     validate_float32_image,

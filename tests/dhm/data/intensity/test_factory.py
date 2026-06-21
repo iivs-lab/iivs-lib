@@ -48,7 +48,7 @@ def test_load_intensity_dispatches_by_extension(tmp_path, ext):
 
 
 def test_load_intensity_rejects_unknown_extension(tmp_path):
-    with pytest.raises(ValueError, match="unsupported intensity extension"):
+    with pytest.raises(ValueError, match=r"unsupported extension .* for intensity"):
         load_intensity(tmp_path / "x.foo")
 
 
@@ -70,7 +70,7 @@ def test_read_intensity_header_rejects_npy(tmp_path):
 
 
 def test_read_intensity_header_rejects_unknown_extension(tmp_path):
-    with pytest.raises(ValueError, match="unsupported intensity extension"):
+    with pytest.raises(ValueError, match=r"unsupported extension .* for intensity"):
         read_intensity_header(tmp_path / "x.foo")
 
 
@@ -110,7 +110,7 @@ def test_save_intensity_bin_requires_pixel_size(tmp_path):
 
 
 def test_save_intensity_rejects_unknown_extension(tmp_path):
-    with pytest.raises(ValueError, match="unsupported intensity extension"):
+    with pytest.raises(ValueError, match=r"unsupported extension .* for intensity"):
         save_intensity(tmp_path / "x.foo", IMG, pixel_size=1e-6)
 
 
@@ -147,7 +147,7 @@ def test_intensity_list_rejects_empty():
 
 
 def test_intensity_list_rejects_unknown_extension(tmp_path):
-    with pytest.raises(ValueError, match="unsupported intensity extension"):
+    with pytest.raises(ValueError, match=r"unsupported extension .* for intensity"):
         intensity_list([tmp_path / "a.foo"])
 
 

@@ -11,12 +11,9 @@ __all__ = (
 import warnings
 from typing import TYPE_CHECKING
 
-from iivs.dhm.data.common import (
-    FLOAT_FORMATS,
-    detect_numbered_format,
-    file_extension,
-    unsupported_extension,
-)
+from kaparoo.filesystem import UnsupportedExtensionError, file_extension
+
+from iivs.dhm.data.common import FLOAT_FORMATS, detect_numbered_format
 from iivs.dhm.data.intensity.bin import (
     IntensityBinFolder,
     IntensityBinList,
@@ -72,7 +69,7 @@ def load_intensity(
         return load_intensity_txt(path, on_nonfinite=on_nonfinite)
     if ext == "npy":
         return load_intensity_npy(path, on_nonfinite=on_nonfinite)
-    raise unsupported_extension(ext, kind="intensity", formats=FLOAT_FORMATS)
+    raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="intensity")
 
 
 def read_intensity_header(path: StrPath) -> IntensityBinHeader:
@@ -94,7 +91,7 @@ def read_intensity_header(path: StrPath) -> IntensityBinHeader:
     if ext == "npy":
         msg = "`.npy` is header-less; supply metadata via IntensityNpyFolder"
         raise ValueError(msg)
-    raise unsupported_extension(ext, kind="intensity", formats=FLOAT_FORMATS)
+    raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="intensity")
 
 
 def save_intensity(
@@ -136,7 +133,7 @@ def save_intensity(
             warnings.warn(msg, stacklevel=2)
         save_intensity_npy(path, data, overwrite=overwrite, on_nonfinite=on_nonfinite)
         return
-    raise unsupported_extension(ext, kind="intensity", formats=FLOAT_FORMATS)
+    raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="intensity")
 
 
 def intensity_list(files: StrPaths) -> IntensityFileList:
@@ -168,7 +165,7 @@ def intensity_list(files: StrPaths) -> IntensityFileList:
     if ext == "npy":
         msg = "no .npy intensity list; use IntensityNpyFolder (npy is header-less)"
         raise ValueError(msg)
-    raise unsupported_extension(ext, kind="intensity", formats=FLOAT_FORMATS)
+    raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="intensity")
 
 
 def intensity_folder(

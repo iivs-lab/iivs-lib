@@ -1,15 +1,10 @@
 from __future__ import annotations
 
-__all__ = (
-    "detect_numbered_format",
-    "file_extension",
-    "numbered_name",
-    "unsupported_extension",
-)
+__all__ = ("detect_numbered_format", "numbered_name")
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
+from kaparoo.filesystem import file_extension
 from kaparoo.filesystem.search import search_files
 from kaparoo.filters import RegexFilter
 
@@ -27,27 +22,6 @@ def numbered_name(index: int, *, stem: str, ext: str) -> str:
     folder.
     """
     return f"{index:05d}_{stem}.{ext}"
-
-
-def file_extension(path: StrPath) -> str:
-    """The lower-case extension of `path`, without the leading dot.
-
-    Normalizes for suffix dispatch (`Path.suffix` keeps the dot and case): both
-    ``"a/b.BIN"`` and ``"a/b.bin"`` yield ``"bin"``, and an extension-less path
-    yields ``""``.
-    """
-    return Path(path).suffix.casefold().removeprefix(".")
-
-
-def unsupported_extension(ext: str, *, kind: str, formats: Sequence[str]) -> ValueError:
-    """A `ValueError` for `ext` being none of a modality's `formats`.
-
-    Centralizes the dispatch-rejection message the per-modality factories raise,
-    e.g. ``unsupported phase extension 'foo' (expected bin, txt, or npy)``.
-    """
-    *head, last = formats
-    expected = f"{', '.join(head)}, or {last}" if head else last
-    return ValueError(f"unsupported {kind} extension {ext!r} (expected {expected})")
 
 
 def detect_numbered_format(

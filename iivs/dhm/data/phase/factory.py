@@ -11,12 +11,9 @@ __all__ = (
 import warnings
 from typing import TYPE_CHECKING, overload
 
-from iivs.dhm.data.common import (
-    FLOAT_FORMATS,
-    detect_numbered_format,
-    file_extension,
-    unsupported_extension,
-)
+from kaparoo.filesystem import UnsupportedExtensionError, file_extension
+
+from iivs.dhm.data.common import FLOAT_FORMATS, detect_numbered_format
 from iivs.dhm.data.phase.bin import (
     PhaseBinFolder,
     PhaseBinList,
@@ -69,7 +66,7 @@ def load_phase(
         return load_phase_txt(path, on_nonfinite=on_nonfinite)
     if ext == "npy":
         return load_phase_npy(path, on_nonfinite=on_nonfinite)
-    raise unsupported_extension(ext, kind="phase", formats=FLOAT_FORMATS)
+    raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="phase")
 
 
 def read_phase_header(path: StrPath) -> PhaseBinHeader:
@@ -90,7 +87,7 @@ def read_phase_header(path: StrPath) -> PhaseBinHeader:
     if ext == "npy":
         msg = "`.npy` is header-less; supply metadata via PhaseNpyFolder"
         raise ValueError(msg)
-    raise unsupported_extension(ext, kind="phase", formats=FLOAT_FORMATS)
+    raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="phase")
 
 
 @overload
@@ -186,7 +183,7 @@ def save_phase(
             warnings.warn(msg, stacklevel=2)
         save_phase_npy(path, data, overwrite=overwrite, on_nonfinite=on_nonfinite)
         return
-    raise unsupported_extension(ext, kind="phase", formats=FLOAT_FORMATS)
+    raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="phase")
 
 
 def phase_list(
@@ -222,7 +219,7 @@ def phase_list(
     if ext == "npy":
         msg = "no .npy phase list; use PhaseNpyFolder (npy is header-less)"
         raise ValueError(msg)
-    raise unsupported_extension(ext, kind="phase", formats=FLOAT_FORMATS)
+    raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="phase")
 
 
 @overload
