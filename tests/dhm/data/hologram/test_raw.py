@@ -37,7 +37,9 @@ def test_rejects_wrong_extension(tmp_path):
     # A non-.raw path is rejected up front, regardless of contents.
     path = tmp_path / "holo.bin"
     _write_raw(path)
-    with pytest.raises(ValueError, match=r"must have a \.raw extension"):
+    with pytest.raises(
+        ValueError, match=r"unsupported extension .* \(supported: 'raw'\)"
+    ):
         HologramRawFile(path)
 
 

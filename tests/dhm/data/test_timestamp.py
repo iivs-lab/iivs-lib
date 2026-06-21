@@ -32,7 +32,9 @@ def test_txt_is_a_timestamp_sequence(tmp_path):
 def test_txt_rejects_wrong_extension(tmp_path):
     path = tmp_path / "timestamps.dat"
     path.write_text(_SAMPLE)
-    with pytest.raises(ValueError, match=r"must have a \.txt extension"):
+    with pytest.raises(
+        ValueError, match=r"unsupported extension .* \(supported: 'txt'\)"
+    ):
         TimestampsTxtFile(path)
 
 

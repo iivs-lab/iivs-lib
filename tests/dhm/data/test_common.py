@@ -180,14 +180,18 @@ def test_ensure_file_extension_ok():
 
 
 def test_ensure_file_extension_rejects():
-    with pytest.raises(ValueError, match=r"must have a \.bin extension"):
+    with pytest.raises(
+        ValueError, match=r"unsupported extension .* \(supported: 'bin'\)"
+    ):
         ensure_file_extension("dir/x.txt", "bin")
 
 
 def test_file_list_rejects_wrong_extension(tmp_path):
     # PhaseBinList (FILE_EXT="bin") rejects a non-.bin path up front, before any
     # decode -- the file need not even exist.
-    with pytest.raises(ValueError, match=r"must have a \.bin extension"):
+    with pytest.raises(
+        ValueError, match=r"unsupported extension .* \(supported: 'bin'\)"
+    ):
         PhaseBinList([tmp_path / "00000_phase.txt"])
 
 
@@ -264,7 +268,9 @@ def test_ensure_file_extension_add_keeps_matching(tmp_path):
 
 
 def test_ensure_file_extension_add_rejects_mismatch(tmp_path):
-    with pytest.raises(ValueError, match=r"must have a \.bin extension"):
+    with pytest.raises(
+        ValueError, match=r"unsupported extension .* \(supported: 'bin'\)"
+    ):
         ensure_file_extension(tmp_path / "out.txt", "bin", add=True)
 
 
@@ -276,5 +282,7 @@ def test_save_appends_extension_when_absent(tmp_path):
 
 def test_save_rejects_wrong_extension(tmp_path):
     data = np.zeros((2, 2), dtype=np.float32)
-    with pytest.raises(ValueError, match=r"must have a \.bin extension"):
+    with pytest.raises(
+        ValueError, match=r"unsupported extension .* \(supported: 'bin'\)"
+    ):
         save_phase_bin(tmp_path / "x.txt", data, pixel_size=1e-6, height_scale=2e-7)

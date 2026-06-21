@@ -100,7 +100,9 @@ def test_read_phbounds_rejects_non_numeric(tmp_path):
 def test_read_phbounds_rejects_wrong_extension(tmp_path):
     path = tmp_path / "phbounds.bin"
     path.write_text("[nm]\n0 1\n")
-    with pytest.raises(ValueError, match=r"must have a \.txt extension"):
+    with pytest.raises(
+        ValueError, match=r"unsupported extension .* \(supported: 'txt'\)"
+    ):
         read_phbounds(path)
 
 
@@ -111,7 +113,9 @@ def test_write_phbounds_appends_extension(tmp_path):
 
 
 def test_write_phbounds_rejects_wrong_extension(tmp_path):
-    with pytest.raises(ValueError, match=r"must have a \.txt extension"):
+    with pytest.raises(
+        ValueError, match=r"unsupported extension .* \(supported: 'txt'\)"
+    ):
         write_phbounds(tmp_path / "phbounds.bin", PhaseBounds(0.0, 1.0))
 
 
