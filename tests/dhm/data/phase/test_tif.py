@@ -10,7 +10,7 @@ from iivs.dhm.data.phase.tif import PhaseTifFolder, PhaseTifList
 
 
 def _write(path, data):
-    # Uncompressed uint8 tif: readable without the imagecodecs extra.
+    # A plain uncompressed uint8 tif (the codec path is exercised elsewhere).
     tifffile.imwrite(path, np.asarray(data, dtype=np.uint8))
 
 

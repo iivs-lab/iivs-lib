@@ -52,7 +52,13 @@ keywords = [
     "lyncee-tec",
 ]
 dependencies = [
+    # Core image-handling stack: this library's primary job is reading and
+    # rendering microscope image data, so the TIFF decoder (incl. the Koala
+    # previews' LZW, via `imagecodecs`) and the `matplotlib` visualization
+    # backend ship by default -- only `torch` (`analysis.pytorch`) is an extra.
+    "imagecodecs>=2026.5.10",
     "kaparoo-python>=0.9.0",
+    "matplotlib>=3.11.0",
     "natsort>=8.4.0",
     "numpy>=2.4.6",
     "tifffile>=2026.6.1",
@@ -62,10 +68,6 @@ dependencies = [
 GitHub = "https://www.github.com/iivs-lab/iivs-lib"
 
 [project.optional-dependencies]
-# Decoders for Koala's LZW-compressed `Image/*.tif` uint8 previews.
-image = [
-    "imagecodecs>=2026.5.10",
-]
 # Torch-native `analysis.pytorch` helpers. Floor 2.9 = first cp314 wheels
 # (needed for requires-python >=3.14); pairs with NumPy 2.x.
 torch = [
@@ -82,9 +84,9 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.14",
     "ty>=0.0.40",
-    # Self-referenced extras: test their runtime paths (`[torch]`
-    # `analysis.pytorch`, `[image]` LZW decode) and keep floors single-sourced.
-    "iivs-lib[image,torch]",
+    # Self-referenced extra: test the `[torch]` `analysis.pytorch` runtime path
+    # and keep its floor single-sourced.
+    "iivs-lib[torch]",
 ]
 
 [tool.uv.build-backend]

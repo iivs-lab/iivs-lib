@@ -23,10 +23,13 @@ uv add iivs-lib
 pip install iivs-lib
 ```
 
-The `[image]` extra adds `imagecodecs`, needed only to decode the
-LZW-compressed Koala `Image/*.tif` uint8 previews (`uv add "iivs-lib[image]"`).
-The `[torch]` extra adds PyTorch for `iivs.dhm.analysis.pytorch` — tensor-in /
-tensor-out OPD / dry-mass twins with autograd (`uv add "iivs-lib[torch]"`).
+Image I/O and visualization ship by default: `imagecodecs` (to decode the
+LZW-compressed Koala `Image/*.tif` uint8 previews) and `matplotlib` (for
+`iivs.common.visualization` / `iivs.dhm.visualization`) are core dependencies —
+handling image-like microscope data is this library's primary job. The only
+extra is `[torch]`, which adds PyTorch for `iivs.dhm.analysis.pytorch` —
+tensor-in / tensor-out OPD / dry-mass twins with autograd
+(`uv add "iivs-lib[torch]"`).
 
 ## 🚀 Quick start
 

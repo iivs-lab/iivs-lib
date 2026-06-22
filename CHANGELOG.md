@@ -10,6 +10,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `iivs.common.visualization` and `iivs.dhm.visualization`: matplotlib rendering
+  for image data. `common.visualization.normalize` / `render` are the
+  technique-agnostic core — draw a 2-D array on a matplotlib `Axes` (created if
+  not given) and return it, so the caller owns showing / saving and the data
+  layer stays matplotlib-free. `dhm.visualization.render_phase` /
+  `render_intensity` / `render_hologram` are thin adapters: phase gets a colormap
+  + colorbar (optionally over a `PhaseBounds` nm range), intensity / holograms
+  render grayscale.
 - `iivs.dhm.data.common`: shared vocabulary for the repeated dispatch literals —
   the `OnNonFinite` (`"ignore"`/`"warn"`/`"raise"`) and `ValidationLevel`
   (`"names"`/`"headers"`/`"data"`) type aliases, the `FloatFormat` alias with its
@@ -57,6 +65,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Image I/O and visualization ship as **core dependencies**, not extras.
+  `imagecodecs` (LZW `Image/*.tif` preview decode) moves into the base
+  dependencies and the `[image]` extra is removed; `matplotlib` is added as a
+  core dependency for the new `*.visualization` packages. Handling image-like
+  microscope data is this library's primary job, so these are always present —
+  `[torch]` (`analysis.pytorch`) remains the only extra. `load_uint8_tif` no
+  longer raises an "install the `[image]` extra" `ImportError`.
 - `iivs.dhm.data.hologram`: `convert_hologram_sequence` and `save_hologram_raw`
   now accept any uint8 `DataSequence`, not just a `HologramSequence`, so a
   `kaparoo` composer (e.g. a `ConcatSequence` of acquisitions) can be re-encoded

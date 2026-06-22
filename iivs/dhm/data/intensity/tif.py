@@ -33,8 +33,8 @@ class IntensityTifFolder(ImageTifFolder, IntensityTifList):
     Construction and validation are inherited from `ImageTifFolder`; this
     supplies only the file stem.
 
-    Decoding the LZW-compressed Koala previews needs the `iivs-lib[image]` extra
-    (`imagecodecs`).
+    The LZW-compressed Koala previews decode via the core `imagecodecs`
+    dependency (no extra needed).
 
     Args:
         root: The folder to scan.

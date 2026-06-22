@@ -8,7 +8,9 @@ import tifffile
 from kaparoo.filesystem import ensure_file_extension
 
 from iivs.dhm.data.common import (
+    FLOAT_FORMATS,
     FrameShapedMixin,
+    detect_numbered_format,
     load_uint8_tif,
     numbered_name,
     parse_txt_grid,
@@ -129,7 +131,7 @@ def test_parse_txt_grid_rejects_malformed():
 def test_load_uint8_tif_roundtrip(tmp_path):
     data = np.arange(6, dtype=np.uint8).reshape(2, 3)
     path = tmp_path / "00000_phase.tif"
-    tifffile.imwrite(path, data)  # uncompressed: no imagecodecs needed
+    tifffile.imwrite(path, data)  # a plain uint8 tif roundtrip
     loaded = load_uint8_tif(path)
     np.testing.assert_array_equal(loaded, data)
     assert loaded.dtype == np.uint8
@@ -139,33 +141,6 @@ def test_load_uint8_tif_rejects_non_uint8(tmp_path):
     path = tmp_path / "00000_phase.tif"
     tifffile.imwrite(path, np.zeros((2, 2), dtype=np.float32))
     with pytest.raises(ValueError, match="uint8"):
-        load_uint8_tif(path)
-
-
-def test_load_uint8_tif_without_imagecodecs_raises_importerror(tmp_path, monkeypatch):
-    # Writing LZW also needs imagecodecs, so simulate tifffile's missing-codec error.
-    path = tmp_path / "00000_phase.tif"
-    path.write_bytes(b"")  # content is irrelevant; imread is mocked
-
-    def _raise(_):
-        msg = "<COMPRESSION.LZW: 5> requires the 'imagecodecs' package"
-        raise KeyError(msg)
-
-    monkeypatch.setattr(tifffile, "imread", _raise)
-    with pytest.raises(ImportError, match=r"iivs-lib\[image\]"):
-        load_uint8_tif(path)
-
-
-def test_load_uint8_tif_reraises_unrelated_keyerror(tmp_path, monkeypatch):
-    path = tmp_path / "00000_phase.tif"
-    path.write_bytes(b"")
-
-    def _raise(_):
-        msg = "unrelated"
-        raise KeyError(msg)
-
-    monkeypatch.setattr(tifffile, "imread", _raise)
-    with pytest.raises(KeyError, match="unrelated"):
         load_uint8_tif(path)
 
 
@@ -286,3 +261,72 @@ def test_save_rejects_wrong_extension(tmp_path):
         ValueError, match=r"unsupported extension .* \(supported: 'bin'\)"
     ):
         save_phase_bin(tmp_path / "x.txt", data, pixel_size=1e-6, height_scale=2e-7)
+
+
+# ========================== #
+#   detect_numbered_format   #
+# ========================== #
+
+
+def _numbered(root, index, *, stem, ext):
+    # detect_numbered_format only inspects names, so empty files suffice.
+    (root / numbered_name(index, stem=stem, ext=ext)).write_bytes(b"")
+
+
+def test_detect_single_format(tmp_path):
+    _numbered(tmp_path, 0, stem="phase", ext="bin")
+    _numbered(tmp_path, 1, stem="phase", ext="bin")
+    assert (
+        detect_numbered_format(tmp_path, stem="phase", formats=FLOAT_FORMATS) == "bin"
+    )
+
+
+def test_detect_ignores_other_stems_and_loose_files(tmp_path):
+    # Only NNNNN_<stem>.<ext> at depth 1 counts.
+    _numbered(tmp_path, 0, stem="phase", ext="txt")
+    _numbered(tmp_path, 0, stem="intensity", ext="bin")  # other stem
+    (tmp_path / "phase.bin").write_bytes(b"")  # unnumbered
+    (tmp_path / "0_phase.bin").write_bytes(b"")  # too few digits
+    assert (
+        detect_numbered_format(tmp_path, stem="phase", formats=FLOAT_FORMATS) == "txt"
+    )
+
+
+def test_detect_no_files_raises(tmp_path):
+    with pytest.raises(FileNotFoundError, match=r"no NNNNN_phase"):
+        detect_numbered_format(tmp_path, stem="phase", formats=FLOAT_FORMATS)
+
+
+def test_detect_multiple_without_prefer_raises(tmp_path):
+    _numbered(tmp_path, 0, stem="phase", ext="bin")
+    _numbered(tmp_path, 0, stem="phase", ext="txt")
+    with pytest.raises(ValueError, match=r"ambiguous.*multiple phase formats"):
+        detect_numbered_format(tmp_path, stem="phase", formats=FLOAT_FORMATS)
+
+
+def test_detect_prefer_single_format(tmp_path):
+    _numbered(tmp_path, 0, stem="phase", ext="bin")
+    _numbered(tmp_path, 0, stem="phase", ext="txt")
+    got = detect_numbered_format(
+        tmp_path, stem="phase", formats=FLOAT_FORMATS, prefer="txt"
+    )
+    assert got == "txt"
+
+
+def test_detect_prefer_priority_sequence_picks_first_present(tmp_path):
+    # npy is absent, so the first *present* format in prefer order wins.
+    _numbered(tmp_path, 0, stem="phase", ext="bin")
+    _numbered(tmp_path, 0, stem="phase", ext="txt")
+    got = detect_numbered_format(
+        tmp_path, stem="phase", formats=FLOAT_FORMATS, prefer=("npy", "txt", "bin")
+    )
+    assert got == "txt"
+
+
+def test_detect_prefer_selects_none_present_raises(tmp_path):
+    _numbered(tmp_path, 0, stem="phase", ext="bin")
+    _numbered(tmp_path, 0, stem="phase", ext="txt")
+    with pytest.raises(ValueError, match=r"prefer=\['npy'\] selects none"):
+        detect_numbered_format(
+            tmp_path, stem="phase", formats=FLOAT_FORMATS, prefer="npy"
+        )

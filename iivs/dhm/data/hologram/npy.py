@@ -37,8 +37,8 @@ def save_hologram_npy(
 ) -> None:
     """Save a 2D uint8 hologram as an uncompressed `.npy` file.
 
-    The header-less, lossless twin of `save_hologram_tif` (no codec, no
-    `[image]` extra). Written atomically.
+    The header-less, lossless twin of `save_hologram_tif` (no codec / LZW).
+    Written atomically.
 
     Args:
         path: The `.npy` file to write.

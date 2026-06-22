@@ -26,7 +26,7 @@ quantitative float32 phase reconstruction and its uint8 display preview.
   `PhaseNpyFolder` constructor and shared by every frame.
 - The `Image/*.tif` previews are an 8-bit visualization (`PhaseImageSequence`),
   **not** a substitute for the quantitative float source (`PhaseFloatSequence`).
-  Decoding the LZW-compressed previews needs the `iivs-lib[image]` extra.
+  The LZW-compressed previews decode via the core `imagecodecs` dependency.
 
 ### Format-agnostic entry points
 

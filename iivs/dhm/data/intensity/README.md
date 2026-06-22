@@ -25,7 +25,7 @@ phase-only bytes as a no-op sentinel), so there is no `PhaseUnit` analogue, no
   `IntensityNpyFolder` constructor and shared by every frame.
 - The `Image/*.tif` previews are an 8-bit visualization
   (`IntensityImageSequence`), not the quantitative float source
-  (`IntensityFloatSequence`); decoding them needs the `iivs-lib[image]` extra.
+  (`IntensityFloatSequence`); the LZW previews decode via core `imagecodecs`.
   Verified against a real acquisition, Koala normalizes each intensity preview
   **per frame** (its own min/max → 0–255), *not* globally — so there is no
   bounds record and no `Image → Float` reconstruction here (unlike `phase`,

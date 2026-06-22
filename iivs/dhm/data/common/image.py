@@ -33,27 +33,16 @@ def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
 
     Modality-agnostic: the Koala uint8 previews (`Image/*.tif`) and any other
     single-page 8-bit tif decode through this. The Koala previews are
-    LZW-compressed, so decoding them needs the `imagecodecs` package -- install
-    the `iivs-lib[image]` extra.
+    LZW-compressed; `imagecodecs` is a core dependency, so they decode without
+    any extra.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ImportError: If decoding `path` needs a compression codec (e.g. the
-            previews' LZW) that only `imagecodecs` provides and it is missing.
         ValueError: If the decoded image is not a 2D uint8 array.
     """
     path = ensure_file_exists(path)
-    try:
-        data = tifffile.imread(path)
-    except KeyError as exc:
-        # tifffile defers compression codecs (the previews' LZW) to imagecodecs,
-        # raising a bare KeyError naming that package when it is not installed.
-        if "imagecodecs" not in str(exc):
-            raise
-        msg = f"reading {path} requires the imagecodecs package (install the iivs-lib[image] extra)"
-        raise ImportError(msg) from exc
-    return validate_uint8_image(data, allow_stack=False)
+    return validate_uint8_image(tifffile.imread(path), allow_stack=False)
 
 
 class ImageFileList(FileListSequence[NDArray[np.uint8], Path]):
