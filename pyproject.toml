@@ -3,7 +3,7 @@
 # ========================== #
 
 [build-system]
-requires = ["uv_build>=0.11.16,<0.12"]
+requires = ["uv_build>=0.11.23,<0.12"]
 build-backend = "uv_build"
 
 # ========================== #
@@ -80,10 +80,10 @@ torch = [
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.3",
+    "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
-    "ruff>=0.15.14",
-    "ty>=0.0.40",
+    "ruff>=0.15.18",
+    "ty>=0.0.51",
     # Self-referenced extra: test the `[torch]` `analysis.pytorch` runtime path
     # and keep its floor single-sourced.
     "iivs-lib[torch]",
@@ -165,7 +165,7 @@ exclude_lines = [
 directory = ".cache/coverage/htmlcov"
 
 [tool.ruff]
-required-version = ">=0.15.14"
+required-version = ">=0.15.18"
 cache-dir = "./.cache/ruff"
 extend-exclude = [
     ".cache",
@@ -318,7 +318,7 @@ ignore-overlong-task-comments = true
 [tool.ruff.lint.pydoclint]
 ignore-one-line-docstrings = true
 
-# Following sections use default values and are omitted (ruff v0.15.14):
+# Following sections use default values and are omitted (ruff v0.15.18):
 # - tool.ruff.analyze
 # - tool.ruff.lint.flake8-boolean-trap
 # - tool.ruff.lint.flake8-bugbear

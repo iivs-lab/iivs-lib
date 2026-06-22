@@ -60,9 +60,9 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
-          skip-existing: true
           print-hash: true
           attestations: true
+          skip-existing: true
 
   pypi:
     name: Publish to PyPI
@@ -103,10 +103,14 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           awk -v ver="$version" '
-            index($0, "## [" ver "]") == 1 { flag = 1; next }
+            $0 ~ "^## \\[" ver "\\]" { flag = 1; next }
             /^## / { if (flag) exit }
             flag { print }
           ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::No CHANGELOG section for $GITHUB_REF_NAME — promote [Unreleased] to a dated ## [$version] heading before tagging."
+            exit 1
+          fi
           cat release-notes.md
 
       - name: Create GitHub release

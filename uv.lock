@@ -239,10 +239,10 @@ provides-extras = ["torch"]
 [package.metadata.requires-dev]
 dev = [
     { name = "iivs-lib", extras = ["torch"] },
-    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
-    { name = "ruff", specifier = ">=0.15.14" },
-    { name = "ty", specifier = ">=0.0.40" },
+    { name = "ruff", specifier = ">=0.15.18" },
+    { name = "ty", specifier = ">=0.0.51" },
 ]
 
 [[package]]
