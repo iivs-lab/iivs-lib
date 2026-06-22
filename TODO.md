@@ -161,11 +161,3 @@ techniques the lab runs.
   Resolve the resulting double-"common" (`iivs.common.data` vs
   `iivs.dhm.data.common`) by folding / renaming the dhm-internal one (e.g.
   `dhm.data.koala`).
-- **Timing / `timestamp` is a shared-metadata candidate for `common.data`.**
-  `Timestamp`, the abstract `TimestampSequence` interface (`mean_interval_ms` /
-  `mean_frame_rate`), and `TimestampsFixedFPS` (synthesized from a frame rate) are
-  technique-agnostic — any time-lapse acquisition has per-frame timing — so they
-  hoist alongside the image I/O. Only the Koala `timestamps.txt` reader
-  (`TimestampsTxtFile`) stays in `dhm`; `epi` / `rcm` read timing from OME-TIFF /
-  Micro-Manager metadata instead, implementing the same `TimestampSequence`
-  interface.

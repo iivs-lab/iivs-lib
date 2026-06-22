@@ -22,6 +22,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   of `iivs.dhm.data.common` — `read_npy_shape` / `write_npy` (the `.npy` reader /
   writer) and `FrameShapedMixin` (the same-shape marker mixin). They are
   re-exported from `iivs.dhm.data.common`, so existing imports are unchanged.
+- `iivs.common.data.timestamp`: the technique-agnostic timing types, hoisted out
+  of `iivs.dhm.data.timestamp` — the `Timestamp` record, the abstract
+  `TimestampSequence` interface (`mean_interval_ms` / `mean_frame_rate`), and the
+  synthetic `TimestampsFixedFPS`. Any time-lapse acquisition has per-frame timing,
+  so a future technique (`epi` / `rcm`) implements the same `TimestampSequence`
+  from OME-TIFF / Micro-Manager metadata without importing `dhm`. The Koala
+  `timestamps.txt` reader `TimestampsTxtFile` stays in `iivs.dhm.data.timestamp`,
+  which re-exports the three hoisted types, so existing imports are unchanged.
 - `iivs.dhm.data.common`: shared vocabulary for the repeated dispatch literals —
   the `OnNonFinite` (`"ignore"`/`"warn"`/`"raise"`) and `ValidationLevel`
   (`"names"`/`"headers"`/`"data"`) type aliases, the `FloatFormat` alias with its
