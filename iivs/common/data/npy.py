@@ -38,7 +38,7 @@ def write_npy(path: StrPath, data: NDArray[Any], *, overwrite: bool = False) -> 
 
     Content is staged to a temp file in the destination's directory and moved
     into place on success. The shared writer behind the per-modality `.npy`
-    savers; `.npy` carries no Koala header, so only the raw array is stored.
+    savers; `.npy` carries no header, so only the raw array is stored.
 
     Raises:
         FileExistsError: If `path` exists and `overwrite` is False.

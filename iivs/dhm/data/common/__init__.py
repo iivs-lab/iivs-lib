@@ -14,16 +14,18 @@ import X`` reaches any of them:
 - `float` — the float32 file list/folder bases over a ``(read_header, decode)``
   codec, generic in the header type (`KoalaFloatFileList`,
   `KoalaFloatFileFolder`; shared by phase and intensity).
-- `npy` — the header-less `.npy` shape reader and writer (`read_npy_shape`,
-  `write_npy`).
-- `sequence` — the numbered-folder base and same-shape mixin
-  (`SequentialFileFolder`, `FrameShapedMixin`).
+- `sequence` — the numbered-folder base (`SequentialFileFolder`).
 - `validation` — the float32 / uint8 image validators.
 - `utils` — the numbered-folder helpers (`numbered_name`,
   `detect_numbered_format`). The extension helpers `file_extension`,
   `ensure_file_extension` (with its `add=True` mode), and the
   `UnsupportedExtensionError` raised on a bad extension are imported directly
   from `kaparoo.filesystem` where needed, not re-exported here.
+
+The header-less `.npy` reader / writer (`read_npy_shape`, `write_npy`) and the
+same-shape mixin `FrameShapedMixin` are technique-agnostic and now live in
+`iivs.common.data`; they are re-exported here so ``from iivs.dhm.data.common
+import X`` still reaches them.
 """
 
 from __future__ import annotations
@@ -56,6 +58,7 @@ __all__ = (
     "write_txt_grid",
 )
 
+from iivs.common.data import read_npy_shape, write_npy
 from iivs.dhm.data.common.bin import KoalaBinHeader, read_bin_pixels, write_bin
 from iivs.dhm.data.common.float import (
     FLOAT_FORMATS,
@@ -70,7 +73,6 @@ from iivs.dhm.data.common.image import (
     ImageTifList,
     load_uint8_tif,
 )
-from iivs.dhm.data.common.npy import read_npy_shape, write_npy
 from iivs.dhm.data.common.sequence import (
     FrameShapedMixin,
     SequentialFileFolder,

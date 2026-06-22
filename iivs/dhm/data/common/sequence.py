@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __all__ = ("FrameShapedMixin", "SequentialFileFolder", "ValidationLevel")
 
-from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
@@ -12,6 +11,7 @@ from kaparoo.filters import Regex
 from kaparoo.utils import ensure_one_of, replace_if_none
 from natsort import natsorted, ns
 
+from iivs.common.data.sequence import FrameShapedMixin
 from iivs.dhm.data.common.utils import numbered_name
 
 if TYPE_CHECKING:
@@ -20,25 +20,6 @@ if TYPE_CHECKING:
 
 type ValidationLevel = Literal["names", "headers", "data"]
 """How deeply a numbered folder checks each file: name, header, or full data."""
-
-
-class FrameShapedMixin(ABC):
-    """Mixin marking a sequence whose items all share one `frame_shape`.
-
-    Mix into a modality sequence on a same-shape source (e.g. a single
-    acquisition) to force `frame_shape` to be implemented. There is no
-    per-modality `Uniform*Sequence`: "a uniform float phase sequence" is just
-    ``isinstance(x, PhaseFloatSequence) and isinstance(x, FrameShapedMixin)``
-    (and likewise for the other modalities). `SequentialFileFolder` mixes this
-    in for every numbered folder; a single-file source like `HologramRawFile`
-    mixes it in directly.
-    """
-
-    @property
-    @abstractmethod
-    def frame_shape(self) -> tuple[int, int]:
-        """The pixel dimensions (height, width) shared by every item."""
-        raise NotImplementedError
 
 
 class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):

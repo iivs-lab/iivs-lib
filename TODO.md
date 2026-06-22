@@ -127,9 +127,10 @@ techniques the lab runs.
   path that puts a `PhaseFloatSequence` in nm before rendering, grid / multi-axis
   layout, channel composite (for `rcm` / `epi`), sequence animation, and
   `save` / `show` helpers.
-- **Hoist `common.data` when `rcm` / `epi` land.** Move the *format-agnostic* I/O
-  now in `dhm.data.common` up to `common.data`, leaving the Koala-proprietary
-  codecs in `dhm`. Do this when `rcm` / `epi` are the real second consumers
+- **Hoist `common.data` (partly done; finish when `rcm` / `epi` land).** The
+  zero-coupling leaves are already in `iivs.common.data`; move the remaining
+  *format-agnostic* I/O up too, leaving the Koala-proprietary codecs in `dhm`. Do
+  this when `rcm` / `epi` are the real second consumers
   (validate the generic/specific boundary against them, not by guessing) — the
   same pass that places the shared camera substrate above. The new requirements
   (16-bit pixels, single-stack OME-TIFF, T/Z/C-labeled folders) show the value is
@@ -150,9 +151,12 @@ techniques the lab runs.
     like `HologramRawFile`, but OME-axis-aware) — neither is a hoist. The *List*
     layer (arbitrary file list, no naming) is shareable once dtype-generalized;
     only the *Folder* discovery is per-convention.
-  - *Move as-is* (no coupling): `FrameShapedMixin`, the `npy` reader/writer,
-    `_validate_image_dims`. *Stays in `dhm`* (Koala-proprietary): `bin`, `txt`,
-    `float`, and the Koala numbering helpers above.
+  - *Move as-is* (no coupling): **done** — `FrameShapedMixin` and the `npy`
+    reader / writer (`read_npy_shape` / `write_npy`) now live in `iivs.common.data`
+    (re-exported from `dhm.data.common`). `_validate_image_dims` is generic too but
+    moves with the `validation` dtype generalization above, so its file is not
+    split. *Stays in `dhm`* (Koala-proprietary): `bin`, `txt`, `float`, and the
+    Koala numbering helpers above.
 
   Resolve the resulting double-"common" (`iivs.common.data` vs
   `iivs.dhm.data.common`) by folding / renaming the dhm-internal one (e.g.

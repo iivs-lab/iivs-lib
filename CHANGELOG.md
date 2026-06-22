@@ -18,6 +18,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `render_intensity` / `render_hologram` are thin adapters: phase gets a colormap
   + colorbar (optionally over a `PhaseBounds` nm range), intensity / holograms
   render grayscale.
+- `iivs.common.data`: the first technique-agnostic data primitives, hoisted out
+  of `iivs.dhm.data.common` — `read_npy_shape` / `write_npy` (the `.npy` reader /
+  writer) and `FrameShapedMixin` (the same-shape marker mixin). They are
+  re-exported from `iivs.dhm.data.common`, so existing imports are unchanged.
 - `iivs.dhm.data.common`: shared vocabulary for the repeated dispatch literals —
   the `OnNonFinite` (`"ignore"`/`"warn"`/`"raise"`) and `ValidationLevel`
   (`"names"`/`"headers"`/`"data"`) type aliases, the `FloatFormat` alias with its
