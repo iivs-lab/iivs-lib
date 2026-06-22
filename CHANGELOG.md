@@ -86,7 +86,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   metadata), matching the per-format `save_phase_bin` / `save_phase_txt`. Runtime
   behavior is unchanged.
 
-- Require `kaparoo-python>=0.9.0`. Its filter classes moved to a top-level
+- Require `kaparoo-python>=0.9.1`. Its filter classes moved to a top-level
   `kaparoo.filters` package; the numbered-folder discovery in
   `data.common.sequence` imports `Regex` from there. The per-modality
   factories dispatch on `kaparoo.filesystem`'s `file_extension` and raise its
