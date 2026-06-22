@@ -5,16 +5,15 @@ item to a CHANGELOG entry once it lands.
 
 ## Open
 
-- **Exercise the real LZW `Image/*.tif` decode path in tests.** Today the
-  `load_uint8_tif` LZW branch is only covered via a monkeypatched
-  `tifffile.imread` (`tests/dhm/data/test_common.py`); the actual `imagecodecs`
-  decode is never run. Add a test that round-trips a genuinely LZW-compressed
-  uint8 tif — either a small generated fixture
+- **Exercise the real LZW `Image/*.tif` decode path in tests.** `load_uint8_tif`
+  is only tested against an *uncompressed* tif; the actual `imagecodecs` LZW
+  decode (what Koala writes) is never run. Add a test that round-trips a
+  genuinely LZW-compressed uint8 tif — either a small generated fixture
   (`tifffile.imwrite(path, data, compression="lzw")`, no proprietary data to
   ship) or a minimal real Koala `Image/*.tif` sample asset (mind size and the
   Lyncée Tec data-redistribution question; keep it out of the built
-  sdist/wheel). The `dev` group already pulls `iivs-lib[image]`, so the codec
-  is present in CI.
+  sdist/wheel). `imagecodecs` is now a core dependency, so the codec is always
+  present in CI.
 - **Add a dataset/acquisition opener.** Koala nests its export as
   `<Modality>/Float/Bin`, `<Modality>/Float/Txt`, `<Modality>/Image`, plus
   `Holograms/holo.raw`, `timestamps.txt`, and `phbounds.txt` at the root (this
@@ -69,46 +68,100 @@ parity before the next release.
   folder-export twin above. Track these together so `hologram` ends up with the
   same composer-in / dispatch-out surface as the float modalities.
 
-## Planned module structure (future `confocal` / `rcm`, shared `common`, viz)
+## Planned module structure (future `rcm` / `epi` techniques, shared `common`, viz)
 
-Design decisions reached for growing `iivs` beyond `dhm`. The governing rule:
-name namespaces by **technique** (`dhm`, `confocal`), not contrast mechanism;
-keep field-standard acronyms (`dhm` / `rcm` / `opd`) but spell out colloquial
+Design decisions for growing `iivs` beyond `dhm`. The governing rule: name
+namespaces by **technique** (`dhm`, `rcm`, `epi`), not contrast mechanism; keep
+field-standard acronyms (`dhm` / `rcm` / `opd`) but spell out colloquial
 abbreviations (`visualization`, not `viz`). Shared layers are pure infra and
-**never import a modality** (one-directional dependency).
+**never import a technique** (one-directional dependency); a technique never
+imports a sibling technique.
 
-- **`iivs.common` shared namespace.** Add `common` as a sibling of the modality
+Lab techniques: `dhm` (existing, label-free QPI), `rcm` (re-scan confocal
+super-resolution), `epi` (epifluorescence / widefield). `rcm` and `epi` are
+**parallel top-level peers**, not one `confocal` namespace with `rcm` nested
+inside (this revises the earlier confocal-family plan): both are first-class
+techniques the lab runs.
+
+- **`iivs.common` shared namespace.** Add `common` as a sibling of the technique
   namespaces, mirroring their layout (`common.data`, `common.visualization`,
   ...), so every namespace has a uniform `<ns>.data` / `<ns>.visualization`
-  shape and `common` is "the shared modality". `common.*` is numpy / tifffile /
-  kaparoo only; modalities depend on `common`, not vice versa.
-- **`common.visualization` core + per-modality adapters.** Build a
-  modality-agnostic render core (normalize, colormap / LUT, colorbar, grid,
-  channel composite, sequence animation, save/show, matplotlib backend) under
-  `common.visualization`; each `<modality>.visualization` is a thin adapter
-  adding semantics (`dhm`: phase → nm range + colormap + colorbar via
-  `PhaseBounds`, intensity / hologram grayscale; `confocal`: fluorescence
-  channel LUTs + composite, bright-field grayscale). Ship behind an optional
-  `iivs-lib[visualization]` extra with a guarded matplotlib import (like
-  `[torch]` / `[image]`); keep viz as functions taking sequences / arrays, not
-  `.show()` methods on data classes (data layer stays matplotlib-free). This is
-  greenfield — build it first.
-- **Hoist `common.data` when `confocal` lands.** Move the format-agnostic I/O now
-  in `dhm.data.common` (npy, tif / image, validation, the numbered-folder
-  sequence templates, `numbered_name`) up to `common.data`, leaving the Koala
-  `.bin` / `.txt` codecs (`KoalaBinHeader`, `KoalaTxtHeaderCodec`,
-  `KoalaFloatFile*`) in `dhm`. Do this when `confocal` is the real second
-  consumer (validate the generic/specific boundary against it, not by guessing).
+  shape and `common` is "the shared technique". `common.*` is numpy / tifffile /
+  kaparoo only; techniques depend on `common`, not vice versa.
+- **Shared camera / OME-TIFF substrate for `rcm` + `epi` (contrast-agnostic).**
+  `rcm` and `epi` share their acquisition substrate — multi-channel OME-TIFF /
+  Micro-Manager data, single-stack files or T/Z/C-labeled folders, possibly
+  16-bit — so that I/O must live in **one** shared place, never copied into each.
+  The substrate is **camera-scoped, not fluorescence-scoped**: it is contrast-
+  agnostic, so a future bright-field instrument rides on the same layer (see the
+  bright-field note below). But `common` stays technique-agnostic pure infra, and
+  a technique must not import a sibling, so the shared code cannot live in `rcm`,
+  `epi`, or (as acquisition *semantics*) in `common`. Split it on the
+  infra/semantics line: the generic container I/O — reading OME-TIFF via
+  `tifffile`, parsing Micro-Manager metadata, the multichannel-stack / dimension-
+  labeled-folder sequence templates — is format infra and belongs in
+  `common.data`; the camera-acquisition *semantics* the peers share (named
+  channels, LUTs, channel composite, dimension axes) need a home below both.
+  Settle that home when the `rcm` / `epi` data code actually lands and the real
+  shared surface is known (don't guess): a dedicated shared module is the likely
+  answer, folding the thin remainder into `common.data` the alternative. Validate
+  the boundary against the code, not by prediction.
+- **Bright-field is deferred — a contrast mode, not a technique.** The lab has a
+  dedicated bright-field instrument, but its output is essentially a single-
+  channel grayscale intensity raster (≈ the existing `intensity` role), so it has
+  no distinct surface to justify its own namespace yet. **No `bfm` namespace
+  now.** If added later it is a thin grayscale module on the shared camera
+  substrate above — not a fluorescence peer, and not a flat top-level. Contrast
+  (fluorescence vs bright-field) is **orthogonal** to the instrument/technique
+  axis; keep it a sub-concern, never a top-level (this is why the substrate above
+  is camera- not fluorescence-scoped).
+- **`common.visualization` core + per-technique adapters.** A
+  technique-agnostic render core under `common.visualization`, with each
+  `<technique>.visualization` a thin adapter adding semantics (`dhm`: phase →
+  colormap + colorbar, optionally over a `PhaseBounds` nm range, intensity /
+  hologram grayscale; `rcm` / `epi`: fluorescence channel LUTs + composite,
+  bright-field grayscale). Matplotlib is a core dependency; viz is functions
+  taking sequences / arrays, never `.show()` methods on data classes (the data
+  layer stays matplotlib-free). *First slice landed*: `normalize` / `render`
+  (single image → `Axes`) and the `dhm` adapters. **Remaining**: a `PhaseBounds`
+  path that puts a `PhaseFloatSequence` in nm before rendering, grid / multi-axis
+  layout, channel composite (for `rcm` / `epi`), sequence animation, and
+  `save` / `show` helpers.
+- **Hoist `common.data` when `rcm` / `epi` land.** Move the *format-agnostic* I/O
+  now in `dhm.data.common` up to `common.data`, leaving the Koala-proprietary
+  codecs in `dhm`. Do this when `rcm` / `epi` are the real second consumers
+  (validate the generic/specific boundary against them, not by guessing) — the
+  same pass that places the shared camera substrate above. The new requirements
+  (16-bit pixels, single-stack OME-TIFF, T/Z/C-labeled folders) show the value is
+  mostly in **generalizing two axes `dhm` never exercised**, not in a bulk move:
+  - *Pixel dtype* (uint8 → uint8 / uint16 / float32). `validation`'s
+    `validate_uint8_image` / `validate_float32_image` hardcode the dtype, but the
+    dimension check is already factored into the generic `_validate_image_dims`;
+    re-shape as a dtype-parametric validator (integers need no finite policy, so
+    uint16 joins the uint8 side trivially). `image`'s `load_uint8_tif` and
+    `ImageFileList` are uint8-locked at the type level — make them generic in the
+    pixel dtype, exactly as `KoalaFloatFileList[H]` is generic in the header type
+    and modalities bind it: `dhm` binds uint8, `epi` / `rcm` bind uint16.
+  - *Frame addressing* (single linear `NNNNN` index → multi-axis + single-file
+    stacks). `SequentialFileFolder` and `numbered_name` / `detect_numbered_format`
+    hardcode Koala's `{index:05d}_{stem}.{ext}`, so they **stay dhm-specific**;
+    the T/Z/C folder is a sibling template on `kaparoo`'s `FileFolderSequence`,
+    and the OME-TIFF single-stack reader is **new** code (a `SingleFileSequence`
+    like `HologramRawFile`, but OME-axis-aware) — neither is a hoist. The *List*
+    layer (arbitrary file list, no naming) is shareable once dtype-generalized;
+    only the *Folder* discovery is per-convention.
+  - *Move as-is* (no coupling): `FrameShapedMixin`, the `npy` reader/writer,
+    `_validate_image_dims`. *Stays in `dhm`* (Koala-proprietary): `bin`, `txt`,
+    `float`, and the Koala numbering helpers above.
+
   Resolve the resulting double-"common" (`iivs.common.data` vs
   `iivs.dhm.data.common`) by folding / renaming the dhm-internal one (e.g.
   `dhm.data.koala`).
-- **`iivs.confocal` namespace (camera / Micro-Manager confocal + RCM).** A
-  technique-named namespace for the camera-based confocal microscope, which also
-  does bright-field — so `confocal` (technique), not `fluorescence` (a contrast
-  mode that would exclude bright-field). Axes: contrast (fluorescence /
-  bright-field) × resolution (standard / `rcm`). RCM is a **variant within**
-  `confocal` (re-scan super-res), not a parallel top-level — it shares the
-  multi-channel OME-TIFF / Micro-Manager data and differs mainly in re-scan pixel
-  size / resolution. Shared OME-TIFF / Micro-Manager / channel I/O lives in
-  `confocal.data.common` (over `common.data`); fluorescence / bright-field are
-  contrast sub-modules; the `rcm` resolution variant is thin.
+- **Timing / `timestamp` is a shared-metadata candidate for `common.data`.**
+  `Timestamp`, the abstract `TimestampSequence` interface (`mean_interval_ms` /
+  `mean_frame_rate`), and `TimestampsFixedFPS` (synthesized from a frame rate) are
+  technique-agnostic — any time-lapse acquisition has per-frame timing — so they
+  hoist alongside the image I/O. Only the Koala `timestamps.txt` reader
+  (`TimestampsTxtFile`) stays in `dhm`; `epi` / `rcm` read timing from OME-TIFF /
+  Micro-Manager metadata instead, implementing the same `TimestampSequence`
+  interface.
