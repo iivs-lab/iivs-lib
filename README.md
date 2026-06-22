@@ -1,9 +1,9 @@
 # iivs-lib
 
-[![PyPI version](https://img.shields.io/pypi/v/iivs-lib.svg)](https://pypi.org/project/iivs-lib/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg?logo=opensourceinitiative&logoColor=white)](./LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/iivs-lib.svg?logo=pypi&logoColor=white)](https://pypi.org/project/iivs-lib/)
 [![Downloads](https://pepy.tech/badge/iivs-lib)](https://pypi.org/project/iivs-lib/)
-[![Python](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![Python](https://img.shields.io/badge/python-3.14+-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![ty](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ty/main/assets/badge/v0.json)](https://github.com/astral-sh/ty)

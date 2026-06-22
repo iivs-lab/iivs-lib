@@ -1,6 +1,6 @@
 # Changes here will be overwritten by Copier; do not edit by hand.
 # Run `copier update` to refresh from the template.
-_commit: v1.5.2
+_commit: v1.5.4
 _src_path: gh:kaparoo/python-project-template
 author_email: kaparoo2001@gmail.com
 author_name: Jaewoo Park
