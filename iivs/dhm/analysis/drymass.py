@@ -79,11 +79,8 @@ class DryMassCalculator:
         alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     ) -> Self:
         """Build a calculator whose phase path uses `wavelength` (in m)."""
-        return cls(
-            pixel_size=pixel_size,
-            alpha=alpha,
-            opd_converter=OPDConverter(wavelength=wavelength),
-        )
+        opd_converter = OPDConverter(wavelength=wavelength)
+        return cls(pixel_size=pixel_size, alpha=alpha, opd_converter=opd_converter)
 
     @property
     def wavelength(self) -> float:

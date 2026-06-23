@@ -69,11 +69,8 @@ class DryMass(nn.Module):
         wavelength: float = DEFAULT_WAVELENGTH,
     ) -> Self:
         """Build a calculator whose phase path uses `wavelength` (in m)."""
-        return cls(
-            pixel_size=pixel_size,
-            alpha=alpha,
-            opd_module=OpticalPathDifference(wavelength=wavelength),
-        )
+        opd_module = OpticalPathDifference(wavelength=wavelength)
+        return cls(pixel_size=pixel_size, alpha=alpha, opd_module=opd_module)
 
     def calc_from_opd(
         self,
