@@ -52,13 +52,12 @@ keywords = [
     "lyncee-tec",
 ]
 dependencies = [
-    # Core image-handling stack: this library's primary job is reading and
-    # rendering microscope image data, so the TIFF decoder (incl. the Koala
-    # previews' LZW, via `imagecodecs`) and the `matplotlib` visualization
-    # backend ship by default -- only `torch` (`analysis.pytorch`) is an extra.
+    # Core image-handling stack: this library's primary job is reading
+    # microscope image data, so the TIFF decoder (incl. the Koala previews'
+    # LZW, via `imagecodecs`) ships by default -- only `torch`
+    # (`analysis.pytorch`) is an extra.
     "imagecodecs>=2026.5.10",
     "kaparoo-python>=0.9.1",
-    "matplotlib>=3.11.0",
     "natsort>=8.4.0",
     "numpy>=2.4.6",
     "tifffile>=2026.6.1",
