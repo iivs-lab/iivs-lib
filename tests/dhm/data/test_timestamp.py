@@ -2,12 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from iivs.dhm.data.timestamp import (
-    Timestamp,
-    TimestampSequence,
-    TimestampsFixedFPS,
-    TimestampsTxtFile,
-)
+from iivs.common.data.timestamp import Timestamp, TimestampSequence
+from iivs.dhm.data.timestamp import TimestampsTxtFile
 
 _SAMPLE = (
     "00000 15:21:47.674 2026.01.15 0\n"
@@ -20,20 +16,6 @@ def _write(tmp_path, text=_SAMPLE):
     path = tmp_path / "timestamps.txt"
     path.write_text(text)
     return path
-
-
-# --- re-export of the hoisted common types ---
-
-
-def test_dhm_reexports_common_timestamp_types():
-    # The technique-agnostic types live in iivs.common.data; dhm re-exports the
-    # very same objects so existing `from iivs.dhm.data.timestamp import ...`
-    # imports keep working.
-    from iivs.common.data import timestamp as common_timestamp
-
-    assert Timestamp is common_timestamp.Timestamp
-    assert TimestampSequence is common_timestamp.TimestampSequence
-    assert TimestampsFixedFPS is common_timestamp.TimestampsFixedFPS
 
 
 # --- TimestampsTxtFile ---

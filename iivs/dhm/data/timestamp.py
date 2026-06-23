@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("Timestamp", "TimestampSequence", "TimestampsFixedFPS", "TimestampsTxtFile")
+__all__ = ("TimestampsTxtFile",)
 
 import re
 from functools import cached_property
@@ -9,11 +9,7 @@ from typing import TYPE_CHECKING, override
 from kaparoo.data.sequences.templates import SingleFileSequence
 from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
-from iivs.common.data.timestamp import (
-    Timestamp,
-    TimestampSequence,
-    TimestampsFixedFPS,
-)
+from iivs.common.data.timestamp import Timestamp, TimestampSequence
 
 if TYPE_CHECKING:
     from typing import ClassVar
