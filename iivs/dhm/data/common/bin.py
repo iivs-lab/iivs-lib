@@ -205,33 +205,6 @@ class KoalaBinHeader(ABC):
             return cls.from_stream(f)
 
 
-def _read_bin_pixels(f: IO[bytes], header: KoalaBinHeader) -> NDArray[np.float32]:
-    """Read the float32 pixel block from a stream positioned at the pixels.
-
-    Validates the remaining byte count against `header` before decoding. The
-    stream is expected to sit right after the header (e.g. straight after
-    `KoalaBinHeader.from_stream`); `load_bin` is the public path-based reader.
-
-    Args:
-        f: An open binary stream positioned at the pixel block.
-        header: The header whose geometry the pixel block must match.
-
-    Returns:
-        The decoded image as a writable float32 array of shape `header.shape`.
-
-    Raises:
-        ValueError: If the byte count does not match `header.pixel_count`.
-    """
-    raw = f.read()
-    expected = header.pixel_count * _PIXEL_DTYPE.itemsize
-    if len(raw) != expected:
-        msg = f"pixel count must be {header.pixel_count} ({expected} bytes), got {len(raw)}"
-        raise ValueError(msg)
-
-    pixels = np.frombuffer(raw, dtype=_PIXEL_DTYPE)
-    return pixels.reshape(header.shape).astype(np.float32, copy=True)
-
-
 def load_bin[H: KoalaBinHeader](
     path: StrPath,
     header_cls: type[H],
@@ -241,8 +214,9 @@ def load_bin[H: KoalaBinHeader](
     """Read a Koala `.bin` file's float32 image and header (the shared engine).
 
     Opens `path`, parses the fixed-size header as `header_cls`, decodes the
-    pixel block, and validates it. The per-modality `load_*_bin` wrappers bind
-    their header type and add the `return_header` ergonomics.
+    pixel block (checking its byte count), and validates it. The per-modality
+    `load_*_bin` wrappers bind their header type and add the `return_header`
+    ergonomics.
 
     Args:
         path: The `.bin` file to read.
@@ -264,8 +238,15 @@ def load_bin[H: KoalaBinHeader](
     path = ensure_file_exists(path)
     with path.open("rb") as f:
         header = header_cls.from_stream(f)
-        data = _read_bin_pixels(f, header)
+        raw = f.read()
 
+    expected = header.pixel_count * _PIXEL_DTYPE.itemsize
+    if len(raw) != expected:
+        msg = f"pixel count must be {header.pixel_count} ({expected} bytes), got {len(raw)}"
+        raise ValueError(msg)
+
+    pixels = np.frombuffer(raw, dtype=_PIXEL_DTYPE)
+    data = pixels.reshape(header.shape).astype(np.float32, copy=True)
     return validate_float32_image(data, on_nonfinite=on_nonfinite), header
 
 
