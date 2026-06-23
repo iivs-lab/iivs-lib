@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __all__ = ("read_npy_shape", "write_npy")
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -15,22 +14,31 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def read_npy_shape(path: StrPath) -> tuple[int, int]:
-    """Read a 2D `.npy` array's (height, width) without loading its data.
+def read_npy_shape(path: StrPath, expected: int = 2) -> tuple[int, ...]:
+    """Read an `.npy` array's shape without loading its data.
 
     Memory-maps the file to read just the shape from the `.npy` header, so a
     header-less `.npy` folder can be validated by shape cheaply. Pickled object
     arrays are rejected (`allow_pickle=False`).
 
+    Args:
+        path: The `.npy` file to inspect.
+        expected: The required number of dimensions (positive). Defaults to 2.
+
     Raises:
-        ValueError: If the array is not 2-dimensional.
+        ValueError: If `expected` is not positive, or the array does not have
+            `expected` dimensions.
     """
+    if expected < 1:
+        msg = f"expected must be positive (got {expected})"
+        raise ValueError(msg)
+
     array: NDArray[Any] = np.load(path, mmap_mode="r", allow_pickle=False)
     shape: tuple[int, ...] = array.shape
-    if len(shape) != 2:
-        msg = f"{Path(path).name} must be a 2D array (got {len(shape)}D)"
+    if len(shape) != expected:
+        msg = f"expected {expected}D but got {len(shape)}D: {path}"
         raise ValueError(msg)
-    return (shape[0], shape[1])
+    return shape
 
 
 def write_npy(path: StrPath, data: NDArray[Any], *, overwrite: bool = False) -> None:

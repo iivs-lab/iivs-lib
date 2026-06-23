@@ -183,8 +183,21 @@ def test_read_npy_shape_2d(tmp_path):
 def test_read_npy_shape_rejects_non_2d(tmp_path):
     path = tmp_path / "a.npy"
     np.save(path, np.zeros((2, 3, 4), dtype=np.float32))
-    with pytest.raises(ValueError, match="2D array"):
+    with pytest.raises(ValueError, match="expected 2D but got 3D"):
         read_npy_shape(path)
+
+
+def test_read_npy_shape_honors_expected(tmp_path):
+    path = tmp_path / "a.npy"
+    np.save(path, np.zeros((2, 3, 4), dtype=np.float32))
+    assert read_npy_shape(path, expected=3) == (2, 3, 4)
+
+
+def test_read_npy_shape_rejects_nonpositive_expected(tmp_path):
+    path = tmp_path / "a.npy"
+    np.save(path, np.zeros((3, 4), dtype=np.float32))
+    with pytest.raises(ValueError, match="expected must be positive"):
+        read_npy_shape(path, expected=0)
 
 
 # ========================== #
