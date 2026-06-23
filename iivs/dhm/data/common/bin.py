@@ -234,9 +234,14 @@ def write_bin(
     clobbered file.
 
     Raises:
+        ValueError: If `pixels`' shape does not match `header.shape`.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    if pixels.shape != header.shape:
+        msg = f"pixels shape must match header {header.shape} (got {pixels.shape})"
+        raise ValueError(msg)
+
     record = header.to_dtype()
     block = np.ascontiguousarray(pixels, dtype=_PIXEL_DTYPE)
     with StagedFile(path, binary=True, overwrite=overwrite) as staged:

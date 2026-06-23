@@ -16,7 +16,9 @@ from iivs.dhm.data.common import (
     parse_txt_grid,
     validate_float32_image,
     validate_uint8_image,
+    write_bin,
 )
+from iivs.dhm.data.intensity.bin import IntensityBinHeader
 from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
 
@@ -198,6 +200,18 @@ def test_read_npy_shape_rejects_nonpositive_expected(tmp_path):
     np.save(path, np.zeros((3, 4), dtype=np.float32))
     with pytest.raises(ValueError, match="expected must be positive"):
         read_npy_shape(path, expected=0)
+
+
+# ========================== #
+#         write_bin          #
+# ========================== #
+
+
+def test_write_bin_rejects_pixel_shape_mismatch(tmp_path):
+    header = IntensityBinHeader(width=4, height=3, pixel_size=1e-6)  # shape (3, 4)
+    pixels = np.zeros((2, 2), dtype=np.float32)
+    with pytest.raises(ValueError, match=r"pixels shape must match header \(3, 4\)"):
+        write_bin(tmp_path / "x.bin", header, pixels)
 
 
 # ========================== #
