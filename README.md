@@ -89,7 +89,7 @@ sequences, and the round trips between them).
 
 Every sequence is a `kaparoo.data.sequences.DataSequence`, so it indexes,
 slices, and iterates lazily; same-shape sources also expose `frame_shape` by
-mixing in `common.FrameShapedMixin` (so a uniform source is its
+mixing in `iivs.common.data.FrameShapedMixin` (so a uniform source is its
 `<Modality>FloatSequence` / `<Modality>ImageSequence` plus that mixin). For
 phase and intensity the quantitative float32 sources are
 `<Modality>FloatSequence` and the uint8 `Image/*.tif` previews are

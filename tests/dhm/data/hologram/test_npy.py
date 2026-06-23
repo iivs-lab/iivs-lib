@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.data.common import FrameShapedMixin
+from iivs.common.data import FrameShapedMixin
 from iivs.dhm.data.hologram.base import HologramSequence
 from iivs.dhm.data.hologram.npy import HologramNpyFolder, load_hologram_npy
 

@@ -18,8 +18,7 @@ READMEs.
 | `txt` | `KoalaTxtHeaderCodec` (a stateless `Float/Txt` header (de)serializer producing a `KoalaBinHeader`) + `parse_txt_grid` / `write_txt_grid`. |
 | `float` | `KoalaFloatFileList[H]` / `KoalaFloatFileFolder[H]` — the float32 list/folder machinery, generic in the header type, over a `(read_header, decode)` codec. |
 | `image` | `ImageFileList` / `ImageFileFolder` + `ImageTifList` / `ImageTifFolder` (uint8 image bases) + `load_uint8_tif`. |
-| `npy` | `read_npy_shape` (shape from a `.npy` header) + `write_npy`. |
-| `sequence` | `SequentialFileFolder` (numbered `{index:05d}_<stem>.<ext>` discovery + validation) + the `FrameShapedMixin` (forces `frame_shape`). |
+| `sequence` | `SequentialFileFolder` (numbered `{index:05d}_<stem>.<ext>` discovery + validation; mixes in `iivs.common.data`'s `FrameShapedMixin`). |
 | `validation` | `validate_float32_image` / `validate_uint8_image`. |
 | `utils` | `numbered_name` (the `{index:05d}_<stem>.<ext>` builder). The path helper `ensure_file_extension` is imported directly from `kaparoo.filesystem`. |
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("FrameShapedMixin", "SequentialFileFolder", "ValidationLevel")
+__all__ = ("SequentialFileFolder", "ValidationLevel")
 
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override

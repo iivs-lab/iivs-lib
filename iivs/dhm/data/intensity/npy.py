@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING, ClassVar, override
 import numpy as np
 from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
-from iivs.dhm.data.common import read_npy_shape, validate_float32_image, write_npy
+from iivs.common.data import read_npy_shape, write_npy
+from iivs.dhm.data.common import validate_float32_image
 from iivs.dhm.data.intensity.base import IntensityFileFolder
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
 

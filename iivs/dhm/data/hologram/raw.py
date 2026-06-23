@@ -16,7 +16,8 @@ from kaparoo.filesystem import StagedFile, ensure_file_exists, ensure_file_exten
 from kaparoo.utils import ensure_one_of
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import FrameShapedMixin, validate_uint8_image
+from iivs.common.data import FrameShapedMixin
+from iivs.dhm.data.common import validate_uint8_image
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:

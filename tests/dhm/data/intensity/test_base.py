@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from iivs.dhm.data.common import FrameShapedMixin
+from iivs.common.data import FrameShapedMixin
 from iivs.dhm.data.intensity.base import (
     IntensityFloatSequence,
     IntensityImageSequence,

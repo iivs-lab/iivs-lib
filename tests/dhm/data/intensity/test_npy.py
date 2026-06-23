@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.data.common import FrameShapedMixin
+from iivs.common.data import FrameShapedMixin
 from iivs.dhm.data.intensity.base import IntensityFloatSequence
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
 from iivs.dhm.data.intensity.npy import IntensityNpyFolder, load_intensity_npy

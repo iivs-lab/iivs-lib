@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import tifffile
 
-from iivs.dhm.data.common import FrameShapedMixin
+from iivs.common.data import FrameShapedMixin
 from iivs.dhm.data.phase.base import PhaseFloatSequence, PhaseImageSequence
 from iivs.dhm.data.phase.tif import PhaseTifFolder, PhaseTifList
 

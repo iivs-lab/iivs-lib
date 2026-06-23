@@ -12,8 +12,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `iivs.common.data`: the first technique-agnostic data primitives, hoisted out
   of `iivs.dhm.data.common` — `read_npy_shape` / `write_npy` (the `.npy` reader /
-  writer) and `FrameShapedMixin` (the same-shape marker mixin). They are
-  re-exported from `iivs.dhm.data.common`, so existing imports are unchanged.
+  writer) and `FrameShapedMixin` (the same-shape marker mixin).
 - `iivs.common.data.timestamp`: the technique-agnostic timing types, hoisted out
   of `iivs.dhm.data.timestamp` — the `Timestamp` record, the abstract
   `TimestampSequence` interface (`mean_interval_ms` / `mean_frame_rate`), and the

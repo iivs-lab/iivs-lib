@@ -7,14 +7,13 @@ import pytest
 import tifffile
 from kaparoo.filesystem import ensure_file_extension
 
+from iivs.common.data import FrameShapedMixin, read_npy_shape
 from iivs.dhm.data.common import (
     FLOAT_FORMATS,
-    FrameShapedMixin,
     detect_numbered_format,
     load_uint8_tif,
     numbered_name,
     parse_txt_grid,
-    read_npy_shape,
     validate_float32_image,
     validate_uint8_image,
 )

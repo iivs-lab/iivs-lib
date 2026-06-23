@@ -22,10 +22,9 @@ import X`` reaches any of them:
   `UnsupportedExtensionError` raised on a bad extension are imported directly
   from `kaparoo.filesystem` where needed, not re-exported here.
 
-The header-less `.npy` reader / writer (`read_npy_shape`, `write_npy`) and the
-same-shape mixin `FrameShapedMixin` are technique-agnostic and now live in
-`iivs.common.data`; they are re-exported here so ``from iivs.dhm.data.common
-import X`` still reaches them.
+The technique-agnostic `.npy` reader / writer (`read_npy_shape`, `write_npy`)
+and the same-shape mixin `FrameShapedMixin` live in `iivs.common.data`; import
+them from there.
 """
 
 from __future__ import annotations
@@ -33,7 +32,6 @@ from __future__ import annotations
 __all__ = (
     "FLOAT_FORMATS",
     "FloatFormat",
-    "FrameShapedMixin",
     "ImageFileFolder",
     "ImageFileList",
     "ImageTifFolder",
@@ -50,15 +48,12 @@ __all__ = (
     "numbered_name",
     "parse_txt_grid",
     "read_bin_pixels",
-    "read_npy_shape",
     "validate_float32_image",
     "validate_uint8_image",
     "write_bin",
-    "write_npy",
     "write_txt_grid",
 )
 
-from iivs.common.data import read_npy_shape, write_npy
 from iivs.dhm.data.common.bin import KoalaBinHeader, read_bin_pixels, write_bin
 from iivs.dhm.data.common.float import (
     FLOAT_FORMATS,
@@ -73,11 +68,7 @@ from iivs.dhm.data.common.image import (
     ImageTifList,
     load_uint8_tif,
 )
-from iivs.dhm.data.common.sequence import (
-    FrameShapedMixin,
-    SequentialFileFolder,
-    ValidationLevel,
-)
+from iivs.dhm.data.common.sequence import SequentialFileFolder, ValidationLevel
 from iivs.dhm.data.common.txt import KoalaTxtHeaderCodec, parse_txt_grid, write_txt_grid
 from iivs.dhm.data.common.utils import detect_numbered_format, numbered_name
 from iivs.dhm.data.common.validation import (
