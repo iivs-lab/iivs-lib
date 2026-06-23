@@ -11,7 +11,7 @@ from kaparoo.filters import Regex
 from kaparoo.utils import ensure_one_of, replace_if_none
 from natsort import natsorted, ns
 
-from iivs.common.data.sequence import FrameShapedMixin
+from iivs.common.data.mixin import FrameShapedMixin
 from iivs.dhm.data.common.utils import numbered_name
 
 if TYPE_CHECKING:
