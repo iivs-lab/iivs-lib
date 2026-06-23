@@ -25,8 +25,8 @@ def read_npy_shape(path: StrPath) -> tuple[int, int]:
     Raises:
         ValueError: If the array is not 2-dimensional.
     """
-    array = np.load(path, mmap_mode="r", allow_pickle=False)
-    shape = array.shape
+    array: NDArray[Any] = np.load(path, mmap_mode="r", allow_pickle=False)
+    shape: tuple[int, ...] = array.shape
     if len(shape) != 2:
         msg = f"{Path(path).name} must be a 2D array (got {len(shape)}D)"
         raise ValueError(msg)
