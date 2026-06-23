@@ -247,8 +247,9 @@ def load_bin[H: KoalaBinHeader](
     Args:
         path: The `.bin` file to read.
         header_cls: The `KoalaBinHeader` subclass to parse the header as.
-        on_nonfinite: How to handle non-finite values, forwarded to
-            `validate_float32_image`. Defaults to "ignore".
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
+            decoded data: "ignore" (default) accepts them silently, "warn"
+            emits a RuntimeWarning, "raise" raises a ValueError.
 
     Returns:
         An ``(image, header)`` tuple -- the float32 image of shape

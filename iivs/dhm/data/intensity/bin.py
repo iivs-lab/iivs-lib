@@ -136,10 +136,10 @@ def load_intensity_bin(
         path: The .bin file to read.
         return_header: Whether to also return the parsed `IntensityBinHeader`.
             Defaults to False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
-            forwarded to `validate_float32_image`: "ignore" (default) accepts
-            silently, "warn" emits a RuntimeWarning, "raise" raises a
-            ValueError (useful to reject corrupted files).
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
+            decoded data: "ignore" (default) accepts silently, "warn" emits a
+            RuntimeWarning, "raise" raises a ValueError (useful to reject
+            corrupted files).
 
     Returns:
         The intensity image as a 2D float32 array, or an (image, header)
@@ -185,10 +185,9 @@ def save_intensity_bin(
         pixel_size: Physical size of one (square) pixel, in m.
         overwrite: Whether to replace `path` if it already exists. Defaults
             to False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
-            forwarded to `validate_float32_image`: "ignore" accepts silently,
-            "warn" (default) emits a RuntimeWarning, "raise" rejects with a
-            ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in
+            `data`: "ignore" accepts silently, "warn" (default) emits a
+            RuntimeWarning, "raise" rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.bin` extension, `data` is not a single

@@ -150,9 +150,9 @@ def save_intensity_txt(
         pixel_size: Physical size of one (square) pixel, in m.
         overwrite: Whether to replace `path` if it already exists. Defaults to
             False.
-        on_nonfinite: How to handle non-finite values, forwarded to
-            `validate_float32_image`: "ignore" accepts silently, "warn"
-            (default) emits a RuntimeWarning, "raise" rejects with a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in
+            `data`: "ignore" accepts silently, "warn" (default) emits a
+            RuntimeWarning, "raise" rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.txt` extension, `data` is not a single

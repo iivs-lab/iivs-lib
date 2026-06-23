@@ -157,12 +157,11 @@ def load_phase_bin(
         path: The .bin file to read.
         return_header: Whether to also return the parsed `PhaseBinHeader`.
             Defaults to False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
-            forwarded to `validate_float32_image`: "ignore" (default) accepts
-            silently, "warn" emits a RuntimeWarning, "raise" raises a
-            ValueError (useful to reject corrupted files). Defaults to
-            "ignore", since a structurally valid file's contents are
-            accepted by default.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
+            decoded data: "ignore" (default) accepts silently, "warn" emits a
+            RuntimeWarning, "raise" raises a ValueError (useful to reject
+            corrupted files). Defaults to "ignore", since a structurally valid
+            file's contents are accepted by default.
 
     Returns:
         The phase image as a 2D float32 array, or an (image, header) tuple
@@ -267,10 +266,9 @@ def save_phase_bin(
             UNKNOWN is stored as-is but emits a warning.
         overwrite: Whether to replace `path` if it already exists. Defaults
             to False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
-            forwarded to `validate_float32_image`: "ignore" accepts silently,
-            "warn" (default) emits a RuntimeWarning, "raise" rejects with a
-            ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in
+            `data`: "ignore" accepts silently, "warn" (default) emits a
+            RuntimeWarning, "raise" rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.bin` extension, neither or both scale

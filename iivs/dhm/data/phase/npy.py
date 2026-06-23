@@ -37,10 +37,9 @@ def load_phase_npy(
 
     Args:
         path: The `.npy` file to read.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf),
-            forwarded to `validate_float32_image`: "ignore" (default) accepts
-            silently, "warn" emits a RuntimeWarning, "raise" raises a
-            ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
+            decoded data: "ignore" (default) accepts silently, "warn" emits a
+            RuntimeWarning, "raise" raises a ValueError.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
@@ -71,9 +70,9 @@ def save_phase_npy(
         data: The phase image to save, of shape (H, W).
         overwrite: Whether to replace `path` if it already exists. Defaults to
             False.
-        on_nonfinite: How to handle non-finite values, forwarded to
-            `validate_float32_image`: "ignore" accepts silently, "warn"
-            (default) emits a RuntimeWarning, "raise" rejects with a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in
+            `data`: "ignore" accepts silently, "warn" (default) emits a
+            RuntimeWarning, "raise" rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.npy` extension, `data` is not a single

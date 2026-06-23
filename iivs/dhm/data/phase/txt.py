@@ -159,7 +159,9 @@ def load_phase_txt(
     Args:
         path: The `.txt` file to read.
         return_header: Whether to also return the parsed header.
-        on_nonfinite: Forwarded to `validate_float32_image`.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
+            decoded data: "ignore" (default) accepts silently, "warn" emits a
+            RuntimeWarning, "raise" raises a ValueError.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
@@ -238,9 +240,9 @@ def save_phase_txt(
             as METERS (the file cannot store it); UNKNOWN is stored but warns.
         overwrite: Whether to replace `path` if it already exists. Defaults to
             False.
-        on_nonfinite: How to handle non-finite values, forwarded to
-            `validate_float32_image`: "ignore" accepts silently, "warn"
-            (default) emits a RuntimeWarning, "raise" rejects with a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in
+            `data`: "ignore" accepts silently, "warn" (default) emits a
+            RuntimeWarning, "raise" rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.txt` extension, neither or both scale
