@@ -13,11 +13,11 @@ import warnings
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
+from kaparoo.filesystem import ensure_file_extension
 
 from iivs.dhm.data.common import (
     KoalaBinHeader,
-    read_bin_pixels,
+    load_bin,
     validate_float32_image,
     write_bin,
 )
@@ -176,12 +176,7 @@ def load_phase_bin(
             pixels, or holds non-finite values while `on_nonfinite` is
             "raise".
     """
-    path = ensure_file_exists(path)
-    with path.open("rb") as f:
-        header = PhaseBinHeader.from_stream(f)
-        data = read_bin_pixels(f, header)
-
-    data = validate_float32_image(data, on_nonfinite=on_nonfinite)
+    data, header = load_bin(path, PhaseBinHeader, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
 
 

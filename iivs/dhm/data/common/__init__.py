@@ -4,8 +4,8 @@ The cross-modality primitives the per-modality packages compose, split by
 concern into submodules and re-exported here so ``from iivs.dhm.data.common
 import X`` reaches any of them:
 
-- `bin` — the Koala `.bin` header value object and pixel I/O (`KoalaBinHeader`,
-  `read_bin_pixels`, `write_bin`).
+- `bin` — the Koala `.bin` header value object and I/O (`KoalaBinHeader`,
+  `load_bin`, `write_bin`).
 - `txt` — the `Float/Txt` header codec and grid I/O (`KoalaTxtHeaderCodec`,
   `parse_txt_grid`, `write_txt_grid`).
 - `image` — the uint8 image folder/list bases and `.tif` reader
@@ -44,17 +44,17 @@ __all__ = (
     "SequentialFileFolder",
     "ValidationLevel",
     "detect_numbered_format",
+    "load_bin",
     "load_uint8_tif",
     "numbered_name",
     "parse_txt_grid",
-    "read_bin_pixels",
     "validate_float32_image",
     "validate_uint8_image",
     "write_bin",
     "write_txt_grid",
 )
 
-from iivs.dhm.data.common.bin import KoalaBinHeader, read_bin_pixels, write_bin
+from iivs.dhm.data.common.bin import KoalaBinHeader, load_bin, write_bin
 from iivs.dhm.data.common.float import (
     FLOAT_FORMATS,
     FloatFormat,

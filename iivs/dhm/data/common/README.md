@@ -14,7 +14,7 @@ READMEs.
 
 | Submodule | Holds |
 | --- | --- |
-| `bin` | `KoalaBinHeader` (the 23-byte `.bin` header value object) + `read_bin_pixels` / `write_bin`. |
+| `bin` | `KoalaBinHeader` (the 23-byte `.bin` header value object) + `load_bin` / `write_bin`. |
 | `txt` | `KoalaTxtHeaderCodec` (a stateless `Float/Txt` header (de)serializer producing a `KoalaBinHeader`) + `parse_txt_grid` / `write_txt_grid`. |
 | `float` | `KoalaFloatFileList[H]` / `KoalaFloatFileFolder[H]` — the float32 list/folder machinery, generic in the header type, over a `(read_header, decode)` codec. |
 | `image` | `ImageFileList` / `ImageFileFolder` + `ImageTifList` / `ImageTifFolder` (uint8 image bases) + `load_uint8_tif`. |

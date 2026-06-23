@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("KoalaBinHeader", "read_bin_pixels", "write_bin")
+__all__ = ("KoalaBinHeader", "load_bin", "write_bin")
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -9,11 +9,15 @@ from typing import TYPE_CHECKING, ClassVar, cast
 import numpy as np
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 
+from iivs.dhm.data.common.validation import validate_float32_image
+
 if TYPE_CHECKING:
     from typing import IO, Self
 
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
+
+    from iivs.dhm.data.common.validation import OnNonFinite
 
 
 _PIXEL_DTYPE = np.dtype("<f4")  # on-disk pixels: little-endian float32
@@ -201,11 +205,19 @@ class KoalaBinHeader(ABC):
             return cls.from_stream(f)
 
 
-def read_bin_pixels(f: IO[bytes], header: KoalaBinHeader) -> NDArray[np.float32]:
-    """Read the float32 pixel block after the header as an (H, W) array.
+def _read_bin_pixels(f: IO[bytes], header: KoalaBinHeader) -> NDArray[np.float32]:
+    """Read the float32 pixel block from a stream positioned at the pixels.
 
-    Validates that the remaining bytes match the pixel count declared by
-    `header` before decoding.
+    Validates the remaining byte count against `header` before decoding. The
+    stream is expected to sit right after the header (e.g. straight after
+    `KoalaBinHeader.from_stream`); `load_bin` is the public path-based reader.
+
+    Args:
+        f: An open binary stream positioned at the pixel block.
+        header: The header whose geometry the pixel block must match.
+
+    Returns:
+        The decoded image as a writable float32 array of shape `header.shape`.
 
     Raises:
         ValueError: If the byte count does not match `header.pixel_count`.
@@ -220,6 +232,42 @@ def read_bin_pixels(f: IO[bytes], header: KoalaBinHeader) -> NDArray[np.float32]
     return pixels.reshape(header.shape).astype(np.float32, copy=True)
 
 
+def load_bin[H: KoalaBinHeader](
+    path: StrPath,
+    header_cls: type[H],
+    *,
+    on_nonfinite: OnNonFinite = "ignore",
+) -> tuple[NDArray[np.float32], H]:
+    """Read a Koala `.bin` file's float32 image and header (the shared engine).
+
+    Opens `path`, parses the fixed-size header as `header_cls`, decodes the
+    pixel block, and validates it. The per-modality `load_*_bin` wrappers bind
+    their header type and add the `return_header` ergonomics.
+
+    Args:
+        path: The `.bin` file to read.
+        header_cls: The `KoalaBinHeader` subclass to parse the header as.
+        on_nonfinite: How to handle non-finite values, forwarded to
+            `validate_float32_image`. Defaults to "ignore".
+
+    Returns:
+        An ``(image, header)`` tuple -- the float32 image of shape
+        `header.shape` and the parsed `header_cls` instance.
+
+    Raises:
+        FileNotFoundError: If `path` does not exist.
+        NotAFileError: If `path` exists but is not a regular file.
+        ValueError: If the header is invalid, the pixel count is wrong, or the
+            data holds non-finite values while `on_nonfinite` is "raise".
+    """
+    path = ensure_file_exists(path)
+    with path.open("rb") as f:
+        header = header_cls.from_stream(f)
+        data = _read_bin_pixels(f, header)
+
+    return validate_float32_image(data, on_nonfinite=on_nonfinite), header
+
+
 def write_bin(
     path: StrPath,
     header: KoalaBinHeader,
@@ -232,6 +280,14 @@ def write_bin(
     Content is staged to a temp file in the destination's directory and moved
     into place on success, so a failed write never leaves a partial or
     clobbered file.
+
+    Args:
+        path: The destination file to write (written as-is; the caller ensures
+            the `.bin` extension).
+        header: The header to write; its `to_dtype` fills the 23-byte record.
+        pixels: The float32 image to write, of shape `header.shape`.
+        overwrite: Whether to replace `path` if it already exists. Defaults to
+            False.
 
     Raises:
         ValueError: If `pixels`' shape does not match `header.shape`.
