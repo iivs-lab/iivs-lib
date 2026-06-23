@@ -2,9 +2,9 @@ from __future__ import annotations
 
 __all__ = ("Timestamp", "TimestampSequence", "TimestampsFixedFPS")
 
-import itertools
 from abc import abstractmethod
 from dataclasses import dataclass
+from itertools import pairwise
 from typing import TYPE_CHECKING, override
 
 from kaparoo.data.sequences.base import DataSequence
@@ -52,26 +52,23 @@ class Timestamp:
             return ()
 
         # Pad the front so the first frame's interval comes out as t0 - t0 = 0.0.
-        padded = (elapsed_times_ms[0], *elapsed_times_ms)
+        padded: tuple[float, ...] = (elapsed_times_ms[0], *elapsed_times_ms)
         return tuple(
             cls(elapsed_ms=current, interval_ms=current - previous)
-            for previous, current in itertools.pairwise(padded)
+            for previous, current in pairwise(padded)
         )
 
 
 class TimestampSequence(DataSequence[Timestamp, int]):
     """A read-only sequence of per-frame `Timestamp`s, from any source.
 
-    Annotate parameters with this interface to accept any timing source: the
-    Koala `iivs.dhm.data.timestamp.TimestampsTxtFile` (read from a Lyncée Tec
-    Koala ``timestamps.txt``), `TimestampsFixedFPS` (synthesized from a frame
-    rate), or a future technique's reader (`epi` / `rcm` from OME-TIFF /
-    Micro-Manager metadata). Each item is a `Timestamp` and its metadata is the
-    frame index.
+    Annotate parameters with this interface to accept any timing source,
+    however the timestamps are obtained. Each item is a `Timestamp` and its
+    metadata is the frame index.
 
     Subclasses populate `self._timestamps` (the ordered frames) in their
-    ``__init__``; the sequence protocol (`__len__`, `get_item`, `get_meta`)
-    is served from it here.
+    ``__init__`` and implement `mean_interval_ms`; the sequence protocol
+    (`__len__`, `get_item`, `get_meta`) is served from it here.
     """
 
     _timestamps: tuple[Timestamp, ...]
@@ -116,7 +113,12 @@ class TimestampSequence(DataSequence[Timestamp, int]):
 class TimestampsFixedFPS(TimestampSequence):
     """A synthetic `TimestampSequence` with a constant frame rate.
 
-    Frames are evenly spaced from `frame_rate`; see `generate` for the timing.
+    Frames are evenly spaced at ``1000 / frame_rate`` ms; `mean_frame_rate` /
+    `mean_interval_ms` return the bound rate exactly (no averaging drift).
+
+    Args:
+        frame_rate: Frames per second; must be positive.
+        num_frames: Number of frames to synthesize; must be non-negative.
 
     Raises:
         ValueError: If `frame_rate` is not positive, or `num_frames` is
