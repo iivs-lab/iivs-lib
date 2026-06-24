@@ -11,14 +11,15 @@ from iivs.common.data import FrameShapedMixin, read_npy_shape
 from iivs.dhm.data.common import (
     FLOAT_FORMATS,
     detect_numbered_format,
+    load_txt,
     load_uint8_tif,
     numbered_name,
-    parse_txt_grid,
     validate_float32_image,
     validate_uint8_image,
     write_bin,
 )
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
+from iivs.dhm.data.intensity.txt import IntensityTxtHeaderCodec
 from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
 
@@ -98,30 +99,42 @@ def test_no_stack_accepts_2d():
 
 
 # ========================== #
-#       parse_txt_grid       #
+#          load_txt          #
 # ========================== #
 
 
-def test_parse_txt_grid_ok():
-    grid = parse_txt_grid(["1 2 3", "4 5 6"], shape=(2, 3))
-    np.testing.assert_array_equal(grid, [[1, 2, 3], [4, 5, 6]])
-    assert grid.dtype == np.float32
+def _write_txt(tmp_path, *, height, width, grid):
+    path = tmp_path / "x.txt"
+    path.write_text(f"h={height} w={width}\npixel size=1e-06 m\n" + grid)
+    return path
 
 
-def test_parse_txt_grid_single_line():
+def test_load_txt_rows(tmp_path):
+    path = _write_txt(tmp_path, height=2, width=3, grid="1 2 3\n4 5 6\n")
+    data, header = load_txt(path, IntensityTxtHeaderCodec)
+    np.testing.assert_array_equal(data, [[1, 2, 3], [4, 5, 6]])
+    assert data.dtype == np.float32
+    assert header.shape == (2, 3)
+
+
+def test_load_txt_single_line_grid(tmp_path):
     # Koala may write the whole grid on one line; row-major reshape handles it.
-    grid = parse_txt_grid(["1 2 3 4 5 6"], shape=(2, 3))
-    np.testing.assert_array_equal(grid, [[1, 2, 3], [4, 5, 6]])
+    path = _write_txt(tmp_path, height=2, width=3, grid="1 2 3 4 5 6\n")
+    data, _ = load_txt(path, IntensityTxtHeaderCodec)
+    np.testing.assert_array_equal(data, [[1, 2, 3], [4, 5, 6]])
 
 
-def test_parse_txt_grid_rejects_shape_mismatch():
-    with pytest.raises(ValueError, match="txt grid must hold"):
-        parse_txt_grid(["1 2 3", "4 5 6"], shape=(2, 2))
+def test_load_txt_rejects_grid_count_mismatch(tmp_path):
+    # header declares 2x2 (4 values) but the grid holds 6
+    path = _write_txt(tmp_path, height=2, width=2, grid="1 2 3\n4 5 6\n")
+    with pytest.raises(ValueError, match="txt grid must hold 4 values"):
+        load_txt(path, IntensityTxtHeaderCodec)
 
 
-def test_parse_txt_grid_rejects_malformed():
+def test_load_txt_rejects_malformed_grid(tmp_path):
+    path = _write_txt(tmp_path, height=2, width=2, grid="1 2\n3 nan x\n")
     with pytest.raises(ValueError, match="malformed txt grid"):
-        parse_txt_grid(["1 2", "3 nan x"], shape=(2, 2))
+        load_txt(path, IntensityTxtHeaderCodec)
 
 
 # ========================== #

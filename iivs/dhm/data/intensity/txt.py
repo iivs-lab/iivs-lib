@@ -10,13 +10,13 @@ __all__ = (
 
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
-from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
+from kaparoo.filesystem import ensure_file_extension
 
 from iivs.dhm.data.common import (
     KoalaTxtHeaderCodec,
-    parse_txt_grid,
+    load_txt,
     validate_float32_image,
-    write_txt_grid,
+    write_txt,
 )
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
@@ -115,13 +115,7 @@ def load_intensity_txt(
         ValueError: If the header is malformed, the grid does not match it, or
             it holds non-finite values while `on_nonfinite` is "raise".
     """
-    path = ensure_file_exists(path)
-    lines = path.read_text().splitlines()
-    header = IntensityTxtHeaderCodec.from_lines(lines, path)
-    data = parse_txt_grid(
-        lines[IntensityTxtHeaderCodec.HEADER_LINES :], shape=header.shape
-    )
-    data = validate_float32_image(data, on_nonfinite=on_nonfinite)
+    data, header = load_txt(path, IntensityTxtHeaderCodec, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
 
 
@@ -166,9 +160,7 @@ def save_intensity_txt(
     header = IntensityBinHeader(
         width=int(data.shape[1]), height=int(data.shape[0]), pixel_size=pixel_size
     )
-    write_txt_grid(
-        path, IntensityTxtHeaderCodec.to_lines(header), data, overwrite=overwrite
-    )
+    write_txt(path, IntensityTxtHeaderCodec.to_lines(header), data, overwrite=overwrite)
 
 
 # ========================== #

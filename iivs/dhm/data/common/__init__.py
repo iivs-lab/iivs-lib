@@ -6,8 +6,8 @@ import X`` reaches any of them:
 
 - `bin` — the Koala `.bin` header value object and I/O (`KoalaBinHeader`,
   `load_bin`, `write_bin`).
-- `txt` — the `Float/Txt` header codec and grid I/O (`KoalaTxtHeaderCodec`,
-  `parse_txt_grid`, `write_txt_grid`).
+- `txt` — the `Float/Txt` header codec and image I/O (`KoalaTxtHeaderCodec`,
+  `load_txt`, `write_txt`).
 - `image` — the uint8 image folder/list bases and `.tif` reader
   (`ImageFileFolder` / `ImageFileList`, `ImageTifFolder` / `ImageTifList`,
   `load_uint8_tif`).
@@ -45,13 +45,13 @@ __all__ = (
     "ValidationLevel",
     "detect_numbered_format",
     "load_bin",
+    "load_txt",
     "load_uint8_tif",
     "numbered_name",
-    "parse_txt_grid",
     "validate_float32_image",
     "validate_uint8_image",
     "write_bin",
-    "write_txt_grid",
+    "write_txt",
 )
 
 from iivs.dhm.data.common.bin import KoalaBinHeader, load_bin, write_bin
@@ -69,7 +69,7 @@ from iivs.dhm.data.common.image import (
     load_uint8_tif,
 )
 from iivs.dhm.data.common.sequence import SequentialFileFolder, ValidationLevel
-from iivs.dhm.data.common.txt import KoalaTxtHeaderCodec, parse_txt_grid, write_txt_grid
+from iivs.dhm.data.common.txt import KoalaTxtHeaderCodec, load_txt, write_txt
 from iivs.dhm.data.common.utils import detect_numbered_format, numbered_name
 from iivs.dhm.data.common.validation import (
     OnNonFinite,
