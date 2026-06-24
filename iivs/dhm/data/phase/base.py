@@ -3,6 +3,7 @@ from __future__ import annotations
 __all__ = ("PhaseFloatSequence", "PhaseImageSequence", "PhaseSequence")
 
 import math
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
@@ -200,13 +201,14 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
             height_scale=header.height_scale,
         )
 
+    @cached_property
     def bounds_nm(self) -> PhaseBounds:
         """Global phase display bounds over every frame, in nanometers.
 
         Recomputes the `phbounds.txt` values straight from the float source:
         each frame is converted to nanometers via its own `height_scale`, then
-        reduced to one global ``(min, max)``. Reads every file once, regardless
-        of `target_unit`.
+        reduced to one global ``(min, max)``. Reads every file once on first
+        access (regardless of `target_unit`) and caches the result.
 
         Raises:
             ValueError: If the sequence is empty, or a frame's stored unit
@@ -238,7 +240,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
                 from this source via `bounds_nm`.
         """
         if bounds is None:
-            bounds = self.bounds_nm()
+            bounds = self.bounds_nm
         return PhaseImageView(self, bounds)
 
 

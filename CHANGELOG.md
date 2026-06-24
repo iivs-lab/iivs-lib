@@ -97,6 +97,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Raise the `iivs-lib[torch]` extra's floor to `torch>=2.9` — the first release
   with CPython 3.14 (cp314) wheels, which the project's `requires-python >=3.14`
   needs (2.6–2.8 ship none); resolved installs on 3.14 are unaffected.
+- `PhaseFloatSequence.bounds_nm` is now a cached **property**, not a method:
+  access it as `seq.bounds_nm` (no call). It still reads every frame on first
+  access, then caches the global `(min, max)` for the sequence's lifetime.
 
 ## [0.1.0] - 2026-06-05
 
