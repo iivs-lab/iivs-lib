@@ -69,6 +69,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
         *,
         target_unit: Literal[PhaseUnit.NANOMETERS, PhaseUnit.METERS] = ...,
     ) -> PhaseFloatSequence[M]: ...
+
     @overload
     def to_float(
         self,
@@ -77,6 +78,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
         target_unit: Literal[PhaseUnit.RADIANS],
         height_scale: float,
     ) -> PhaseFloatSequence[M]: ...
+
     @overload
     def to_float(
         self,
@@ -86,6 +88,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
         wavelength: float,
         refractive_delta: float,
     ) -> PhaseFloatSequence[M]: ...
+
     def to_float(
         self,
         bounds: PhaseBounds,
@@ -122,6 +125,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
                 height-scale forms is given, or `target_unit` is not reachable
                 from nm.
         """
+
         scale = (
             resolve_height_scale(height_scale, wavelength, refractive_delta)
             if target_unit is PhaseUnit.RADIANS
@@ -262,18 +266,13 @@ class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
         target_unit: PhaseUnit | None = None,
         validate: ValidationLevel | None = "headers",
     ) -> None:
-        # Stashed for _after_header, which resolves it once the shared header is
-        # known (the cooperative PhaseFileList.__init__ sets target_unit to None).
-        self._init_target_unit = target_unit
         super().__init__(root, validate=validate)
 
-    @override
-    def _after_header(self) -> None:
-        """Resolve `target_unit` against the shared header and fail fast if unreachable."""
-        self._target_unit = replace_if_none(self._init_target_unit, self._header.unit)
-
-        # Empty array -> a pure source/target pair check, no pixel work.
-        convert_phase_unit(
+        # The shared header is known only after super().__init__ reads it, and
+        # the validation above never uses target_unit (it decodes raw frames),
+        # so resolve it here -- against the header, failing fast if unreachable.
+        self._target_unit = replace_if_none(target_unit, self._header.unit)
+        convert_phase_unit(  # empty array -> a pure source/target pair check
             np.empty((0, 0), dtype=np.float32),
             source=self._header.unit,
             target=self._target_unit,

@@ -28,9 +28,8 @@ READMEs.
   `KoalaFloatFileList[H]` / `KoalaFloatFileFolder[H]` bound to its header type
   `H`, supplying only `FILE_EXT`, `FILE_STEM`, and the `_read_header` / `_decode`
   codec (where `_decode` returns `(image, header)`). Phase adds its unit layer by
-  overriding `_postprocess` (per-frame conversion) and `_after_header`
-  (`target_unit` resolution); intensity adds nothing. So a new format is a couple
-  of codec methods, not a copied list+folder.
+  overriding `_postprocess` (per-frame conversion); intensity adds nothing. So a
+  new format is a couple of codec methods, not a copied list+folder.
 - **Folder ⊂ list.** A `*Folder` subclasses its `*List` (mirroring kaparoo's
   `FileFolderSequence ⊂ FileListSequence`) and reuses its `load_file`;
   `SequentialFileFolder` adds numbered discovery, the contiguity-checked

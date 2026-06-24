@@ -127,8 +127,7 @@ class KoalaFloatFileFolder[H: KoalaBinHeader](
     reads one shared acquisition `header` from the first file, exposes
     `frame_shape` from it, and checks every other file's header against it.
     Concrete folders supply `FILE_STEM` (and inherit `FILE_EXT` and the codec
-    from the matching `*List`). A subclass needing extra construction state
-    (e.g. phase's `target_unit`) overrides `_after_header`.
+    from the matching `*List`).
     """
 
     LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")
@@ -142,16 +141,8 @@ class KoalaFloatFileFolder[H: KoalaBinHeader](
     ) -> None:
         super().__init__(root)  # discovers the files; rejects an empty folder
         self._header = self._read_header(self.get_file(0))
-        self._after_header()
         if validate is not None:
             self.validate(level=validate)
-
-    def _after_header(self) -> None:
-        """Hook run once the shared `header` is read, before validation.
-
-        Default no-op; a subclass (e.g. phase) resolves extra construction
-        state here, after `self._header` is available.
-        """
 
     @property
     def header(self) -> H:
