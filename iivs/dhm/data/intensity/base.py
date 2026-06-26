@@ -35,6 +35,16 @@ class IntensitySequence[T, M](DataSequence[T, M]):
     """
 
 
+class IntensityImageSequence[M](IntensitySequence[NDArray[np.uint8], M]):
+    """A read-only sequence of uint8 intensity preview images.
+
+    The display-only 8-bit preview Koala renders under `Image/*.tif` -- distinct
+    from, and not a substitute for, the quantitative `IntensityFloatSequence`.
+    Same-shape sources mix in `data.common.FrameShapedMixin` to expose
+    `frame_shape`.
+    """
+
+
 class IntensityFloatSequence[M](IntensitySequence[NDArray[np.float32], M]):
     """A read-only sequence of quantitative float32 intensity images.
 
@@ -43,16 +53,6 @@ class IntensityFloatSequence[M](IntensitySequence[NDArray[np.float32], M]):
     (`IntensityBinFolder`) or an arbitrary `IntensityBinList` of unrelated
     files, and their `.txt` twins. Same-shape sources additionally mix in
     `data.common.FrameShapedMixin` to expose `frame_shape`.
-    """
-
-
-class IntensityImageSequence[M](IntensitySequence[NDArray[np.uint8], M]):
-    """A read-only sequence of uint8 intensity preview images.
-
-    The display-only 8-bit preview Koala renders under `Image/*.tif` -- distinct
-    from, and not a substitute for, the quantitative `IntensityFloatSequence`.
-    Same-shape sources mix in `data.common.FrameShapedMixin` to expose
-    `frame_shape`.
     """
 
 
