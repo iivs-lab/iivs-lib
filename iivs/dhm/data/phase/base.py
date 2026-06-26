@@ -17,7 +17,6 @@ from iivs.dhm.data.phase.bounds import PhaseBounds
 from iivs.dhm.data.phase.unit import PhaseUnit, convert_phase_unit, resolve_height_scale
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from typing import Literal
 
     from kaparoo.filesystem.types import StrPath, StrPaths
@@ -40,17 +39,6 @@ class PhaseSequence[T, M](DataSequence[T, M]):
             or `NDArray[np.uint8]` (preview).
         M: The per-item metadata type chosen by the concrete sequence (e.g. the
             source `Path`).
-    """
-
-
-class PhaseFloatSequence[M](PhaseSequence[NDArray[np.float32], M]):
-    """A read-only sequence of quantitative float32 phase images.
-
-    The phase reconstruction Koala exports as `Float/{Bin,Txt}`; annotate
-    parameters with it to accept any float32 phase source -- one acquisition
-    (`PhaseBinFolder`) or an arbitrary `PhaseBinList` of unrelated files, and
-    their `.txt` twins. Same-shape sources additionally mix in
-    `data.common.FrameShapedMixin` to expose `frame_shape`.
     """
 
 
@@ -126,7 +114,85 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
                 height-scale forms is given, or `target_unit` is not reachable
                 from nm.
         """
+        return PhaseFloatView(
+            self,
+            bounds,
+            target_unit=target_unit,
+            height_scale=height_scale,
+            wavelength=wavelength,
+            refractive_delta=refractive_delta,
+        )
 
+
+class PhaseImageView(PhaseImageSequence[Path]):
+    """A lazy uint8 preview over a quantitative phase list (the `to_image` result).
+
+    Wraps a `PhaseFileList`; `get_item` decodes the frame, converts it to nm, and
+    renders it through the bound `PhaseBounds` on access. Per-frame metadata (the
+    source path) passes through unchanged.
+    """
+
+    def __init__(self, source: PhaseFileList, bounds: PhaseBounds) -> None:
+        self._source = source
+        self._bounds = bounds
+
+    @property
+    def source(self) -> PhaseFileList:
+        """The quantitative phase list being rendered (e.g. for `frame_shape`)."""
+        return self._source
+
+    @property
+    def bounds(self) -> PhaseBounds:
+        """The display bounds the previews are rendered against."""
+        return self._bounds
+
+    def __len__(self) -> int:
+        return len(self._source)
+
+    @override
+    def get_meta(self, index: int) -> Path:
+        return self._source.get_meta(index)
+
+    @override
+    def get_item(self, index: int) -> NDArray[np.uint8]:
+        return self._bounds.encode_preview(self._source._decode_nm(index))  # noqa: SLF001
+
+
+class PhaseFloatSequence[M](PhaseSequence[NDArray[np.float32], M]):
+    """A read-only sequence of quantitative float32 phase images.
+
+    The phase reconstruction Koala exports as `Float/{Bin,Txt}`; annotate
+    parameters with it to accept any float32 phase source -- one acquisition
+    (`PhaseBinFolder`) or an arbitrary `PhaseBinList` of unrelated files, and
+    their `.txt` twins. Same-shape sources additionally mix in
+    `data.common.FrameShapedMixin` to expose `frame_shape`.
+    """
+
+
+class PhaseFloatView[M](
+    TransformedSequence[NDArray[np.uint8], M, NDArray[np.float32], M],
+    PhaseFloatSequence[M],
+):
+    """A lazy phase reconstruction over a preview sequence (the `to_float` result).
+
+    A `kaparoo` `TransformedSequence` that maps each uint8 preview back to float32
+    phase -- `bounds.decode_preview` (to nm), then `convert_phase_unit` to
+    `target_unit` -- retyped as a `PhaseFloatSequence`. The values are
+    8-bit-quantized -- a reconstruction, never the quantitative `Float` source.
+    `source` (the wrapped previews) and the per-frame metadata pass-through come
+    from `TransformedSequence`.
+    """
+
+    def __init__(
+        self,
+        source: PhaseImageSequence[M],
+        bounds: PhaseBounds,
+        *,
+        target_unit: PhaseUnit = PhaseUnit.NANOMETERS,
+        height_scale: float | None = None,
+        wavelength: float | None = None,
+        refractive_delta: float | None = None,
+    ) -> None:
         scale = (
             resolve_height_scale(height_scale, wavelength, refractive_delta)
             if target_unit is PhaseUnit.RADIANS
@@ -142,7 +208,13 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
                 height_scale=scale,
             )
 
-        return PhaseFloatView(self, to_unit, bounds)
+        super().__init__(source, to_unit)
+        self._bounds = bounds
+
+    @property
+    def bounds(self) -> PhaseBounds:
+        """The display bounds used to map previews back to phase."""
+        return self._bounds
 
 
 class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Path]):
@@ -280,65 +352,3 @@ class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
             target=self._target_unit,
             height_scale=self._header.height_scale,
         )
-
-
-class PhaseImageView(PhaseImageSequence[Path]):
-    """A lazy uint8 preview over a quantitative phase list (the `to_image` result).
-
-    Wraps a `PhaseFileList`; `get_item` decodes the frame, converts it to nm, and
-    renders it through the bound `PhaseBounds` on access. Per-frame metadata (the
-    source path) passes through unchanged.
-    """
-
-    def __init__(self, source: PhaseFileList, bounds: PhaseBounds) -> None:
-        self._source = source
-        self._bounds = bounds
-
-    @property
-    def source(self) -> PhaseFileList:
-        """The quantitative phase list being rendered (e.g. for `frame_shape`)."""
-        return self._source
-
-    @property
-    def bounds(self) -> PhaseBounds:
-        """The display bounds the previews are rendered against."""
-        return self._bounds
-
-    def __len__(self) -> int:
-        return len(self._source)
-
-    @override
-    def get_meta(self, index: int) -> Path:
-        return self._source.get_meta(index)
-
-    @override
-    def get_item(self, index: int) -> NDArray[np.uint8]:
-        return self._bounds.encode_preview(self._source._decode_nm(index))  # noqa: SLF001
-
-
-class PhaseFloatView[M](
-    TransformedSequence[NDArray[np.uint8], M, NDArray[np.float32], M],
-    PhaseFloatSequence[M],
-):
-    """A lazy phase reconstruction over a preview sequence (the `to_float` result).
-
-    A `kaparoo` `TransformedSequence` that maps each uint8 preview back to float32
-    phase via a `PhaseBounds`-derived transform, retyped as a `PhaseFloatSequence`.
-    The values are 8-bit-quantized -- a reconstruction, never the quantitative
-    `Float` source. `source` (the wrapped previews) and the per-frame metadata
-    pass-through come from `TransformedSequence`.
-    """
-
-    def __init__(
-        self,
-        source: PhaseImageSequence[M],
-        transform: Callable[[NDArray[np.uint8]], NDArray[np.float32]],
-        bounds: PhaseBounds,
-    ) -> None:
-        super().__init__(source, transform)
-        self._bounds = bounds
-
-    @property
-    def bounds(self) -> PhaseBounds:
-        """The display bounds used to map previews back to phase."""
-        return self._bounds
