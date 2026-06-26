@@ -52,6 +52,25 @@ def test_load_intensity_rejects_unknown_extension(tmp_path):
         load_intensity(tmp_path / "x.foo")
 
 
+@pytest.mark.parametrize("ext", ("bin", "txt"))
+def test_load_intensity_return_header_gives_header_for_bin_txt(tmp_path, ext):
+    path = tmp_path / f"x.{ext}"
+    _save(path, ext)
+    img, header = load_intensity(path, return_header=True)
+    np.testing.assert_allclose(img, IMG, rtol=1e-5)
+    assert isinstance(header, IntensityBinHeader)
+    assert header.shape == IMG.shape
+    assert header.pixel_size == pytest.approx(1e-6, rel=1e-3)
+
+
+def test_load_intensity_return_header_is_none_for_npy(tmp_path):
+    path = tmp_path / "x.npy"
+    _save(path, "npy")
+    img, header = load_intensity(path, return_header=True)
+    np.testing.assert_array_equal(img, IMG)
+    assert header is None
+
+
 # --- read_intensity_header ---
 
 

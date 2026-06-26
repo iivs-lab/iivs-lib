@@ -42,8 +42,8 @@ right symbol for you, over `.bin` / `.txt` / `.npy`:
 
 | Factory | Picks |
 | --- | --- |
-| `load_intensity(path)` | `load_intensity_{bin,txt,npy}` — image only |
-| `read_intensity_header(path)` | `read_intensity_{bin,txt}_header` (**`.npy` excluded** — header-less) |
+| `load_intensity(path, *, return_header=False)` | `load_intensity_{bin,txt,npy}` — the image, or `(image, header)` when `return_header` (with `header` `None` for the header-less `.npy`) |
+| `read_intensity_header(path)` | `read_intensity_{bin,txt}_header` (**`.npy` excluded** — header-less, **raises**; unlike `load_intensity`'s optional `None`) |
 | `save_intensity(path, data, ...)` | `save_intensity_{bin,txt,npy}` (`.npy` ignores `pixel_size`, with a warning) |
 | `intensity_list(files)` | `Intensity{Bin,Txt}List` by the files' shared extension |
 | `intensity_folder(root)` | `Intensity{Bin,Txt,Npy}Folder` by the folder's contents (an `.npy` folder needs `pixel_size`) |

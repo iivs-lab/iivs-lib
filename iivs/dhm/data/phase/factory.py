@@ -33,6 +33,7 @@ from iivs.dhm.data.phase.unit import PhaseUnit, resolve_height_scale
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from typing import Literal
 
     import numpy as np
     from kaparoo.filesystem.types import StrPath, StrPaths
@@ -43,17 +44,60 @@ if TYPE_CHECKING:
     from iivs.dhm.data.phase.bin import PhaseBinHeader
 
 
+@overload
 def load_phase(
     path: StrPath,
     *,
+    return_header: Literal[False] = False,
+    on_nonfinite: OnNonFinite = ...,
+) -> NDArray[np.float32]: ...
+
+
+@overload
+def load_phase(
+    path: StrPath,
+    *,
+    return_header: Literal[True],
+    on_nonfinite: OnNonFinite = ...,
+) -> tuple[NDArray[np.float32], PhaseBinHeader | None]: ...
+
+
+@overload
+def load_phase(
+    path: StrPath,
+    *,
+    return_header: bool,
+    on_nonfinite: OnNonFinite = ...,
+) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader | None]: ...
+
+
+def load_phase(
+    path: StrPath,
+    *,
+    return_header: bool = False,
     on_nonfinite: OnNonFinite = "ignore",
-) -> NDArray[np.float32]:
+) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader | None]:
     """Load a float32 phase image, picking the reader by `path`'s extension.
 
     Dispatches `.bin` / `.txt` / `.npy` to `load_phase_bin` / `load_phase_txt` /
-    `load_phase_npy`. Returns the **image only** (uniform across formats, since
-    `.npy` is header-less); for the header too, use the per-format loader's
-    `return_header` (`.bin` / `.txt`) or `read_phase_header`.
+    `load_phase_npy`. With `return_header` it also returns the parsed header --
+    but `None` for `.npy`, which is header-less (its `pixel_size`, `unit`, and
+    `height_scale` live only on `PhaseNpyFolder`, not in the file). Contrast
+    `read_phase_header`, whose sole job *is* the header and so raises on `.npy`:
+    here the header is an optional extra, so an absent one is `None`, not an
+    error.
+
+    Args:
+        path: The `.bin` / `.txt` / `.npy` file to read.
+        return_header: Whether to also return the parsed header (`None` for the
+            header-less `.npy`). Defaults to False.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
+            decoded data: "ignore" (default) accepts silently, "warn" emits a
+            RuntimeWarning, "raise" rejects with a ValueError.
+
+    Returns:
+        The phase image as a 2D float32 array, or an `(image, header)` tuple
+        when `return_header` is True -- with `header` `None` for `.npy`.
 
     Raises:
         ValueError: If `path`'s extension is not bin, txt, or npy (plus the
@@ -61,11 +105,16 @@ def load_phase(
     """
     ext = file_extension(path)
     if ext == "bin":
-        return load_phase_bin(path, on_nonfinite=on_nonfinite)
+        return load_phase_bin(
+            path, return_header=return_header, on_nonfinite=on_nonfinite
+        )
     if ext == "txt":
-        return load_phase_txt(path, on_nonfinite=on_nonfinite)
+        return load_phase_txt(
+            path, return_header=return_header, on_nonfinite=on_nonfinite
+        )
     if ext == "npy":
-        return load_phase_npy(path, on_nonfinite=on_nonfinite)
+        data = load_phase_npy(path, on_nonfinite=on_nonfinite)
+        return (data, None) if return_header else data
     raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="phase")
 
 

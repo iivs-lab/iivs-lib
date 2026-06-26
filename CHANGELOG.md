@@ -31,9 +31,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `HologramFormat` / `HOLOGRAM_FORMATS`.
 - `iivs.dhm.data.phase`: extension-dispatch entry points that pick the format
   by a path's suffix, so callers need not hand-pick the per-format symbol.
-  - `load_phase(path)` — dispatch `.bin` / `.txt` / `.npy` to
-    `load_phase_bin` / `load_phase_txt` / `load_phase_npy`; returns the image
-    only (uniform across formats).
+  - `load_phase(path, *, return_header=False)` — dispatch `.bin` / `.txt` /
+    `.npy` to `load_phase_bin` / `load_phase_txt` / `load_phase_npy`. Returns
+    the image, or `(image, header)` when `return_header` — with `header` `None`
+    for the header-less `.npy` (`read_phase_header` instead *raises* on `.npy`,
+    since returning the header is its sole job).
   - `read_phase_header(path)` — dispatch `.bin` / `.txt` to their header
     readers. `.npy` is excluded (it is header-less).
   - `save_phase(path, data, ...)` — dispatch the writers; for `.npy` the

@@ -9,7 +9,7 @@ __all__ = (
 )
 
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from kaparoo.filesystem import UnsupportedExtensionError, file_extension
 
@@ -36,6 +36,7 @@ from iivs.dhm.data.intensity.txt import (
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from typing import Literal
 
     import numpy as np
     from kaparoo.filesystem.types import StrPath, StrPaths
@@ -46,29 +47,76 @@ if TYPE_CHECKING:
     from iivs.dhm.data.intensity.bin import IntensityBinHeader
 
 
+@overload
 def load_intensity(
     path: StrPath,
     *,
+    return_header: Literal[False] = False,
+    on_nonfinite: OnNonFinite = ...,
+) -> NDArray[np.float32]: ...
+
+
+@overload
+def load_intensity(
+    path: StrPath,
+    *,
+    return_header: Literal[True],
+    on_nonfinite: OnNonFinite = ...,
+) -> tuple[NDArray[np.float32], IntensityBinHeader | None]: ...
+
+
+@overload
+def load_intensity(
+    path: StrPath,
+    *,
+    return_header: bool,
+    on_nonfinite: OnNonFinite = ...,
+) -> NDArray[np.float32] | tuple[NDArray[np.float32], IntensityBinHeader | None]: ...
+
+
+def load_intensity(
+    path: StrPath,
+    *,
+    return_header: bool = False,
     on_nonfinite: OnNonFinite = "ignore",
-) -> NDArray[np.float32]:
+) -> NDArray[np.float32] | tuple[NDArray[np.float32], IntensityBinHeader | None]:
     """Load a float32 intensity image, picking the reader by `path`'s extension.
 
     Dispatches `.bin` / `.txt` / `.npy` to `load_intensity_bin` /
-    `load_intensity_txt` / `load_intensity_npy`. Returns the **image only**
-    (uniform across formats, since `.npy` is header-less); for the header too,
-    use the per-format loader's `return_header` (`.bin` / `.txt`) or
-    `read_intensity_header`.
+    `load_intensity_txt` / `load_intensity_npy`. With `return_header` it also
+    returns the parsed header -- but `None` for `.npy`, which is header-less
+    (its `pixel_size` lives only on `IntensityNpyFolder`, not in the file).
+    Contrast `read_intensity_header`, whose sole job *is* the header and so
+    raises on `.npy`: here the header is an optional extra, so an absent one is
+    `None`, not an error.
+
+    Args:
+        path: The `.bin` / `.txt` / `.npy` file to read.
+        return_header: Whether to also return the parsed header (`None` for the
+            header-less `.npy`). Defaults to False.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
+            decoded data: "ignore" (default) accepts silently, "warn" emits a
+            RuntimeWarning, "raise" rejects with a ValueError.
+
+    Returns:
+        The intensity image as a 2D float32 array, or an `(image, header)` tuple
+        when `return_header` is True -- with `header` `None` for `.npy`.
 
     Raises:
         ValueError: If `path`'s extension is not bin, txt, or npy.
     """
     ext = file_extension(path)
     if ext == "bin":
-        return load_intensity_bin(path, on_nonfinite=on_nonfinite)
+        return load_intensity_bin(
+            path, return_header=return_header, on_nonfinite=on_nonfinite
+        )
     if ext == "txt":
-        return load_intensity_txt(path, on_nonfinite=on_nonfinite)
+        return load_intensity_txt(
+            path, return_header=return_header, on_nonfinite=on_nonfinite
+        )
     if ext == "npy":
-        return load_intensity_npy(path, on_nonfinite=on_nonfinite)
+        data = load_intensity_npy(path, on_nonfinite=on_nonfinite)
+        return (data, None) if return_header else data
     raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="intensity")
 
 

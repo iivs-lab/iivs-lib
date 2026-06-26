@@ -35,8 +35,8 @@ right symbol for you, over `.bin` / `.txt` / `.npy`:
 
 | Factory | Picks |
 | --- | --- |
-| `load_phase(path)` | `load_phase_{bin,txt,npy}` — image only |
-| `read_phase_header(path)` | `read_phase_{bin,txt}_header` (**`.npy` excluded** — header-less) |
+| `load_phase(path, *, return_header=False)` | `load_phase_{bin,txt,npy}` — the image, or `(image, header)` when `return_header` (with `header` `None` for the header-less `.npy`) |
+| `read_phase_header(path)` | `read_phase_{bin,txt}_header` (**`.npy` excluded** — header-less, **raises**; unlike `load_phase`'s optional `None`) |
 | `save_phase(path, data, ...)` | `save_phase_{bin,txt,npy}` (`.npy` ignores the header metadata, with a warning) |
 | `phase_list(files)` | `Phase{Bin,Txt}List` by the files' shared extension |
 | `phase_folder(root)` | `Phase{Bin,Txt,Npy}Folder` by the folder's contents (an `.npy` folder needs `pixel_size` + `unit`) |
