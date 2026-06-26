@@ -114,19 +114,19 @@ def convert_intensity_folder(
         ValueError: If `ext` is not "bin", "txt", or "npy".
         FileExistsError: If `root` exists and `overwrite` is False.
     """
+    kwargs = {}
+
     if ext in ("bin", "txt"):
-        save_intensity_folder(
-            root,
-            folder,
-            ext=ext,
-            pixel_size=folder.header.pixel_size,
-            stem=folder.FILE_STEM,
-            overwrite=overwrite,
-        )
-    else:
-        save_intensity_folder(
-            root, folder, ext=ext, stem=folder.FILE_STEM, overwrite=overwrite
-        )
+        kwargs = {"pixel_size": folder.header.pixel_size}
+
+    save_intensity_folder(
+        root,
+        folder,
+        ext=ext,
+        stem=folder.FILE_STEM,
+        overwrite=overwrite,
+        **kwargs,
+    )
 
 
 def convert_intensity_list(

@@ -177,21 +177,24 @@ def convert_phase_folder(
         ValueError: If `ext` is not "bin", "txt", or "npy".
         FileExistsError: If `root` exists and `overwrite` is False.
     """
+    kwargs = {}
+
     if ext in ("bin", "txt"):
-        save_phase_folder(
-            root,
-            folder,
-            ext=ext,
-            pixel_size=folder.header.pixel_size,
-            height_scale=folder.header.height_scale,
-            unit=replace_if_none(folder.target_unit, folder.header.unit),
-            stem=folder.FILE_STEM,
-            overwrite=overwrite,
-        )
-    else:
-        save_phase_folder(
-            root, folder, ext=ext, stem=folder.FILE_STEM, overwrite=overwrite
-        )
+        header = folder.header
+        kwargs = {
+            "pixel_size": header.pixel_size,
+            "height_scale": header.height_scale,
+            "unit": replace_if_none(folder.target_unit, header.unit),
+        }
+
+    save_phase_folder(
+        root,
+        folder,
+        ext=ext,
+        stem=folder.FILE_STEM,
+        overwrite=overwrite,
+        **kwargs,
+    )
 
 
 def convert_phase_list(
