@@ -102,6 +102,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `PhaseFloatSequence.bounds_nm` is now a cached **property**, not a method:
   access it as `seq.bounds_nm` (no call). It still reads every frame on first
   access, then caches the global `(min, max)` for the sequence's lifetime.
+- `iivs.dhm.data.common`: the `.bin` and `Float/Txt` readers are consolidated
+  into two header-parameterized engines — `load_bin(path, header_cls)` and
+  `load_txt(path, header_codec)`, each returning `(image, header)`. They absorb
+  and replace the lower-level `read_bin_pixels` and `parse_txt_grid` (removed
+  from the public surface), and `write_txt_grid` is renamed to `write_txt`. Each
+  phase / intensity per-format loader is now a thin wrapper over these, so the
+  duplicated per-modality read bodies are gone.
+
+### Fixed
+
+- `iivs.dhm.data.common.write_bin` now rejects a pixel block whose shape
+  disagrees with the header, instead of writing a malformed `.bin`.
 
 ## [0.1.0] - 2026-06-05
 

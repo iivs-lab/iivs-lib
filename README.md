@@ -87,6 +87,13 @@ sequences, and the round trips between them).
   `TimestampsTxtFile` (Koala `timestamps.txt`), and `TimestampsFixedFPS`
   (synthesized from a frame rate).
 
+`phase` and `intensity` also expose **suffix-dispatch entry points** that pick
+the format by a path's extension — `load_phase` / `read_phase_header` /
+`save_phase`, `phase_list` / `phase_folder` (and the `intensity` twins) — plus
+`save_phase_folder` / `save_intensity_folder` to write any (e.g. a `kaparoo`-
+composed) image sequence to a numbered folder. `load_phase` / `load_intensity`
+take `return_header` (the header is `None` for the header-less `.npy`).
+
 Every sequence is a `kaparoo.data.sequences.DataSequence`, so it indexes,
 slices, and iterates lazily; same-shape sources also expose `frame_shape` by
 mixing in `iivs.common.data.FrameShapedMixin` (so a uniform source is its
