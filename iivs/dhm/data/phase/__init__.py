@@ -56,17 +56,15 @@ from iivs.dhm.data.phase.bin import (
     save_phase_bin,
 )
 from iivs.dhm.data.phase.bounds import PhaseBounds, read_phbounds, write_phbounds
-from iivs.dhm.data.phase.convert import (
+from iivs.dhm.data.phase.dispatch import (
     convert_phase_folder,
     convert_phase_list,
-    save_phase_folder,
-)
-from iivs.dhm.data.phase.factory import (
     load_phase,
     phase_folder,
     phase_list,
     read_phase_header,
     save_phase,
+    save_phase_folder,
 )
 from iivs.dhm.data.phase.npy import PhaseNpyFolder, load_phase_npy, save_phase_npy
 from iivs.dhm.data.phase.tif import PhaseTifFolder, PhaseTifList
