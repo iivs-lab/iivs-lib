@@ -33,7 +33,7 @@ quantitative float32 phase reconstruction and its uint8 display preview.
 When the format is only known at runtime (from a path's suffix), these pick the
 right symbol for you, over `.bin` / `.txt` / `.npy`:
 
-| Factory | Picks |
+| Entry point | Picks |
 | --- | --- |
 | `load_phase(path, *, return_header=False)` | `load_phase_{bin,txt,npy}` — the image, or `(image, header)` when `return_header` (with `header` `None` for the header-less `.npy`) |
 | `read_phase_header(path)` | `read_phase_{bin,txt}_header` (**`.npy` excluded** — header-less, **raises**; unlike `load_phase`'s optional `None`) |

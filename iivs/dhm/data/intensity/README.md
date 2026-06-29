@@ -40,7 +40,7 @@ phase-only bytes as a no-op sentinel), so there is no `PhaseUnit` analogue, no
 When the format is only known at runtime (from a path's suffix), these pick the
 right symbol for you, over `.bin` / `.txt` / `.npy`:
 
-| Factory | Picks |
+| Entry point | Picks |
 | --- | --- |
 | `load_intensity(path, *, return_header=False)` | `load_intensity_{bin,txt,npy}` — the image, or `(image, header)` when `return_header` (with `header` `None` for the header-less `.npy`) |
 | `read_intensity_header(path)` | `read_intensity_{bin,txt}_header` (**`.npy` excluded** — header-less, **raises**; unlike `load_intensity`'s optional `None`) |
