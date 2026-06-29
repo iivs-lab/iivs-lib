@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from kaparoo.data.sequences import ConcatSequence
 
-from iivs.dhm.data.hologram.convert import convert_hologram_sequence
+from iivs.dhm.data.hologram.dispatch import convert_hologram_sequence
 from iivs.dhm.data.hologram.npy import HologramNpyFolder, save_hologram_npy
 from iivs.dhm.data.hologram.raw import (
     HologramRawFile,

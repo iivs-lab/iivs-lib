@@ -26,7 +26,7 @@ __all__ = (
 )
 
 from iivs.dhm.data.hologram.base import HologramSequence
-from iivs.dhm.data.hologram.convert import (
+from iivs.dhm.data.hologram.dispatch import (
     HOLOGRAM_FORMATS,
     HologramFormat,
     convert_hologram_sequence,
