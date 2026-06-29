@@ -39,7 +39,7 @@ def test_resolve_height_scale_derives_from_wavelength_pair():
 def test_resolve_height_scale_rejects_invalid_forms(
     height_scale, wavelength, refractive_delta
 ):
-    with pytest.raises(ValueError, match="give height_scale"):
+    with pytest.raises(ValueError, match="exactly one"):
         resolve_height_scale(height_scale, wavelength, refractive_delta)
 
 

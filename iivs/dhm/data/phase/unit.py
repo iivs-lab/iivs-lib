@@ -49,7 +49,7 @@ def resolve_height_scale(
     if height_scale is None and wavelength is not None and refractive_delta is not None:
         return wavelength / (math.tau * refractive_delta)
 
-    msg = "give height_scale, or wavelength and refractive_delta (not both)"
+    msg = "give exactly one of: height_scale, or wavelength and refractive_delta"
     raise ValueError(msg)
 
 

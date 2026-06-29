@@ -136,8 +136,8 @@ applying it by hand.
 - Exception messages use a terse, lower-case house style: no leading
   capital, no trailing period. Prefer `f"<subject> must be <constraint>
   (got {value})"` for validation, or a short imperative for
-  mutually-exclusive options (`"give height_scale, or wavelength and
-  refractive_delta (not both)"`). Name the valid set or the fix, not
+  mutually-exclusive options (`"give exactly one of: height_scale, or
+  wavelength and refractive_delta"`). Name the valid set or the fix, not
   just the failure (`"unsupported extension 'X': expected bin, txt"`),
   so the message tells the caller what to do next. Keep each message on
   one line — if it would wrap, shorten it or hoist a value to a local

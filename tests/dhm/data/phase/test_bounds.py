@@ -310,7 +310,7 @@ def test_to_float_to_meters_needs_no_scale(tmp_path):
 def test_to_float_to_radians_requires_scale(tmp_path):
     folder = _two_frame_folder(tmp_path)
     preview = folder.to_image(PhaseBounds(min_nm=0.0, max_nm=600.0))
-    with pytest.raises(ValueError, match="give height_scale"):
+    with pytest.raises(ValueError, match="exactly one"):
         preview.to_float(
             PhaseBounds(min_nm=0.0, max_nm=600.0), target_unit=PhaseUnit.RADIANS
         )
