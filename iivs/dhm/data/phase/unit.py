@@ -41,16 +41,16 @@ def resolve_height_scale(
     (2*pi * refractive_delta)`). Exactly one of the two forms must be given.
 
     Raises:
-        ValueError: If neither or both forms are given.
+        ValueError: Unless exactly one form is fully given (neither, both, or a
+            half-filled pair all raise).
     """
-    match height_scale, wavelength, refractive_delta:
-        case scale, None, None if scale is not None:
-            return scale
-        case None, wave, delta if wave is not None and delta is not None:
-            return wave / (math.tau * delta)
-        case _:
-            msg = "give height_scale, or wavelength and refractive_delta (not both)"
-            raise ValueError(msg)
+    if height_scale is not None and wavelength is None and refractive_delta is None:
+        return height_scale
+    if height_scale is None and wavelength is not None and refractive_delta is not None:
+        return wavelength / (math.tau * refractive_delta)
+
+    msg = "give height_scale, or wavelength and refractive_delta (not both)"
+    raise ValueError(msg)
 
 
 def convert_phase_unit(
