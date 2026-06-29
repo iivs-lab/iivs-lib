@@ -50,17 +50,15 @@ from iivs.dhm.data.intensity.bin import (
     read_intensity_bin_header,
     save_intensity_bin,
 )
-from iivs.dhm.data.intensity.convert import (
+from iivs.dhm.data.intensity.dispatch import (
     convert_intensity_folder,
     convert_intensity_list,
-    save_intensity_folder,
-)
-from iivs.dhm.data.intensity.factory import (
     intensity_folder,
     intensity_list,
     load_intensity,
     read_intensity_header,
     save_intensity,
+    save_intensity_folder,
 )
 from iivs.dhm.data.intensity.npy import (
     IntensityNpyFolder,
