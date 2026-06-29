@@ -1,9 +1,49 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
-from iivs.dhm.data.phase.unit import PhaseUnit, convert_phase_unit
+from iivs.dhm.data.phase.unit import (
+    PhaseUnit,
+    convert_phase_unit,
+    resolve_height_scale,
+)
+
+# --- resolve_height_scale ---
+
+
+def test_resolve_height_scale_direct_form_passes_through():
+    assert resolve_height_scale(2e-7, None, None) == 2e-7
+
+
+def test_resolve_height_scale_derives_from_wavelength_pair():
+    # height per rad = wavelength / (2*pi * refractive_delta), computed here
+    # independently of the implementation.
+    got = resolve_height_scale(None, 666e-9, 0.5)
+    assert got == pytest.approx(666e-9 / (math.tau * 0.5))
+
+
+@pytest.mark.parametrize(
+    ("height_scale", "wavelength", "refractive_delta"),
+    (
+        (None, None, None),  # neither form
+        (2e-7, 666e-9, 0.5),  # both forms
+        (2e-7, 666e-9, None),  # direct form + a stray wavelength
+        (2e-7, None, 0.5),  # direct form + a stray refractive_delta
+        (None, 666e-9, None),  # half-filled pair (wavelength only)
+        (None, None, 0.5),  # half-filled pair (refractive_delta only)
+    ),
+)
+def test_resolve_height_scale_rejects_invalid_forms(
+    height_scale, wavelength, refractive_delta
+):
+    with pytest.raises(ValueError, match="give height_scale"):
+        resolve_height_scale(height_scale, wavelength, refractive_delta)
+
+
+# --- convert_phase_unit ---
 
 
 def test_convert_phase_unit_radians_to_meters():
