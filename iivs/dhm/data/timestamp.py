@@ -26,9 +26,8 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If `path` does not have a `.txt` extension, the file is
-            malformed, or its frame indices are not contiguous from 0 (see
-            `parse`).
+        ValueError: If `path` does not have a `.txt` extension, the file is malformed,
+            or its frame indices are not contiguous from 0 (see `parse`).
     """
 
     LINE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(

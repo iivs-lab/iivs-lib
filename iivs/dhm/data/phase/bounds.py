@@ -21,9 +21,9 @@ class PhaseBounds:
 
     Lyncée Tec Koala renders the quantitative float phase into the uint8 `Image/*.tif`
     previews by linearly mapping ``[min_nm, max_nm]`` onto ``0-255``; these are
-    the global min and max of that phase over the acquisition. A
-    `PhaseFloatSequence` can recompute them straight from its `Float` source via
-    `bounds_nm`, so the previews are never the authoritative source.
+    the global min and max of that phase over the acquisition.
+    A `PhaseFloatSequence` can recompute them straight from its `Float` source
+    via `bounds_nm`, so the previews are never the authoritative source.
 
     Attributes:
         min_nm: Lower display bound, in nanometers.

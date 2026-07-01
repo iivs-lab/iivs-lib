@@ -236,9 +236,9 @@ class HologramRawFile(
     The file is a `HologramRawHeader` followed by its frames, held internally
     as a lazy, read-only `np.memmap` so a large multi-frame file is never
     loaded whole. Each item is a fresh, writable copy of one frame (metadata
-    is the frame index) -- matching `PhaseBinFolder` and
-    `HologramTifFolder` -- so it can go straight to `torch.from_numpy`. For
-    zero-copy bulk access, use the read-only `frames` memmap directly.
+    is the frame index) -- matching `PhaseBinFolder` and `HologramTifFolder` --
+    so it can go straight to `torch.from_numpy`. For zero-copy bulk access, use
+    the read-only `frames` memmap directly.
 
     The sequence pickles to just its path -- the memmap re-opens in each
     process rather than copying every frame -- so it is cheap to hand to

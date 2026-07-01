@@ -22,9 +22,8 @@ class OpticalPathDifference(nn.Module):
     quantity, per the `nn.Module` convention). Binds a wavelength and the cached
     `opd_scale` (nm of OPD per rad, a plain float reused from the NumPy engine,
     so the physics is shared); `from_wavelength_nm` / `wavelength_nm` give its nm
-    form. The `convert_*` / `forward` methods are pure
-    scalar multiplies, so they preserve the input tensor's dtype, device, and
-    autograd graph.
+    form. The `convert_*` / `forward` methods are pure scalar multiplies, so
+    they preserve the input tensor's dtype, device, and autograd graph.
 
     Tensors are expected to hold a real floating dtype (e.g. ``float32``); the
     output keeps the input's dtype (torch's `Tensor` type does not carry it).
@@ -67,8 +66,8 @@ class OpticalPathDifference(nn.Module):
 def phase_to_opd(phase: Tensor, *, wavelength: float = DEFAULT_WAVELENGTH) -> Tensor:
     """Convert phase (rad) to OPD (nm); a one-shot `OpticalPathDifference`.
 
-    Preserves the input tensor's dtype, device, and autograd graph. For repeated
-    use, build an `OpticalPathDifference` (or read its `opd_scale`) once.
+    Preserves the input tensor's dtype, device, and autograd graph.
+    For repeated use, build an `OpticalPathDifference` (or read its `opd_scale`) once.
 
     Args:
         phase: Phase image (or batch), in rad.
@@ -80,8 +79,8 @@ def phase_to_opd(phase: Tensor, *, wavelength: float = DEFAULT_WAVELENGTH) -> Te
 def opd_to_phase(opd: Tensor, *, wavelength: float = DEFAULT_WAVELENGTH) -> Tensor:
     """Convert OPD (nm) to phase (rad); a one-shot `OpticalPathDifference`.
 
-    The inverse of `phase_to_opd`; preserves dtype, device, and the autograd
-    graph.
+    The inverse of `phase_to_opd`; preserves dtype, device, and the autograd graph.
+    For repeated use, build an `OpticalPathDifference` (or read its `opd_scale`) once.
 
     Args:
         opd: OPD image (or batch), in nm.

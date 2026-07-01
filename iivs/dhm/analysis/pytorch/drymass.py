@@ -31,9 +31,9 @@ class DryMass(nn.Module):
     ``float64`` (for precision) and scales, returning a tensor in the input's
     dtype -- never a Python `float` -- so it stays on the input's device, dtype,
     and autograd graph (a `float()` cast would sync off-device and drop
-    gradients). Inputs are batched (``(..., H, W)``); a
-    ``(N, H, W)`` mask adds a trailing channel axis (``(..., N)``);
-    ``reduce=False`` returns the per-pixel mass-density map instead of the sum.
+    gradients). Inputs are batched (``(..., H, W)``); a ``(N, H, W)`` mask adds
+    a trailing channel axis (``(..., N)``); ``reduce=False`` returns the
+    per-pixel mass-density map instead of the sum.
     The OPD must already be background-corrected.
 
     Attributes:
