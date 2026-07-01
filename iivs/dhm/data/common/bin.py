@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 import numpy as np
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 
-from iivs.dhm.data.common.validation import validate_float32_array
+from iivs.common.data import validate_float32_array
 
 if TYPE_CHECKING:
     from typing import IO, Self
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
-    from iivs.dhm.data.common.validation import OnNonFinite
+    from iivs.common.data import OnNonFinite
 
 
 _PIXEL_DTYPE = np.dtype("<f4")  # on-disk pixels: little-endian float32

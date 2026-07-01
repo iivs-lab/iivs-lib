@@ -48,7 +48,8 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath, StrPaths
     from numpy.typing import NDArray
 
-    from iivs.dhm.data.common import FloatFormat, OnNonFinite, ValidationLevel
+    from iivs.common.data import OnNonFinite
+    from iivs.dhm.data.common import FloatFormat, ValidationLevel
     from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
     from iivs.dhm.data.phase.bin import PhaseBinHeader
 

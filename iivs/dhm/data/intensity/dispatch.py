@@ -51,7 +51,8 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath, StrPaths
     from numpy.typing import NDArray
 
-    from iivs.dhm.data.common import FloatFormat, OnNonFinite, ValidationLevel
+    from iivs.common.data import OnNonFinite
+    from iivs.dhm.data.common import FloatFormat, ValidationLevel
     from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
     from iivs.dhm.data.intensity.bin import IntensityBinHeader
 

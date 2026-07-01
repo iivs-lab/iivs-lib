@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 import numpy as np
 from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
-from iivs.common.data import read_npy_shape, write_npy
-from iivs.dhm.data.common import validate_float32_array
+from iivs.common.data import read_npy_shape, validate_float32_array, write_npy
 from iivs.dhm.data.phase.base import PhaseFileFolder
 from iivs.dhm.data.phase.bin import PhaseBinHeader
 from iivs.dhm.data.phase.unit import resolve_height_scale
@@ -17,7 +16,8 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
-    from iivs.dhm.data.common import OnNonFinite, ValidationLevel
+    from iivs.common.data import OnNonFinite
+    from iivs.dhm.data.common import ValidationLevel
     from iivs.dhm.data.phase.unit import PhaseUnit
 
 

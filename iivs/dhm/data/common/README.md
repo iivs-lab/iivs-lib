@@ -19,7 +19,6 @@ READMEs.
 | `float` | `KoalaFloatFileList[H]` / `KoalaFloatFileFolder[H]` — the float32 list/folder machinery, generic in the header type, over a `(read_header, decode)` codec. |
 | `image` | `ImageFileList` / `ImageFileFolder` + `ImageTifList` / `ImageTifFolder` (uint8 image bases) + `load_uint8_tif`. |
 | `sequence` | `SequentialFileFolder` (numbered `{index:05d}_<stem>.<ext>` discovery + validation; mixes in `iivs.common.data`'s `FrameShapedMixin`). |
-| `validation` | `validate_float_array` / `validate_uint_array` (dtype-parametric) + their `validate_float32_array` / `validate_uint8_array` bindings. |
 | `utils` | `numbered_name` (the `{index:05d}_<stem>.<ext>` builder). The path helper `ensure_file_extension` is imported directly from `kaparoo.filesystem`. |
 
 ## Design notes

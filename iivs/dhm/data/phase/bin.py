@@ -15,12 +15,8 @@ from typing import TYPE_CHECKING, ClassVar, overload, override
 
 from kaparoo.filesystem import ensure_file_extension
 
-from iivs.dhm.data.common import (
-    KoalaBinHeader,
-    load_bin,
-    validate_float32_array,
-    write_bin,
-)
+from iivs.common.data import validate_float32_array
+from iivs.dhm.data.common import KoalaBinHeader, load_bin, write_bin
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
 from iivs.dhm.data.phase.unit import PhaseUnit, convert_phase_unit, resolve_height_scale
 
@@ -31,7 +27,7 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
-    from iivs.dhm.data.common import OnNonFinite
+    from iivs.common.data import OnNonFinite
 
 
 # ========================== #

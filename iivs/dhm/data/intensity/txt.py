@@ -12,12 +12,8 @@ from typing import TYPE_CHECKING, ClassVar, overload, override
 
 from kaparoo.filesystem import ensure_file_extension
 
-from iivs.dhm.data.common import (
-    KoalaTxtHeaderCodec,
-    load_txt,
-    validate_float32_array,
-    write_txt,
-)
+from iivs.common.data import validate_float32_array
+from iivs.dhm.data.common import KoalaTxtHeaderCodec, load_txt, write_txt
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
 
@@ -28,7 +24,7 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
-    from iivs.dhm.data.common import OnNonFinite
+    from iivs.common.data import OnNonFinite
 
 
 class IntensityTxtHeaderCodec(KoalaTxtHeaderCodec[IntensityBinHeader]):

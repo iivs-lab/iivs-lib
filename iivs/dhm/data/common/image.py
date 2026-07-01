@@ -19,8 +19,8 @@ from kaparoo.data.sequences import FileListSequence
 from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 from numpy.typing import NDArray
 
+from iivs.common.data import validate_uint8_array
 from iivs.dhm.data.common.sequence import SequentialFileFolder
-from iivs.dhm.data.common.validation import validate_uint8_array
 
 if TYPE_CHECKING:
     from typing import Literal

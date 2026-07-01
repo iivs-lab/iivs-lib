@@ -24,8 +24,8 @@ if TYPE_CHECKING:
 
     from kaparoo.filesystem.types import StrPath, StrPaths
 
+    from iivs.common.data import OnNonFinite
     from iivs.dhm.data.common.sequence import ValidationLevel
-    from iivs.dhm.data.common.validation import OnNonFinite
 
 
 type FloatFormat = Literal["bin", "txt", "npy"]
