@@ -14,12 +14,11 @@ import X`` reaches any of them:
 - `float` — the float32 file list/folder bases over a ``(read_header, decode)``
   codec, generic in the header type (`KoalaFloatFileList`,
   `KoalaFloatFileFolder`; shared by phase and intensity).
-- `sequence` — the numbered-folder base (`SequentialFileFolder`).
-- `utils` — the numbered-folder helpers (`numbered_name`,
-  `detect_numbered_format`). The extension helpers `file_extension`,
-  `ensure_file_extension` (with its `add=True` mode), and the
-  `UnsupportedExtensionError` raised on a bad extension are imported directly
-  from `kaparoo.filesystem` where needed, not re-exported here.
+- `sequence` — the numbered-folder base (`SequentialFileFolder`) plus its naming
+  / discovery helpers (`numbered_name`, `detect_numbered_format`). The extension
+  helpers `file_extension`, `ensure_file_extension` (with its `add=True` mode),
+  and the `UnsupportedExtensionError` raised on a bad extension are imported
+  directly from `kaparoo.filesystem` where needed, not re-exported here.
 
 The technique-agnostic `.npy` reader / writer (`read_npy_shape`, `write_npy`),
 the same-shape mixin `FrameShapedMixin`, and the array validators
@@ -65,6 +64,10 @@ from iivs.dhm.data.common.image import (
     ImageTifList,
     load_uint8_tif,
 )
-from iivs.dhm.data.common.sequence import SequentialFileFolder, ValidationLevel
+from iivs.dhm.data.common.sequence import (
+    SequentialFileFolder,
+    ValidationLevel,
+    detect_numbered_format,
+    numbered_name,
+)
 from iivs.dhm.data.common.txt import KoalaTxtHeaderCodec, load_txt, write_txt
-from iivs.dhm.data.common.utils import detect_numbered_format, numbered_name

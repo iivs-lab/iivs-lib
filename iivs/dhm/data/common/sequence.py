@@ -1,25 +1,112 @@
 from __future__ import annotations
 
-__all__ = ("SequentialFileFolder", "ValidationLevel")
+__all__ = (
+    "SequentialFileFolder",
+    "ValidationLevel",
+    "detect_numbered_format",
+    "numbered_name",
+)
 
+from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 from kaparoo.data.sequences import FileFolderSequence
+from kaparoo.filesystem import file_extension
 from kaparoo.filesystem.search import search_files
 from kaparoo.filters import Regex
 from kaparoo.utils import ensure_one_of, replace_if_none
 from natsort import natsorted, ns
 
 from iivs.common.data.mixin import FrameShapedMixin
-from iivs.dhm.data.common.utils import numbered_name
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Literal
+
+    from kaparoo.filesystem.types import StrPath
 
 
 type ValidationLevel = Literal["names", "headers", "data"]
 """How deeply a numbered folder checks each file: name, header, or full data."""
+
+
+@cache
+def _numbered_filter(stem: str, exts: tuple[str, ...]) -> Regex:
+    """A cached name filter for ``{index:05d}_{stem}.<ext>`` files.
+
+    Built once per ``(stem, exts)``, since both are fixed by the folder type;
+    shared by `SequentialFileFolder.list_files` (one `ext`) and
+    `detect_numbered_format` (several).
+    """
+    return Regex(rf"\d{{5}}_{stem}\.({'|'.join(exts)})")
+
+
+def numbered_name(index: int, *, stem: str, ext: str) -> str:
+    """The contiguous Koala filename ``{index:05d}_{stem}.{ext}``.
+
+    The single source of truth for the numbered-folder naming convention, used
+    both to discover/validate a `SequentialFileFolder` and to write a converted
+    folder.
+    """
+    return f"{index:05d}_{stem}.{ext}"
+
+
+def detect_numbered_format(
+    root: StrPath,
+    *,
+    stem: str,
+    formats: Sequence[str],
+    prefer: str | Sequence[str] | None = None,
+) -> str:
+    """Return which of `formats` the ``{index:05d}_{stem}.<ext>`` files in `root` use.
+
+    Scans `root` at depth 1 for the numbered ``{stem}`` files with `search_files`
+    and a `Regex`, then resolves a single format. When more than one format
+    is present, `prefer` decides -- mirroring `kaparoo`'s
+    `hierarchy.Exclusive(on_conflict=...)`:
+
+    - `None` -- raise (the conflict is an error; the caller must disambiguate).
+    - a format, or a priority sequence of formats -- pick the first present
+      format in that order (the `"priority"` resolution).
+
+    Args:
+        root: The folder to scan.
+        stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>`` (e.g. "phase").
+        formats: The candidate extensions, in their natural order.
+        prefer: The conflict policy -- `None` to error on multiple formats, or a
+            format / priority sequence to pick the first present one.
+
+    Raises:
+        FileNotFoundError: If `root` holds no ``{NNNNN}_{stem}.<format>`` files.
+        ValueError: If multiple formats are present and `prefer` is `None`, or
+            `prefer` is given but selects none of the present formats.
+    """
+    formats = tuple(formats)
+    hits = search_files(root, name_filter=_numbered_filter(stem, formats), max_depth=1)
+    found = {file_extension(hit) for hit in hits}
+    present = [fmt for fmt in formats if fmt in found]
+
+    if not present:
+        alternation = "|".join(formats)
+        msg = f"no NNNNN_{stem}.({alternation}) files found in {root}"
+        raise FileNotFoundError(msg)
+    if len(present) == 1:
+        return present[0]
+
+    if prefer is None:
+        msg = (
+            f"ambiguous: {root} holds multiple {stem} formats ({present}); "
+            f"pass prefer to pick one"
+        )
+        raise ValueError(msg)
+
+    order = [prefer] if isinstance(prefer, str) else list(prefer)
+    for fmt in order:
+        if fmt in present:
+            return fmt
+    msg = f"prefer={order} selects none of the present {stem} formats ({present})"
+    raise ValueError(msg)
 
 
 class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
@@ -50,8 +137,8 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     @override
     def list_files(self, root: Path) -> list[Path]:
         """List the `NNNNN_<stem>.<ext>` files under `root`, in index order."""
-        pattern = rf"\d{{5}}_{self.FILE_STEM}\.{self.FILE_EXT}"
-        files = search_files(root, name_filter=Regex(pattern), max_depth=1)
+        name_filter = _numbered_filter(self.FILE_STEM, (self.FILE_EXT,))
+        files = search_files(root, name_filter=name_filter, max_depth=1)
         if not files:
             msg = f"no NNNNN_{self.FILE_STEM}.{self.FILE_EXT} files found in {root}"
             raise FileNotFoundError(msg)
