@@ -9,7 +9,7 @@ import numpy as np
 from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
 from iivs.common.data import write_npy
-from iivs.dhm.data.common import ImageFileFolder, validate_uint8_image
+from iivs.dhm.data.common import ImageFileFolder, validate_uint8_array
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:
@@ -30,7 +30,7 @@ def load_hologram_npy(path: StrPath) -> NDArray[np.uint8]:
         ValueError: If the array is pickled or is not a 2D uint8 image.
     """
     path = ensure_file_exists(path)
-    return validate_uint8_image(np.load(path, allow_pickle=False), allow_stack=False)
+    return validate_uint8_array(np.load(path, allow_pickle=False), allow_stack=False)
 
 
 def save_hologram_npy(
@@ -54,7 +54,7 @@ def save_hologram_npy(
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
     path = ensure_file_extension(path, "npy", add=True)
-    data = validate_uint8_image(data, allow_stack=False)
+    data = validate_uint8_array(data, allow_stack=False)
     write_npy(path, data, overwrite=overwrite)
 
 

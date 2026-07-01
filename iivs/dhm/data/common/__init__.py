@@ -15,7 +15,8 @@ import X`` reaches any of them:
   codec, generic in the header type (`KoalaFloatFileList`,
   `KoalaFloatFileFolder`; shared by phase and intensity).
 - `sequence` — the numbered-folder base (`SequentialFileFolder`).
-- `validation` — the float32 / uint8 image validators.
+- `validation` — dtype-parametric array validators (`validate_float_array` /
+  `validate_uint_array`) and their float32 / uint8 bindings.
 - `utils` — the numbered-folder helpers (`numbered_name`,
   `detect_numbered_format`). The extension helpers `file_extension`,
   `ensure_file_extension` (with its `add=True` mode), and the
@@ -48,8 +49,10 @@ __all__ = (
     "load_txt",
     "load_uint8_tif",
     "numbered_name",
-    "validate_float32_image",
-    "validate_uint8_image",
+    "validate_float32_array",
+    "validate_float_array",
+    "validate_uint8_array",
+    "validate_uint_array",
     "write_bin",
     "write_txt",
 )
@@ -73,6 +76,8 @@ from iivs.dhm.data.common.txt import KoalaTxtHeaderCodec, load_txt, write_txt
 from iivs.dhm.data.common.utils import detect_numbered_format, numbered_name
 from iivs.dhm.data.common.validation import (
     OnNonFinite,
-    validate_float32_image,
-    validate_uint8_image,
+    validate_float32_array,
+    validate_float_array,
+    validate_uint8_array,
+    validate_uint_array,
 )

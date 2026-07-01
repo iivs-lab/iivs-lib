@@ -136,14 +136,14 @@ def test_save_load_is_row_major(tmp_path):
 
 
 def test_save_rejects_non_2d(tmp_path):
-    with pytest.raises(ValueError, match="single 2D image"):
+    with pytest.raises(ValueError, match="single 2D array"):
         save_intensity_bin(
             tmp_path / "bad.bin", np.zeros(5, dtype=np.float32), pixel_size=1.0
         )
 
 
 def test_save_rejects_3d_stack(tmp_path):
-    with pytest.raises(ValueError, match="single 2D image"):
+    with pytest.raises(ValueError, match="single 2D array"):
         save_intensity_bin(
             tmp_path / "bad.bin", np.zeros((2, 2, 2), dtype=np.float32), pixel_size=1.0
         )

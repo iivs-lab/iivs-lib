@@ -8,7 +8,7 @@ import numpy as np
 from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
 from iivs.common.data import read_npy_shape, write_npy
-from iivs.dhm.data.common import validate_float32_image
+from iivs.dhm.data.common import validate_float32_array
 from iivs.dhm.data.phase.base import PhaseFileFolder
 from iivs.dhm.data.phase.bin import PhaseBinHeader
 from iivs.dhm.data.phase.unit import resolve_height_scale
@@ -49,7 +49,7 @@ def load_phase_npy(
     """
     path = ensure_file_exists(path)
     data = np.load(path, allow_pickle=False)
-    return validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    return validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
 
 
 def save_phase_npy(
@@ -82,7 +82,7 @@ def save_phase_npy(
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
     path = ensure_file_extension(path, "npy", add=True)
-    data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    data = validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
     write_npy(path, data, overwrite=overwrite)
 
 

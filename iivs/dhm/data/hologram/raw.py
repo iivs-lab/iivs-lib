@@ -17,7 +17,7 @@ from kaparoo.utils import ensure_one_of
 from numpy.typing import NDArray
 
 from iivs.common.data import FrameShapedMixin
-from iivs.dhm.data.common import validate_uint8_image
+from iivs.dhm.data.common import validate_uint8_array
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:
@@ -184,7 +184,7 @@ def save_hologram_raw(
     if isinstance(frames, np.ndarray):
         # `cast` away the `DataSequence & ndarray` residual ty forms when
         # narrowing the generic union by `isinstance` (both are non-final).
-        stack = validate_uint8_image(
+        stack = validate_uint8_array(
             cast("NDArray[np.uint8]", frames), allow_stack=True
         )
         if stack.ndim == 2:
@@ -204,7 +204,7 @@ def save_hologram_raw(
             msg = "cannot save an empty hologram sequence to .raw"
             raise ValueError(msg)
 
-        shape = validate_uint8_image(frames[0], allow_stack=False).shape
+        shape = validate_uint8_array(frames[0], allow_stack=False).shape
         height, width = shape[0], shape[1]
         frame_iter = frames
 
@@ -216,7 +216,7 @@ def save_hologram_raw(
         header.to_dtype().tofile(staged.file)
 
         for frame in frame_iter:
-            frame = validate_uint8_image(frame, allow_stack=False)
+            frame = validate_uint8_array(frame, allow_stack=False)
             if frame.shape != (height, width):
                 msg = (
                     f"all frames must have shape {(height, width)} (got {frame.shape})"

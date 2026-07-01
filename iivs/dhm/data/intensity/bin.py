@@ -17,7 +17,7 @@ from kaparoo.filesystem import ensure_file_extension
 from iivs.dhm.data.common import (
     KoalaBinHeader,
     load_bin,
-    validate_float32_image,
+    validate_float32_array,
     write_bin,
 )
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
@@ -199,7 +199,7 @@ def save_intensity_bin(
     path = ensure_file_extension(path, "bin", add=True)
 
     # save stores a single image (allow_stack=False), unlike the loader.
-    data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    data = validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
 
     header = IntensityBinHeader(
         width=int(data.shape[1]),

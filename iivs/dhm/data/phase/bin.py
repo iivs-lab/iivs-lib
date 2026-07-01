@@ -18,7 +18,7 @@ from kaparoo.filesystem import ensure_file_extension
 from iivs.dhm.data.common import (
     KoalaBinHeader,
     load_bin,
-    validate_float32_image,
+    validate_float32_array,
     write_bin,
 )
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
@@ -281,7 +281,7 @@ def save_phase_bin(
     height_scale = resolve_height_scale(height_scale, wavelength, refractive_delta)
 
     # save stores a single image (allow_stack=False), unlike the loaders.
-    data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    data = validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
     data, unit = _to_storable_unit(data, unit, height_scale)
 
     if unit is PhaseUnit.UNKNOWN:

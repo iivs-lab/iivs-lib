@@ -20,7 +20,7 @@ from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 from numpy.typing import NDArray
 
 from iivs.dhm.data.common.sequence import SequentialFileFolder
-from iivs.dhm.data.common.validation import validate_uint8_image
+from iivs.dhm.data.common.validation import validate_uint8_array
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -42,7 +42,7 @@ def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
         ValueError: If the decoded image is not a 2D uint8 array.
     """
     path = ensure_file_exists(path)
-    return validate_uint8_image(tifffile.imread(path), allow_stack=False)
+    return validate_uint8_array(tifffile.imread(path), allow_stack=False)
 
 
 class ImageFileList(FileListSequence[NDArray[np.uint8], Path]):

@@ -15,7 +15,7 @@ from kaparoo.filesystem import ensure_file_extension
 from iivs.dhm.data.common import (
     KoalaTxtHeaderCodec,
     load_txt,
-    validate_float32_image,
+    validate_float32_array,
     write_txt,
 )
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
@@ -156,7 +156,7 @@ def save_intensity_txt(
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
     path = ensure_file_extension(path, "txt", add=True)
-    data = validate_float32_image(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    data = validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
     header = IntensityBinHeader(
         width=int(data.shape[1]), height=int(data.shape[0]), pixel_size=pixel_size
     )

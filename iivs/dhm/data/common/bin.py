@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 import numpy as np
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 
-from iivs.dhm.data.common.validation import validate_float32_image
+from iivs.dhm.data.common.validation import validate_float32_array
 
 if TYPE_CHECKING:
     from typing import IO, Self
@@ -247,7 +247,7 @@ def load_bin[H: KoalaBinHeader](
 
     pixels = np.frombuffer(raw, dtype=_PIXEL_DTYPE)
     data = pixels.reshape(header.shape).astype(np.float32, copy=True)
-    return validate_float32_image(data, on_nonfinite=on_nonfinite), header
+    return validate_float32_array(data, on_nonfinite=on_nonfinite), header
 
 
 def write_bin(

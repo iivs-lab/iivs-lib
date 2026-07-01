@@ -18,7 +18,7 @@ from iivs.dhm.data.common import (
     ImageTifFolder,
     ImageTifList,
     load_uint8_tif,
-    validate_uint8_image,
+    validate_uint8_array,
 )
 from iivs.dhm.data.hologram.base import HologramSequence
 
@@ -62,7 +62,7 @@ def save_hologram_tif(
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
     path = ensure_file_extension(path, "tif", add=True)
-    data = validate_uint8_image(data, allow_stack=False)
+    data = validate_uint8_array(data, allow_stack=False)
 
     # tifffile needs a named target, so encode in memory and stage the bytes.
     buffer = io.BytesIO()

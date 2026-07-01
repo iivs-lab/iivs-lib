@@ -144,7 +144,7 @@ def test_load_phase_npy_rejects_pickled_object_array(tmp_path):
 def test_load_phase_npy_rejects_non_2d(tmp_path):
     path = tmp_path / "x.npy"
     np.save(path, np.zeros((2, 2, 2), dtype=np.float32))
-    with pytest.raises(ValueError, match="2D image"):
+    with pytest.raises(ValueError, match="2D array"):
         load_phase_npy(path)
 
 
