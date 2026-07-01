@@ -16,7 +16,6 @@ from kaparoo.filesystem import file_extension
 from kaparoo.filesystem.search import search_files
 from kaparoo.filters import Regex
 from kaparoo.utils import ensure_one_of, replace_if_none
-from natsort import natsorted, ns
 
 from iivs.common.data.mixin import FrameShapedMixin
 
@@ -136,13 +135,18 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
 
     @override
     def list_files(self, root: Path) -> list[Path]:
-        """List the `NNNNN_<stem>.<ext>` files under `root`, in index order."""
+        """List the `NNNNN_<stem>.<ext>` files under `root`, in index order.
+
+        `search_files` sorts lexicographically by default, which -- with the
+        fixed-width ``{index:05d}`` zero-padding -- is exactly numeric index
+        order, so no extra sort is needed.
+        """
         name_filter = _numbered_filter(self.FILE_STEM, (self.FILE_EXT,))
         files = search_files(root, name_filter=name_filter, max_depth=1)
         if not files:
             msg = f"no NNNNN_{self.FILE_STEM}.{self.FILE_EXT} files found in {root}"
             raise FileNotFoundError(msg)
-        return natsorted(files, alg=ns.PATH)
+        return files
 
     @override
     def get_meta(self, index: int) -> Path:

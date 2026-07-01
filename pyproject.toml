@@ -58,7 +58,6 @@ dependencies = [
     # (`analysis.pytorch`) is an extra.
     "imagecodecs>=2026.5.10",
     "kaparoo-python>=0.9.1",
-    "natsort>=8.4.0",
     "numpy>=2.4.6",
     "tifffile>=2026.6.1",
 ]
