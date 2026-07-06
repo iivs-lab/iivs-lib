@@ -6,7 +6,7 @@ Guidance for AI coding assistants working on this project.
 ## Project
 
 - Package: `iivs/`
-- Python:  3.14+
+- Python:  3.13+
 - Kind:    distributable library (`uv_build` backend)
 
 ## Toolchain

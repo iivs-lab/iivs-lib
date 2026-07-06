@@ -69,6 +69,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Lower the minimum Python to **3.13** (from 3.14). The code uses only PEP 695
+  generics (3.12+) and `kaparoo-python` supports 3.13, so 3.13 runs the full
+  suite unchanged; CI now covers 3.13 and 3.14. The `[torch]` extra keeps its
+  `torch>=2.9` floor (wheels for both cp313 and cp314).
 - `iivs.common.data`: hoist the dtype-generic image bases out of the (now)
   `iivs.dhm.data.koala` layer — `load_tif` (read any single-page `.tif`, keeping
   its stored dtype) and `ImageFileList[U]` (the header-less image list template,

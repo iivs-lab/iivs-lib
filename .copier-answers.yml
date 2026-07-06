@@ -13,7 +13,7 @@ package_name: iivs
 project_description: A Python toolkit for multi-modal holographic systems and cellular
     analysis.
 project_name: iivs-lib
-python_version: '3.14'
+python_version: '3.13'
 release_automation: github-oidc
 repo_name: iivs-lib
 use_pytest: true
