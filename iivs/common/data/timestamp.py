@@ -36,7 +36,8 @@ class Timestamp:
             raise ValueError(msg)
 
         if self.interval_ms > self.elapsed_ms:
-            msg = f"interval_ms must not exceed elapsed_ms (got {self.interval_ms} > {self.elapsed_ms})"
+            msg = "interval_ms must not exceed elapsed_ms"
+            msg += f" (got {self.interval_ms} > {self.elapsed_ms})"
             raise ValueError(msg)
 
     @classmethod
@@ -100,8 +101,7 @@ class TimestampSequence(DataSequence[Timestamp, int]):
         """The mean frame rate, in fps.
 
         Raises:
-            ValueError: If the mean interval is zero, leaving the frame rate
-                undefined.
+            ValueError: If the mean interval is zero, leaving the frame rate undefined.
         """
         interval_ms = self.mean_interval_ms
         if interval_ms == 0.0:
@@ -121,8 +121,7 @@ class TimestampsFixedFPS(TimestampSequence):
         num_frames: Number of frames to synthesize; must be non-negative.
 
     Raises:
-        ValueError: If `frame_rate` is not positive, or `num_frames` is
-            negative.
+        ValueError: If `frame_rate` is not positive, or `num_frames` is negative.
     """
 
     def __init__(self, *, frame_rate: float, num_frames: int) -> None:
@@ -149,8 +148,7 @@ class TimestampsFixedFPS(TimestampSequence):
         Frame ``i`` has ``elapsed_ms = i * 1000 / frame_rate``.
 
         Raises:
-            ValueError: If `frame_rate` is not positive, or `num_frames` is
-                negative.
+            ValueError: If `frame_rate` is not positive, or `num_frames` is negative.
         """
         if frame_rate <= 0.0:
             msg = f"frame_rate must be positive (got {frame_rate})"
