@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, ClassVar, overload, override
 from kaparoo.filesystem import ensure_file_extension
 
 from iivs.common.data import validate_float32_array
-from iivs.dhm.data.common import KoalaTxtHeaderCodec, load_txt, write_txt
+from iivs.dhm.data.koala import KoalaTxtHeaderCodec, load_txt, write_txt
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
 from iivs.dhm.data.phase.bin import PhaseBinHeader, _to_storable_unit
 from iivs.dhm.data.phase.unit import PhaseUnit, resolve_height_scale

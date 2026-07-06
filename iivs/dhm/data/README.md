@@ -2,7 +2,7 @@
 
 Readers, writers, and lazy sequences for Lyncée Tec Koala acquisition data. Each
 imaging modality is its own subpackage; the `timestamp` module and the internal
-`common` package round it out.
+`koala` package round it out.
 
 ## Subpackages
 
@@ -11,7 +11,7 @@ imaging modality is its own subpackage; the `timestamp` module and the internal
 | [`hologram`](./hologram/README.md) | Raw uint8 holograms (`.raw` / `.tif` / `.npy`) | single-file stack + per-frame folders |
 | [`phase`](./phase/README.md) | Quantitative float32 phase + uint8 previews | per-format endpoints, units, `phbounds.txt` |
 | [`intensity`](./intensity/README.md) | Quantitative float32 intensity + uint8 previews | the phase twin, without units |
-| [`common`](./common/README.md) | Cross-modality building blocks (**internal**) | architecture map for contributors |
+| [`koala`](./koala/README.md) | Cross-modality building blocks (**internal**) | architecture map for contributors |
 
 Each modality splits a format into per-format codec modules over a shared base,
 exposing per-format `load_*` / `save_*` / `read_*_header` functions and lazy

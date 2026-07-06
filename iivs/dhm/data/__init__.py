@@ -6,7 +6,7 @@ previews), `hologram` (uint8 ``.raw`` / ``.tif`` / ``.npy``) -- alongside a
 `timestamp` module for ``timestamps.txt``. Within a modality, each file format
 is a codec module exposing a loader, a saver, and lazy sequence types, and a
 `convert` helper re-encodes a sequence from one format to another. Blocks shared
-across modalities live in `common`; `constants` holds the lab's default optical
+across modalities live in `koala`; `constants` holds the lab's default optical
 parameters.
 
 The ``.bin``, ``.tif`` / ``.raw``, and ``timestamps.txt`` formats are

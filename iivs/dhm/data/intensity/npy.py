@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from iivs.common.data import OnNonFinite
-    from iivs.dhm.data.common import ValidationLevel
+    from iivs.dhm.data.koala import ValidationLevel
 
 
 def load_intensity_npy(

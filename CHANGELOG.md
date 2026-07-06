@@ -11,7 +11,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - `iivs.common.data`: the first technique-agnostic data primitives, hoisted out
-  of `iivs.dhm.data.common` — `read_npy_shape` / `write_npy` (the `.npy` reader /
+  of `iivs.dhm.data.koala` — `read_npy_shape` / `write_npy` (the `.npy` reader /
   writer) and `FrameShapedMixin` (the same-shape marker mixin).
 - `iivs.common.data.timestamp`: the technique-agnostic timing types, hoisted out
   of `iivs.dhm.data.timestamp` — the `Timestamp` record, the abstract
@@ -20,7 +20,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   so a future technique (`epi` / `rcm`) implements the same `TimestampSequence`
   from OME-TIFF / Micro-Manager metadata without importing `dhm`. The Koala
   `timestamps.txt` reader `TimestampsTxtFile` stays in `iivs.dhm.data.timestamp`.
-- `iivs.dhm.data.common`: shared vocabulary for the repeated dispatch literals —
+- `iivs.dhm.data.koala`: shared vocabulary for the repeated dispatch literals —
   the `OnNonFinite` (`"ignore"`/`"warn"`/`"raise"`) and `ValidationLevel`
   (`"names"`/`"headers"`/`"data"`) type aliases, the `FloatFormat` alias with its
   `FLOAT_FORMATS` tuple, and `detect_numbered_format(root, *, stem, formats,
@@ -69,6 +69,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Rename `iivs.dhm.data.common` to `iivs.dhm.data.koala`. The dhm-internal
+  cross-modality layer holds Lyncée Tec Koala's proprietary `.bin` / `Float/Txt`
+  codecs and its `{index:05d}_<stem>.<ext>` export convention, so the vendor name
+  disambiguates it from the technique-agnostic `iivs.common.data`. Update imports
+  (`from iivs.dhm.data.koala import ...`); no symbols changed.
 - `imagecodecs` (LZW `Image/*.tif` preview decode) ships as a **core
   dependency**, not an extra: it moves into the base dependencies and the
   `[image]` extra is removed. Handling image-like microscope data is this
@@ -102,7 +107,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `PhaseFloatSequence.bounds_nm` is now a cached **property**, not a method:
   access it as `seq.bounds_nm` (no call). It still reads every frame on first
   access, then caches the global `(min, max)` for the sequence's lifetime.
-- `iivs.dhm.data.common`: the `.bin` and `Float/Txt` readers are consolidated
+- `iivs.dhm.data.koala`: the `.bin` and `Float/Txt` readers are consolidated
   into two header-parameterized engines — `load_bin(path, header_cls)` and
   `load_txt(path, header_codec)`, each returning `(image, header)`. They absorb
   and replace the lower-level `read_bin_pixels` and `parse_txt_grid` (removed
@@ -112,7 +117,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
-- `iivs.dhm.data.common.write_bin` now rejects a pixel block whose shape
+- `iivs.dhm.data.koala.write_bin` now rejects a pixel block whose shape
   disagrees with the header, instead of writing a malformed `.bin`.
 
 ## [0.1.0] - 2026-06-05

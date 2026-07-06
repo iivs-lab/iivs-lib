@@ -1,7 +1,7 @@
 """Building blocks shared across the data modalities (phase, intensity, ...).
 
 The cross-modality primitives the per-modality packages compose, split by
-concern into submodules and re-exported here so ``from iivs.dhm.data.common
+concern into submodules and re-exported here so ``from iivs.dhm.data.koala
 import X`` reaches any of them:
 
 - `bin` — the Koala `.bin` header value object and I/O (`KoalaBinHeader`,
@@ -50,24 +50,24 @@ __all__ = (
     "write_txt",
 )
 
-from iivs.dhm.data.common.bin import KoalaBinHeader, load_bin, write_bin
-from iivs.dhm.data.common.float import (
+from iivs.dhm.data.koala.bin import KoalaBinHeader, load_bin, write_bin
+from iivs.dhm.data.koala.float import (
     FLOAT_FORMATS,
     FloatFormat,
     KoalaFloatFileFolder,
     KoalaFloatFileList,
 )
-from iivs.dhm.data.common.image import (
+from iivs.dhm.data.koala.image import (
     ImageFileFolder,
     ImageFileList,
     ImageTifFolder,
     ImageTifList,
     load_uint8_tif,
 )
-from iivs.dhm.data.common.sequence import (
+from iivs.dhm.data.koala.sequence import (
     SequentialFileFolder,
     ValidationLevel,
     detect_numbered_format,
     numbered_name,
 )
-from iivs.dhm.data.common.txt import KoalaTxtHeaderCodec, load_txt, write_txt
+from iivs.dhm.data.koala.txt import KoalaTxtHeaderCodec, load_txt, write_txt

@@ -13,9 +13,9 @@ from typing import TYPE_CHECKING, ClassVar, overload, override
 from kaparoo.filesystem import ensure_file_extension
 
 from iivs.common.data import validate_float32_array
-from iivs.dhm.data.common import KoalaTxtHeaderCodec, load_txt, write_txt
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
+from iivs.dhm.data.koala import KoalaTxtHeaderCodec, load_txt, write_txt
 
 if TYPE_CHECKING:
     from typing import Literal

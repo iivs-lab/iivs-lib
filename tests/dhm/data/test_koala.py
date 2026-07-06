@@ -8,7 +8,9 @@ import tifffile
 from kaparoo.filesystem import ensure_file_extension
 
 from iivs.common.data import FrameShapedMixin, read_npy_shape
-from iivs.dhm.data.common import (
+from iivs.dhm.data.intensity.bin import IntensityBinHeader
+from iivs.dhm.data.intensity.txt import IntensityTxtHeaderCodec
+from iivs.dhm.data.koala import (
     FLOAT_FORMATS,
     detect_numbered_format,
     load_txt,
@@ -16,8 +18,6 @@ from iivs.dhm.data.common import (
     numbered_name,
     write_bin,
 )
-from iivs.dhm.data.intensity.bin import IntensityBinHeader
-from iivs.dhm.data.intensity.txt import IntensityTxtHeaderCodec
 from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
 

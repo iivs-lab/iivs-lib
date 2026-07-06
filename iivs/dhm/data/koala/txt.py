@@ -10,7 +10,7 @@ import numpy as np
 from kaparoo.filesystem import StagedFile, ensure_file_exists
 
 from iivs.common.data import validate_float32_array
-from iivs.dhm.data.common.bin import KoalaBinHeader
+from iivs.dhm.data.koala.bin import KoalaBinHeader
 
 if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath

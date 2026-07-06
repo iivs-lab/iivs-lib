@@ -22,7 +22,7 @@ from kaparoo.filesystem import (
 )
 from kaparoo.utils import ensure_one_of, replace_if_none
 
-from iivs.dhm.data.common import FLOAT_FORMATS, detect_numbered_format, numbered_name
+from iivs.dhm.data.koala import FLOAT_FORMATS, detect_numbered_format, numbered_name
 from iivs.dhm.data.phase.bin import (
     PhaseBinFolder,
     PhaseBinList,
@@ -49,7 +49,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from iivs.common.data import OnNonFinite
-    from iivs.dhm.data.common import FloatFormat, ValidationLevel
+    from iivs.dhm.data.koala import FloatFormat, ValidationLevel
     from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
     from iivs.dhm.data.phase.bin import PhaseBinHeader
 

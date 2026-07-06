@@ -9,8 +9,8 @@ import numpy as np
 from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 
 from iivs.common.data import validate_uint8_array, write_npy
-from iivs.dhm.data.common import ImageFileFolder
 from iivs.dhm.data.hologram.base import HologramSequence
+from iivs.dhm.data.koala import ImageFileFolder
 
 if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath

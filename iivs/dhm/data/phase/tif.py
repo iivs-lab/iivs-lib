@@ -5,7 +5,7 @@ __all__ = ("PhaseTifFolder", "PhaseTifList")
 from pathlib import Path
 from typing import ClassVar
 
-from iivs.dhm.data.common import ImageTifFolder, ImageTifList
+from iivs.dhm.data.koala import ImageTifFolder, ImageTifList
 from iivs.dhm.data.phase.base import PhaseImageSequence
 
 

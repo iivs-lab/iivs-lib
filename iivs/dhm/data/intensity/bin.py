@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING, ClassVar, overload, override
 from kaparoo.filesystem import ensure_file_extension
 
 from iivs.common.data import validate_float32_array
-from iivs.dhm.data.common import KoalaBinHeader, load_bin, write_bin
 from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
+from iivs.dhm.data.koala import KoalaBinHeader, load_bin, write_bin
 
 if TYPE_CHECKING:
     from typing import Literal, Self

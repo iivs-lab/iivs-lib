@@ -22,7 +22,6 @@ from kaparoo.filesystem import (
 )
 from kaparoo.utils import ensure_one_of
 
-from iivs.dhm.data.common import FLOAT_FORMATS, detect_numbered_format, numbered_name
 from iivs.dhm.data.intensity.bin import (
     IntensityBinFolder,
     IntensityBinList,
@@ -42,6 +41,7 @@ from iivs.dhm.data.intensity.txt import (
     read_intensity_txt_header,
     save_intensity_txt,
 )
+from iivs.dhm.data.koala import FLOAT_FORMATS, detect_numbered_format, numbered_name
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -52,9 +52,9 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from iivs.common.data import OnNonFinite
-    from iivs.dhm.data.common import FloatFormat, ValidationLevel
     from iivs.dhm.data.intensity.base import IntensityFileFolder, IntensityFileList
     from iivs.dhm.data.intensity.bin import IntensityBinHeader
+    from iivs.dhm.data.koala import FloatFormat, ValidationLevel
 
 
 # ========================== #

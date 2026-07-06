@@ -1,11 +1,11 @@
-# `iivs.dhm.data.common`
+# `iivs.dhm.data.koala`
 
 Cross-modality building blocks the per-modality packages
 ([`hologram`](../hologram/README.md), [`phase`](../phase/README.md),
 [`intensity`](../intensity/README.md)) compose. **Internal**: these are
 infrastructure for the modality code, not the user-facing API. Everything is
-re-exported from `common`, so `from iivs.dhm.data.common import X` reaches any
-submodule.
+re-exported at the package root, so `from iivs.dhm.data.koala import X` reaches
+any submodule.
 
 This README is a map for contributors; per-format usage lives in the modality
 READMEs.

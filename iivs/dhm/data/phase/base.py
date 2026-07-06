@@ -12,7 +12,7 @@ from kaparoo.data.sequences import DataSequence, TransformedSequence
 from kaparoo.utils import replace_if_none
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import KoalaFloatFileFolder, KoalaFloatFileList
+from iivs.dhm.data.koala import KoalaFloatFileFolder, KoalaFloatFileList
 from iivs.dhm.data.phase.bounds import PhaseBounds
 from iivs.dhm.data.phase.unit import PhaseUnit, convert_phase_unit, resolve_height_scale
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
     from kaparoo.filesystem.types import StrPath, StrPaths
 
-    from iivs.dhm.data.common import ValidationLevel
+    from iivs.dhm.data.koala import ValidationLevel
     from iivs.dhm.data.phase.bin import PhaseBinHeader
 
 

@@ -5,8 +5,8 @@ __all__ = ("IntensityTifFolder", "IntensityTifList")
 from pathlib import Path
 from typing import ClassVar
 
-from iivs.dhm.data.common import ImageTifFolder, ImageTifList
 from iivs.dhm.data.intensity.base import IntensityImageSequence
+from iivs.dhm.data.koala import ImageTifFolder, ImageTifList
 
 
 class IntensityTifList(ImageTifList, IntensityImageSequence[Path]):

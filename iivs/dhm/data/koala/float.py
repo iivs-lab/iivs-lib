@@ -16,8 +16,8 @@ from kaparoo.data.sequences import FileListSequence
 from kaparoo.filesystem import ensure_file_extension
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common.bin import KoalaBinHeader
-from iivs.dhm.data.common.sequence import SequentialFileFolder
+from iivs.dhm.data.koala.bin import KoalaBinHeader
+from iivs.dhm.data.koala.sequence import SequentialFileFolder
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath, StrPaths
 
     from iivs.common.data import OnNonFinite
-    from iivs.dhm.data.common.sequence import ValidationLevel
+    from iivs.dhm.data.koala.sequence import ValidationLevel
 
 
 type FloatFormat = Literal["bin", "txt", "npy"]

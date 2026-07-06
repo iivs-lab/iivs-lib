@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING
 from kaparoo.filesystem import StagedDirectory
 from kaparoo.utils import ensure_one_of
 
-from iivs.dhm.data.common import numbered_name
 from iivs.dhm.data.hologram.npy import save_hologram_npy
 from iivs.dhm.data.hologram.raw import save_hologram_raw
 from iivs.dhm.data.hologram.tif import save_hologram_tif
+from iivs.dhm.data.koala import numbered_name
 
 if TYPE_CHECKING:
     from typing import Literal

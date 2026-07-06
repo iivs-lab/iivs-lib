@@ -9,7 +9,7 @@ import numpy as np
 from kaparoo.data.sequences import DataSequence
 from numpy.typing import NDArray
 
-from iivs.dhm.data.common import KoalaFloatFileFolder, KoalaFloatFileList
+from iivs.dhm.data.koala import KoalaFloatFileFolder, KoalaFloatFileList
 
 if TYPE_CHECKING:
     # Binds `H` via the string forward-ref in the class bases below. ruff does

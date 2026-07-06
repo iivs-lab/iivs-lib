@@ -20,7 +20,7 @@ from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 from numpy.typing import NDArray
 
 from iivs.common.data import validate_uint8_array
-from iivs.dhm.data.common.sequence import SequentialFileFolder
+from iivs.dhm.data.koala.sequence import SequentialFileFolder
 
 if TYPE_CHECKING:
     from typing import Literal
