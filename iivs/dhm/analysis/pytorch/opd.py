@@ -18,15 +18,15 @@ if TYPE_CHECKING:
 class OpticalPathDifference(nn.Module):
     """Torch `nn.Module` for the OPD <-> phase relation at a fixed wavelength.
 
-    The torch twin of `iivs.dhm.analysis.opd.OPDConverter` (named for the
-    quantity, per the `nn.Module` convention). Binds a wavelength and the cached
-    `opd_scale` (nm of OPD per rad, a plain float reused from the NumPy engine,
-    so the physics is shared); `from_wavelength_nm` / `wavelength_nm` give its nm
-    form. The `convert_*` / `forward` methods are pure scalar multiplies, so
-    they preserve the input tensor's dtype, device, and autograd graph.
+    The torch twin of `iivs.dhm.analysis.opd.OPDConverter` (named for the quantity,
+    per the `nn.Module` convention). Binds a wavelength and the cached `opd_scale`
+    (nm of OPD per rad, a plain float reused from the NumPy engine, so the physics is
+    shared); `from_wavelength_nm` / `wavelength_nm` give its nm form.
+    The `convert_*` / `forward` methods are pure scalar multiplies, so they preserve
+    the input tensor's dtype, device, and autograd graph.
 
-    Tensors are expected to hold a real floating dtype (e.g. ``float32``); the
-    output keeps the input's dtype (torch's `Tensor` type does not carry it).
+    Tensors are expected to hold a real floating dtype (e.g. ``float32``); the output
+    keeps the input's dtype (torch's `Tensor` type does not carry it).
 
     Attributes:
         wavelength: Illumination wavelength, in m.

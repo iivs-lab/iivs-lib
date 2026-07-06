@@ -32,14 +32,14 @@ class DryMassCalculator:
         mass = dmc.calc_from_phase(phase, mask=cell)  # phase in rad
 
     Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg, summed in
-    float64 over the last two axes (H, W) and returned as float32. Inputs are
-    batched (``(..., H, W)``) and a ``(N, H, W)`` mask adds a trailing channel
-    axis. See `calc_from_opd` for the shape / `reduce` details. The OPD must
-    already be background-corrected (≈ 0 outside the object); segmentation and
-    background estimation stay the caller's responsibility.
+    float64 over the last two axes (H, W) and returned as float32. Inputs are batched
+    (``(..., H, W)``) and a ``(N, H, W)`` mask adds a trailing channel axis.
+    See `calc_from_opd` for the shape / `reduce` details. The OPD must already be
+    background-corrected (≈ 0 outside the object); segmentation and background
+    estimation stay the caller's responsibility.
 
-    The free `calc_drymass` / `calc_drymass_from_phase` are one-shot conveniences
-    over this class. For PyTorch, use `iivs.dhm.analysis.pytorch.DryMass`.
+    The free `calc_drymass` / `calc_drymass_from_phase` are one-shot conveniences over
+    this class. For PyTorch, use `DryMass` from `iivs.dhm.analysis.pytorch`.
 
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.

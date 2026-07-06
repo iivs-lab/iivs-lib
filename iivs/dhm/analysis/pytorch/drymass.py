@@ -23,18 +23,17 @@ if TYPE_CHECKING:
 class DryMass(nn.Module):
     """Torch `nn.Module` for dry mass (pg) from OPD or phase.
 
-    The torch twin of `iivs.dhm.analysis.drymass.DryMassCalculator` (named for
-    the quantity, per the `nn.Module` convention). Binds the pixel size, specific
-    refractive increment, and an `OpticalPathDifference` (for the phase path)
-    once; the per-pixel `drymass_scale` (a plain float) is reused from the NumPy
-    engine. `calc_from_opd` sums the masked OPD over the last two axes (H, W) in
-    ``float64`` (for precision) and scales, returning a tensor in the input's
-    dtype (never a Python `float`), so it stays on the input's device, dtype,
-    and autograd graph (a `float()` cast would sync off-device and drop
-    gradients). Inputs are batched (``(..., H, W)``); a ``(N, H, W)`` mask adds
-    a trailing channel axis (``(..., N)``); ``reduce=False`` returns the
-    per-pixel mass-density map instead of the sum.
-    The OPD must already be background-corrected.
+    The torch twin of `iivs.dhm.analysis.drymass.DryMassCalculator` (named for the
+    quantity, per the `nn.Module` convention). Binds the pixel size, specific
+    refractive increment, and an `OpticalPathDifference` (for the phase path) once;
+    the per-pixel `drymass_scale` (a plain float) is reused from the NumPy engine.
+    `calc_from_opd` sums the masked OPD over the last two axes (H, W) in ``float64``
+    (for precision) and scales, returning a tensor in the input's dtype (never a
+    Python `float`), so it stays on the input's device, dtype, and autograd graph
+    (a `float()` cast would sync off-device and drop gradients). Inputs are batched
+    (``(..., H, W)``); a ``(N, H, W)`` mask adds a trailing channel axis
+    (``(..., N)``); ``reduce=False`` returns the per-pixel mass-density map instead
+    of the sum. The OPD must already be background-corrected.
 
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
