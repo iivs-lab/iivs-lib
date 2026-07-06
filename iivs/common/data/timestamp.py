@@ -36,8 +36,8 @@ class Timestamp:
             raise ValueError(msg)
 
         if self.interval_ms > self.elapsed_ms:
-            msg = "interval_ms must not exceed elapsed_ms"
-            msg += f" (got {self.interval_ms} > {self.elapsed_ms})"
+            got = f"{self.interval_ms} > {self.elapsed_ms}"
+            msg = f"interval_ms must not exceed elapsed_ms (got {got})"
             raise ValueError(msg)
 
     @classmethod
