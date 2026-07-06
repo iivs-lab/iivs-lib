@@ -128,16 +128,16 @@ def test_uint_array_rejects_non_unsigned_dtype():
 
 
 def test_float_array_custom_dims_accepts_volume():
-    # dims=3 treats the trailing three axes as core; a 3-D array is one volume.
+    # ndim=3 treats the trailing three axes as core; a 3-D array is one volume.
     data = np.zeros((2, 2, 2), dtype=np.float32)
-    assert validate_float_array(data, dims=3, allow_stack=False) is data
+    assert validate_float_array(data, ndim=3, allow_stack=False) is data
 
 
 def test_float_array_custom_dims_rejects_too_few():
     with pytest.raises(ValueError, match="at least 3-dimensional"):
-        validate_float_array(np.zeros((2, 2), dtype=np.float32), dims=3)
+        validate_float_array(np.zeros((2, 2), dtype=np.float32), ndim=3)
 
 
 def test_uint_array_custom_dims_accepts_stacked_volume():
     data = np.zeros((5, 2, 2, 2), dtype=np.uint16)
-    assert validate_uint_array(data, dtype=np.uint16, dims=3) is data
+    assert validate_uint_array(data, dtype=np.uint16, ndim=3) is data
