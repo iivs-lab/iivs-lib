@@ -8,9 +8,9 @@ import X`` reaches any of them:
   `load_bin`, `write_bin`).
 - `txt` — the `Float/Txt` header codec and image I/O (`KoalaTxtHeaderCodec`,
   `load_txt`, `write_txt`).
-- `image` — the uint8 image folder/list bases and `.tif` reader
-  (`ImageFileFolder` / `ImageFileList`, `ImageTifFolder` / `ImageTifList`,
-  `load_uint8_tif`).
+- `image` — the uint8 `.tif` reader (`load_uint8_tif`) and the numbered folder /
+  list concretes (`ImageFileFolder`, `ImageTifFolder` / `ImageTifList`) that bind
+  uint8 on `iivs.common.data`'s generic `ImageFileList` and `load_tif`.
 - `float` — the float32 file list/folder bases over a ``(read_header, decode)``
   codec, generic in the header type (`KoalaFloatFileList`,
   `KoalaFloatFileFolder`; shared by phase and intensity).
@@ -20,10 +20,11 @@ import X`` reaches any of them:
   and the `UnsupportedExtensionError` raised on a bad extension are imported
   directly from `kaparoo.filesystem` where needed, not re-exported here.
 
-The technique-agnostic `.npy` reader / writer (`read_npy_shape`, `write_npy`),
-the same-shape mixin `FrameShapedMixin`, and the array validators
-(`validate_float_array` / `validate_uint_array` and their float32 / uint8
-bindings) live in `iivs.common.data`; import them from there.
+The technique-agnostic primitives live in `iivs.common.data` -- the `.npy`
+reader / writer (`read_npy_shape`, `write_npy`), the same-shape mixin
+`FrameShapedMixin`, the array validators (`validate_float_array` /
+`validate_uint_array` and their float32 / uint8 bindings), and the dtype-generic
+image bases (`load_tif`, `ImageFileList`); import them from there.
 """
 
 from __future__ import annotations
@@ -32,7 +33,6 @@ __all__ = (
     "FLOAT_FORMATS",
     "FloatFormat",
     "ImageFileFolder",
-    "ImageFileList",
     "ImageTifFolder",
     "ImageTifList",
     "KoalaBinHeader",
@@ -59,7 +59,6 @@ from iivs.dhm.data.koala.float import (
 )
 from iivs.dhm.data.koala.image import (
     ImageFileFolder,
-    ImageFileList,
     ImageTifFolder,
     ImageTifList,
     load_uint8_tif,

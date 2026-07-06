@@ -2,93 +2,53 @@ from __future__ import annotations
 
 __all__ = (
     "ImageFileFolder",
-    "ImageFileList",
     "ImageTifFolder",
     "ImageTifList",
     "load_uint8_tif",
 )
 
-from abc import abstractmethod
 from functools import cached_property
-from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
-import tifffile
-from kaparoo.data.sequences import FileListSequence
-from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
 from numpy.typing import NDArray
 
-from iivs.common.data import validate_uint8_array
+from iivs.common.data import ImageFileList, load_tif, validate_uint8_array
 from iivs.dhm.data.koala.sequence import SequentialFileFolder
 
 if TYPE_CHECKING:
+    from pathlib import Path
     from typing import Literal
 
-    from kaparoo.filesystem.types import StrPath, StrPaths
+    from kaparoo.filesystem.types import StrPath
 
 
 def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
     """Load a single uint8 raster from a `.tif` file.
 
-    Modality-agnostic: the Koala uint8 previews (`Image/*.tif`) and any other
-    single-page 8-bit tif decode through this. The Koala previews are
-    LZW-compressed; `imagecodecs` is a core dependency, so they decode without
-    any extra.
+    The uint8 binding of `iivs.common.data.load_tif`: Koala's `Image/*.tif`
+    previews are 8-bit, so the decoded array is validated as a 2D uint8 image.
+    The previews are LZW-compressed; `imagecodecs` (a core dependency) decodes
+    them without any extra.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the decoded image is not a 2D uint8 array.
     """
-    path = ensure_file_exists(path)
-    return validate_uint8_array(tifffile.imread(path), allow_stack=False)
+    return validate_uint8_array(load_tif(path), allow_stack=False)
 
 
-class ImageFileList(FileListSequence[NDArray[np.uint8], Path]):
-    """A uint8 image sequence over an arbitrary list of files, via a `load_file` codec.
-
-    The modality- and format-agnostic body for header-less uint8 image sources
-    (`.tif` previews, `.npy` arrays): each file is decoded independently, so the
-    files may live anywhere and differ in shape. A concrete subclass supplies
-    only `load_file` (and `FILE_EXT`) for its on-disk format (`ImageTifList`); a
-    modality adds its role by also inheriting its `<Modality>ImageSequence` --
-    e.g. `PhaseTifList(ImageTifList, PhaseImageSequence[Path])`. `ImageFileFolder`
-    is the auto-discovered, same-shape specialization.
-
-    Args:
-        files: The files to expose, in the given order.
-
-    Raises:
-        ValueError: If any path does not have the subclass `.<FILE_EXT>` suffix.
-    """
-
-    FILE_EXT: ClassVar[str]
-
-    def __init__(self, files: StrPaths) -> None:
-        super().__init__([ensure_file_extension(f, self.FILE_EXT) for f in files])
-
-    @override
-    def get_meta(self, index: int) -> Path:
-        """Return the source path of the file at `index`."""
-        return self.get_file(index)
-
-    @override
-    @abstractmethod
-    def load_file(self, path: Path) -> NDArray[np.uint8]:
-        """Decode the uint8 image at `path` (subclass codec)."""
-        raise NotImplementedError
-
-
-class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ImageFileList):
+class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ImageFileList[np.uint8]):
     """A uint8 image folder: numbered discovery + one shared (lazily read) shape.
 
-    The auto-discovered, same-shape specialization of `ImageFileList`. A
-    header-less image file carries no shape metadata, so `frame_shape` is read
-    lazily from the first file (via the subclass `load_file`) and every image is
-    required to match it. Concrete folders set `FILE_EXT` / `FILE_STEM`, supply
-    a `load_file`, and add their image role -- e.g. `ImageTifFolder` (tif) or
-    `HologramNpyFolder` (npy).
+    The auto-discovered, same-shape specialization of `iivs.common.data`'s
+    `ImageFileList`, over the Koala `{index:05d}_<stem>.<ext>` numbering
+    (`SequentialFileFolder`). A header-less image file carries no shape metadata,
+    so `frame_shape` is read lazily from the first file (via the subclass
+    `load_file`) and every image is required to match it. Concrete folders set
+    `FILE_EXT` / `FILE_STEM`, supply a `load_file`, and add their image role --
+    e.g. `ImageTifFolder` (tif) or `HologramNpyFolder` (npy).
 
     Args:
         root: The folder to scan.
@@ -133,13 +93,14 @@ class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ImageFileList):
             raise ValueError(msg)
 
 
-class ImageTifList(ImageFileList):
+class ImageTifList(ImageFileList[np.uint8]):
     """A uint8 `.tif` image sequence over an arbitrary list of files.
 
-    Supplies the `.tif` codec (`load_uint8_tif`) over `ImageFileList`. A modality
-    adds its role by also inheriting its `<Modality>ImageSequence` (e.g.
-    `PhaseTifList(ImageTifList, PhaseImageSequence[Path])`). `ImageTifFolder` is
-    the auto-discovered, same-shape specialization.
+    Supplies the `.tif` codec (`load_uint8_tif`) over `iivs.common.data`'s
+    `ImageFileList`. A modality adds its role by also inheriting its
+    `<Modality>ImageSequence` (e.g. `PhaseTifList(ImageTifList,
+    PhaseImageSequence[Path])`). `ImageTifFolder` is the auto-discovered,
+    same-shape specialization.
 
     Args:
         files: The `.tif` files to expose, in the given order.

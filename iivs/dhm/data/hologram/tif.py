@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 def load_hologram_tif(path: StrPath) -> NDArray[np.uint8]:
     """Load a Lyncée Tec Koala uint8 hologram from a `.tif` file.
 
-    A thin alias over `common.load_uint8_tif`.
+    A thin alias over `koala.load_uint8_tif`.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
@@ -71,7 +71,7 @@ def save_hologram_tif(
 class HologramTifList(ImageTifList, HologramSequence[Path]):
     """A hologram sequence over an explicit, arbitrary list of `.tif` files.
 
-    The uint8 tif body comes from `common.ImageTifList`; this adds the hologram
+    The uint8 tif body comes from `koala.ImageTifList`; this adds the hologram
     role. Imposes no naming, contiguity, or single-folder constraint: the files
     may live anywhere and each is decoded independently, so they may differ in
     shape (hence a plain `HologramSequence`, no `frame_shape`). Each item is the
