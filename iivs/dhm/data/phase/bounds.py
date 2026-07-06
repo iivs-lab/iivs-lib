@@ -93,8 +93,8 @@ class PhaseBounds:
         """Map a uint8 Koala preview back toward phase, in nanometers (lossy).
 
         The inverse of Koala's display rendering: ``0`` maps to `min_nm`, ``255``
-        to `max_nm`, linearly. The result is 8-bit quantized -- a coarse
-        reconstruction with step ``(max_nm - min_nm) / 255``, never a substitute
+        to `max_nm`, linearly. The result is 8-bit quantized (a coarse
+        reconstruction with step ``(max_nm - min_nm) / 255``), never a substitute
         for the quantitative `Float` source. A degenerate ``min_nm == max_nm``
         maps every pixel to that single value.
 
@@ -108,7 +108,7 @@ class PhaseBounds:
         """Render phase (nm) into a uint8 Koala-style preview (the forward map).
 
         Linearly maps ``[min_nm, max_nm]`` onto ``0-255`` with rounding, clamping
-        out-of-range values to the ends -- how Koala renders `Image/*.tif`. The
+        out-of-range values to the ends, as Koala renders `Image/*.tif`. The
         round trip ``decode_preview(encode_preview(x))`` recovers `x` only up to
         the 8-bit quantization. A degenerate ``min_nm == max_nm`` maps everything
         to ``0`` (division by a zero span is avoided).
@@ -148,11 +148,9 @@ def write_phbounds(
     functional API.
 
     Args:
-        path: The `.txt` file to write (``.txt`` is appended if `path` has no
-            suffix).
+        path: The `.txt` file to write (``.txt`` is appended if `path` has no suffix).
         bounds: The display bounds to record.
-        overwrite: Whether to replace `path` if it already exists. Defaults to
-            False.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
 
     Raises:
         As `PhaseBounds.to_file` (wrong extension, an existing target without

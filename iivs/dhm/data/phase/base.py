@@ -35,7 +35,7 @@ class PhaseSequence[T, M](DataSequence[T, M]):
     the `Float` / `Image` subtype when the dtype matters.
 
     Type Parameters:
-        T: The item (image) array type -- `NDArray[np.float32]` (quantitative)
+        T: The item (image) array type: `NDArray[np.float32]` (quantitative)
             or `NDArray[np.uint8]` (preview).
         M: The per-item metadata type chosen by the concrete sequence (e.g. the
             source `Path`).
@@ -46,7 +46,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
     """A read-only sequence of uint8 phase preview images.
 
     The display-only 8-bit preview Koala renders under `Image/*.tif` (the float
-    phase mapped through `phbounds.txt` into 0-255) -- distinct from, and not a
+    phase mapped through `phbounds.txt` into 0-255); distinct from, and not a
     substitute for, the quantitative `PhaseFloatSequence`. Same-shape sources
     mix in `data.common.FrameShapedMixin` to expose `frame_shape`.
     """
@@ -92,7 +92,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
         Each uint8 frame is mapped back through `bounds`
         (`PhaseBounds.decode_preview`) on access, then converted from nanometers
         to `target_unit`. The result is a **lossy, 8-bit-quantized
-        reconstruction**, not the quantitative `Float` source it imitates -- use
+        reconstruction**, not the quantitative `Float` source it imitates; use
         the real `Float` sequence when the exact values matter. `bounds` must be
         supplied (a preview cannot recover them); read it from the acquisition's
         `phbounds.txt` or recompute it from the `Float` twin's `bounds_nm`.
@@ -162,7 +162,7 @@ class PhaseFloatSequence[M](PhaseSequence[NDArray[np.float32], M]):
     """A read-only sequence of quantitative float32 phase images.
 
     The phase reconstruction Koala exports as `Float/{Bin,Txt}`; annotate
-    parameters with it to accept any float32 phase source -- one acquisition
+    parameters with it to accept any float32 phase source: one acquisition
     (`PhaseBinFolder`) or an arbitrary `PhaseBinList` of unrelated files, and
     their `.txt` twins. Same-shape sources additionally mix in
     `data.common.FrameShapedMixin` to expose `frame_shape`.
@@ -176,9 +176,9 @@ class PhaseFloatView[M](
     """A lazy phase reconstruction over a preview sequence (the `to_float` result).
 
     A `kaparoo` `TransformedSequence` that maps each uint8 preview back to float32
-    phase -- `bounds.decode_preview` (to nm), then `convert_phase_unit` to
-    `target_unit` -- retyped as a `PhaseFloatSequence`. The values are
-    8-bit-quantized -- a reconstruction, never the quantitative `Float` source.
+    phase (`bounds.decode_preview` to nm, then `convert_phase_unit` to
+    `target_unit`), retyped as a `PhaseFloatSequence`. The values are
+    8-bit-quantized (a reconstruction, never the quantitative `Float` source).
     `source` (the wrapped previews) and the per-frame metadata pass-through come
     from `TransformedSequence`.
     """
@@ -321,7 +321,7 @@ class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
 
     The auto-discovered, same-shape specialization of `PhaseFileList`; it reuses
     that list's `load_file` codec and adds the shared acquisition `header`.
-    Concrete folders (`PhaseBinFolder`, `PhaseTxtFolder`) set only `FILE_EXT` --
+    Concrete folders (`PhaseBinFolder`, `PhaseTxtFolder`) set only `FILE_EXT`;
     the `(read_header, decode)` codec comes from the matching `*List` they also
     inherit. `target_unit` defaults to the shared header's stored unit.
 
@@ -344,7 +344,7 @@ class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
 
         # The shared header is known only after super().__init__ reads it, and
         # the validation above never uses target_unit (it decodes raw frames),
-        # so resolve it here -- against the header, failing fast if unreachable.
+        # so resolve it here against the header, failing fast if unreachable.
         self._target_unit = replace_if_none(target_unit, self._header.unit)
         convert_phase_unit(  # empty array -> a pure source/target pair check
             np.empty((0, 0), dtype=np.float32),

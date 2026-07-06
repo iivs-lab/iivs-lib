@@ -15,7 +15,7 @@ class IntensityTifList(ImageTifList, IntensityImageSequence[Path]):
     The uint8 display-preview twin of `IntensityBinList`: each file is decoded
     independently as a uint8 image, with no naming/contiguity constraint. This
     is an `IntensityImageSequence`, *not* a quantitative
-    `IntensityFloatSequence` -- the pixels are the 8-bit preview, not the float
+    `IntensityFloatSequence`; the pixels are the 8-bit preview, not the float
     intensity. `IntensityTifFolder` is the auto-discovered, same-shape special
     case.
 

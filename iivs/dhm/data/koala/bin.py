@@ -32,7 +32,7 @@ class KoalaBinHeader(ABC):
     `DTYPE`, the structural read (size / version / byte-order checks), and the
     geometry conveniences. The trailing ``hconv`` / ``unit`` bytes carry
     modality-specific meaning, so subclasses own them via `from_dtype` /
-    `to_dtype` -- phase reads them as a height scale plus `PhaseUnit`, while
+    `to_dtype`; phase reads them as a height scale plus `PhaseUnit`, while
     intensity treats them as Koala's no-op sentinel.
 
     Attributes:
@@ -226,7 +226,7 @@ def load_bin[H: KoalaBinHeader](
             emits a RuntimeWarning, "raise" raises a ValueError.
 
     Returns:
-        An ``(image, header)`` tuple -- the float32 image of shape
+        An ``(image, header)`` tuple: the float32 image of shape
         `header.shape` and the parsed `header_cls` instance.
 
     Raises:

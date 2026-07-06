@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 
 
 class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
-    """Stateless (de)serializer between a Koala `Float/Txt` header and a `KoalaBinHeader`.
+    """Stateless (de)serializer between a `Float/Txt` header and a `KoalaBinHeader`.
 
-    Not a header value object -- it is never instantiated and carries no state;
+    Not a header value object; it is never instantiated and carries no state;
     every method is a classmethod, and `from_lines` / `from_file` return the
     modality's `KoalaBinHeader` (`H`), not a `KoalaTxtHeaderCodec`. It is the
     text twin of the binary (de)serialization that lives on `KoalaBinHeader`
@@ -32,9 +32,9 @@ class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
     The first two lines are always ``h=<H> w=<W>`` and ``pixel size=<m> m``; a
     modality may add more (phase carries a `data unit` and a `height conversion
     factor` line). A subclass sets `HEADER_LINES` / `MODALITY` and bridges those
-    extra lines both ways -- `_from_geometry` parses them into `H`,
-    `_extra_lines` serializes them back -- so `phase` and `intensity` share the
-    line-count check, the `h/w` + `pixel size` regex, and the file read/write.
+    extra lines both ways (`_from_geometry` parses them into `H`, `_extra_lines`
+    serializes them back), so `phase` and `intensity` share the line-count
+    check, the `h/w` + `pixel size` regex, and the file read/write.
 
     Type Parameters:
         H: The header the subclass produces (e.g. `PhaseBinHeader`).
@@ -49,7 +49,7 @@ class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
     def from_lines(cls, lines: list[str], path: StrPath) -> H:
         """Parse the header from a file's lines (only the first `HEADER_LINES` matter).
 
-        Accepts the whole file's lines -- any grid that follows is ignored here.
+        Accepts the whole file's lines; any grid that follows is ignored here.
 
         Raises:
             ValueError: If there are too few lines, or the geometry is malformed.
@@ -130,11 +130,11 @@ def load_txt[H: KoalaBinHeader](
 ) -> tuple[NDArray[np.float32], H]:
     """Read a Koala `Float/Txt` file's float32 image and header (the shared engine).
 
-    Reads the header via `header_codec`, then the float grid that follows --
+    Reads the header via `header_codec`, then the float grid that follows.
     Koala may write the grid as `height` rows *or* as a single long line, so
-    every value is read (layout-agnostic) and reshaped to the header shape --
-    and validates it. The per-modality `load_*_txt` wrappers bind their codec
-    and add the `return_header` ergonomics.
+    every value is read (layout-agnostic), reshaped to the header shape, and
+    validated. The per-modality `load_*_txt` wrappers bind their codec and add
+    the `return_header` ergonomics.
 
     Args:
         path: The `.txt` file to read.
@@ -144,7 +144,7 @@ def load_txt[H: KoalaBinHeader](
             a RuntimeWarning, "raise" raises a ValueError.
 
     Returns:
-        An ``(image, header)`` tuple -- the float32 image of shape
+        An ``(image, header)`` tuple: the float32 image of shape
         `header.shape` and the header the codec produced.
 
     Raises:

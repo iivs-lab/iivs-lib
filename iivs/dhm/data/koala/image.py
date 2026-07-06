@@ -47,7 +47,7 @@ class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ImageFileList[np.
     (`SequentialFileFolder`). A header-less image file carries no shape metadata,
     so `frame_shape` is read lazily from the first file (via the subclass
     `load_file`) and every image is required to match it. Concrete folders set
-    `FILE_EXT` / `FILE_STEM`, supply a `load_file`, and add their image role --
+    `FILE_EXT` / `FILE_STEM`, supply a `load_file`, and add their image role,
     e.g. `ImageTifFolder` (tif) or `HologramNpyFolder` (npy).
 
     Args:
@@ -119,7 +119,7 @@ class ImageTifFolder(ImageFileFolder, ImageTifList):
 
     The auto-discovered, same-shape specialization of `ImageTifList`. Concrete
     folders set `FILE_STEM` (and inherit `FILE_EXT = "tif"`) and add their image
-    role -- e.g. `PhaseTifFolder(ImageTifFolder, PhaseTifList)`.
+    role, e.g. `PhaseTifFolder(ImageTifFolder, PhaseTifList)`.
 
     Args:
         root: The folder to scan.

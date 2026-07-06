@@ -1,10 +1,10 @@
 """Readers, writers, and sequences for Lyncée Tec Koala acquisition data.
 
-Each imaging modality is its own subpackage -- `phase` and `intensity`
+The imaging modalities are each their own subpackage: `phase` and `intensity`
 (quantitative float32 ``.bin`` / ``.txt`` / ``.npy``, plus uint8 ``.tif``
-previews), `hologram` (uint8 ``.raw`` / ``.tif`` / ``.npy``) -- alongside a
-`timestamp` module for ``timestamps.txt``. Within a modality, each file format
-is a codec module exposing a loader, a saver, and lazy sequence types, and a
+previews) and `hologram` (uint8 ``.raw`` / ``.tif`` / ``.npy``). A `timestamp`
+module handles ``timestamps.txt``. Within a modality, each file format is a
+codec module exposing a loader, a saver, and lazy sequence types, and a
 `convert` helper re-encodes a sequence from one format to another. Blocks shared
 across modalities live in `koala`; `constants` holds the lab's default optical
 parameters.

@@ -14,7 +14,7 @@ class PhaseTifList(ImageTifList, PhaseImageSequence[Path]):
 
     The uint8 display-preview twin of `PhaseBinList`: each file is decoded
     independently as a uint8 image, with no naming/contiguity constraint. This
-    is a `PhaseImageSequence`, *not* a quantitative `PhaseFloatSequence` -- the
+    is a `PhaseImageSequence`, *not* a quantitative `PhaseFloatSequence`; the
     pixels are the 8-bit preview Koala renders, not the float phase.
     `PhaseTifFolder` is the auto-discovered, same-shape special case.
 

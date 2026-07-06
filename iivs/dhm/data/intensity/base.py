@@ -28,8 +28,8 @@ class IntensitySequence[T, M](DataSequence[T, M]):
     annotate with the `Float` / `Image` subtype when the dtype matters.
 
     Type Parameters:
-        T: The item (image) array type -- `NDArray[np.float32]` (quantitative)
-            or `NDArray[np.uint8]` (preview).
+        T: The item (image) array type (`NDArray[np.float32]` for quantitative,
+            `NDArray[np.uint8]` for preview).
         M: The per-item metadata type chosen by the concrete sequence (e.g. the
             source `Path`).
     """
@@ -38,7 +38,7 @@ class IntensitySequence[T, M](DataSequence[T, M]):
 class IntensityImageSequence[M](IntensitySequence[NDArray[np.uint8], M]):
     """A read-only sequence of uint8 intensity preview images.
 
-    The display-only 8-bit preview Koala renders under `Image/*.tif` -- distinct
+    The display-only 8-bit preview Koala renders under `Image/*.tif`, distinct
     from, and not a substitute for, the quantitative `IntensityFloatSequence`.
     Same-shape sources mix in `data.common.FrameShapedMixin` to expose
     `frame_shape`.
@@ -49,7 +49,7 @@ class IntensityFloatSequence[M](IntensitySequence[NDArray[np.float32], M]):
     """A read-only sequence of quantitative float32 intensity images.
 
     The intensity reconstruction Koala exports as `Float/{Bin,Txt}`; annotate
-    parameters with it to accept any float32 intensity source -- one acquisition
+    parameters with it to accept any float32 intensity source: one acquisition
     (`IntensityBinFolder`) or an arbitrary `IntensityBinList` of unrelated
     files, and their `.txt` twins. Same-shape sources additionally mix in
     `data.common.FrameShapedMixin` to expose `frame_shape`.

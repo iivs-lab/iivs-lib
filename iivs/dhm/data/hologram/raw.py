@@ -30,8 +30,8 @@ if TYPE_CHECKING:
 class HologramRawHeader:
     """The fixed-size header of a Lyncée Tec Koala hologram `.raw` file.
 
-    Four little-endian int32 fields -- width, height, bit depth (bits per
-    pixel), and frame count -- followed immediately by `frame_count`
+    Four little-endian int32 fields (width, height, bit depth in bits per
+    pixel, and frame count), followed immediately by `frame_count`
     row-major frames of `height x width` pixels.
 
     Attributes:
@@ -145,7 +145,7 @@ class HologramRawHeader:
 
 
 def read_hologram_raw_header(path: StrPath) -> HologramRawHeader:
-    """Read only the header of a Lyncée Tec Koala hologram `.raw` file, without the pixels."""
+    """Read only the header of a Koala hologram `.raw` file, without the pixels."""
     return HologramRawHeader.from_file(path)
 
 
@@ -164,10 +164,10 @@ def save_hologram_raw(
 
     Args:
         path: The `.raw` file to write.
-        frames: The holograms to save -- a single 2D image, an ``(N, H, W)``
-            stack array, or any uint8 `DataSequence` (a `HologramSequence`, or a
-            `kaparoo` composer such as a `ConcatSequence`). All frames must share
-            one shape.
+        frames: The holograms to save (a single 2D image, an ``(N, H, W)``
+            stack array, or any uint8 `DataSequence` such as a `HologramSequence`
+            or a `kaparoo` composer like a `ConcatSequence`). All frames must
+            share one shape.
         overwrite: Whether to replace `path` if it already exists. Defaults to
             False.
 
@@ -235,12 +235,12 @@ class HologramRawFile(
     The file is a `HologramRawHeader` followed by its frames, held internally
     as a lazy, read-only `np.memmap` so a large multi-frame file is never
     loaded whole. Each item is a fresh, writable copy of one frame (metadata
-    is the frame index) -- matching `PhaseBinFolder` and `HologramTifFolder` --
+    is the frame index), matching `PhaseBinFolder` and `HologramTifFolder`,
     so it can go straight to `torch.from_numpy`. For zero-copy bulk access, use
     the read-only `frames` memmap directly.
 
-    The sequence pickles to just its path -- the memmap re-opens in each
-    process rather than copying every frame -- so it is cheap to hand to
+    The sequence pickles to just its path (the memmap re-opens in each
+    process rather than copying every frame), so it is cheap to hand to
     worker processes (e.g. a PyTorch `DataLoader`).
 
     Args:

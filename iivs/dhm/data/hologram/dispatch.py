@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 type HologramFormat = Literal["raw", "tif", "npy"]
-"""A hologram's on-disk format -- the multi-frame `.raw` stack, or `.tif` / `.npy`."""
+"""A hologram's on-disk format: the multi-frame `.raw` stack, or `.tif` / `.npy`."""
 
 HOLOGRAM_FORMATS: tuple[HologramFormat, ...] = ("raw", "tif", "npy")
 """The hologram formats, for runtime membership checks (the `HologramFormat` values)."""
@@ -49,12 +49,12 @@ def convert_hologram_sequence(
     falling back to the ``holo`` stem when it has no `FILE_STEM`.
 
     Args:
-        dest: Destination -- the `.raw` file for "raw", else the folder to
+        dest: Destination; the `.raw` file for "raw", else the folder to
             create and fill.
-        sequence: Source hologram sequence to read -- a `HologramRawFile`,
+        sequence: Source hologram sequence to read (a `HologramRawFile`,
             `HologramTifFolder`, `HologramNpyFolder`, `HologramTifList`, or any
-            uint8 `DataSequence` (e.g. a composed sequence).
-        ext: Target format -- "raw", "tif", or "npy".
+            uint8 `DataSequence` such as a composed sequence).
+        ext: Target format; "raw", "tif", or "npy".
         overwrite: Whether to replace an existing destination. Defaults to
             False.
 

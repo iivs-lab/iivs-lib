@@ -99,8 +99,8 @@ def load_intensity(
 
     Dispatches `.bin` / `.txt` / `.npy` to `load_intensity_bin` /
     `load_intensity_txt` / `load_intensity_npy`. With `return_header` it also
-    returns the parsed header -- but `None` for `.npy`, which is header-less
-    (its `pixel_size` lives only on `IntensityNpyFolder`, not in the file).
+    returns the parsed header (`None` for `.npy`, which is header-less; its
+    `pixel_size` lives only on `IntensityNpyFolder`, not in the file).
     Contrast `read_intensity_header`, whose sole job *is* the header and so
     raises on `.npy`: here the header is an optional extra, so an absent one is
     `None`, not an error.
@@ -115,7 +115,7 @@ def load_intensity(
 
     Returns:
         The intensity image as a 2D float32 array, or an `(image, header)` tuple
-        when `return_header` is True -- with `header` `None` for `.npy`.
+        when `return_header` is True (with `header` `None` for `.npy`).
 
     Raises:
         ValueError: If `path`'s extension is not bin, txt, or npy.
@@ -209,7 +209,7 @@ def intensity_list(files: StrPaths) -> IntensityFileList:
 
     Dispatches `.bin` / `.txt` to `IntensityBinList` / `IntensityTxtList`. All
     `files` must share one extension. `.npy` has no list form (each file is
-    header-less, with no shared acquisition header) -- use `IntensityNpyFolder`.
+    header-less, with no shared acquisition header); use `IntensityNpyFolder`.
 
     Raises:
         ValueError: If `files` is empty, mixes extensions, is `.npy`, or shares
@@ -255,7 +255,7 @@ def intensity_folder(
         root: The folder to scan.
         pixel_size: The pixel size for a `.npy` folder (omit for `.bin` / `.txt`).
         validate: Validation level at construction, or None to skip.
-        prefer: How to resolve a `root` that holds more than one format -- `None`
+        prefer: How to resolve a `root` that holds more than one format. `None`
             (default) raises, while a format or a priority sequence picks the
             first present one (e.g. `prefer=("bin", "txt")`).
 
@@ -299,9 +299,9 @@ def save_intensity_folder(
     """Write any intensity image sequence to `root` as numbered `ext` files.
 
     The composer-friendly export: `images` is any iterable of float32 intensity
-    frames -- a file sequence, a `kaparoo` composer (`ConcatSequence`, a sliced
-    or windowed view), or a plain list -- so it accepts sources that carry no
-    Koala header. Because that header cannot be recovered from a composed
+    frames (a file sequence, a `kaparoo` composer such as `ConcatSequence` or a
+    sliced or windowed view, or a plain list), so it accepts sources that carry
+    no Koala header. Because that header cannot be recovered from a composed
     sequence, the `bin` / `txt` `pixel_size` is given here explicitly; the
     header-less `npy` ignores it. `convert_intensity_folder` is the convenience
     that reads `pixel_size` off a file folder's header for you.
@@ -312,7 +312,7 @@ def save_intensity_folder(
     Args:
         root: Destination folder to create and fill.
         images: The intensity frames to write, in order (each a 2D float32 image).
-        ext: Target format -- "bin", "txt", or "npy".
+        ext: Target format ("bin", "txt", or "npy").
         pixel_size: Physical size of one (square) pixel, in m. Required for
             "bin" / "txt"; ignored (with a warning) for "npy".
         stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>``. Defaults to
@@ -356,15 +356,15 @@ def convert_intensity_folder(
     The file-folder convenience over `save_intensity_folder`: each frame becomes
     one numbered file sharing the folder's single header. `bin` / `txt` preserve
     `pixel_size` (read from the folder); the header-less `npy` drops it. For a
-    composed or transformed sequence (e.g. a `kaparoo` `ConcatSequence`) -- which
-    has no folder header -- use `save_intensity_folder` directly with explicit
+    composed or transformed sequence (e.g. a `kaparoo` `ConcatSequence`), which
+    has no folder header, use `save_intensity_folder` directly with explicit
     `pixel_size`. The new folder is built atomically, so a failed run leaves any
     existing `root` untouched.
 
     Args:
         root: Destination folder to create and fill with the re-encoded frames.
         folder: Source intensity folder to read.
-        ext: Target format -- "bin", "txt", or "npy".
+        ext: Target format ("bin", "txt", or "npy").
         overwrite: Whether to replace `root` if it already exists. Defaults to
             False.
 
@@ -402,7 +402,7 @@ def convert_intensity_list(
 
     Args:
         sequence: Source intensity file list to re-encode in place.
-        ext: Target format -- "bin", "txt", or "npy".
+        ext: Target format ("bin", "txt", or "npy").
         overwrite: Whether to replace an existing target sibling. Defaults to
             False.
 

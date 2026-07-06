@@ -62,18 +62,18 @@ def detect_numbered_format(
 
     Scans `root` at depth 1 for the numbered ``{stem}`` files with `search_files`
     and a `Regex`, then resolves a single format. When more than one format
-    is present, `prefer` decides -- mirroring `kaparoo`'s
+    is present, `prefer` decides, mirroring `kaparoo`'s
     `hierarchy.Exclusive(on_conflict=...)`:
 
-    - `None` -- raise (the conflict is an error; the caller must disambiguate).
-    - a format, or a priority sequence of formats -- pick the first present
+    - `None`: raise (the conflict is an error; the caller must disambiguate).
+    - a format, or a priority sequence of formats: pick the first present
       format in that order (the `"priority"` resolution).
 
     Args:
         root: The folder to scan.
         stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>`` (e.g. "phase").
         formats: The candidate extensions, in their natural order.
-        prefer: The conflict policy -- `None` to error on multiple formats, or a
+        prefer: The conflict policy; `None` to error on multiple formats, or a
             format / priority sequence to pick the first present one.
 
     Raises:
@@ -137,8 +137,8 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     def list_files(self, root: Path) -> list[Path]:
         """List the `NNNNN_<stem>.<ext>` files under `root`, in index order.
 
-        `search_files` sorts lexicographically by default, which -- with the
-        fixed-width ``{index:05d}`` zero-padding -- is exactly numeric index
+        `search_files` sorts lexicographically by default, which (with the
+        fixed-width ``{index:05d}`` zero-padding) is exactly numeric index
         order, so no extra sort is needed.
         """
         name_filter = _numbered_filter(self.FILE_STEM, (self.FILE_EXT,))

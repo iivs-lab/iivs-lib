@@ -20,7 +20,7 @@ import X`` reaches any of them:
   and the `UnsupportedExtensionError` raised on a bad extension are imported
   directly from `kaparoo.filesystem` where needed, not re-exported here.
 
-The technique-agnostic primitives live in `iivs.common.data` -- the `.npy`
+The technique-agnostic primitives live in `iivs.common.data`: the `.npy`
 reader / writer (`read_npy_shape`, `write_npy`), the same-shape mixin
 `FrameShapedMixin`, the array validators (`validate_float_array` /
 `validate_uint_array` and their float32 / uint8 bindings), and the dtype-generic

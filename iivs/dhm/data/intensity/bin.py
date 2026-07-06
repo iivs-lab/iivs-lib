@@ -40,7 +40,7 @@ class IntensityBinHeader(KoalaBinHeader):
     Intensity reconstructions share the 23-byte Koala header with phase, but
     carry no height scale or phase unit: Koala writes ``hconv = -1`` and
     ``unit = 0`` as a no-op sentinel. Only the geometry is meaningful, so this
-    header adds no fields to the shared `KoalaBinHeader` -- it just pins those
+    header adds no fields to the shared `KoalaBinHeader`; it just pins those
     trailing bytes to the sentinel on write and ignores them on read.
 
     Attributes:

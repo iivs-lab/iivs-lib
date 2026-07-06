@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 class IntensityTxtHeaderCodec(KoalaTxtHeaderCodec[IntensityBinHeader]):
     """Reads a Koala `Float/Txt` intensity header into an `IntensityBinHeader`.
 
-    The 2-line header is just the shared `h/w` + `pixel size` pair -- intensity
+    The 2-line header is just the shared `h/w` + `pixel size` pair; intensity
     carries no unit or height-conversion line, unlike phase::
 
         h=900 w=900
@@ -51,7 +51,7 @@ class IntensityTxtHeaderCodec(KoalaTxtHeaderCodec[IntensityBinHeader]):
         pixel_size: float,
         path: StrPath,
     ) -> IntensityBinHeader:
-        """Build straight from the geometry -- intensity has no extra header lines."""
+        """Build straight from the geometry (intensity has no extra header lines)."""
         return IntensityBinHeader(width=width, height=height, pixel_size=pixel_size)
 
 
@@ -167,10 +167,9 @@ def save_intensity_txt(
 class IntensityTxtList(IntensityFileList):
     """An intensity sequence over an explicit, arbitrary list of `Float/Txt` files.
 
-    The text twin of `IntensityBinList` (the `.txt` codec over
-    `IntensityFileList`): no naming/contiguity/shared-header constraint; each
-    file is read independently. `IntensityTxtFolder` is the auto-discovered,
-    same-shape special case of this.
+    The text twin of `IntensityBinList` (the `.txt` codec over `IntensityFileList`):
+    no naming/contiguity/shared-header constraint; each file is read independently.
+    `IntensityTxtFolder` is the auto-discovered, same-shape special case of this.
 
     Args:
         files: The `.txt` files to expose, in the given order.

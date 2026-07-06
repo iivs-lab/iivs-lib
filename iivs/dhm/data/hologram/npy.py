@@ -64,7 +64,7 @@ class HologramNpyFolder(ImageFileFolder, HologramSequence[Path]):
     The `.npy` codec over `koala.ImageFileFolder`: numbered discovery + one
     shared (lazily read) `frame_shape`, with each frame loaded by
     `numpy.load(allow_pickle=False)` (a pickled object array is rejected).
-    Holograms carry no physical metadata, so -- unlike phase / intensity --
+    Holograms carry no physical metadata, so (unlike phase / intensity)
     nothing extra is needed at construction. Create the files with `numpy.save`
     (uncompressed `.npy`, one 2-D uint8 frame per file).
 
