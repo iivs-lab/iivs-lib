@@ -39,8 +39,8 @@ def validate_ndim[T: np.generic](
             Defaults to True; set False to require exactly `ndim` axes.
 
     Raises:
-        ValueError: If `array` has fewer than `ndim` axes, or -- when
-            `allow_stack` is False -- not exactly `ndim`.
+        ValueError: If `array` has fewer than `ndim` axes, or if
+            `allow_stack` is False and it does not have exactly `ndim`.
     """
 
     if allow_stack:

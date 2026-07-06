@@ -11,7 +11,7 @@ class FrameShapedMixin(ABC):
     Mix into a sequence whose items are guaranteed the same shape (e.g. one
     acquisition's frames) to force `frame_shape` to be implemented. There is no
     separate `Uniform*Sequence` type: a uniform source is its role base plus this
-    mixin -- ``isinstance(x, SomeSequence) and isinstance(x, FrameShapedMixin)``.
+    mixin (``isinstance(x, SomeSequence) and isinstance(x, FrameShapedMixin)``).
     A numbered-folder template mixes this in for every folder; a single-file
     multi-frame source mixes it in directly.
     """
