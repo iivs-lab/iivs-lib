@@ -27,8 +27,24 @@ the data layer and beyond — not formal milestones.
 
 ## Beyond the data layer
 
-- **`iivs.dhm.analysis`.** Revisit the deferred `MaskedReduction` idea —
-  separating mask + reduction (sum / norm / mean) from the dry-mass calculation.
+- **`iivs.dhm.analysis` — split `MaskedReduction` out of dry mass.** Make
+  `DryMass` / `DryMassCalculator` compute only the per-pixel mass-density map
+  (`opd * scale`) and move masking + reduction (sum / norm / mean) into a
+  separate `MaskedReduction`, which also accepts label images (scikit-image
+  style, 0 = background) alongside the current one-hot `(N, H, W)` masks. Two
+  payoffs beyond label support:
+  - **Clean `nn.Module` composition.** A per-pixel `forward(self, opd) ->
+    opd * scale` drops the keyword-only `mask` / `reduce` and the Python
+    validation / `raise`, so `DryMass` becomes a shape-preserving pointwise
+    layer (fits `nn.Sequential`, hooks, `jit` / `compile`) rather than a
+    reduction head, matching `OpticalPathDifference`'s already-clean form.
+    Gradients still flow; the reduction stays differentiable when called
+    explicitly.
+  - **Drops the NumPy/Torch duplication.** The mask shape-validation and
+    branching leave both engines for the one shared reduction.
+
+  Sequence: ① shrink `DryMass` / `DryMassCalculator` to per-pixel; ② add the
+  shared `MaskedReduction` (NumPy + Torch, label + one-hot).
 - **`iivs.common.data`.** Re-check the technique-agnostic layer once the above
   settle (e.g. where a shared `MaskedReduction` or calibration type would live).
 
