@@ -7,7 +7,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, override
 
 from kaparoo.data.sequences.templates import SingleFileSequence
-from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
+from kaparoo.filesystem import ensure_file_exists
 
 from iivs.common.data.timestamp import Timestamp, TimestampSequence
 
@@ -74,8 +74,7 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
                 not match the expected format, the frame indices are not
                 contiguous from 0, or an elapsed time decreases.
         """
-        path = ensure_file_extension(path, "txt")
-        path = ensure_file_exists(path)
+        path = ensure_file_exists(path, ext="txt")
 
         elapsed_times_ms: list[float] = []
 

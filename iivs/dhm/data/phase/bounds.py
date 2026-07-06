@@ -55,8 +55,7 @@ class PhaseBounds:
                 not a `[nm]` tag plus a numeric `min max` line, or the bounds
                 are not ordered.
         """
-        path = ensure_file_extension(path, "txt")
-        path = ensure_file_exists(path)
+        path = ensure_file_exists(path, ext="txt")
         lines = [line.strip() for line in path.read_text().splitlines() if line.strip()]
 
         if len(lines) != 2:
