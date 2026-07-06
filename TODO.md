@@ -45,6 +45,21 @@ the data layer and beyond — not formal milestones.
 
   Sequence: ① shrink `DryMass` / `DryMassCalculator` to per-pixel; ② add the
   shared `MaskedReduction` (NumPy + Torch, label + one-hot).
+- **`timestamp` — generalize `TimestampSequence` metadata to `[M]`.** The base
+  hardcodes meta to `int` (the frame index, redundant with the position), but
+  `kaparoo`'s `DataSequence[T, M = None]` already treats `get_meta` as a generic
+  per-source aux channel. Make `TimestampSequence[M = None]` (keeping `get_meta`
+  abstract) so each source surfaces its own metadata *through the one `get_meta`
+  channel* — no side API: `TimestampsTxtFile` returns the acquisition `datetime`
+  built from the currently-discarded `time` / `date` fields (`[datetime]`),
+  synthetic `TimestampsFixedFPS` returns `None` (`[None]`), and a future source
+  with non-`datetime` meta just binds its own type (no union creep). Meta-agnostic
+  callers annotate `TimestampSequence[Any]`. Pending calls: (1) `TimestampsFixedFPS`
+  meta — `None` (honest: no aux) vs. keep the `int` index; (2) the Koala wall-clock
+  is naive / local, which `ruff` `DTZ` rejects — allow via `# noqa` (+ reason) or
+  make it tz-aware. Work: capture `time` / `date` in `LINE_PATTERN` and store
+  `_wall_clocks`; implement `get_meta` per source; update the base docstring and
+  the `get_meta` tests.
 - **`iivs.common.data`.** Re-check the technique-agnostic layer once the above
   settle (e.g. where a shared `MaskedReduction` or calibration type would live).
 
