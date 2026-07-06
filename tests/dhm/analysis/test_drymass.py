@@ -100,7 +100,7 @@ def test_rejects_bad_shapes():
     opd = np.zeros((3, 4, 4), dtype=np.float32)
     with pytest.raises(ValueError, match="at least 2D"):  # opd needs (H, W)
         dmc.calc_from_opd(np.zeros(4, dtype=np.float32))
-    with pytest.raises(ValueError, match="loop over the extra"):  # (T, N, H, W) mask
+    with pytest.raises(ValueError, match="mask must be"):  # (T, N, H, W) mask
         dmc.calc_from_opd(opd, mask=np.ones((3, 2, 4, 4), dtype=bool))
     with pytest.raises(ValueError, match="must match"):  # (H, W) mismatch
         dmc.calc_from_opd(opd, mask=np.ones((4, 5), dtype=bool))

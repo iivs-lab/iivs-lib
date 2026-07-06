@@ -106,10 +106,12 @@ class DryMass(nn.Module):
 
         if use_mask:
             if mask.ndim not in (2, 3):
-                msg = f"mask must be (H, W) or (N, H, W) (got {mask.ndim}D); loop over the extra (e.g. time) axis"
+                msg = f"mask must be (H, W) or (N, H, W) (got {mask.ndim}D)"
                 raise ValueError(msg)
             if mask.shape[-2:] != opd.shape[-2:]:
-                msg = f"opd and mask (H, W) must match (got {tuple(opd.shape[-2:])} vs {tuple(mask.shape[-2:])})"
+                opd_hw = tuple(opd.shape[-2:])
+                mask_hw = tuple(mask.shape[-2:])
+                msg = f"opd and mask (H, W) must match (got {opd_hw} vs {mask_hw})"
                 raise ValueError(msg)
 
         out_dtype = opd.dtype

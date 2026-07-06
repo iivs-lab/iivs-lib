@@ -67,7 +67,7 @@ def test_rejects_bad_shapes():
     opd = torch.zeros(3, 4, 4)
     with pytest.raises(ValueError, match="at least 2D"):
         calc.calc_from_opd(torch.zeros(4))
-    with pytest.raises(ValueError, match="loop over the extra"):  # (T, N, H, W)
+    with pytest.raises(ValueError, match="mask must be"):  # (T, N, H, W)
         calc.calc_from_opd(opd, mask=torch.ones(3, 2, 4, 4, dtype=torch.bool))
     with pytest.raises(ValueError, match="must match"):  # (H, W) mismatch
         calc.calc_from_opd(opd, mask=torch.ones(4, 5, dtype=torch.bool))
