@@ -101,8 +101,12 @@ applying it by hand.
   (or docstrings) that merely restate the code, and a base class whose
   docstring explains itself in terms of its specific subclasses —
   except a *closed* hierarchy's base, which may name its subclasses as
-  a deliberate family map. It is *not* a licence to leave a consumed
-  method bare. When written, document *intent and contracts, not
+  a deliberate family map. Even then, a shared, technique-agnostic
+  layer never names a downstream consumer in its docstrings: an
+  `iivs.common` docstring must not mention a specific technique or
+  modality (`dhm`, `phase`, `intensity`, `hologram`) — `common` cannot
+  depend on what depends on it. It is *not* a licence to leave a
+  consumed method bare. When written, document *intent and contracts, not
   mechanism*:
   - Lead with a one-line summary — a declarative noun phrase for
     classes ("An ordered, read-only view over ..."), an imperative
