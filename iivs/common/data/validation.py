@@ -29,16 +29,14 @@ def validate_dims[T: np.generic](
 ) -> NDArray[T]:
     """Validate an array's dimensionality and return it.
 
-    `dims` is the core (trailing) dimensionality -- 2 for an (H, W) image. With
-    `allow_stack`, any number of leading axes may precede it (`array.ndim >=
-    dims`); without it, exactly `dims` axes are required. `array` is never
-    modified.
+    Only the axis *count* is checked. With `allow_stack` the array needs at least
+    `dims` axes; without it, exactly `dims`. `array` is never modified.
 
     Args:
         array: The array to check.
-        dims: The core (trailing) dimensionality. Defaults to 2.
-        allow_stack: Whether to accept leading axes beyond `dims`. Defaults to
-            True; set False to require exactly `dims` axes.
+        dims: The required number of core dimensions. Defaults to 2.
+        allow_stack: Whether to accept extra axes beyond `dims` (a stack).
+            Defaults to True; set False to require exactly `dims` axes.
 
     Raises:
         ValueError: If `array` has fewer than `dims` axes, or -- when
@@ -63,8 +61,8 @@ def validate_dtype[T: np.generic](
     """Validate `array`'s dtype is exactly `dtype`, a subtype of `kind`, and return it.
 
     `kind` is the abstract numpy scalar family `dtype` must belong to (e.g.
-    `np.floating`); its `__name__` names that family in the error message, so it
-    cannot drift from the `issubdtype` check. `array` is never modified.
+    `np.floating`); it also names that family in the error message, so the
+    message cannot drift from the check. `array` is never modified.
 
     Raises:
         ValueError: If `dtype` is not a subtype of `kind`, or if `array`'s dtype
@@ -94,23 +92,20 @@ def validate_float_array[F: np.floating](
 ) -> NDArray[F]:
     """Validate a floating-point array (or stack) of `dtype` and return it.
 
-    The trailing `dims` axes are the array's core dimensions (2 = an H x W image
-    by default). Any number of leading axes is allowed (a stack); pass
-    `allow_stack=False` to require exactly `dims` axes. `array` is never modified.
-
-    Modality-agnostic over the floating dtype: phase and intensity validate their
-    float32 arrays through the `validate_float32_array` binding.
+    The `dims` core dimensions default to 2 (an H x W image). With a stack, extra
+    axes add to the count; pass `allow_stack=False` to require exactly `dims`
+    axes. Only the axis count is checked. `array` is never modified.
 
     Args:
-        array: The array or stack to validate, of shape (..., H, W).
+        array: The array or stack to validate.
         dtype: The exact floating dtype `array` must carry. Defaults to float32.
-        dims: The core (trailing) dimensionality, excluding stacked leading axes.
+        dims: The number of core dimensions, excluding any stacked axes.
             Defaults to 2 (an H x W image).
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf):
             "ignore" accepts them silently, "warn" (default) accepts them but
             emits a RuntimeWarning, "raise" raises a ValueError.
-        allow_stack: Whether to accept leading axes beyond `dims`. Defaults to
-            True; set False to require exactly `dims` axes.
+        allow_stack: Whether to accept extra axes beyond `dims` (a stack).
+            Defaults to True; set False to require exactly `dims` axes.
 
     Raises:
         ValueError: If `dtype` is not a floating type; if `array`'s dtype is not
@@ -150,23 +145,18 @@ def validate_uint_array[U: np.unsignedinteger](
 ) -> NDArray[U]:
     """Validate an unsigned-integer array (or stack) of `dtype` and return it.
 
-    The trailing `dims` axes are the array's core dimensions (2 = an H x W image
-    by default). Any number of leading axes is allowed (a stack); pass
-    `allow_stack=False` to require exactly `dims` axes. Unsigned integers are
-    inherently finite, so there is no non-finite policy. `array` is never modified.
-
-    Modality-agnostic over the unsigned dtype: holograms validate their uint8
-    arrays through the `validate_uint8_array` binding; a future 16-bit source
-    binds `np.uint16`.
+    The `dims` core dimensions default to 2 (an H x W image). With a stack, extra
+    axes add to the count; pass `allow_stack=False` to require exactly `dims`
+    axes. Only the axis count is checked. Unsigned integers are inherently finite,
+    so there is no non-finite policy. `array` is never modified.
 
     Args:
-        array: The array or stack to validate, of shape (..., H, W).
-        dtype: The exact unsigned-integer dtype `array` must carry. Defaults to
-            uint8.
-        dims: The core (trailing) dimensionality, excluding stacked leading axes.
+        array: The array or stack to validate.
+        dtype: The exact unsigned-integer dtype `array` must carry. Defaults to uint8.
+        dims: The number of core dimensions, excluding any stacked axes.
             Defaults to 2 (an H x W image).
-        allow_stack: Whether to accept leading axes beyond `dims`. Defaults to
-            True; set False to require exactly `dims` axes.
+        allow_stack: Whether to accept extra axes beyond `dims` (a stack).
+            Defaults to True; set False to require exactly `dims` axes.
 
     Raises:
         ValueError: If `dtype` is not an unsigned-integer type, or if `array`'s
@@ -185,8 +175,23 @@ def validate_float32_array(
 ) -> NDArray[np.float32]:
     """Validate a float32 array (or stack) and return it.
 
-    The float32 binding of `validate_float_array` -- see it for the shape,
-    `dims`, and `on_nonfinite` details. `array` is never modified.
+    The `dims` core dimensions default to 2 (an H x W image); with a stack, extra
+    axes add to the count (only the axis count is checked). Non-finite values
+    (NaN, +/-inf) are handled per `on_nonfinite`. `array` is never modified.
+
+    Args:
+        array: The array or stack to validate.
+        dims: The number of core dimensions, excluding any stacked axes.
+            Defaults to 2 (an H x W image).
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf):
+            "ignore" accepts them silently, "warn" (default) accepts them but
+            emits a RuntimeWarning, "raise" raises a ValueError.
+        allow_stack: Whether to accept extra axes beyond `dims` (a stack).
+            Defaults to True; set False to require exactly `dims` axes.
+
+    Raises:
+        ValueError: If `array` is not float32, has the wrong dimensionality, or
+            holds non-finite values while `on_nonfinite` is "raise".
     """
     return validate_float_array(
         array,
@@ -202,9 +207,19 @@ def validate_uint8_array(
 ) -> NDArray[np.uint8]:
     """Validate a uint8 array (or stack) and return it.
 
-    The uint8 binding of `validate_uint_array` -- see it for the shape and `dims`
-    details. uint8 is inherently finite, so there is no non-finite policy. `array`
-    is never modified.
+    The `dims` core dimensions default to 2 (an H x W image); with a stack, extra
+    axes add to the count (only the axis count is checked). uint8 is inherently
+    finite, so there is no non-finite policy. `array` is never modified.
+
+    Args:
+        array: The array or stack to validate.
+        dims: The number of core dimensions, excluding any stacked axes.
+            Defaults to 2 (an H x W image).
+        allow_stack: Whether to accept extra axes beyond `dims` (a stack).
+            Defaults to True; set False to require exactly `dims` axes.
+
+    Raises:
+        ValueError: If `array` is not uint8 or has the wrong dimensionality.
     """
     return validate_uint_array(
         array, dtype=np.uint8, dims=dims, allow_stack=allow_stack
