@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 class DryMassCalculator:
     """Integrate OPD (or phase) into dry mass (pg) at a fixed pixel size and alpha.
 
-    Bind the pixel size, specific refractive increment, and -- for the phase
-    path -- an `OPDConverter` once; the per-pixel mass factor is precomputed::
+    Bind the pixel size, specific refractive increment, and (for the phase
+    path) an `OPDConverter` once; the per-pixel mass factor is precomputed::
 
         dmc = DryMassCalculator(pixel_size=px)  # alpha, wavelength default
         dmc = DryMassCalculator.from_wavelength(pixel_size=px, wavelength=666e-9)
@@ -34,7 +34,7 @@ class DryMassCalculator:
     Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg, summed in
     float64 over the last two axes (H, W) and returned as float32. Inputs are
     batched (``(..., H, W)``) and a ``(N, H, W)`` mask adds a trailing channel
-    axis -- see `calc_from_opd` for the shape / `reduce` details. The OPD must
+    axis. See `calc_from_opd` for the shape / `reduce` details. The OPD must
     already be background-corrected (≈ 0 outside the object); segmentation and
     background estimation stay the caller's responsibility.
 
@@ -123,7 +123,7 @@ class DryMassCalculator:
         Raises:
             ValueError: If `opd` is not at least 2-D ``(..., H, W)``; if `mask`
                 is not 2-D ``(H, W)`` or 3-D ``(N, H, W)`` (a per-frame /
-                higher-rank mask like ``(T, N, H, W)`` is unsupported -- loop
+                higher-rank mask like ``(T, N, H, W)`` is unsupported; loop
                 over its leading axes); or if `mask`'s ``(H, W)`` does not match
                 `opd`'s.
         """

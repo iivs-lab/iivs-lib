@@ -29,7 +29,7 @@ class DryMass(nn.Module):
     once; the per-pixel `drymass_scale` (a plain float) is reused from the NumPy
     engine. `calc_from_opd` sums the masked OPD over the last two axes (H, W) in
     ``float64`` (for precision) and scales, returning a tensor in the input's
-    dtype -- never a Python `float` -- so it stays on the input's device, dtype,
+    dtype (never a Python `float`), so it stays on the input's device, dtype,
     and autograd graph (a `float()` cast would sync off-device and drop
     gradients). Inputs are batched (``(..., H, W)``); a ``(N, H, W)`` mask adds
     a trailing channel axis (``(..., N)``); ``reduce=False`` returns the
@@ -94,7 +94,7 @@ class DryMass(nn.Module):
         Raises:
             ValueError: If `opd` is not at least 2-D ``(..., H, W)``; if `mask`
                 is not 2-D ``(H, W)`` or 3-D ``(N, H, W)`` (a per-frame /
-                higher-rank mask like ``(T, N, H, W)`` is unsupported -- loop
+                higher-rank mask like ``(T, N, H, W)`` is unsupported; loop
                 over its leading axes); or if `mask`'s ``(H, W)`` does not match
                 `opd`'s.
         """

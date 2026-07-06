@@ -26,9 +26,9 @@ class OPDConverter:
         opd = conv.convert_to_opd(phase)
         phase = conv.convert_to_phase(opd)
 
-    ``OPD = phase * wavelength / (2 * pi)``, independent of refractive index --
-    distinct from the height `PhaseUnit.METERS` represents, which additionally
-    divides by the refractive-index difference. OPD is in **nm** (the QPI
+    ``OPD = phase * wavelength / (2 * pi)``, independent of refractive index
+    (distinct from the height `PhaseUnit.METERS` represents, which additionally
+    divides by the refractive-index difference). OPD is in **nm** (the QPI
     convention) while `wavelength` is SI (m); the per-rad scale is cached as
     `opd_scale`. The free `phase_to_opd` / `opd_to_phase` are one-shot
     conveniences over this class. For PyTorch, use
