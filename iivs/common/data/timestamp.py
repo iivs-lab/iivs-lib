@@ -63,9 +63,9 @@ class Timestamp:
 class TimestampSequence(DataSequence[Timestamp, int]):
     """A read-only sequence of per-frame `Timestamp`s, from any source.
 
-    Annotate parameters with this interface to accept any timing source,
-    however the timestamps are obtained. Each item is a `Timestamp` and its
-    metadata is the frame index.
+    Annotate parameters with this interface to accept any timing source, however
+    the timestamps are obtained. Each item is a `Timestamp` and its metadata is
+    the frame index.
 
     Subclasses populate `self._timestamps` (the ordered frames) in their
     ``__init__`` and implement `mean_interval_ms`; the sequence protocol

@@ -39,8 +39,8 @@ def validate_ndim[T: np.generic](
             Defaults to True; set False to require exactly `ndim` axes.
 
     Raises:
-        ValueError: If `array` has fewer than `ndim` axes, or if
-            `allow_stack` is False and it does not have exactly `ndim`.
+        ValueError: If `array` has fewer than `ndim` axes, or if `allow_stack` is False
+            and it does not have exactly `ndim`.
     """
 
     if allow_stack:
@@ -60,8 +60,8 @@ def validate_dtype[T: np.generic](
 ) -> NDArray[T]:
     """Validate `array`'s dtype is exactly `dtype`, a subtype of `kind`, and return it.
 
-    `kind` is the abstract numpy scalar family `dtype` must belong to (e.g.
-    `np.floating`); it also names that family in the error message, so the
+    `kind` is the abstract numpy scalar family `dtype` must belong to
+    (e.g. `np.floating`); it also names that family in the error message, so the
     message cannot drift from the check. `array` is never modified.
 
     Raises:
