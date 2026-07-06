@@ -90,14 +90,15 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
                 raise ValueError(msg)
 
             index = int(matched["index"])
-            expected_index = len(elapsed_times_ms)  # next contiguous index, from 0
-            if index != expected_index:
-                msg = f"frame index at line {lineno} must be {expected_index} (got {index}): {path}"
+            expected = len(elapsed_times_ms)  # next contiguous index, from 0
+            if index != expected:
+                msg = f"index at line {lineno} must be {expected} (got {index}): {path}"
                 raise ValueError(msg)
 
             elapsed = float(matched["elapsed"])
             if elapsed_times_ms and elapsed < elapsed_times_ms[-1]:
-                msg = f"elapsed time at line {lineno} must be >= {elapsed_times_ms[-1]} (got {elapsed}): {path}"
+                prev = elapsed_times_ms[-1]
+                msg = f"elapsed time at line {lineno} >= {prev} (got {elapsed}): {path}"
                 raise ValueError(msg)
 
             elapsed_times_ms.append(elapsed)
