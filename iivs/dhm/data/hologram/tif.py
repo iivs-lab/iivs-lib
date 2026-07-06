@@ -15,11 +15,7 @@ import tifffile
 from kaparoo.filesystem import StagedFile, ensure_file_extension
 
 from iivs.common.data import validate_uint8_array
-from iivs.dhm.data.common import (
-    ImageTifFolder,
-    ImageTifList,
-    load_uint8_tif,
-)
+from iivs.dhm.data.common import ImageTifFolder, ImageTifList, load_uint8_tif
 from iivs.dhm.data.hologram.base import HologramSequence
 
 if TYPE_CHECKING:
