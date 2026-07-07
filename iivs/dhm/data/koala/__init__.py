@@ -8,9 +8,9 @@ them:
   `load_bin`, `write_bin`).
 - `txt` — the `Float/Txt` header codec and image I/O (`KoalaTxtHeaderCodec`,
   `load_txt`, `write_txt`).
-- `image` — the uint8 `.tif` reader (`load_uint8_tif`) and the numbered folder /
-  list concretes (`ImageFileFolder`, `ImageTifFolder` / `ImageTifList`) that bind
-  uint8 on `iivs.common.data`'s generic `ArrayFileList` and `load_tif`.
+- `image` — the uint8 `.tif` reader (`load_uint8_tif`, over `tifffile`) and the
+  numbered folder / list concretes (`ImageFileFolder`, `ImageTifFolder` /
+  `ImageTifList`) that bind uint8 on `iivs.common.data`'s generic `ArrayFileList`.
 - `float` — the float32 file list/folder bases over a ``(read_header, decode)``
   codec, generic in the header type (`KoalaFloatFileList`,
   `KoalaFloatFileFolder`; shared by phase and intensity).
@@ -23,8 +23,8 @@ them:
 The technique-agnostic primitives live in `iivs.common.data`: the `.npy` reader / writer
 (`read_npy_shape`, `write_npy`), the same-shape mixin `FrameShapedMixin`, the array
 validators (`validate_float_array` / `validate_uint_array` and their float32 / uint8
-bindings), and the dtype-generic array-list base (`ArrayFileList`) and tif reader
-(`load_tif`); import them from there.
+bindings), and the dtype-generic array-list base (`ArrayFileList`); import them
+from there.
 """
 
 from __future__ import annotations

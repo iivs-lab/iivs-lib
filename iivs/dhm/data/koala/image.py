@@ -11,9 +11,11 @@ from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
+import tifffile
+from kaparoo.filesystem import ensure_file_exists
 from numpy.typing import NDArray
 
-from iivs.common.data import ArrayFileList, load_tif, validate_uint8_array
+from iivs.common.data import ArrayFileList, validate_uint8_array
 from iivs.dhm.data.koala.sequence import SequentialFileFolder
 
 if TYPE_CHECKING:
@@ -26,16 +28,17 @@ if TYPE_CHECKING:
 def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
     """Load a single uint8 raster from a `.tif` file.
 
-    The uint8 binding of `iivs.common.data.load_tif`: Koala's `Image/*.tif` previews are
-    8-bit, so the decoded array is validated as a 2D uint8 image. The previews are
-    LZW-compressed; `imagecodecs` (a core dependency) decodes them without any extra.
+    Koala's `Image/*.tif` previews are 8-bit, so the decoded array is validated as a 2D
+    uint8 image. The previews are LZW-compressed; `imagecodecs` (a core dependency)
+    decodes them without any extra.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the decoded image is not a 2D uint8 array.
     """
-    return validate_uint8_array(load_tif(path), allow_stack=False)
+    path = ensure_file_exists(path)
+    return validate_uint8_array(tifffile.imread(path), allow_stack=False)
 
 
 class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ArrayFileList[np.uint8]):

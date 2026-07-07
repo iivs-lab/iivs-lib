@@ -4,14 +4,14 @@ import numpy as np
 import pytest
 import tifffile
 
-from iivs.common.data import ArrayFileList, load_tif
+from iivs.common.data import ArrayFileList
 
 
 class _U8TifList(ArrayFileList[np.uint8]):
     FILE_EXT = "tif"
 
     def load_file(self, path):
-        return load_tif(path).astype(np.uint8, copy=False)
+        return tifffile.imread(path).astype(np.uint8, copy=False)
 
 
 def test_array_file_list_indexes_and_meta_is_path(tmp_path):

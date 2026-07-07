@@ -73,14 +73,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   generics (3.12+) and `kaparoo-python` supports 3.13, so 3.13 runs the full
   suite unchanged; CI now covers 3.13 and 3.14. The `[torch]` extra keeps its
   `torch>=2.9` floor (wheels for both cp313 and cp314).
-- `iivs.common.data`: hoist the dtype-generic image bases out of the (now)
-  `iivs.dhm.data.koala` layer — `load_tif` (read any single-page `.tif`, keeping
-  its stored dtype) and `ArrayFileList[U]` (the header-less array-list template,
-  generic in the item dtype). `koala` keeps the uint8 bindings: `load_uint8_tif`
-  (`= validate_uint8_array(load_tif(...))`), the Koala-numbered `ImageFileFolder`,
-  and the `.tif` concretes `ImageTifList` / `ImageTifFolder`. Same behavior; the
-  uint8 assumption (Koala previews are 8-bit) stays in `koala`, so a future 16-bit
-  source binds `ArrayFileList[np.uint16]` on the shared `load_tif`.
+- `iivs.common.data`: hoist the dtype-generic array-list base `ArrayFileList[U]`
+  (the header-less list template, generic in the item dtype) out of the (now)
+  `iivs.dhm.data.koala` layer. `koala` keeps the uint8 `.tif` bindings:
+  `load_uint8_tif` (a `tifffile` read validated to a 2D uint8 image), the
+  Koala-numbered `ImageFileFolder`, and the `.tif` concretes `ImageTifList` /
+  `ImageTifFolder`. The uint8 assumption (Koala previews are 8-bit) stays in
+  `koala`, so a future 16-bit source binds `ArrayFileList[np.uint16]` with its
+  own reader.
 - Rename `iivs.dhm.data.common` to `iivs.dhm.data.koala`. The dhm-internal
   cross-modality layer holds Lyncée Tec Koala's proprietary `.bin` / `Float/Txt`
   codecs and its `{index:05d}_<stem>.<ext>` export convention, so the vendor name

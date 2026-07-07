@@ -7,7 +7,6 @@ __all__ = (
     "Timestamp",
     "TimestampSequence",
     "TimestampsFixedFPS",
-    "load_tif",
     "read_npy_shape",
     "validate_float32_array",
     "validate_float_array",
@@ -19,7 +18,6 @@ __all__ = (
 from iivs.common.data.mixin import FrameShapedMixin
 from iivs.common.data.npy import read_npy_shape, write_npy
 from iivs.common.data.sequence import ArrayFileList
-from iivs.common.data.tif import load_tif
 from iivs.common.data.timestamp import Timestamp, TimestampSequence, TimestampsFixedFPS
 from iivs.common.data.validation import (
     OnNonFinite,
