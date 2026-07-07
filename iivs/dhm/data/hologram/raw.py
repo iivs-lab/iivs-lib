@@ -108,9 +108,9 @@ class HologramRawHeader:
             ValueError: If the stream is too small for a header, or holds
                 invalid header fields.
         """
-        raw = f.read(cls.HEADER_SIZE)
-        if len(raw) < cls.HEADER_SIZE:
-            msg = f"file must be at least {cls.HEADER_SIZE} bytes for a header (got {len(raw)})"
+        raw = f.read(expected := cls.HEADER_SIZE)
+        if (actual := len(raw)) < expected:
+            msg = f"file must be at least {expected} bytes for a header (got {actual})"
             raise ValueError(msg)
 
         record = np.frombuffer(raw, dtype=cls.DTYPE, count=1)[0]
@@ -123,7 +123,7 @@ class HologramRawHeader:
 
     @classmethod
     def from_file(cls, path: StrPath) -> Self:
-        """Open `path` and read its header; a thin wrapper over `from_stream`.
+        """Open `path` and read its header.
 
         Raises:
             FileNotFoundError: If `path` does not exist.
@@ -168,8 +168,7 @@ def save_hologram_raw(
             stack array, or any uint8 `DataSequence` such as a `HologramSequence`
             or a `kaparoo` composer like a `ConcatSequence`). All frames must
             share one shape.
-        overwrite: Whether to replace `path` if it already exists. Defaults to
-            False.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `path` has a non-`.raw` extension, an array is not a 2D
