@@ -20,9 +20,8 @@ if TYPE_CHECKING:
 def load_hologram_npy(path: StrPath) -> NDArray[np.uint8]:
     """Load a header-less `.npy` uint8 hologram image.
 
-    The `.npy` twin of `load_hologram_tif`: the lossless, codec-free single-frame
-    reader. Loaded with `numpy.load(allow_pickle=False)`, so a pickled object
-    array is rejected.
+    The `.npy` twin of `load_hologram_tif`: the lossless, codec-free
+    single-frame reader.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
@@ -44,8 +43,7 @@ def save_hologram_npy(
     Args:
         path: The `.npy` file to write.
         data: The hologram image to save, of shape (H, W).
-        overwrite: Whether to replace `path` if it already exists. Defaults to
-            False.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `path` has a non-`.npy` extension, or `data` is not a 2D
@@ -62,8 +60,7 @@ class HologramNpyFolder(ImageFileFolder, HologramSequence[Path]):
     """An ordered sequence of header-less `{index:05d}_holo.npy` uint8 holograms.
 
     The `.npy` codec over `koala.ImageFileFolder`: numbered discovery + one
-    shared (lazily read) `frame_shape`, with each frame loaded by
-    `numpy.load(allow_pickle=False)` (a pickled object array is rejected).
+    shared (lazily read) `frame_shape`; a pickled object array is rejected.
     Holograms carry no physical metadata, so (unlike phase / intensity)
     nothing extra is needed at construction. Create the files with `numpy.save`
     (uncompressed `.npy`, one 2-D uint8 frame per file).

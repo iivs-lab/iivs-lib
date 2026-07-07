@@ -55,8 +55,7 @@ def convert_hologram_sequence(
             `HologramTifFolder`, `HologramNpyFolder`, `HologramTifList`, or any
             uint8 `DataSequence` such as a composed sequence).
         ext: Target format; "raw", "tif", or "npy".
-        overwrite: Whether to replace an existing destination. Defaults to
-            False.
+        overwrite: Whether to replace an existing destination. Defaults to False.
 
     Raises:
         ValueError: If `ext` is not "raw", "tif", or "npy".

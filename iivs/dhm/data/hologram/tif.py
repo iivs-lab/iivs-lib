@@ -27,8 +27,6 @@ if TYPE_CHECKING:
 def load_hologram_tif(path: StrPath) -> NDArray[np.uint8]:
     """Load a Lyncée Tec Koala uint8 hologram from a `.tif` file.
 
-    A thin alias over `koala.load_uint8_tif`.
-
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
@@ -48,8 +46,7 @@ def save_hologram_tif(
     Args:
         path: The `.tif` file to write.
         data: The hologram image to save, of shape (H, W).
-        overwrite: Whether to replace `path` if it already exists. Defaults
-            to False.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `path` has a non-`.tif` extension, or `data` is not a 2D
