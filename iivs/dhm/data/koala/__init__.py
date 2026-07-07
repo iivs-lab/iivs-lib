@@ -15,7 +15,7 @@ them:
   codec, generic in the header type (`KoalaFloatFileList`,
   `KoalaFloatFileFolder`; shared by phase and intensity).
 - `sequence` — the numbered-folder base (`SequentialFileFolder`) plus its naming
-  / discovery helpers (`numbered_name`, `detect_numbered_format`). The extension
+  / discovery helpers (`koala_frame_name`, `detect_koala_format`). The extension
   helpers `file_extension`, `ensure_file_extension` (with its `add=True` mode),
   and the `UnsupportedExtensionError` raised on a bad extension are imported
   directly from `kaparoo.filesystem` where needed, not re-exported here.
@@ -39,11 +39,11 @@ __all__ = (
     "KoalaTxtHeaderCodec",
     "SequentialFileFolder",
     "ValidationLevel",
-    "detect_numbered_format",
+    "detect_koala_format",
+    "koala_frame_name",
     "load_bin",
     "load_txt",
     "load_uint8_tif",
-    "numbered_name",
     "write_bin",
     "write_txt",
 )
@@ -64,7 +64,7 @@ from iivs.dhm.data.koala.image import (
 from iivs.dhm.data.koala.sequence import (
     SequentialFileFolder,
     ValidationLevel,
-    detect_numbered_format,
-    numbered_name,
+    detect_koala_format,
+    koala_frame_name,
 )
 from iivs.dhm.data.koala.txt import KoalaTxtHeaderCodec, load_txt, write_txt

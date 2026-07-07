@@ -22,7 +22,7 @@ from kaparoo.filesystem import (
 )
 from kaparoo.utils import ensure_one_of, replace_if_none
 
-from iivs.dhm.data.koala import FLOAT_FORMATS, detect_numbered_format, numbered_name
+from iivs.dhm.data.koala import FLOAT_FORMATS, detect_koala_format, koala_frame_name
 from iivs.dhm.data.phase.bin import (
     PhaseBinFolder,
     PhaseBinList,
@@ -340,7 +340,7 @@ def phase_folder(
     """Open a numbered phase folder, picking the class by the format it holds.
 
     Discovers the `{index:05d}_phase.<ext>` files under `root` (via
-    `data.common.detect_numbered_format`) and dispatches to `PhaseBinFolder` /
+    `detect_koala_format`) and dispatches to `PhaseBinFolder` /
     `PhaseTxtFolder` / `PhaseNpyFolder`. The `.bin` / `.txt` folders read their metadata
     from the files, so the `pixel_size` / `unit` / scale args must be omitted for them;
     the header-less `.npy` folder instead **requires** `pixel_size` and `unit` (and a
@@ -362,9 +362,7 @@ def phase_folder(
             metadata args are given for a `.bin` / `.txt` folder, or if a `.npy` folder
             is missing `pixel_size` / `unit`.
     """
-    ext = detect_numbered_format(
-        root, stem="phase", formats=FLOAT_FORMATS, prefer=prefer
-    )
+    ext = detect_koala_format(root, stem="phase", formats=FLOAT_FORMATS, prefer=prefer)
     if ext in ("bin", "txt"):
         if any(
             arg is not None
@@ -512,7 +510,7 @@ def save_phase_folder(
 
     with StagedDirectory(root, overwrite=overwrite) as staged:
         for index, image in enumerate(images):
-            save(staged.workdir / numbered_name(index, stem=stem, ext=ext), image)
+            save(staged.workdir / koala_frame_name(index, stem=stem, ext=ext), image)
 
 
 def convert_phase_folder(

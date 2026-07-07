@@ -3,8 +3,8 @@ from __future__ import annotations
 __all__ = (
     "SequentialFileFolder",
     "ValidationLevel",
-    "detect_numbered_format",
-    "numbered_name",
+    "detect_koala_format",
+    "koala_frame_name",
 )
 
 from functools import cache
@@ -31,26 +31,26 @@ type ValidationLevel = Literal["names", "headers", "data"]
 
 
 @cache
-def _numbered_filter(stem: str, exts: tuple[str, ...]) -> Regex:
+def _koala_frame_filter(stem: str, exts: tuple[str, ...]) -> Regex:
     """A cached name filter for ``{index:05d}_{stem}.<ext>`` files.
 
     Built once per ``(stem, exts)``, since both are fixed by the folder type; shared by
-    `SequentialFileFolder.list_files` (one `ext`) and `detect_numbered_format`
+    `SequentialFileFolder.list_files` (one `ext`) and `detect_koala_format`
     (several).
     """
     return Regex(rf"\d{{5}}_{stem}\.({'|'.join(exts)})")
 
 
-def numbered_name(index: int, *, stem: str, ext: str) -> str:
+def koala_frame_name(index: int, *, stem: str, ext: str) -> str:
     """The contiguous Koala filename ``{index:05d}_{stem}.{ext}``.
 
-    The single source of truth for the numbered-folder naming convention, used both to
+    The single source of truth for Koala's frame-naming convention, used both to
     discover/validate a `SequentialFileFolder` and to write a converted folder.
     """
     return f"{index:05d}_{stem}.{ext}"
 
 
-def detect_numbered_format(
+def detect_koala_format(
     root: StrPath,
     *,
     stem: str,
@@ -80,7 +80,9 @@ def detect_numbered_format(
             is given but selects none of the present formats.
     """
     formats = tuple(formats)
-    hits = search_files(root, name_filter=_numbered_filter(stem, formats), max_depth=1)
+    hits = search_files(
+        root, name_filter=_koala_frame_filter(stem, formats), max_depth=1
+    )
     found = {file_extension(hit) for hit in hits}
     present = [fmt for fmt in formats if fmt in found]
 
@@ -137,7 +139,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         ``{index:05d}`` zero-padding) is exactly numeric index order, so no extra sort
         is needed.
         """
-        name_filter = _numbered_filter(self.FILE_STEM, (self.FILE_EXT,))
+        name_filter = _koala_frame_filter(self.FILE_STEM, (self.FILE_EXT,))
         files = search_files(root, name_filter=name_filter, max_depth=1)
         if not files:
             msg = f"no NNNNN_{self.FILE_STEM}.{self.FILE_EXT} files found in {root}"
@@ -151,7 +153,7 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
 
     def expected_name(self, index: int) -> str:
         """The contiguous filename expected at `index`."""
-        return numbered_name(index, stem=self.FILE_STEM, ext=self.FILE_EXT)
+        return koala_frame_name(index, stem=self.FILE_STEM, ext=self.FILE_EXT)
 
     def validate(self, *, level: ValidationLevel | None = None) -> None:
         """Validate every file to `level` (defaults to `DEFAULT_LEVEL`)."""

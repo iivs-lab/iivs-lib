@@ -41,7 +41,7 @@ from iivs.dhm.data.intensity.txt import (
     read_intensity_txt_header,
     save_intensity_txt,
 )
-from iivs.dhm.data.koala import FLOAT_FORMATS, detect_numbered_format, numbered_name
+from iivs.dhm.data.koala import FLOAT_FORMATS, detect_koala_format, koala_frame_name
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -243,7 +243,7 @@ def intensity_folder(
     """Open a numbered intensity folder, picking the class by the format it holds.
 
     Discovers the `{index:05d}_intensity.<ext>` files under `root` (via
-    `data.common.detect_numbered_format`) and dispatches to `IntensityBinFolder` /
+    `detect_koala_format`) and dispatches to `IntensityBinFolder` /
     `IntensityTxtFolder` / `IntensityNpyFolder`. The `.bin` / `.txt` folders read
     `pixel_size` from the files, so it must be omitted for them; the header-less `.npy`
     folder instead **requires** `pixel_size`.
@@ -262,7 +262,7 @@ def intensity_folder(
             `pixel_size` is given for a `.bin` / `.txt` folder, or if a `.npy` folder is
             missing it.
     """
-    ext = detect_numbered_format(
+    ext = detect_koala_format(
         root, stem="intensity", formats=FLOAT_FORMATS, prefer=prefer
     )
     if ext in ("bin", "txt"):
@@ -335,7 +335,7 @@ def save_intensity_folder(
 
     with StagedDirectory(root, overwrite=overwrite) as staged:
         for index, image in enumerate(images):
-            save(staged.workdir / numbered_name(index, stem=stem, ext=ext), image)
+            save(staged.workdir / koala_frame_name(index, stem=stem, ext=ext), image)
 
 
 def convert_intensity_folder(

@@ -23,7 +23,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `iivs.dhm.data.koala`: shared vocabulary for the repeated dispatch literals —
   the `OnNonFinite` (`"ignore"`/`"warn"`/`"raise"`) and `ValidationLevel`
   (`"names"`/`"headers"`/`"data"`) type aliases, the `FloatFormat` alias with its
-  `FLOAT_FORMATS` tuple, and `detect_numbered_format(root, *, stem, formats,
+  `FLOAT_FORMATS` tuple, and `detect_koala_format(root, *, stem, formats,
   prefer)` — which discovers a numbered folder's format with `kaparoo`'s
   `search_files` + a `Regex` (no `Path.glob`) and resolves a multi-format
   conflict via `prefer` (the per-modality factories now share these instead of
@@ -90,6 +90,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   codecs and its `{index:05d}_<stem>.<ext>` export convention, so the vendor name
   disambiguates it from the technique-agnostic `iivs.common.data`. Update imports
   (`from iivs.dhm.data.koala import ...`); no symbols changed.
+- Rename `iivs.dhm.data.koala.numbered_name` to `koala_frame_name`, marking the
+  `{index:05d}_<stem>.<ext>` file-naming convention as Lyncée Tec Koala's rather
+  than a generic "numbered" (the sibling folder-format discovery is exposed as
+  `detect_koala_format`).
 - `imagecodecs` (LZW `Image/*.tif` preview decode) ships as a **core
   dependency**, not an extra: it moves into the base dependencies and the
   `[image]` extra is removed. Handling image-like microscope data is this

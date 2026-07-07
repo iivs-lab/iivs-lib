@@ -12,10 +12,10 @@ from iivs.dhm.data.intensity.bin import IntensityBinHeader
 from iivs.dhm.data.intensity.txt import IntensityTxtHeaderCodec
 from iivs.dhm.data.koala import (
     FLOAT_FORMATS,
-    detect_numbered_format,
+    detect_koala_format,
+    koala_frame_name,
     load_txt,
     load_uint8_tif,
-    numbered_name,
     write_bin,
 )
 from iivs.dhm.data.phase.base import PhaseSequence
@@ -191,12 +191,12 @@ def test_heterogeneous_list_lacks_the_mixin(tmp_path):
 
 
 # ========================== #
-#     numbered_name / ext    #
+#     koala_frame_name / ext    #
 # ========================== #
 
 
-def test_numbered_name():
-    assert numbered_name(7, stem="phase", ext="bin") == "00007_phase.bin"
+def test_koala_frame_name():
+    assert koala_frame_name(7, stem="phase", ext="bin") == "00007_phase.bin"
 
 
 def test_ensure_file_extension_add_appends_when_absent(tmp_path):
@@ -234,21 +234,19 @@ def test_save_rejects_wrong_extension(tmp_path):
 
 
 # ========================== #
-#   detect_numbered_format   #
+#   detect_koala_format   #
 # ========================== #
 
 
 def _numbered(root, index, *, stem, ext):
-    # detect_numbered_format only inspects names, so empty files suffice.
-    (root / numbered_name(index, stem=stem, ext=ext)).write_bytes(b"")
+    # detect_koala_format only inspects names, so empty files suffice.
+    (root / koala_frame_name(index, stem=stem, ext=ext)).write_bytes(b"")
 
 
 def test_detect_single_format(tmp_path):
     _numbered(tmp_path, 0, stem="phase", ext="bin")
     _numbered(tmp_path, 1, stem="phase", ext="bin")
-    assert (
-        detect_numbered_format(tmp_path, stem="phase", formats=FLOAT_FORMATS) == "bin"
-    )
+    assert detect_koala_format(tmp_path, stem="phase", formats=FLOAT_FORMATS) == "bin"
 
 
 def test_detect_ignores_other_stems_and_loose_files(tmp_path):
@@ -257,27 +255,25 @@ def test_detect_ignores_other_stems_and_loose_files(tmp_path):
     _numbered(tmp_path, 0, stem="intensity", ext="bin")  # other stem
     (tmp_path / "phase.bin").write_bytes(b"")  # unnumbered
     (tmp_path / "0_phase.bin").write_bytes(b"")  # too few digits
-    assert (
-        detect_numbered_format(tmp_path, stem="phase", formats=FLOAT_FORMATS) == "txt"
-    )
+    assert detect_koala_format(tmp_path, stem="phase", formats=FLOAT_FORMATS) == "txt"
 
 
 def test_detect_no_files_raises(tmp_path):
     with pytest.raises(FileNotFoundError, match=r"no NNNNN_phase"):
-        detect_numbered_format(tmp_path, stem="phase", formats=FLOAT_FORMATS)
+        detect_koala_format(tmp_path, stem="phase", formats=FLOAT_FORMATS)
 
 
 def test_detect_multiple_without_prefer_raises(tmp_path):
     _numbered(tmp_path, 0, stem="phase", ext="bin")
     _numbered(tmp_path, 0, stem="phase", ext="txt")
     with pytest.raises(ValueError, match=r"ambiguous.*multiple phase formats"):
-        detect_numbered_format(tmp_path, stem="phase", formats=FLOAT_FORMATS)
+        detect_koala_format(tmp_path, stem="phase", formats=FLOAT_FORMATS)
 
 
 def test_detect_prefer_single_format(tmp_path):
     _numbered(tmp_path, 0, stem="phase", ext="bin")
     _numbered(tmp_path, 0, stem="phase", ext="txt")
-    got = detect_numbered_format(
+    got = detect_koala_format(
         tmp_path, stem="phase", formats=FLOAT_FORMATS, prefer="txt"
     )
     assert got == "txt"
@@ -287,7 +283,7 @@ def test_detect_prefer_priority_sequence_picks_first_present(tmp_path):
     # npy is absent, so the first *present* format in prefer order wins.
     _numbered(tmp_path, 0, stem="phase", ext="bin")
     _numbered(tmp_path, 0, stem="phase", ext="txt")
-    got = detect_numbered_format(
+    got = detect_koala_format(
         tmp_path, stem="phase", formats=FLOAT_FORMATS, prefer=("npy", "txt", "bin")
     )
     assert got == "txt"
@@ -297,6 +293,4 @@ def test_detect_prefer_selects_none_present_raises(tmp_path):
     _numbered(tmp_path, 0, stem="phase", ext="bin")
     _numbered(tmp_path, 0, stem="phase", ext="txt")
     with pytest.raises(ValueError, match=r"prefer=\['npy'\] selects none"):
-        detect_numbered_format(
-            tmp_path, stem="phase", formats=FLOAT_FORMATS, prefer="npy"
-        )
+        detect_koala_format(tmp_path, stem="phase", formats=FLOAT_FORMATS, prefer="npy")
