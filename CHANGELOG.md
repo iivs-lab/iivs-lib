@@ -71,8 +71,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Lower the minimum Python to **3.13** (from 3.14). The code uses only PEP 695
   generics (3.12+) and `kaparoo-python` supports 3.13, so 3.13 runs the full
-  suite unchanged; CI now covers 3.13 and 3.14. The `[torch]` extra keeps its
-  `torch>=2.9` floor (wheels for both cp313 and cp314).
+  suite unchanged; CI now covers 3.13 and 3.14.
 - `iivs.common.data`: hoist the dtype-generic array-list base `ArrayFileList[U]`
   (the header-less list template, generic in the item dtype) out of the (now)
   `iivs.dhm.data.koala` layer. `koala` keeps the uint8 `.tif` bindings:
@@ -81,6 +80,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `ImageTifFolder`. The uint8 assumption (Koala previews are 8-bit) stays in
   `koala`, so a future 16-bit source binds `ArrayFileList[np.uint16]` with its
   own reader.
+- `iivs.common.data`: rename the array validators `validate_float32_image` /
+  `validate_uint8_image` (from `0.1.0`) to `validate_float32_array` /
+  `validate_uint8_array`, and generalize them over a dtype-parametric core with
+  an explicit `ndim` (default 2; `allow_stack` still toggles single-image vs
+  stack). They validate arrays / stacks, not only single images, hence the name.
 - Rename `iivs.dhm.data.common` to `iivs.dhm.data.koala`. The dhm-internal
   cross-modality layer holds Lyncée Tec Koala's proprietary `.bin` / `Float/Txt`
   codecs and its `{index:05d}_<stem>.<ext>` export convention, so the vendor name
@@ -110,12 +114,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   in place of this package's own short-lived `file_extension` /
   `unsupported_extension` helpers.
 - Membership-validation guards now use `kaparoo.utils.ensure_one_of` (the `ext`
-  checks in the `convert` modules, the folder `validate` level, and
+  checks in the `convert_*` functions, the folder `validate` level, and
   `HologramRawHeader.bit_depth`). The rejection message wording changes
   slightly (e.g. `ext must be one of [...]`).
-- Raise the `iivs-lib[torch]` extra's floor to `torch>=2.9` — the first release
-  with CPython 3.14 (cp314) wheels, which the project's `requires-python >=3.14`
-  needs (2.6–2.8 ship none); resolved installs on 3.14 are unaffected.
+- Raise the `iivs-lib[torch]` extra's floor to `torch>=2.9` (from `2.6`).
+  `torch<2.9` ships no CPython 3.14 (cp314) wheels, and CI covers 3.14, so 2.9 is
+  the floor that resolves across the supported Pythons (cp313 / cp314); installs
+  on 3.13 are unaffected, since 2.6+ all ship cp313 wheels.
 - `PhaseFloatSequence.bounds_nm` is now a cached **property**, not a method:
   access it as `seq.bounds_nm` (no call). It still reads every frame on first
   access, then caches the global `(min, max)` for the sequence's lifetime.
@@ -126,6 +131,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   from the public surface), and `write_txt_grid` is renamed to `write_txt`. Each
   phase / intensity per-format loader is now a thin wrapper over these, so the
   duplicated per-modality read bodies are gone.
+- The Koala `Float/Txt` readers (`load_txt`, the per-modality `load_*_txt`
+  wrappers, and `KoalaTxtHeaderCodec.from_file`) now validate the `.txt`
+  extension up front, matching the `phbounds.txt` / `timestamps.txt` readers: a
+  wrong-format path fails with `unsupported extension` rather than a downstream
+  `malformed header`. The binary formats (`.bin` / `.npy` / `.raw` / `.tif`)
+  still sniff content, so they are unaffected.
 
 ### Fixed
 

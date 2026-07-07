@@ -64,8 +64,8 @@ the data layer and beyond — not formal milestones.
   settle (e.g. where a shared `MaskedReduction` or calibration type would live).
 - **Extract `kaparoo-numpy` (deferred).** The numpy-generic, iivs-agnostic parts
   of `iivs.common.data` — the array validators (`validate_*_array`), `.npy` I/O
-  (`read_npy_shape` / `write_npy`), and the array-file bases (`load_tif`,
-  `ArrayFileList`) — are kaparoo-ecosystem utilities, not iivs-specific
+  (`read_npy_shape` / `write_npy`), and the array-file base (`ArrayFileList`) —
+  are kaparoo-ecosystem utilities, not iivs-specific
   (`ArrayFileList` already extends `kaparoo`'s `FileListSequence`). Split them
   into a sibling `kaparoo-numpy` distribution *once a second consumer needs
   them*: premature now (iivs is the only user, and a separate lib adds

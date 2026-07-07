@@ -103,7 +103,7 @@ phase and intensity the quantitative float32 sources are
 `<Modality>ImageSequence`, both under the `<Modality>Sequence` base.
 Numbered-folder sequences share the `common.SequentialFileFolder`
 discovery/validation base, and validate their arrays via
-`common.validate_float32_image` / `validate_uint8_image`. These cross-modality
+`common.validate_float32_array` / `validate_uint8_array`. These cross-modality
 building blocks live in `iivs.dhm.data.koala`.
 
 ### `iivs.dhm.analysis`
