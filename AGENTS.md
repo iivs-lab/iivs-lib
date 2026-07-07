@@ -87,9 +87,13 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
 `ruff` enforces most of this — run `uv run ruff check --fix` rather than
 applying it by hand.
 
-- Every module starts with `from __future__ import annotations` (ruff
-  isort `required-imports`). Empty `__init__.py` package markers are
-  exempt.
+- Every module *with annotations* starts with `from __future__ import
+  annotations` (ruff isort `required-imports`). `__init__.py` package
+  markers are exempt (per-file-ignore `I002`): whether an empty marker or
+  a pure re-export hub, they carry no annotations, so the import would be
+  a no-op. `constants.py` and other bare-value modules keep it under the
+  blanket rule (the no-op line costs less than a per-file exception, and
+  guards a future annotation edit).
 - Use builtin generics — `list`, `dict`, `tuple`, `type` — never
   `typing.List`, `typing.Dict`, `typing.Tuple`, `typing.Type` (ruff `UP`).
 - Imports are grouped and sorted: standard library, third party, first

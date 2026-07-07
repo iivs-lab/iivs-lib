@@ -5,8 +5,6 @@ readers/writers and lazy sequences, plus `convert_phase_*` format conversion and
 `phbounds.txt` display bounds.
 """
 
-from __future__ import annotations
-
 __all__ = (
     "PhaseBinFolder",
     "PhaseBinHeader",

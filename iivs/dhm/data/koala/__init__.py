@@ -27,8 +27,6 @@ bindings), and the dtype-generic array-list base (`ArrayFileList`); import them
 from there.
 """
 
-from __future__ import annotations
-
 __all__ = (
     "FLOAT_FORMATS",
     "FloatFormat",

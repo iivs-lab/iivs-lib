@@ -6,8 +6,6 @@ that preserve the input tensor's device and autograd graph. The physical calibra
 torch-native.
 """
 
-from __future__ import annotations
-
 try:
     from iivs.dhm.analysis.pytorch.drymass import (
         DryMass,

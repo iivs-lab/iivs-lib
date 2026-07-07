@@ -14,5 +14,3 @@ The ``.bin``, ``.tif`` / ``.raw``, and ``timestamps.txt`` formats are `Lyncée T
 implementation, `pyKoalaUtils <https://github.com/lynceetec/pyKoalaUtils>`_ (MIT); this
 package is an independent reimplementation and contains no code from it.
 """
-
-from __future__ import annotations

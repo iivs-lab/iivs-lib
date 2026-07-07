@@ -5,8 +5,6 @@ The NumPy engines and one-shot helpers are re-exported here; the Torch twins liv
 re-exported, so importing this package never requires PyTorch.
 """
 
-from __future__ import annotations
-
 __all__ = (
     "DryMassCalculator",
     "OPDConverter",

@@ -4,8 +4,6 @@ Quantitative float32 intensity (`.bin` / `.txt` / `.npy`) and uint8 `.tif` previ
 their readers/writers and lazy sequences, plus `convert_intensity_*` format conversion.
 """
 
-from __future__ import annotations
-
 __all__ = (
     "IntensityBinFolder",
     "IntensityBinHeader",
