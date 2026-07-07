@@ -270,10 +270,9 @@ def save_phase_txt(
 class PhaseTxtList(PhaseFileList):
     """A phase sequence over an explicit, arbitrary list of `Float/Txt` files.
 
-    The text twin of `PhaseBinList` (the `.txt` codec over `PhaseFileList`):
-    no naming/contiguity/shared-header constraint; each file is read
-    independently with per-file unit conversion. `PhaseTxtFolder` is the
-    auto-discovered, same-shape special case of this.
+    The text twin of `PhaseBinList`: no naming/contiguity/shared-header
+    constraint; each file is read independently with per-file unit conversion.
+    `PhaseTxtFolder` is the auto-discovered, same-shape special case of this.
 
     Args:
         files: The `.txt` files to expose, in the given order.

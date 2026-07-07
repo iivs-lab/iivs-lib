@@ -30,8 +30,6 @@ class IntensityTifFolder(ImageTifFolder, IntensityTifList):
     The uint8 display-preview twin of `IntensityBinFolder`, and the
     auto-discovered, same-shape special case of `IntensityTifList`: lists
     `{index:05d}_intensity.tif`, sharing one (lazily read) `frame_shape`.
-    Construction and validation are inherited from `ImageTifFolder`; this
-    supplies only the file stem.
 
     The LZW-compressed Koala previews decode via the core `imagecodecs`
     dependency (no extra needed).

@@ -68,8 +68,7 @@ def save_hologram_tif(
 class HologramTifList(ImageTifList, HologramSequence[Path]):
     """A hologram sequence over an explicit, arbitrary list of `.tif` files.
 
-    The uint8 tif body comes from `koala.ImageTifList`; this adds the hologram
-    role. Imposes no naming, contiguity, or single-folder constraint: the files
+    Imposes no naming, contiguity, or single-folder constraint: the files
     may live anywhere and each is decoded independently, so they may differ in
     shape (hence a plain `HologramSequence`, no `frame_shape`). Each item is the
     decoded uint8 image and its metadata is the source path. `HologramTifFolder`
@@ -86,8 +85,6 @@ class HologramTifFolder(ImageTifFolder, HologramTifList):
     The auto-discovered, same-shape special case of `HologramTifList`: lists the
     direct children matching `{index:05d}_holo.tif` (exactly five digits,
     case-sensitive) in index order, sharing one (lazily read) `frame_shape`.
-    Construction and validation are inherited from `ImageTifFolder`; this
-    supplies only the file stem.
 
     Args:
         root: The folder to scan.

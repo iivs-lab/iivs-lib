@@ -301,7 +301,7 @@ def save_phase_bin(
 class PhaseBinList(PhaseFileList):
     """A phase sequence over an explicit, arbitrary list of `.bin` files.
 
-    The general case (the `.bin` codec over `PhaseFileList`): no naming,
+    The general case: no naming,
     contiguity, single-folder, or shared-header constraint; each file is read
     independently with per-file unit conversion. `PhaseBinFolder` is the
     auto-discovered, same-shape special case of this.

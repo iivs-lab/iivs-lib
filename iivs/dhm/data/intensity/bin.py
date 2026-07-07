@@ -80,14 +80,14 @@ class IntensityBinHeader(KoalaBinHeader):
 def read_intensity_bin_header(path: StrPath) -> IntensityBinHeader:
     """Read only the header of a Koala intensity `.bin` file, without the pixels.
 
-    Reads just the fixed-size header, so it stays cheap when curating many files
-    by metadata (shape, field of view) without decoding the images.
+    Reads just the fixed-size header, so it stays cheap when curating many files by
+    metadata (shape, field of view) without decoding the images.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the file is too small, declares an unsupported header
-            size, or has invalid header fields.
+        ValueError: If the file is too small, declares an unsupported header size,
+            or has invalid header fields.
     """
     return IntensityBinHeader.from_file(path)
 
@@ -131,10 +131,9 @@ def load_intensity_bin(
         path: The .bin file to read.
         return_header: Whether to also return the parsed `IntensityBinHeader`.
             Defaults to False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
-            decoded data: "ignore" (default) accepts silently, "warn" emits a
-            RuntimeWarning, "raise" raises a ValueError (useful to reject
-            corrupted files).
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
+            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
+            "raise" raises a ValueError (useful to reject corrupted files).
 
     Returns:
         The intensity image as a 2D float32 array, or an (image, header)
@@ -143,10 +142,9 @@ def load_intensity_bin(
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the file is too small, declares an unsupported header
-            size, has invalid header fields, holds the wrong number of
-            pixels, or holds non-finite values while `on_nonfinite` is
-            "raise".
+        ValueError: If the file is too small, declares an unsupported header size,
+            has invalid header fields, holds the wrong number of pixels, or holds
+            non-finite values while `on_nonfinite` is "raise".
     """
     data, header = load_bin(path, IntensityBinHeader, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
@@ -167,8 +165,8 @@ def save_intensity_bin(
 ) -> None:
     """Save a 2D float32 intensity image as a Koala .bin file.
 
-    The phase-only ``hconv`` / ``unit`` bytes are written as Koala's no-op
-    sentinel (``-1`` / ``0``); intensity has no height scale or unit.
+    The phase-only ``hconv`` / ``unit`` bytes are written as Koala's no-op sentinel
+    (``-1`` / ``0``); intensity has no height scale or unit.
 
     The file is written atomically: content is staged to a temp file in the
     destination's directory and moved into place on success, so a failed
@@ -212,7 +210,7 @@ def save_intensity_bin(
 class IntensityBinList(IntensityFileList):
     """An intensity sequence over an explicit, arbitrary list of `.bin` files.
 
-    The general case (the `.bin` codec over `IntensityFileList`): no naming,
+    The general case: no naming,
     contiguity, single-folder, or shared-header constraint; each file is read
     independently. `IntensityBinFolder` is the auto-discovered, same-shape
     special case of this.

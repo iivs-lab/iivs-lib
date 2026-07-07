@@ -40,8 +40,7 @@ class IntensityImageSequence[M](IntensitySequence[NDArray[np.uint8], M]):
 
     The display-only 8-bit preview Koala renders under `Image/*.tif`, distinct
     from, and not a substitute for, the quantitative `IntensityFloatSequence`.
-    Same-shape sources mix in `data.common.FrameShapedMixin` to expose
-    `frame_shape`.
+    Same-shape sources also expose `frame_shape`.
     """
 
 
@@ -51,8 +50,8 @@ class IntensityFloatSequence[M](IntensitySequence[NDArray[np.float32], M]):
     The intensity reconstruction Koala exports as `Float/{Bin,Txt}`; annotate
     parameters with it to accept any float32 intensity source: one acquisition
     (`IntensityBinFolder`) or an arbitrary `IntensityBinList` of unrelated
-    files, and their `.txt` twins. Same-shape sources additionally mix in
-    `data.common.FrameShapedMixin` to expose `frame_shape`.
+    files, and their `.txt` twins. Same-shape sources additionally expose
+    `frame_shape`.
     """
 
 
@@ -61,12 +60,9 @@ class IntensityFileList(
 ):
     """Format-agnostic intensity file list over a ``(read_header, decode)`` codec.
 
-    Inherits the float-list machinery from `KoalaFloatFileList` (the `.<FILE_EXT>`
-    check, `get_meta`, `get_header`, `load_with_header`); a concrete subclass
-    (`IntensityBinList`, `IntensityTxtList`) supplies only `FILE_EXT` and the
-    `_read_header` / `_decode` codec. Intensity carries no unit, so the decoded
-    image needs no post-processing. `IntensityFileFolder` is the auto-discovered,
-    same-shape specialization.
+    An arbitrary list of float32 intensity files, each read independently.
+    Concrete subclasses (`IntensityBinList`, `IntensityTxtList`) bind a format;
+    `IntensityFileFolder` is the auto-discovered, same-shape case.
     """
 
 
@@ -75,8 +71,9 @@ class IntensityFileFolder(
 ):
     """Format-agnostic intensity folder: numbered discovery + one shared header.
 
-    The auto-discovered, same-shape specialization of `IntensityFileList`; it
-    reuses that list's `load_file` codec. Concrete folders set only `FILE_EXT`.
+    The auto-discovered, same-shape case of `IntensityFileList`: one
+    acquisition's numbered files sharing a single `header`. Concrete folders
+    (`IntensityBinFolder`, `IntensityTxtFolder`) bind a format.
     """
 
     FILE_STEM: ClassVar[str] = "intensity"

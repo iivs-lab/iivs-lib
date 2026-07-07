@@ -59,7 +59,7 @@ def save_hologram_npy(
 class HologramNpyFolder(ImageFileFolder, HologramSequence[Path]):
     """An ordered sequence of header-less `{index:05d}_holo.npy` uint8 holograms.
 
-    The `.npy` codec over `koala.ImageFileFolder`: numbered discovery + one
+    Numbered discovery + one
     shared (lazily read) `frame_shape`; a pickled object array is rejected.
     Holograms carry no physical metadata, so (unlike phase / intensity)
     nothing extra is needed at construction. Create the files with `numpy.save`

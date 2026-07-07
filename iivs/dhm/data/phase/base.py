@@ -48,7 +48,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
     The display-only 8-bit preview Koala renders under `Image/*.tif` (the float
     phase mapped through `phbounds.txt` into 0-255); distinct from, and not a
     substitute for, the quantitative `PhaseFloatSequence`. Same-shape sources
-    mix in `data.common.FrameShapedMixin` to expose `frame_shape`.
+    also expose `frame_shape`.
     """
 
     @overload
@@ -164,8 +164,7 @@ class PhaseFloatSequence[M](PhaseSequence[NDArray[np.float32], M]):
     The phase reconstruction Koala exports as `Float/{Bin,Txt}`; annotate
     parameters with it to accept any float32 phase source: one acquisition
     (`PhaseBinFolder`) or an arbitrary `PhaseBinList` of unrelated files, and
-    their `.txt` twins. Same-shape sources additionally mix in
-    `data.common.FrameShapedMixin` to expose `frame_shape`.
+    their `.txt` twins. Same-shape sources additionally expose `frame_shape`.
     """
 
 
@@ -220,12 +219,10 @@ class PhaseFloatView[M](
 class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Path]):
     """Format-agnostic phase file list over a ``(read_header, decode)`` codec.
 
-    Inherits the float-list machinery from `KoalaFloatFileList` (the `.<FILE_EXT>`
-    check, `get_meta`, `get_header`, `load_with_header`); a concrete subclass
-    (`PhaseBinList`, `PhaseTxtList`) supplies only `FILE_EXT` and the
-    `_read_header` / `_decode` codec. This adds the phase layer: `target_unit`
-    plus the per-file unit conversion done in `_postprocess`. `PhaseFileFolder`
-    is the auto-discovered, same-shape specialization.
+    An arbitrary list of float32 phase files, each read independently and
+    returned in `target_unit` (converted per file via its own `height_scale`).
+    Concrete subclasses (`PhaseBinList`, `PhaseTxtList`) bind a format;
+    `PhaseFileFolder` is the auto-discovered, same-shape case.
 
     Args:
         files: The files to expose, in the given order.
@@ -319,11 +316,10 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
 class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
     """Format-agnostic phase folder: numbered discovery + one shared header.
 
-    The auto-discovered, same-shape specialization of `PhaseFileList`; it reuses
-    that list's `load_file` codec and adds the shared acquisition `header`.
-    Concrete folders (`PhaseBinFolder`, `PhaseTxtFolder`) set only `FILE_EXT`;
-    the `(read_header, decode)` codec comes from the matching `*List` they also
-    inherit. `target_unit` defaults to the shared header's stored unit.
+    The auto-discovered, same-shape case of `PhaseFileList`: one acquisition's
+    numbered files sharing a single `header`. Concrete folders (`PhaseBinFolder`,
+    `PhaseTxtFolder`) bind a format. `target_unit` defaults to the shared
+    header's stored unit.
 
     Args:
         root: The folder to scan.

@@ -167,9 +167,9 @@ def save_intensity_txt(
 class IntensityTxtList(IntensityFileList):
     """An intensity sequence over an explicit, arbitrary list of `Float/Txt` files.
 
-    The text twin of `IntensityBinList` (the `.txt` codec over `IntensityFileList`):
-    no naming/contiguity/shared-header constraint; each file is read independently.
-    `IntensityTxtFolder` is the auto-discovered, same-shape special case of this.
+    The text twin of `IntensityBinList`: no naming/contiguity/shared-header
+    constraint; each file is read independently. `IntensityTxtFolder` is the
+    auto-discovered, same-shape special case of this.
 
     Args:
         files: The `.txt` files to expose, in the given order.
