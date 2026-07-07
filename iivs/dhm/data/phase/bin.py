@@ -39,9 +39,8 @@ if TYPE_CHECKING:
 class PhaseBinHeader(KoalaBinHeader):
     """The fixed-size header of a Lyncée Tec Koala float32 .bin phase image.
 
-    Extends the shared `KoalaBinHeader` with the phase reading of the
-    trailing bytes: a positive `height_scale` (the phase-to-height factor,
-    m per rad) and a `PhaseUnit`.
+    Extends the shared `KoalaBinHeader` with the phase reading of the trailing bytes: a
+    positive `height_scale` (the phase-to-height factor, m per rad) and a `PhaseUnit`.
 
     Attributes:
         width: Image width in pixels.
@@ -165,10 +164,9 @@ def load_phase_bin(
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the file is too small, declares an unsupported header
-            size, has invalid header fields, holds the wrong number of
-            pixels, or holds non-finite values while `on_nonfinite` is
-            "raise".
+        ValueError: If the file is too small, declares an unsupported header size, has
+            invalid header fields, holds the wrong number of pixels, or holds non-finite
+            values while `on_nonfinite` is "raise".
     """
     data, header = load_bin(path, PhaseBinHeader, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
@@ -184,9 +182,8 @@ def _to_storable_unit(
 ) -> tuple[NDArray[np.float32], PhaseUnit]:
     """Coerce a (data, unit) pair into a unit the file can store.
 
-    The on-disk format holds only UNKNOWN/RADIANS/METERS, so the code-only
-    NANOMETERS unit is converted to METERS; every other unit passes through
-    unchanged.
+    The on-disk format holds only UNKNOWN/RADIANS/METERS, so the code-only NANOMETERS
+    unit is converted to METERS; every other unit passes through unchanged.
     """
     if unit is PhaseUnit.NANOMETERS:
         data = convert_phase_unit(
@@ -242,27 +239,24 @@ def save_phase_bin(
     pair (then height per rad = wavelength / (2*pi * refractive_delta)).
     Exactly one of the two forms must be given.
 
-    Written atomically, so a failed write never leaves a partial or clobbered
-    file.
+    Written atomically, so a failed write never leaves a partial or clobbered file.
 
     Args:
         path: The .bin file to write.
         data: The phase image to save, of shape (H, W).
         pixel_size: Physical size of one (square) pixel, in m.
-        height_scale: Height represented by one rad of phase, in m.
-            Mutually exclusive with `wavelength`/`refractive_delta`.
-        wavelength: Illumination wavelength, in m. Requires
-            `refractive_delta`.
-        refractive_delta: Refractive-index difference n1 - n2 (the plain
-            difference, not the normalized contrast). Requires `wavelength`.
-        unit: Physical unit of `data`. Defaults to RADIANS. NANOMETERS is
-            converted to METERS before storing (the file cannot store it);
-            UNKNOWN is stored as-is but emits a warning.
-        overwrite: Whether to replace `path` if it already exists. Defaults
-            to False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in
-            `data`: "ignore" accepts silently, "warn" (default) emits a
-            RuntimeWarning, "raise" rejects with a ValueError.
+        height_scale: Height represented by one rad of phase, in m. Mutually exclusive
+            with `wavelength`/`refractive_delta`.
+        wavelength: Illumination wavelength, in m. Requires `refractive_delta`.
+        refractive_delta: Refractive-index difference n1 - n2 (the plain difference, not
+            the normalized contrast). Requires `wavelength`.
+        unit: Physical unit of `data`. Defaults to RADIANS. NANOMETERS is converted to
+            METERS before storing (the file cannot store it); UNKNOWN is stored as-is
+            but emits a warning.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in `data`:
+            "ignore" accepts silently, "warn" (default) emits a RuntimeWarning, "raise"
+            rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.bin` extension, neither or both scale
@@ -300,10 +294,9 @@ def save_phase_bin(
 class PhaseBinList(PhaseFileList):
     """A phase sequence over an explicit, arbitrary list of `.bin` files.
 
-    The general case: no naming,
-    contiguity, single-folder, or shared-header constraint; each file is read
-    independently with per-file unit conversion. `PhaseBinFolder` is the
-    auto-discovered, same-shape special case of this.
+    The general case: no naming, contiguity, single-folder, or shared-header constraint;
+    each file is read independently with per-file unit conversion. `PhaseBinFolder` is
+    the auto-discovered, same-shape special case of this.
 
     Args:
         files: The `.bin` files to expose, in the given order.
@@ -337,11 +330,10 @@ class PhaseBinList(PhaseFileList):
 class PhaseBinFolder(PhaseFileFolder, PhaseBinList):
     """An ordered sequence of Lyncée Tec Koala `.bin` phase images in a folder.
 
-    The auto-discovered, same-shape special case of `PhaseBinList`: lists the
-    direct children matching `{index:05d}_phase.bin` (exactly five digits,
-    case-sensitive), in index order, sharing one acquisition `header` read from
-    the first file. Construction and validation are inherited; this supplies
-    only the `.bin` extension.
+    The auto-discovered, same-shape special case of `PhaseBinList`: lists the direct
+    children matching `{index:05d}_phase.bin` (exactly five digits, case-sensitive), in
+    index order, sharing one acquisition `header` read from the first file. Construction
+    and validation are inherited; this supplies only the `.bin` extension.
 
     Args:
         root: The folder to scan. Must exist, be a directory, and contain at

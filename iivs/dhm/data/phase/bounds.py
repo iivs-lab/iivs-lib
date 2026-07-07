@@ -51,9 +51,8 @@ class PhaseBounds:
         Raises:
             FileNotFoundError: If `path` does not exist.
             NotAFileError: If `path` exists but is not a regular file.
-            ValueError: If `path` does not have a `.txt` extension, the file is
-                not a `[nm]` tag plus a numeric `min max` line, or the bounds
-                are not ordered.
+            ValueError: If `path` does not have a `.txt` extension, the file is not a
+                `[nm]` tag plus a numeric `min max` line, or the bounds are not ordered.
         """
         path = ensure_file_exists(path, ext="txt")
         lines = [line.strip() for line in path.read_text().splitlines() if line.strip()]

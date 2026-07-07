@@ -45,10 +45,9 @@ class PhaseSequence[T, M](DataSequence[T, M]):
 class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
     """A read-only sequence of uint8 phase preview images.
 
-    The display-only 8-bit preview Koala renders under `Image/*.tif` (the float
-    phase mapped through `phbounds.txt` into 0-255); distinct from, and not a
-    substitute for, the quantitative `PhaseFloatSequence`. Same-shape sources
-    also expose `frame_shape`.
+    The display-only 8-bit preview Koala renders under `Image/*.tif` (the float phase
+    mapped through `phbounds.txt` into 0-255); distinct from, and not a substitute for,
+    the quantitative `PhaseFloatSequence`. Same-shape sources also expose `frame_shape`.
     """
 
     @overload
@@ -97,9 +96,8 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
         supplied (a preview cannot recover them); read it from the acquisition's
         `phbounds.txt` or recompute it from the `Float` twin's `bounds_nm`.
 
-        NANOMETERS (the default) and METERS need no scale; RADIANS needs
-        `height_scale` (m per rad), or `wavelength` + `refractive_delta` to
-        derive it.
+        NANOMETERS (the default) and METERS need no scale; RADIANS needs `height_scale`
+        (m per rad), or `wavelength` + `refractive_delta` to derive it.
 
         Args:
             bounds: The display bounds Koala used to render these previews.
@@ -111,8 +109,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
 
         Raises:
             ValueError: If `target_unit` is RADIANS but neither (or both) of the
-                height-scale forms is given, or `target_unit` is not reachable
-                from nm.
+                height-scale forms is given, or `target_unit` is not reachable from nm.
         """
         return PhaseFloatView(
             self,
@@ -174,12 +171,11 @@ class PhaseFloatView[M](
 ):
     """A lazy phase reconstruction over a preview sequence (the `to_float` result).
 
-    A `kaparoo` `TransformedSequence` that maps each uint8 preview back to float32
-    phase (`bounds.decode_preview` to nm, then `convert_phase_unit` to
-    `target_unit`), retyped as a `PhaseFloatSequence`. The values are
-    8-bit-quantized (a reconstruction, never the quantitative `Float` source).
-    `source` (the wrapped previews) and the per-frame metadata pass-through come
-    from `TransformedSequence`.
+    A `kaparoo` `TransformedSequence` that maps each uint8 preview back to float32 phase
+    (`bounds.decode_preview` to nm, then `convert_phase_unit` to `target_unit`), retyped
+    as a `PhaseFloatSequence`. The values are 8-bit-quantized (a reconstruction, never
+    the quantitative `Float` source). `source` (the wrapped previews) and the per-frame
+    metadata pass-through come from `TransformedSequence`.
     """
 
     def __init__(
@@ -226,9 +222,8 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
 
     Args:
         files: The files to expose, in the given order.
-        target_unit: Unit to return images in, applied per file via that
-            file's own `height_scale`. Defaults to None, which keeps each
-            file's stored unit.
+        target_unit: Unit to return images in, applied per file via that file's own
+            `height_scale`. Defaults to None, which keeps each file's stored unit.
 
     Raises:
         ValueError: If any path does not have the subclass `.<FILE_EXT>` suffix.

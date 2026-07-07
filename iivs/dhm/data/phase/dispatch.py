@@ -95,12 +95,11 @@ def load_phase(
     """Load a float32 phase image, picking the reader by `path`'s extension.
 
     Dispatches `.bin` / `.txt` / `.npy` to `load_phase_bin` / `load_phase_txt` /
-    `load_phase_npy`. With `return_header` it also returns the parsed header
-    (`None` for `.npy`, which is header-less; its `pixel_size`, `unit`, and
-    `height_scale` live only on `PhaseNpyFolder`, not in the file). Contrast
-    `read_phase_header`, whose sole job *is* the header and so raises on `.npy`;
-    here the header is an optional extra, so an absent one is `None`, not an
-    error.
+    `load_phase_npy`. With `return_header` it also returns the parsed header (`None` for
+    `.npy`, which is header-less; its `pixel_size`, `unit`, and `height_scale` live only
+    on `PhaseNpyFolder`, not in the file). Contrast `read_phase_header`, whose sole job
+    *is* the header and so raises on `.npy`; here the header is an optional extra, so an
+    absent one is `None`, not an error.
 
     Args:
         path: The `.bin` / `.txt` / `.npy` file to read.
@@ -206,15 +205,13 @@ def save_phase(
     """Save a 2D float32 phase image, picking the writer by `path`'s extension.
 
     Dispatches `.bin` / `.txt` to `save_phase_bin` / `save_phase_txt` (both need
-    `pixel_size` and a phase-to-height scale, given as `height_scale` or as
-    `wavelength` + `refractive_delta`), and `.npy` to the header-less
-    `save_phase_npy`. For `.npy` the metadata args do not apply; passing any
-    emits a warning and they are dropped.
+    `pixel_size` and a phase-to-height scale, given as `height_scale` or as `wavelength`
+    + `refractive_delta`), and `.npy` to the header-less `save_phase_npy`. For `.npy`
+    the metadata args do not apply; passing any emits a warning and they are dropped.
 
     Raises:
-        ValueError: If `path`'s extension is not bin, txt, or npy; for `.bin` /
-            `.txt`, if `pixel_size` is missing or neither/both scale forms are
-            given.
+        ValueError: If `path`'s extension is not bin, txt, or npy; for `.bin` / `.txt`,
+            if `pixel_size` is missing or neither/both scale forms are given.
     """
     ext = file_extension(path)
     if ext in ("bin", "txt"):
@@ -453,15 +450,14 @@ def save_phase_folder(
 ) -> None:
     """Write any phase image sequence to `root` as numbered `ext` files.
 
-    The composer-friendly export: `images` is any iterable of float32 phase
-    frames (a file sequence, a `kaparoo` composer such as `ConcatSequence` or a
-    sliced or windowed view, a `to_float` reconstruction, or a plain list), so
-    it accepts sources that carry no Koala header. Because that header cannot be
-    recovered from a composed sequence, the `bin` / `txt` metadata
-    (`pixel_size`, the phase-to-height scale, and the `unit` the frames are
-    already in) is given here explicitly; the header-less `npy` ignores it.
-    `convert_phase_folder` is the convenience that reads this metadata off a
-    file folder's header for you.
+    The composer-friendly export: `images` is any iterable of float32 phase frames (a
+    file sequence, a `kaparoo` composer such as `ConcatSequence` or a sliced or windowed
+    view, a `to_float` reconstruction, or a plain list), so it accepts sources that
+    carry no Koala header. Because that header cannot be recovered from a composed
+    sequence, the `bin` / `txt` metadata (`pixel_size`, the phase-to-height scale, and
+    the `unit` the frames are already in) is given here explicitly; the header-less
+    `npy` ignores it. `convert_phase_folder` is the convenience that reads this metadata
+    off a file folder's header for you.
 
     Each frame becomes `{index:05d}_<stem>.<ext>`. The folder is built
     atomically, so a failed run leaves any existing `root` untouched.
@@ -470,18 +466,17 @@ def save_phase_folder(
         root: Destination folder to create and fill.
         images: The phase frames to write, in order (each a 2D float32 image).
         ext: Target format ("bin", "txt", or "npy").
-        pixel_size: Physical size of one (square) pixel, in m. Required for
-            "bin" / "txt"; ignored (with a warning) for "npy".
-        height_scale: Height per rad, in m. Mutually exclusive with
-            `wavelength` / `refractive_delta`; one form is required for "bin" /
-            "txt", ignored for "npy".
+        pixel_size: Physical size of one (square) pixel, in m. Required for "bin" /
+            "txt"; ignored (with a warning) for "npy".
+        height_scale: Height per rad, in m. Mutually exclusive with `wavelength` /
+            `refractive_delta`; one form is required for "bin" / "txt", ignored for
+            "npy".
         wavelength: Illumination wavelength, in m (with `refractive_delta`).
         refractive_delta: Refractive-index difference (with `wavelength`).
-        unit: The unit `images` are already in, recorded in the "bin" / "txt"
-            header. Defaults to RADIANS; ignored for "npy".
+        unit: The unit `images` are already in, recorded in the "bin" / "txt" header.
+            Defaults to RADIANS; ignored for "npy".
         stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>``. Defaults to "phase".
-        overwrite: Whether to replace `root` if it already exists. Defaults to
-            False.
+        overwrite: Whether to replace `root` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `ext` is not "bin" / "txt" / "npy", or (for "bin" /
@@ -531,19 +526,17 @@ def convert_phase_folder(
 
     The file-folder convenience over `save_phase_folder`: each frame becomes one
     numbered file sharing the folder's single header. `bin` / `txt` preserve
-    `pixel_size`, `height_scale`, and the effective `unit` (read from the
-    folder); the header-less `npy` drops them. For a composed or transformed
-    sequence (e.g. a `kaparoo` `ConcatSequence`, or a `to_float` view), which
-    has no folder header, use `save_phase_folder` directly with explicit
-    metadata. The new folder is built atomically, so a failed run leaves any
-    existing `root` untouched.
+    `pixel_size`, `height_scale`, and the effective `unit` (read from the folder); the
+    header-less `npy` drops them. For a composed or transformed sequence (e.g. a
+    `kaparoo` `ConcatSequence`, or a `to_float` view), which has no folder header, use
+    `save_phase_folder` directly with explicit metadata. The new folder is built
+    atomically, so a failed run leaves any existing `root` untouched.
 
     Args:
         root: Destination folder to create and fill with the re-encoded frames.
         folder: Source phase folder to read.
         ext: Target format ("bin", "txt", or "npy").
-        overwrite: Whether to replace `root` if it already exists. Defaults to
-            False.
+        overwrite: Whether to replace `root` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `ext` is not "bin", "txt", or "npy".
@@ -585,8 +578,7 @@ def convert_phase_list(
     Args:
         sequence: Source phase file list to re-encode in place.
         ext: Target format ("bin", "txt", or "npy").
-        overwrite: Whether to replace an existing target sibling. Defaults to
-            False.
+        overwrite: Whether to replace an existing target sibling. Defaults to False.
 
     Raises:
         ValueError: If `ext` is not "bin", "txt", or "npy".

@@ -224,17 +224,16 @@ def save_phase_txt(
         path: The `.txt` file to write.
         data: The phase image to save, of shape (H, W).
         pixel_size: Physical size of one (square) pixel, in m.
-        height_scale: Height represented by one rad of phase, in m. Mutually
-            exclusive with `wavelength` / `refractive_delta`.
+        height_scale: Height represented by one rad of phase, in m. Mutually exclusive
+            with `wavelength` / `refractive_delta`.
         wavelength: Illumination wavelength, in m. Requires `refractive_delta`.
         refractive_delta: Refractive-index difference. Requires `wavelength`.
-        unit: Physical unit of `data`. Defaults to RADIANS. NANOMETERS is stored
-            as METERS (the file cannot store it); UNKNOWN is stored but warns.
-        overwrite: Whether to replace `path` if it already exists. Defaults to
-            False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in
-            `data`: "ignore" accepts silently, "warn" (default) emits a
-            RuntimeWarning, "raise" rejects with a ValueError.
+        unit: Physical unit of `data`. Defaults to RADIANS. NANOMETERS is stored as
+            METERS (the file cannot store it); UNKNOWN is stored but warns.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in `data`:
+            "ignore" accepts silently, "warn" (default) emits a RuntimeWarning, "raise"
+            rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.txt` extension, neither or both scale
@@ -300,10 +299,9 @@ class PhaseTxtList(PhaseFileList):
 class PhaseTxtFolder(PhaseFileFolder, PhaseTxtList):
     """An ordered sequence of Koala `Float/Txt` phase images in a folder.
 
-    The text twin of `PhaseBinFolder`, and the auto-discovered, same-shape
-    special case of `PhaseTxtList`: lists `{index:05d}_phase.txt`, sharing one
-    acquisition `header`. Construction and validation are inherited; this
-    supplies only the `.txt` extension.
+    The text twin of `PhaseBinFolder`, and the auto-discovered, same-shape special case
+    of `PhaseTxtList`: lists `{index:05d}_phase.txt`, sharing one acquisition `header`.
+    Construction and validation are inherited; this supplies only the `.txt` extension.
 
     Args:
         root: The folder to scan.
