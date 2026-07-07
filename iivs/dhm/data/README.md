@@ -30,14 +30,23 @@ for both.
 ## The `timestamp` module
 
 Per-frame acquisition timing, as its own `DataSequence` (each item is a
-`Timestamp`, its metadata the frame index).
+`Timestamp`, its metadata the frame index). The technique-agnostic types were
+hoisted to [`iivs.common.data`](../../common/data) so any time-lapse modality can
+reuse them; `iivs.dhm.data.timestamp` keeps only the Koala-specific reader.
+
+From `iivs.common.data`:
 
 - `Timestamp(elapsed_ms, interval_ms)` — one frame's timing (elapsed since start;
   gap from the previous frame, `0.0` for the first).
-- `TimestampsTxtFile(path)` — read a Koala `timestamps.txt` (lines of
-  `<index> <time> <date> <elapsed_ms>`, contiguous from 0).
+- `TimestampSequence` — the read-only interface (`mean_interval_ms` /
+  `mean_frame_rate`) every source implements.
 - `TimestampsFixedFPS(*, frame_rate, num_frames)` — synthesize evenly-spaced
   timing from a frame rate.
+
+From `iivs.dhm.data.timestamp`:
+
+- `TimestampsTxtFile(path)` — read a Koala `timestamps.txt` (lines of
+  `<index> <time> <date> <elapsed_ms>`, contiguous from 0).
 
 Both sequences are a `kaparoo.data.sequences.DataSequence`, so the inherited
 interface applies:

@@ -42,7 +42,7 @@ right symbol for you, over `.bin` / `.txt` / `.npy`:
 | `phase_folder(root)` | `Phase{Bin,Txt,Npy}Folder` by the folder's contents (an `.npy` folder needs `pixel_size` + `unit`) |
 
 `phase_folder` discovers the format with `kaparoo`'s `search_files` + a
-`RegexFilter`. If a folder holds more than one format it raises by default; pass
+`Regex` filter. If a folder holds more than one format it raises by default; pass
 `prefer` (a format or a priority sequence, e.g. `prefer=("bin", "txt")`) to pick
 one — modeled on `kaparoo.filesystem.hierarchy.Exclusive(on_conflict="priority")`.
 
