@@ -37,11 +37,11 @@ if TYPE_CHECKING:
 class IntensityBinHeader(KoalaBinHeader):
     """The fixed-size header of a Lyncée Tec Koala float32 .bin intensity image.
 
-    Intensity reconstructions share the 23-byte Koala header with phase, but
-    carry no height scale or phase unit: Koala writes ``hconv = -1`` and
-    ``unit = 0`` as a no-op sentinel. Only the geometry is meaningful, so this
-    header adds no fields to the shared `KoalaBinHeader`; it just pins those
-    trailing bytes to the sentinel on write and ignores them on read.
+    Intensity reconstructions share the 23-byte Koala header with phase, but carry no
+    height scale or phase unit: Koala writes ``hconv = -1`` and ``unit = 0`` as a no-op
+    sentinel. Only the geometry is meaningful, so this header adds no fields to the
+    shared `KoalaBinHeader`; it just pins those trailing bytes to the sentinel on write
+    and ignores them on read.
 
     Attributes:
         width: Image width in pixels.
@@ -86,8 +86,8 @@ def read_intensity_bin_header(path: StrPath) -> IntensityBinHeader:
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the file is too small, declares an unsupported header size,
-            or has invalid header fields.
+        ValueError: If the file is too small, declares an unsupported header size, or
+            has invalid header fields.
     """
     return IntensityBinHeader.from_file(path)
 
@@ -129,8 +129,8 @@ def load_intensity_bin(
 
     Args:
         path: The .bin file to read.
-        return_header: Whether to also return the parsed `IntensityBinHeader`.
-            Defaults to False.
+        return_header: Whether to also return the parsed `IntensityBinHeader`. Defaults
+            to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
             data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
             "raise" raises a ValueError (useful to reject corrupted files).
@@ -142,9 +142,9 @@ def load_intensity_bin(
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the file is too small, declares an unsupported header size,
-            has invalid header fields, holds the wrong number of pixels, or holds
-            non-finite values while `on_nonfinite` is "raise".
+        ValueError: If the file is too small, declares an unsupported header size, has
+            invalid header fields, holds the wrong number of pixels, or holds non-finite
+            values while `on_nonfinite` is "raise".
     """
     data, header = load_bin(path, IntensityBinHeader, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
@@ -168,23 +168,21 @@ def save_intensity_bin(
     The phase-only ``hconv`` / ``unit`` bytes are written as Koala's no-op sentinel
     (``-1`` / ``0``); intensity has no height scale or unit.
 
-    Written atomically, so a failed write never leaves a partial or clobbered
-    file.
+    Written atomically, so a failed write never leaves a partial or clobbered file.
 
     Args:
         path: The .bin file to write.
         data: The intensity image to save, of shape (H, W).
         pixel_size: Physical size of one (square) pixel, in m.
-        overwrite: Whether to replace `path` if it already exists. Defaults
-            to False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in
-            `data`: "ignore" accepts silently, "warn" (default) emits a
-            RuntimeWarning, "raise" rejects with a ValueError.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in `data`:
+            "ignore" accepts silently, "warn" (default) emits a RuntimeWarning, "raise"
+            rejects with a ValueError.
 
     Raises:
-        ValueError: If `path` has a non-`.bin` extension, `data` is not a single
-            2D float32 image, or it holds non-finite values while `on_nonfinite`
-            is "raise".
+        ValueError: If `path` has a non-`.bin` extension, `data` is not a single 2D
+            float32 image, or it holds non-finite values while `on_nonfinite` is
+            "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -209,10 +207,9 @@ def save_intensity_bin(
 class IntensityBinList(IntensityFileList):
     """An intensity sequence over an explicit, arbitrary list of `.bin` files.
 
-    The general case: no naming,
-    contiguity, single-folder, or shared-header constraint; each file is read
-    independently. `IntensityBinFolder` is the auto-discovered, same-shape
-    special case of this.
+    The general case: no naming, contiguity, single-folder, or shared-header constraint;
+    each file is read independently. `IntensityBinFolder` is the auto-discovered,
+    same-shape special case of this.
 
     Args:
         files: The `.bin` files to expose, in the given order.
@@ -242,21 +239,20 @@ class IntensityBinList(IntensityFileList):
 class IntensityBinFolder(IntensityFileFolder, IntensityBinList):
     """An ordered sequence of Koala `.bin` intensity images in a folder.
 
-    The auto-discovered, same-shape special case of `IntensityBinList`: lists
-    the direct children matching `{index:05d}_intensity.bin` (exactly five
-    digits, case-sensitive), sharing one acquisition `header`. Construction and
-    validation are inherited; this supplies only the `.bin` extension.
+    The auto-discovered, same-shape special case of `IntensityBinList`: lists the direct
+    children matching `{index:05d}_intensity.bin` (exactly five digits, case-sensitive),
+    sharing one acquisition `header`. Construction and validation are inherited; this
+    supplies only the `.bin` extension.
 
     Args:
-        root: The folder to scan. Must exist, be a directory, and contain at
-            least one matching file.
-        validate: Run `validate` to this level at construction, or None to
-            skip. Defaults to "headers".
+        root: The folder to scan. Must exist, be a directory, and contain at least one
+            matching file.
+        validate: Run `validate` to this level at construction, or None to skip.
+            Defaults to "headers".
 
     Raises:
         DirectoryNotFoundError: If `root` does not exist.
         NotADirectoryError: If `root` exists but is not a directory.
-        FileNotFoundError: If no `NNNNN_intensity.bin` files are found in
-            `root`.
+        FileNotFoundError: If no `NNNNN_intensity.bin` files are found in `root`.
         ValueError: If `validate` is set and the sequence fails validation.
     """

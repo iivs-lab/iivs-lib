@@ -41,11 +41,10 @@ class KoalaFloatFileList[H: KoalaBinHeader](
     """Format-agnostic float32 file list over a ``(read_header, decode)`` codec.
 
     The shared base for the Koala float32 sources (phase / intensity `Float`, and
-    header-less `.npy`). A concrete subclass supplies `FILE_EXT` and the
-    `_read_header` / `_decode` codec, where `_decode` returns ``(image,
-    header)``. `load_file` returns the decoded image after `_postprocess`,
-    which a subclass overrides to transform it (e.g. phase's unit conversion);
-    the default is identity.
+    header-less `.npy`). A concrete subclass supplies `FILE_EXT` and the `_read_header`
+    / `_decode` codec, where `_decode` returns ``(image, header)``. `load_file` returns
+    the decoded image after `_postprocess`, which a subclass overrides to transform it
+    (e.g. phase's unit conversion); the default is identity.
 
     Type Parameters:
         H: The header the codec produces (e.g. `PhaseBinHeader`).
@@ -64,9 +63,9 @@ class KoalaFloatFileList[H: KoalaBinHeader](
     def get_header(self, index: int) -> H:
         """Read just the header of the file at `index`, without the pixels.
 
-        A header accessor named to sit beside `get_item` / `get_meta` (not part
-        of kaparoo's protocol). Use `load_with_header` to get the image and its
-        header together in one read.
+        A header accessor named to sit beside `get_item` / `get_meta` (not part of
+        kaparoo's protocol). Use `load_with_header` to get the image and its header
+        together in one read.
         """
         return self._read_header(self.get_file(index))
 
@@ -74,9 +73,8 @@ class KoalaFloatFileList[H: KoalaBinHeader](
         """Decode the image at `index` and its header in a single read.
 
         The image is post-processed exactly as `get_item` (e.g. phase's unit
-        conversion); the header is the file's own. The single-read twin of a
-        `get_item` + `get_header` pair, for callers (e.g. the converters) that
-        need both.
+        conversion); the header is the file's own. The single-read twin of a `get_item`
+        + `get_header` pair, for callers (e.g. the converters) that need both.
         """
         image, header = self._decode(self.get_file(index))
         return self._postprocess(image, header), header
@@ -94,9 +92,8 @@ class KoalaFloatFileList[H: KoalaBinHeader](
     ) -> NDArray[np.float32]:
         """Transform a freshly decoded image (default: identity).
 
-        The hook `load_file` / `load_with_header` apply on top of `_decode`;
-        phase overrides it for per-file unit conversion, intensity keeps the
-        identity default.
+        The hook `load_file` / `load_with_header` apply on top of `_decode`; phase
+        overrides it for per-file unit conversion, intensity keeps the identity default.
         """
         return image
 
@@ -121,10 +118,9 @@ class KoalaFloatFileFolder[H: KoalaBinHeader](
 ):
     """Format-agnostic float32 folder: numbered discovery + one shared header.
 
-    The auto-discovered, same-shape specialization of `KoalaFloatFileList`:
-    reads one shared acquisition `header` from the first file, exposes
-    `frame_shape` from it, and checks every other file's header against it.
-    Concrete folders supply `FILE_STEM`.
+    The auto-discovered, same-shape specialization of `KoalaFloatFileList`: reads one
+    shared acquisition `header` from the first file, exposes `frame_shape` from it, and
+    checks every other file's header against it. Concrete folders supply `FILE_STEM`.
     """
 
     LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")

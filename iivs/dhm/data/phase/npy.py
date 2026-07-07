@@ -28,22 +28,22 @@ def load_phase_npy(
 ) -> NDArray[np.float32]:
     """Load a header-less `.npy` float32 phase image.
 
-    The `.npy` twin of `load_phase_bin` / `load_phase_txt`, but **image only**:
-    a `.npy` carries no Koala header, so there is no `return_header` form and no
-    `read_phase_npy_header`; the `pixel_size` / `unit` / `height_scale`
-    metadata must be supplied separately (e.g. via `PhaseNpyFolder`).
+    The `.npy` twin of `load_phase_bin` / `load_phase_txt`, but **image only**: a `.npy`
+    carries no Koala header, so there is no `return_header` form and no
+    `read_phase_npy_header`; the `pixel_size` / `unit` / `height_scale` metadata must be
+    supplied separately (e.g. via `PhaseNpyFolder`).
 
     Args:
         path: The `.npy` file to read.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
-            decoded data: "ignore" (default) accepts silently, "warn" emits a
-            RuntimeWarning, "raise" raises a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
+            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
+            "raise" raises a ValueError.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the array is pickled, not a single 2D float32 image, or
-            holds non-finite values while `on_nonfinite` is "raise".
+        ValueError: If the array is pickled, not a single 2D float32 image, or holds
+            non-finite values while `on_nonfinite` is "raise".
     """
     path = ensure_file_exists(path)
     data = np.load(path, allow_pickle=False)
@@ -60,8 +60,8 @@ def save_phase_npy(
     """Save a 2D float32 phase image as an uncompressed `.npy` file.
 
     Header-less: `.npy` stores only the array, so the `pixel_size` / `unit` /
-    `height_scale` metadata the `.bin` / `.txt` formats carry is dropped (supply
-    it when reading via `PhaseNpyFolder`). Written atomically.
+    `height_scale` metadata the `.bin` / `.txt` formats carry is dropped (supply it when
+    reading via `PhaseNpyFolder`). Written atomically.
 
     Args:
         path: The `.npy` file to write.
@@ -72,9 +72,9 @@ def save_phase_npy(
             rejects with a ValueError.
 
     Raises:
-        ValueError: If `path` has a non-`.npy` extension, `data` is not a single
-            2D float32 image, or it holds non-finite values while `on_nonfinite`
-            is "raise".
+        ValueError: If `path` has a non-`.npy` extension, `data` is not a single 2D
+            float32 image, or it holds non-finite values while `on_nonfinite` is
+            "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -86,18 +86,18 @@ def save_phase_npy(
 class PhaseNpyFolder(PhaseFileFolder):
     """An ordered sequence of header-less `{index:05d}_phase.npy` float32 phase images.
 
-    A `.npy` array carries no Koala header, so the acquisition metadata the
-    `.bin` / `.txt` formats embed (`pixel_size`, `unit`, and the phase-to-height
-    `height_scale`) is supplied to the constructor instead and shared by every
-    frame. A pickled object array is rejected; create the files with `numpy.save`
-    (uncompressed `.npy`, one 2-D float32 frame per file).
+    A `.npy` array carries no Koala header, so the acquisition metadata the `.bin` /
+    `.txt` formats embed (`pixel_size`, `unit`, and the phase-to-height `height_scale`)
+    is supplied to the constructor instead and shared by every frame. A pickled object
+    array is rejected; create the files with `numpy.save` (uncompressed `.npy`, one 2-D
+    float32 frame per file).
 
     Args:
         root: The folder to scan.
         pixel_size: Physical size of one (square) pixel, in m.
         unit: Physical unit of the stored phase values.
-        height_scale: Height represented by one rad of phase, in m. Mutually
-            exclusive with `wavelength` / `refractive_delta`.
+        height_scale: Height represented by one rad of phase, in m. Mutually exclusive
+            with `wavelength` / `refractive_delta`.
         wavelength: Illumination wavelength, in m (with `refractive_delta`).
         refractive_delta: Refractive-index difference (with `wavelength`).
         target_unit: Unit to return loaded images in (None keeps `unit`).
@@ -105,9 +105,9 @@ class PhaseNpyFolder(PhaseFileFolder):
             Defaults to "headers".
 
     Raises:
-        ValueError: If neither or both height-scale forms are given, if
-            `target_unit` cannot be reached from `unit`, or if `validate` is set
-            and the sequence fails validation.
+        ValueError: If neither or both height-scale forms are given, if `target_unit`
+            cannot be reached from `unit`, or if `validate` is set and the sequence
+            fails validation.
     """
 
     FILE_EXT: ClassVar[str] = "npy"

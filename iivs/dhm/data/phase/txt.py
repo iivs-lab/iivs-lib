@@ -33,8 +33,8 @@ if TYPE_CHECKING:
 class PhaseTxtHeaderCodec(KoalaTxtHeaderCodec[PhaseBinHeader]):
     """Reads a Koala `Float/Txt` phase header into a `PhaseBinHeader`.
 
-    The 4-line header adds a `data unit` and a `height conversion factor` line
-    to the shared `h/w` + `pixel size` pair::
+    The 4-line header adds a `data unit` and a `height conversion factor` line to the
+    shared `h/w` + `pixel size` pair::
 
         h=900 w=900
         pixel size=2.84871e-07 m
@@ -103,8 +103,8 @@ class PhaseTxtHeaderCodec(KoalaTxtHeaderCodec[PhaseBinHeader]):
 def read_phase_txt_header(path: StrPath) -> PhaseBinHeader:
     """Read only the header of a Koala `Float/Txt` phase file, without the grid.
 
-    Returns the same `PhaseBinHeader` the `.bin` reader uses (width, height,
-    pixel size, height scale, unit).
+    Returns the same `PhaseBinHeader` the `.bin` reader uses (width, height, pixel size,
+    height scale, unit).
 
     Raises:
         FileNotFoundError: If `path` does not exist.
@@ -149,21 +149,21 @@ def load_phase_txt(
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]:
     """Load a Koala `Float/Txt` phase image, and optionally its header.
 
-    The text export holds the same quantitative phase as the `.bin`, so this
-    returns a float32 array (and a `PhaseBinHeader`) just like `load_phase_bin`.
+    The text export holds the same quantitative phase as the `.bin`, so this returns a
+    float32 array (and a `PhaseBinHeader`) just like `load_phase_bin`.
 
     Args:
         path: The `.txt` file to read.
         return_header: Whether to also return the parsed header.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
-            decoded data: "ignore" (default) accepts silently, "warn" emits a
-            RuntimeWarning, "raise" raises a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
+            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
+            "raise" raises a ValueError.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the header is malformed, the grid does not match it, or
-            it holds non-finite values while `on_nonfinite` is "raise".
+        ValueError: If the header is malformed, the grid does not match it, or it holds
+            non-finite values while `on_nonfinite` is "raise".
     """
     data, header = load_txt(path, PhaseTxtHeaderCodec, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
@@ -215,10 +215,10 @@ def save_phase_txt(
 ) -> None:
     """Save a 2D float32 phase image as a Koala `Float/Txt` file.
 
-    The text twin of `save_phase_bin`: a 4-line ``h/w`` + ``pixel size`` +
-    ``data unit`` + ``height conversion factor`` header, then the float grid.
-    The phase-to-height scale is given as `height_scale`, or as `wavelength` +
-    `refractive_delta` (exactly one form). Written atomically.
+    The text twin of `save_phase_bin`: a 4-line ``h/w`` + ``pixel size`` + ``data unit``
+    + ``height conversion factor`` header, then the float grid. The phase-to-height
+    scale is given as `height_scale`, or as `wavelength` + `refractive_delta` (exactly
+    one form). Written atomically.
 
     Args:
         path: The `.txt` file to write.
@@ -236,9 +236,9 @@ def save_phase_txt(
             rejects with a ValueError.
 
     Raises:
-        ValueError: If `path` has a non-`.txt` extension, neither or both scale
-            forms are given, `data` is not a single 2D float32 image, or it holds
-            non-finite values while `on_nonfinite` is "raise".
+        ValueError: If `path` has a non-`.txt` extension, neither or both scale forms
+            are given, `data` is not a single 2D float32 image, or it holds non-finite
+            values while `on_nonfinite` is "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -269,9 +269,9 @@ def save_phase_txt(
 class PhaseTxtList(PhaseFileList):
     """A phase sequence over an explicit, arbitrary list of `Float/Txt` files.
 
-    The text twin of `PhaseBinList`: no naming/contiguity/shared-header
-    constraint; each file is read independently with per-file unit conversion.
-    `PhaseTxtFolder` is the auto-discovered, same-shape special case of this.
+    The text twin of `PhaseBinList`: no naming/contiguity/shared-header constraint; each
+    file is read independently with per-file unit conversion. `PhaseTxtFolder` is the
+    auto-discovered, same-shape special case of this.
 
     Args:
         files: The `.txt` files to expose, in the given order.

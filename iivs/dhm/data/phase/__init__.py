@@ -1,8 +1,8 @@
 """Phase reconstruction sequences and I/O.
 
-Quantitative float32 phase (`.bin` / `.txt` / `.npy`) and uint8 `.tif` previews,
-their readers/writers and lazy sequences, plus `convert_phase_*` format
-conversion and the `phbounds.txt` display bounds.
+Quantitative float32 phase (`.bin` / `.txt` / `.npy`) and uint8 `.tif` previews, their
+readers/writers and lazy sequences, plus `convert_phase_*` format conversion and the
+`phbounds.txt` display bounds.
 """
 
 from __future__ import annotations

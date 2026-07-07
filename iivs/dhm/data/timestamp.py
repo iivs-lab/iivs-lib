@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
     """A `TimestampSequence` read from a Lyncée Tec Koala ``timestamps.txt``.
 
-    Each line is ``<index> <time> <date> <elapsed_ms>`` (space-separated), and
-    the frame indices must run contiguously from 0.
+    Each line is ``<index> <time> <date> <elapsed_ms>`` (space-separated), and the frame
+    indices must run contiguously from 0.
 
     Raises:
         FileNotFoundError: If `path` does not exist.

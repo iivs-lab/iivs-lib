@@ -27,11 +27,11 @@ _PIXEL_DTYPE = np.dtype("<f4")  # on-disk pixels: little-endian float32
 class KoalaBinHeader(ABC):
     """Base for the fixed-size 23-byte Lyncée Tec Koala .bin header.
 
-    Holds the geometry (width, height, pixel_size) shared by every `.bin`
-    modality (phase, intensity). The trailing ``hconv`` / ``unit`` bytes carry
-    modality-specific meaning, so subclasses own them via `from_dtype` /
-    `to_dtype`; phase reads them as a height scale plus `PhaseUnit`, while
-    intensity treats them as Koala's no-op sentinel.
+    Holds the geometry (width, height, pixel_size) shared by every `.bin` modality
+    (phase, intensity). The trailing ``hconv`` / ``unit`` bytes carry modality-specific
+    meaning, so subclasses own them via `from_dtype` / `to_dtype`; phase reads them as a
+    height scale plus `PhaseUnit`, while intensity treats them as Koala's no-op
+    sentinel.
 
     Attributes:
         width: Image width in pixels.
@@ -109,8 +109,8 @@ class KoalaBinHeader(ABC):
     def base_record(self) -> NDArray[np.void]:
         """Allocate a `DTYPE` record with the shared fields filled.
 
-        Subclasses fill the remaining ``height_scale`` / ``unit`` bytes in
-        their own `to_dtype`.
+        Subclasses fill the remaining ``height_scale`` / ``unit`` bytes in their own
+        `to_dtype`.
         """
         record = np.zeros(1, dtype=self.DTYPE)
         record["version"] = self.version
@@ -125,8 +125,8 @@ class KoalaBinHeader(ABC):
     def to_dtype(self) -> NDArray[np.void]:
         """Serialize to a 1-element `DTYPE` record array.
 
-        Subclasses implement this, filling the modality-specific
-        ``height_scale`` / ``unit`` bytes on top of `base_record`.
+        Subclasses implement this, filling the modality-specific ``height_scale`` /
+        ``unit`` bytes on top of `base_record`.
         """
         raise NotImplementedError
 
@@ -135,8 +135,8 @@ class KoalaBinHeader(ABC):
     def from_dtype(cls, record: np.void) -> Self:
         """Build a header from a `DTYPE` structured scalar.
 
-        Subclasses implement this, interpreting the ``height_scale`` /
-        ``unit`` bytes for their modality.
+        Subclasses implement this, interpreting the ``height_scale`` / ``unit`` bytes
+        for their modality.
         """
         raise NotImplementedError
 
@@ -144,13 +144,13 @@ class KoalaBinHeader(ABC):
     def read_record(cls, f: IO[bytes]) -> np.void:
         """Read and structurally validate the fixed-size header record.
 
-        Checks the declared header size, version, and byte order, leaving the
-        stream positioned at the pixel data. Modality-specific field
-        validation happens later in the subclass `from_dtype`.
+        Checks the declared header size, version, and byte order, leaving the stream
+        positioned at the pixel data. Modality-specific field validation happens later
+        in the subclass `from_dtype`.
 
         Raises:
-            ValueError: If the stream is too small for a header, or declares
-                an unsupported header size, version, or byte order.
+            ValueError: If the stream is too small for a header, or declares an
+                unsupported header size, version, or byte order.
         """
         raw = f.read(cls.HEADER_SIZE)
         if len(raw) < cls.HEADER_SIZE:
@@ -179,13 +179,13 @@ class KoalaBinHeader(ABC):
     def from_stream(cls, f: IO[bytes]) -> Self:
         """Read and validate a header from an open binary stream.
 
-        Reads exactly the fixed-size header (works on any `IO[bytes]`,
-        including `io.BytesIO`), leaving the stream positioned at the pixel
-        data so callers can keep reading.
+        Reads exactly the fixed-size header (works on any `IO[bytes]`, including
+        `io.BytesIO`), leaving the stream positioned at the pixel data so callers can
+        keep reading.
 
         Raises:
-            ValueError: As `read_record`, plus any field validation raised by
-                the subclass `from_dtype`.
+            ValueError: As `read_record`, plus any field validation raised by the
+                subclass `from_dtype`.
         """
         return cls.from_dtype(cls.read_record(f))
 
@@ -211,17 +211,16 @@ def load_bin[H: KoalaBinHeader](
 ) -> tuple[NDArray[np.float32], H]:
     """Read a Koala `.bin` file's float32 image and header (the shared engine).
 
-    Opens `path`, parses the fixed-size header as `header_cls`, decodes the
-    pixel block (checking its byte count), and validates it. The per-modality
-    `load_*_bin` wrappers bind their header type and add the `return_header`
-    ergonomics.
+    Opens `path`, parses the fixed-size header as `header_cls`, decodes the pixel block
+    (checking its byte count), and validates it. The per-modality `load_*_bin` wrappers
+    bind their header type and add the `return_header` ergonomics.
 
     Args:
         path: The `.bin` file to read.
         header_cls: The `KoalaBinHeader` subclass to parse the header as.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
-            decoded data: "ignore" (default) accepts them silently, "warn"
-            emits a RuntimeWarning, "raise" raises a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
+            data: "ignore" (default) accepts them silently, "warn" emits a
+            RuntimeWarning, "raise" raises a ValueError.
 
     Returns:
         An ``(image, header)`` tuple: the float32 image of shape
@@ -230,8 +229,8 @@ def load_bin[H: KoalaBinHeader](
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the header is invalid, the pixel count is wrong, or the
-            data holds non-finite values while `on_nonfinite` is "raise".
+        ValueError: If the header is invalid, the pixel count is wrong, or the data
+            holds non-finite values while `on_nonfinite` is "raise".
     """
     path = ensure_file_exists(path)
     with path.open("rb") as f:
@@ -260,12 +259,11 @@ def write_bin(
     A failed write never leaves a partial or clobbered file.
 
     Args:
-        path: The destination file to write (written as-is; the caller ensures
-            the `.bin` extension).
+        path: The destination file to write (written as-is; the caller ensures the
+            `.bin` extension).
         header: The header to write; its `to_dtype` fills the 23-byte record.
         pixels: The float32 image to write, of shape `header.shape`.
-        overwrite: Whether to replace `path` if it already exists. Defaults to
-            False.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `pixels`' shape does not match `header.shape`.

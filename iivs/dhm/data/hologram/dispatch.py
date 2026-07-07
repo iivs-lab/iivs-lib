@@ -38,22 +38,22 @@ def convert_hologram_sequence(
 ) -> None:
     """Re-encode a hologram `sequence` to `dest` in the `ext` format.
 
-    Every format is lossless uint8. ``ext="raw"`` writes a single multi-frame
-    `.raw` stack at `dest`, streamed frame by frame so a large source is never
-    held whole; ``"tif"`` / ``"npy"`` write one numbered file per frame into the
-    `dest` folder (named from the source's `FILE_STEM`, else ``holo``). Both
-    paths are written atomically.
+    Every format is lossless uint8. ``ext="raw"`` writes a single multi-frame `.raw`
+    stack at `dest`, streamed frame by frame so a large source is never held whole;
+    ``"tif"`` / ``"npy"`` write one numbered file per frame into the `dest` folder
+    (named from the source's `FILE_STEM`, else ``holo``). Both paths are written
+    atomically.
 
-    Accepts any uint8 image sequence, not just a file-backed `HologramSequence`:
-    a `kaparoo` composer (`ConcatSequence`, a sliced or windowed view) works too,
-    falling back to the ``holo`` stem when it has no `FILE_STEM`.
+    Accepts any uint8 image sequence, not just a file-backed `HologramSequence`: a
+    `kaparoo` composer (`ConcatSequence`, a sliced or windowed view) works too, falling
+    back to the ``holo`` stem when it has no `FILE_STEM`.
 
     Args:
-        dest: Destination; the `.raw` file for "raw", else the folder to
-            create and fill.
+        dest: Destination; the `.raw` file for "raw", else the folder to create and
+            fill.
         sequence: Source hologram sequence to read (a `HologramRawFile`,
-            `HologramTifFolder`, `HologramNpyFolder`, `HologramTifList`, or any
-            uint8 `DataSequence` such as a composed sequence).
+            `HologramTifFolder`, `HologramNpyFolder`, `HologramTifList`, or any uint8
+            `DataSequence` such as a composed sequence).
         ext: Target format; "raw", "tif", or "npy".
         overwrite: Whether to replace an existing destination. Defaults to False.
 

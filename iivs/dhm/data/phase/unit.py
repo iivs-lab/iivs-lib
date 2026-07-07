@@ -37,8 +37,8 @@ def resolve_height_scale(
     """Return `height_scale`, or derive it from `wavelength` and `refractive_delta`.
 
     The phase-to-height factor (m per rad) is given either directly, or as a
-    `wavelength` / `refractive_delta` pair (`height per rad = wavelength /
-    (2*pi * refractive_delta)`). Exactly one of the two forms must be given.
+    `wavelength` / `refractive_delta` pair (`height per rad = wavelength / (2*pi *
+    refractive_delta)`). Exactly one of the two forms must be given.
 
     Raises:
         ValueError: Unless exactly one form is fully given (neither, both, or a
@@ -70,8 +70,8 @@ def convert_phase_unit(
         data: The phase/height image to convert; never modified.
         source: The unit `data` is currently in.
         target: The unit to convert to.
-        height_scale: m per rad. Used only when the conversion crosses
-            RADIANS <-> METERS; ignored for a pure METERS <-> NANOMETERS rescale.
+        height_scale: m per rad. Used only when the conversion crosses RADIANS <->
+            METERS; ignored for a pure METERS <-> NANOMETERS rescale.
 
     Returns:
         A new float32 array in `target`, or `data` itself (unchanged) when

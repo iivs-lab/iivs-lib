@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 def load_hologram_npy(path: StrPath) -> NDArray[np.uint8]:
     """Load a header-less `.npy` uint8 hologram image.
 
-    The `.npy` twin of `load_hologram_tif`: the lossless, codec-free
-    single-frame reader.
+    The `.npy` twin of `load_hologram_tif`: the lossless, codec-free single-frame
+    reader.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
@@ -37,8 +37,8 @@ def save_hologram_npy(
 ) -> None:
     """Save a 2D uint8 hologram as an uncompressed `.npy` file.
 
-    The header-less, lossless twin of `save_hologram_tif` (no codec / LZW).
-    Written atomically.
+    The header-less, lossless twin of `save_hologram_tif` (no codec / LZW). Written
+    atomically.
 
     Args:
         path: The `.npy` file to write.
@@ -46,8 +46,8 @@ def save_hologram_npy(
         overwrite: Whether to replace `path` if it already exists. Defaults to False.
 
     Raises:
-        ValueError: If `path` has a non-`.npy` extension, or `data` is not a 2D
-            uint8 array.
+        ValueError: If `path` has a non-`.npy` extension, or `data` is not a 2D uint8
+            array.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -59,16 +59,15 @@ def save_hologram_npy(
 class HologramNpyFolder(ImageFileFolder, HologramSequence[Path]):
     """An ordered sequence of header-less `{index:05d}_holo.npy` uint8 holograms.
 
-    Numbered discovery + one
-    shared (lazily read) `frame_shape`; a pickled object array is rejected.
-    Holograms carry no physical metadata, so (unlike phase / intensity)
+    Numbered discovery + one shared (lazily read) `frame_shape`; a pickled object array
+    is rejected. Holograms carry no physical metadata, so (unlike phase / intensity)
     nothing extra is needed at construction. Create the files with `numpy.save`
     (uncompressed `.npy`, one 2-D uint8 frame per file).
 
     Args:
         root: The folder to scan.
-        validate: Run `validate` to this level ("names" or "data") at
-            construction, or None to skip. Defaults to "names".
+        validate: Run `validate` to this level ("names" or "data") at construction, or
+            None to skip. Defaults to "names".
     """
 
     FILE_STEM: ClassVar[str] = "holo"

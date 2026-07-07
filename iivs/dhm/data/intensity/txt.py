@@ -30,8 +30,8 @@ if TYPE_CHECKING:
 class IntensityTxtHeaderCodec(KoalaTxtHeaderCodec[IntensityBinHeader]):
     """Reads a Koala `Float/Txt` intensity header into an `IntensityBinHeader`.
 
-    The 2-line header is just the shared `h/w` + `pixel size` pair; intensity
-    carries no unit or height-conversion line, unlike phase::
+    The 2-line header is just the shared `h/w` + `pixel size` pair; intensity carries no
+    unit or height-conversion line, unlike phase::
 
         h=900 w=900
         pixel size=2.84871e-07 m
@@ -101,15 +101,14 @@ def load_intensity_txt(
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], IntensityBinHeader]:
     """Load a Koala `Float/Txt` intensity image, and optionally its header.
 
-    The text export holds the same quantitative intensity as the `.bin`, so
-    this returns a float32 array (and an `IntensityBinHeader`) like
-    `load_intensity_bin`.
+    The text export holds the same quantitative intensity as the `.bin`, so this returns
+    a float32 array (and an `IntensityBinHeader`) like `load_intensity_bin`.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the header is malformed, the grid does not match it, or
-            it holds non-finite values while `on_nonfinite` is "raise".
+        ValueError: If the header is malformed, the grid does not match it, or it holds
+            non-finite values while `on_nonfinite` is "raise".
     """
     data, header = load_txt(path, IntensityTxtHeaderCodec, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
@@ -130,24 +129,23 @@ def save_intensity_txt(
 ) -> None:
     """Save a 2D float32 intensity image as a Koala `Float/Txt` file.
 
-    The text twin of `save_intensity_bin`: a 2-line ``h/w`` + ``pixel size``
-    header (intensity carries no unit or height scale), then the float grid.
-    Written atomically.
+    The text twin of `save_intensity_bin`: a 2-line ``h/w`` + ``pixel size`` header
+    (intensity carries no unit or height scale), then the float grid. Written
+    atomically.
 
     Args:
         path: The `.txt` file to write.
         data: The intensity image to save, of shape (H, W).
         pixel_size: Physical size of one (square) pixel, in m.
-        overwrite: Whether to replace `path` if it already exists. Defaults to
-            False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in
-            `data`: "ignore" accepts silently, "warn" (default) emits a
-            RuntimeWarning, "raise" rejects with a ValueError.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in `data`:
+            "ignore" accepts silently, "warn" (default) emits a RuntimeWarning, "raise"
+            rejects with a ValueError.
 
     Raises:
-        ValueError: If `path` has a non-`.txt` extension, `data` is not a single
-            2D float32 image, or it holds non-finite values while `on_nonfinite`
-            is "raise".
+        ValueError: If `path` has a non-`.txt` extension, `data` is not a single 2D
+            float32 image, or it holds non-finite values while `on_nonfinite` is
+            "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -167,9 +165,9 @@ def save_intensity_txt(
 class IntensityTxtList(IntensityFileList):
     """An intensity sequence over an explicit, arbitrary list of `Float/Txt` files.
 
-    The text twin of `IntensityBinList`: no naming/contiguity/shared-header
-    constraint; each file is read independently. `IntensityTxtFolder` is the
-    auto-discovered, same-shape special case of this.
+    The text twin of `IntensityBinList`: no naming/contiguity/shared-header constraint;
+    each file is read independently. `IntensityTxtFolder` is the auto-discovered,
+    same-shape special case of this.
 
     Args:
         files: The `.txt` files to expose, in the given order.
@@ -196,10 +194,10 @@ class IntensityTxtList(IntensityFileList):
 class IntensityTxtFolder(IntensityFileFolder, IntensityTxtList):
     """An ordered sequence of Koala `Float/Txt` intensity images in a folder.
 
-    The text twin of `IntensityBinFolder`, and the auto-discovered, same-shape
-    special case of `IntensityTxtList`: lists `{index:05d}_intensity.txt`,
-    sharing one acquisition `header`. Construction and validation are inherited;
-    this supplies only the `.txt` extension.
+    The text twin of `IntensityBinFolder`, and the auto-discovered, same-shape special
+    case of `IntensityTxtList`: lists `{index:05d}_intensity.txt`, sharing one
+    acquisition `header`. Construction and validation are inherited; this supplies only
+    the `.txt` extension.
 
     Args:
         root: The folder to scan.

@@ -97,21 +97,20 @@ def load_intensity(
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], IntensityBinHeader | None]:
     """Load a float32 intensity image, picking the reader by `path`'s extension.
 
-    Dispatches `.bin` / `.txt` / `.npy` to `load_intensity_bin` /
-    `load_intensity_txt` / `load_intensity_npy`. With `return_header` it also
-    returns the parsed header (`None` for `.npy`, which is header-less; its
-    `pixel_size` lives only on `IntensityNpyFolder`, not in the file).
-    Contrast `read_intensity_header`, whose sole job *is* the header and so
-    raises on `.npy`: here the header is an optional extra, so an absent one is
-    `None`, not an error.
+    Dispatches `.bin` / `.txt` / `.npy` to `load_intensity_bin` / `load_intensity_txt` /
+    `load_intensity_npy`. With `return_header` it also returns the parsed header (`None`
+    for `.npy`, which is header-less; its `pixel_size` lives only on
+    `IntensityNpyFolder`, not in the file). Contrast `read_intensity_header`, whose sole
+    job *is* the header and so raises on `.npy`: here the header is an optional extra,
+    so an absent one is `None`, not an error.
 
     Args:
         path: The `.bin` / `.txt` / `.npy` file to read.
         return_header: Whether to also return the parsed header (`None` for the
             header-less `.npy`). Defaults to False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
-            decoded data: "ignore" (default) accepts silently, "warn" emits a
-            RuntimeWarning, "raise" rejects with a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
+            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
+            "raise" rejects with a ValueError.
 
     Returns:
         The intensity image as a 2D float32 array, or an `(image, header)` tuple
@@ -138,13 +137,12 @@ def load_intensity(
 def read_intensity_header(path: StrPath) -> IntensityBinHeader:
     """Read just the header of a `.bin` / `.txt` intensity file, by extension.
 
-    Dispatches to `read_intensity_bin_header` / `read_intensity_txt_header`.
-    `.npy` is excluded: it carries no header (supply `pixel_size` via
-    `IntensityNpyFolder`).
+    Dispatches to `read_intensity_bin_header` / `read_intensity_txt_header`. `.npy` is
+    excluded: it carries no header (supply `pixel_size` via `IntensityNpyFolder`).
 
     Raises:
-        ValueError: If `path` is `.npy` (header-less) or its extension is not
-            bin or txt.
+        ValueError: If `path` is `.npy` (header-less) or its extension is not bin or
+            txt.
     """
     ext = file_extension(path)
     if ext == "bin":
@@ -167,14 +165,13 @@ def save_intensity(
 ) -> None:
     """Save a 2D float32 intensity image, picking the writer by `path`'s extension.
 
-    Dispatches `.bin` / `.txt` to `save_intensity_bin` / `save_intensity_txt`
-    (both need `pixel_size`), and `.npy` to the header-less `save_intensity_npy`.
-    For `.npy` the `pixel_size` does not apply; passing it emits a warning and it
-    is dropped.
+    Dispatches `.bin` / `.txt` to `save_intensity_bin` / `save_intensity_txt` (both need
+    `pixel_size`), and `.npy` to the header-less `save_intensity_npy`. For `.npy` the
+    `pixel_size` does not apply; passing it emits a warning and it is dropped.
 
     Raises:
-        ValueError: If `path`'s extension is not bin, txt, or npy; or, for
-            `.bin` / `.txt`, if `pixel_size` is missing.
+        ValueError: If `path`'s extension is not bin, txt, or npy; or, for `.bin` /
+            `.txt`, if `pixel_size` is missing.
     """
     ext = file_extension(path)
     if ext in ("bin", "txt"):
@@ -207,13 +204,13 @@ def save_intensity(
 def intensity_list(files: StrPaths) -> IntensityFileList:
     """Build an intensity file list, picking the class by the files' shared extension.
 
-    Dispatches `.bin` / `.txt` to `IntensityBinList` / `IntensityTxtList`. All
-    `files` must share one extension. `.npy` has no list form (each file is
-    header-less, with no shared acquisition header); use `IntensityNpyFolder`.
+    Dispatches `.bin` / `.txt` to `IntensityBinList` / `IntensityTxtList`. All `files`
+    must share one extension. `.npy` has no list form (each file is header-less, with no
+    shared acquisition header); use `IntensityNpyFolder`.
 
     Raises:
-        ValueError: If `files` is empty, mixes extensions, is `.npy`, or shares
-            an extension that is not bin or txt.
+        ValueError: If `files` is empty, mixes extensions, is `.npy`, or shares an
+            extension that is not bin or txt.
     """
     files = list(files)
     if not files:
@@ -246,25 +243,24 @@ def intensity_folder(
     """Open a numbered intensity folder, picking the class by the format it holds.
 
     Discovers the `{index:05d}_intensity.<ext>` files under `root` (via
-    `data.common.detect_numbered_format`) and dispatches to `IntensityBinFolder`
-    / `IntensityTxtFolder` / `IntensityNpyFolder`. The `.bin` / `.txt` folders
-    read `pixel_size` from the files, so it must be omitted for them; the
-    header-less `.npy` folder instead **requires** `pixel_size`.
+    `data.common.detect_numbered_format`) and dispatches to `IntensityBinFolder` /
+    `IntensityTxtFolder` / `IntensityNpyFolder`. The `.bin` / `.txt` folders read
+    `pixel_size` from the files, so it must be omitted for them; the header-less `.npy`
+    folder instead **requires** `pixel_size`.
 
     Args:
         root: The folder to scan.
         pixel_size: The pixel size for a `.npy` folder (omit for `.bin` / `.txt`).
         validate: Validation level at construction, or None to skip.
         prefer: How to resolve a `root` that holds more than one format. `None`
-            (default) raises, while a format or a priority sequence picks the
-            first present one (e.g. `prefer=("bin", "txt")`).
+            (default) raises, while a format or a priority sequence picks the first
+            present one (e.g. `prefer=("bin", "txt")`).
 
     Raises:
-        FileNotFoundError: If `root` holds no `NNNNN_intensity.{bin,txt,npy}`
-            files.
+        FileNotFoundError: If `root` holds no `NNNNN_intensity.{bin,txt,npy}` files.
         ValueError: If `root` mixes formats and `prefer` does not resolve it, if
-            `pixel_size` is given for a `.bin` / `.txt` folder, or if a `.npy`
-            folder is missing it.
+            `pixel_size` is given for a `.bin` / `.txt` folder, or if a `.npy` folder is
+            missing it.
     """
     ext = detect_numbered_format(
         root, stem="intensity", formats=FLOAT_FORMATS, prefer=prefer
@@ -298,31 +294,29 @@ def save_intensity_folder(
 ) -> None:
     """Write any intensity image sequence to `root` as numbered `ext` files.
 
-    The composer-friendly export: `images` is any iterable of float32 intensity
-    frames (a file sequence, a `kaparoo` composer such as `ConcatSequence` or a
-    sliced or windowed view, or a plain list), so it accepts sources that carry
-    no Koala header. Because that header cannot be recovered from a composed
-    sequence, the `bin` / `txt` `pixel_size` is given here explicitly; the
-    header-less `npy` ignores it. `convert_intensity_folder` is the convenience
-    that reads `pixel_size` off a file folder's header for you.
+    The composer-friendly export: `images` is any iterable of float32 intensity frames
+    (a file sequence, a `kaparoo` composer such as `ConcatSequence` or a sliced or
+    windowed view, or a plain list), so it accepts sources that carry no Koala header.
+    Because that header cannot be recovered from a composed sequence, the `bin` / `txt`
+    `pixel_size` is given here explicitly; the header-less `npy` ignores it.
+    `convert_intensity_folder` is the convenience that reads `pixel_size` off a file
+    folder's header for you.
 
-    Each frame becomes `{index:05d}_<stem>.<ext>`. The folder is built
-    atomically, so a failed run leaves any existing `root` untouched.
+    Each frame becomes `{index:05d}_<stem>.<ext>`. The folder is built atomically, so a
+    failed run leaves any existing `root` untouched.
 
     Args:
         root: Destination folder to create and fill.
         images: The intensity frames to write, in order (each a 2D float32 image).
         ext: Target format ("bin", "txt", or "npy").
-        pixel_size: Physical size of one (square) pixel, in m. Required for
-            "bin" / "txt"; ignored (with a warning) for "npy".
-        stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>``. Defaults to
-            "intensity".
-        overwrite: Whether to replace `root` if it already exists. Defaults to
-            False.
+        pixel_size: Physical size of one (square) pixel, in m. Required for "bin" /
+            "txt"; ignored (with a warning) for "npy".
+        stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>``. Defaults to "intensity".
+        overwrite: Whether to replace `root` if it already exists. Defaults to False.
 
     Raises:
-        ValueError: If `ext` is not "bin" / "txt" / "npy", or (for "bin" /
-            "txt") `pixel_size` is missing.
+        ValueError: If `ext` is not "bin" / "txt" / "npy", or (for "bin" / "txt")
+            `pixel_size` is missing.
         FileExistsError: If `root` exists and `overwrite` is False.
     """
     ensure_one_of(ext, FLOAT_FORMATS, name="ext")
@@ -353,20 +347,18 @@ def convert_intensity_folder(
 ) -> None:
     """Re-encode an intensity `folder` into `root` in the `ext` format.
 
-    The file-folder convenience over `save_intensity_folder`: each frame becomes
-    one numbered file sharing the folder's single header. `bin` / `txt` preserve
-    `pixel_size` (read from the folder); the header-less `npy` drops it. For a
-    composed or transformed sequence (e.g. a `kaparoo` `ConcatSequence`), which
-    has no folder header, use `save_intensity_folder` directly with explicit
-    `pixel_size`. The new folder is built atomically, so a failed run leaves any
-    existing `root` untouched.
+    The file-folder convenience over `save_intensity_folder`: each frame becomes one
+    numbered file sharing the folder's single header. `bin` / `txt` preserve
+    `pixel_size` (read from the folder); the header-less `npy` drops it. For a composed
+    or transformed sequence (e.g. a `kaparoo` `ConcatSequence`), which has no folder
+    header, use `save_intensity_folder` directly with explicit `pixel_size`. The new
+    folder is built atomically, so a failed run leaves any existing `root` untouched.
 
     Args:
         root: Destination folder to create and fill with the re-encoded frames.
         folder: Source intensity folder to read.
         ext: Target format ("bin", "txt", or "npy").
-        overwrite: Whether to replace `root` if it already exists. Defaults to
-            False.
+        overwrite: Whether to replace `root` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `ext` is not "bin", "txt", or "npy".
@@ -395,16 +387,14 @@ def convert_intensity_list(
 ) -> None:
     """Re-encode each file of an intensity `sequence` in place, changing the suffix.
 
-    A list's files may live anywhere, so each is rewritten beside the original
-    with the new ``.{ext}`` suffix, keeping its own `pixel_size`; the
-    header-less `npy` drops it. Each file is written atomically, but the set as
-    a whole is not.
+    A list's files may live anywhere, so each is rewritten beside the original with the
+    new ``.{ext}`` suffix, keeping its own `pixel_size`; the header-less `npy` drops it.
+    Each file is written atomically, but the set as a whole is not.
 
     Args:
         sequence: Source intensity file list to re-encode in place.
         ext: Target format ("bin", "txt", or "npy").
-        overwrite: Whether to replace an existing target sibling. Defaults to
-            False.
+        overwrite: Whether to replace an existing target sibling. Defaults to False.
 
     Raises:
         ValueError: If `ext` is not "bin", "txt", or "npy".

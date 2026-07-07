@@ -13,11 +13,10 @@ class IntensityTifList(ImageTifList, IntensityImageSequence[Path]):
     """An intensity preview sequence over an arbitrary list of `Image/*.tif` files.
 
     The uint8 display-preview twin of `IntensityBinList`: each file is decoded
-    independently as a uint8 image, with no naming/contiguity constraint. This
-    is an `IntensityImageSequence`, *not* a quantitative
-    `IntensityFloatSequence`; the pixels are the 8-bit preview, not the float
-    intensity. `IntensityTifFolder` is the auto-discovered, same-shape special
-    case.
+    independently as a uint8 image, with no naming/contiguity constraint. This is an
+    `IntensityImageSequence`, *not* a quantitative `IntensityFloatSequence`; the pixels
+    are the 8-bit preview, not the float intensity. `IntensityTifFolder` is the
+    auto-discovered, same-shape special case.
 
     Args:
         files: The `.tif` files to expose, in the given order.
@@ -27,12 +26,12 @@ class IntensityTifList(ImageTifList, IntensityImageSequence[Path]):
 class IntensityTifFolder(ImageTifFolder, IntensityTifList):
     """An ordered sequence of Koala `{index:05d}_intensity.tif` uint8 previews.
 
-    The uint8 display-preview twin of `IntensityBinFolder`, and the
-    auto-discovered, same-shape special case of `IntensityTifList`: lists
-    `{index:05d}_intensity.tif`, sharing one (lazily read) `frame_shape`.
+    The uint8 display-preview twin of `IntensityBinFolder`, and the auto-discovered,
+    same-shape special case of `IntensityTifList`: lists `{index:05d}_intensity.tif`,
+    sharing one (lazily read) `frame_shape`.
 
-    The LZW-compressed Koala previews decode via the core `imagecodecs`
-    dependency (no extra needed).
+    The LZW-compressed Koala previews decode via the core `imagecodecs` dependency (no
+    extra needed).
 
     Args:
         root: The folder to scan.

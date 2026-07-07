@@ -1,8 +1,8 @@
 """Building blocks shared across the data modalities (phase, intensity, ...).
 
-The cross-modality primitives the per-modality packages compose, split by
-concern into submodules and re-exported here so ``from iivs.dhm.data.koala
-import X`` reaches any of them:
+The cross-modality primitives the per-modality packages compose, split by concern into
+submodules and re-exported here so ``from iivs.dhm.data.koala import X`` reaches any of
+them:
 
 - `bin` — the Koala `.bin` header value object and I/O (`KoalaBinHeader`,
   `load_bin`, `write_bin`).
@@ -20,11 +20,11 @@ import X`` reaches any of them:
   and the `UnsupportedExtensionError` raised on a bad extension are imported
   directly from `kaparoo.filesystem` where needed, not re-exported here.
 
-The technique-agnostic primitives live in `iivs.common.data`: the `.npy`
-reader / writer (`read_npy_shape`, `write_npy`), the same-shape mixin
-`FrameShapedMixin`, the array validators (`validate_float_array` /
-`validate_uint_array` and their float32 / uint8 bindings), and the dtype-generic
-image bases (`load_tif`, `ImageFileList`); import them from there.
+The technique-agnostic primitives live in `iivs.common.data`: the `.npy` reader / writer
+(`read_npy_shape`, `write_npy`), the same-shape mixin `FrameShapedMixin`, the array
+validators (`validate_float_array` / `validate_uint_array` and their float32 / uint8
+bindings), and the dtype-generic image bases (`load_tif`, `ImageFileList`); import them
+from there.
 """
 
 from __future__ import annotations

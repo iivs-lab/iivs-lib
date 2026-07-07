@@ -105,17 +105,17 @@ def load_phase(
         path: The `.bin` / `.txt` / `.npy` file to read.
         return_header: Whether to also return the parsed header (`None` for the
             header-less `.npy`). Defaults to False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
-            decoded data: "ignore" (default) accepts silently, "warn" emits a
-            RuntimeWarning, "raise" rejects with a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
+            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
+            "raise" rejects with a ValueError.
 
     Returns:
         The phase image as a 2D float32 array, or an `(image, header)` tuple
         when `return_header` is True (with `header` `None` for `.npy`).
 
     Raises:
-        ValueError: If `path`'s extension is not bin, txt, or npy (plus the
-            per-format errors of the chosen reader).
+        ValueError: If `path`'s extension is not bin, txt, or npy (plus the per-format
+            errors of the chosen reader).
     """
     ext = file_extension(path)
     if ext == "bin":
@@ -135,12 +135,12 @@ def load_phase(
 def read_phase_header(path: StrPath) -> PhaseBinHeader:
     """Read just the header of a `.bin` / `.txt` phase file, picking by extension.
 
-    Dispatches to `read_phase_bin_header` / `read_phase_txt_header`. `.npy` is
-    excluded: it carries no header (supply the metadata via `PhaseNpyFolder`).
+    Dispatches to `read_phase_bin_header` / `read_phase_txt_header`. `.npy` is excluded:
+    it carries no header (supply the metadata via `PhaseNpyFolder`).
 
     Raises:
-        ValueError: If `path` is `.npy` (header-less) or its extension is not
-            bin or txt.
+        ValueError: If `path` is `.npy` (header-less) or its extension is not bin or
+            txt.
     """
     ext = file_extension(path)
     if ext == "bin":
@@ -259,13 +259,13 @@ def phase_list(
 ) -> PhaseFileList:
     """Build a phase file list, picking the class by the files' shared extension.
 
-    Dispatches `.bin` / `.txt` to `PhaseBinList` / `PhaseTxtList`. All `files`
-    must share one extension. `.npy` has no list form (each file is header-less,
-    with no shared acquisition header); use `PhaseNpyFolder`.
+    Dispatches `.bin` / `.txt` to `PhaseBinList` / `PhaseTxtList`. All `files` must
+    share one extension. `.npy` has no list form (each file is header-less, with no
+    shared acquisition header); use `PhaseNpyFolder`.
 
     Raises:
-        ValueError: If `files` is empty, mixes extensions, is `.npy`, or shares
-            an extension that is not bin or txt.
+        ValueError: If `files` is empty, mixes extensions, is `.npy`, or shares an
+            extension that is not bin or txt.
     """
     files = list(files)
     if not files:
@@ -341,26 +341,26 @@ def phase_folder(
 
     Discovers the `{index:05d}_phase.<ext>` files under `root` (via
     `data.common.detect_numbered_format`) and dispatches to `PhaseBinFolder` /
-    `PhaseTxtFolder` / `PhaseNpyFolder`. The `.bin` / `.txt` folders read their
-    metadata from the files, so the `pixel_size` / `unit` / scale args must be
-    omitted for them; the header-less `.npy` folder instead **requires**
-    `pixel_size` and `unit` (and a scale form).
+    `PhaseTxtFolder` / `PhaseNpyFolder`. The `.bin` / `.txt` folders read their metadata
+    from the files, so the `pixel_size` / `unit` / scale args must be omitted for them;
+    the header-less `.npy` folder instead **requires** `pixel_size` and `unit` (and a
+    scale form).
 
     Args:
         root: The folder to scan.
-        pixel_size, unit, height_scale, wavelength, refractive_delta: The
-            metadata for a `.npy` folder (omit for `.bin` / `.txt`).
+        pixel_size, unit, height_scale, wavelength, refractive_delta: The metadata for a
+            `.npy` folder (omit for `.bin` / `.txt`).
         target_unit: Unit to return loaded images in (None keeps the stored).
         validate: Validation level at construction, or None to skip.
         prefer: How to resolve a `root` that holds more than one format. `None`
-            (default) raises, while a format or a priority sequence picks the
-            first present one (e.g. `prefer=("bin", "txt")`).
+            (default) raises, while a format or a priority sequence picks the first
+            present one (e.g. `prefer=("bin", "txt")`).
 
     Raises:
         FileNotFoundError: If `root` holds no `NNNNN_phase.{bin,txt,npy}` files.
         ValueError: If `root` mixes formats and `prefer` does not resolve it, if
-            metadata args are given for a `.bin` / `.txt` folder, or if a `.npy`
-            folder is missing `pixel_size` / `unit`.
+            metadata args are given for a `.bin` / `.txt` folder, or if a `.npy` folder
+            is missing `pixel_size` / `unit`.
     """
     ext = detect_numbered_format(
         root, stem="phase", formats=FLOAT_FORMATS, prefer=prefer
@@ -459,8 +459,8 @@ def save_phase_folder(
     `npy` ignores it. `convert_phase_folder` is the convenience that reads this metadata
     off a file folder's header for you.
 
-    Each frame becomes `{index:05d}_<stem>.<ext>`. The folder is built
-    atomically, so a failed run leaves any existing `root` untouched.
+    Each frame becomes `{index:05d}_<stem>.<ext>`. The folder is built atomically, so a
+    failed run leaves any existing `root` untouched.
 
     Args:
         root: Destination folder to create and fill.
@@ -479,8 +479,8 @@ def save_phase_folder(
         overwrite: Whether to replace `root` if it already exists. Defaults to False.
 
     Raises:
-        ValueError: If `ext` is not "bin" / "txt" / "npy", or (for "bin" /
-            "txt") `pixel_size` is missing or neither/both scale forms are given.
+        ValueError: If `ext` is not "bin" / "txt" / "npy", or (for "bin" / "txt")
+            `pixel_size` is missing or neither/both scale forms are given.
         FileExistsError: If `root` exists and `overwrite` is False.
     """
     ensure_one_of(ext, FLOAT_FORMATS, name="ext")
@@ -570,10 +570,10 @@ def convert_phase_list(
 ) -> None:
     """Re-encode each file of a phase `sequence` in place, changing only the suffix.
 
-    A list's files may live anywhere, so each is rewritten beside the original
-    with the new ``.{ext}`` suffix, keeping its own `pixel_size`,
-    `height_scale`, and effective `unit`; the header-less `npy` drops them.
-    Each file is written atomically, but the set as a whole is not.
+    A list's files may live anywhere, so each is rewritten beside the original with the
+    new ``.{ext}`` suffix, keeping its own `pixel_size`, `height_scale`, and effective
+    `unit`; the header-less `npy` drops them. Each file is written atomically, but the
+    set as a whole is not.
 
     Args:
         sequence: Source phase file list to re-encode in place.

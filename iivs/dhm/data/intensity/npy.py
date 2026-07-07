@@ -26,22 +26,22 @@ def load_intensity_npy(
 ) -> NDArray[np.float32]:
     """Load a header-less `.npy` float32 intensity image.
 
-    The `.npy` twin of `load_intensity_bin` / `load_intensity_txt`, but **image
-    only**: a `.npy` carries no Koala header, so there is no `return_header`
-    form and no `read_intensity_npy_header`. The `pixel_size` metadata must be
-    supplied separately (e.g. via `IntensityNpyFolder`).
+    The `.npy` twin of `load_intensity_bin` / `load_intensity_txt`, but **image only**:
+    a `.npy` carries no Koala header, so there is no `return_header` form and no
+    `read_intensity_npy_header`. The `pixel_size` metadata must be supplied separately
+    (e.g. via `IntensityNpyFolder`).
 
     Args:
         path: The `.npy` file to read.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
-            decoded data: "ignore" (default) accepts silently, "warn" emits a
-            RuntimeWarning, "raise" raises a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
+            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
+            "raise" raises a ValueError.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the array is pickled, not a single 2D float32 image, or
-            holds non-finite values while `on_nonfinite` is "raise".
+        ValueError: If the array is pickled, not a single 2D float32 image, or holds
+            non-finite values while `on_nonfinite` is "raise".
     """
     path = ensure_file_exists(path)
     data = np.load(path, allow_pickle=False)
@@ -57,23 +57,22 @@ def save_intensity_npy(
 ) -> None:
     """Save a 2D float32 intensity image as an uncompressed `.npy` file.
 
-    Header-less: only the array is stored, so the `pixel_size` the `.bin` /
-    `.txt` formats carry is dropped (supply it via `IntensityNpyFolder` on
-    read). Written atomically.
+    Header-less: only the array is stored, so the `pixel_size` the `.bin` / `.txt`
+    formats carry is dropped (supply it via `IntensityNpyFolder` on read). Written
+    atomically.
 
     Args:
         path: The `.npy` file to write.
         data: The intensity image to save, of shape (H, W).
-        overwrite: Whether to replace `path` if it already exists. Defaults to
-            False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in
-            `data`: "ignore" accepts silently, "warn" (default) emits a
-            RuntimeWarning, "raise" rejects with a ValueError.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in `data`:
+            "ignore" accepts silently, "warn" (default) emits a RuntimeWarning, "raise"
+            rejects with a ValueError.
 
     Raises:
-        ValueError: If `path` has a non-`.npy` extension, `data` is not a single
-            2D float32 image, or it holds non-finite values while `on_nonfinite`
-            is "raise".
+        ValueError: If `path` has a non-`.npy` extension, `data` is not a single 2D
+            float32 image, or it holds non-finite values while `on_nonfinite` is
+            "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -85,11 +84,11 @@ def save_intensity_npy(
 class IntensityNpyFolder(IntensityFileFolder):
     """An ordered sequence of header-less `{index:05d}_intensity.npy` float32 images.
 
-    A `.npy` array carries no Koala header, so the only metadata the `.bin` /
-    `.txt` formats embed (`pixel_size`) is supplied to the constructor
-    instead and shared by every frame (intensity has no unit or height scale). A
-    pickled object array is rejected; create the files with `numpy.save`
-    (uncompressed `.npy`, one 2-D float32 frame per file).
+    A `.npy` array carries no Koala header, so the only metadata the `.bin` / `.txt`
+    formats embed (`pixel_size`) is supplied to the constructor instead and shared by
+    every frame (intensity has no unit or height scale). A pickled object array is
+    rejected; create the files with `numpy.save` (uncompressed `.npy`, one 2-D float32
+    frame per file).
 
     Args:
         root: The folder to scan.

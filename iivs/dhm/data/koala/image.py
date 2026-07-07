@@ -26,10 +26,9 @@ if TYPE_CHECKING:
 def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
     """Load a single uint8 raster from a `.tif` file.
 
-    The uint8 binding of `iivs.common.data.load_tif`: Koala's `Image/*.tif`
-    previews are 8-bit, so the decoded array is validated as a 2D uint8 image.
-    The previews are LZW-compressed; `imagecodecs` (a core dependency) decodes
-    them without any extra.
+    The uint8 binding of `iivs.common.data.load_tif`: Koala's `Image/*.tif` previews are
+    8-bit, so the decoded array is validated as a 2D uint8 image. The previews are
+    LZW-compressed; `imagecodecs` (a core dependency) decodes them without any extra.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
@@ -44,11 +43,11 @@ class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ImageFileList[np.
 
     The auto-discovered, same-shape specialization of `iivs.common.data`'s
     `ImageFileList`, over the Koala `{index:05d}_<stem>.<ext>` numbering
-    (`SequentialFileFolder`). A header-less image file carries no shape metadata,
-    so `frame_shape` is read lazily from the first file (via the subclass
-    `load_file`) and every image is required to match it. Concrete folders set
-    `FILE_EXT` / `FILE_STEM`, supply a `load_file`, and add their image role,
-    e.g. `ImageTifFolder` (tif) or `HologramNpyFolder` (npy).
+    (`SequentialFileFolder`). A header-less image file carries no shape metadata, so
+    `frame_shape` is read lazily from the first file (via the subclass `load_file`) and
+    every image is required to match it. Concrete folders set `FILE_EXT` / `FILE_STEM`,
+    supply a `load_file`, and add their image role, e.g. `ImageTifFolder` (tif) or
+    `HologramNpyFolder` (npy).
 
     Args:
         root: The folder to scan.
@@ -74,8 +73,8 @@ class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ImageFileList[np.
     def frame_shape(self) -> tuple[int, int]:
         """The (height, width) of the first image, loaded lazily and cached.
 
-        A header-less image folder carries no shape metadata, so this reads the
-        first file and assumes every image shares its shape.
+        A header-less image folder carries no shape metadata, so this reads the first
+        file and assumes every image shares its shape.
         """
         shape = self.load_file(self.get_file(0)).shape
         return (shape[0], shape[1])
@@ -84,8 +83,8 @@ class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ImageFileList[np.
     def _validate_content(self, path: Path, *, level: str) -> None:
         """Decode `path` and require its shape to match the first file.
 
-        `level` is fixed by the hook contract but unused: a header-less image
-        folder carries no header, so "data" is its only level past "names".
+        `level` is fixed by the hook contract but unused: a header-less image folder
+        carries no header, so "data" is its only level past "names".
         """
         image = self.load_file(path)
         if image.shape != self.frame_shape:
@@ -99,8 +98,8 @@ class ImageTifList(ImageFileList[np.uint8]):
     Supplies the `.tif` codec (`load_uint8_tif`) over `iivs.common.data`'s
     `ImageFileList`. A modality adds its role by also inheriting its
     `<Modality>ImageSequence` (e.g. `PhaseTifList(ImageTifList,
-    PhaseImageSequence[Path])`). `ImageTifFolder` is the auto-discovered,
-    same-shape specialization.
+    PhaseImageSequence[Path])`). `ImageTifFolder` is the auto-discovered, same-shape
+    specialization.
 
     Args:
         files: The `.tif` files to expose, in the given order.
@@ -117,9 +116,9 @@ class ImageTifList(ImageFileList[np.uint8]):
 class ImageTifFolder(ImageFileFolder, ImageTifList):
     """A uint8 `.tif` folder: `ImageFileFolder` over the `.tif` codec.
 
-    The auto-discovered, same-shape specialization of `ImageTifList`. Concrete
-    folders set `FILE_STEM` and add their image role, e.g.
-    `PhaseTifFolder(ImageTifFolder, PhaseTifList)`.
+    The auto-discovered, same-shape specialization of `ImageTifList`. Concrete folders
+    set `FILE_STEM` and add their image role, e.g. `PhaseTifFolder(ImageTifFolder,
+    PhaseTifList)`.
 
     Args:
         root: The folder to scan.

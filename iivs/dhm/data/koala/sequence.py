@@ -34,9 +34,9 @@ type ValidationLevel = Literal["names", "headers", "data"]
 def _numbered_filter(stem: str, exts: tuple[str, ...]) -> Regex:
     """A cached name filter for ``{index:05d}_{stem}.<ext>`` files.
 
-    Built once per ``(stem, exts)``, since both are fixed by the folder type;
-    shared by `SequentialFileFolder.list_files` (one `ext`) and
-    `detect_numbered_format` (several).
+    Built once per ``(stem, exts)``, since both are fixed by the folder type; shared by
+    `SequentialFileFolder.list_files` (one `ext`) and `detect_numbered_format`
+    (several).
     """
     return Regex(rf"\d{{5}}_{stem}\.({'|'.join(exts)})")
 
@@ -44,9 +44,8 @@ def _numbered_filter(stem: str, exts: tuple[str, ...]) -> Regex:
 def numbered_name(index: int, *, stem: str, ext: str) -> str:
     """The contiguous Koala filename ``{index:05d}_{stem}.{ext}``.
 
-    The single source of truth for the numbered-folder naming convention, used
-    both to discover/validate a `SequentialFileFolder` and to write a converted
-    folder.
+    The single source of truth for the numbered-folder naming convention, used both to
+    discover/validate a `SequentialFileFolder` and to write a converted folder.
     """
     return f"{index:05d}_{stem}.{ext}"
 
@@ -60,10 +59,9 @@ def detect_numbered_format(
 ) -> str:
     """Return which of `formats` the ``{index:05d}_{stem}.<ext>`` files in `root` use.
 
-    Scans `root` at depth 1 for the numbered ``{stem}`` files with `search_files`
-    and a `Regex`, then resolves a single format. When more than one format
-    is present, `prefer` decides, mirroring `kaparoo`'s
-    `hierarchy.Exclusive(on_conflict=...)`:
+    Scans `root` at depth 1 for the numbered ``{stem}`` files with `search_files` and a
+    `Regex`, then resolves a single format. When more than one format is present,
+    `prefer` decides, mirroring `kaparoo`'s `hierarchy.Exclusive(on_conflict=...)`:
 
     - `None`: raise (the conflict is an error; the caller must disambiguate).
     - a format, or a priority sequence of formats: pick the first present
@@ -73,13 +71,13 @@ def detect_numbered_format(
         root: The folder to scan.
         stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>`` (e.g. "phase").
         formats: The candidate extensions, in their natural order.
-        prefer: The conflict policy; `None` to error on multiple formats, or a
-            format / priority sequence to pick the first present one.
+        prefer: The conflict policy; `None` to error on multiple formats, or a format /
+            priority sequence to pick the first present one.
 
     Raises:
         FileNotFoundError: If `root` holds no ``{NNNNN}_{stem}.<format>`` files.
-        ValueError: If multiple formats are present and `prefer` is `None`, or
-            `prefer` is given but selects none of the present formats.
+        ValueError: If multiple formats are present and `prefer` is `None`, or `prefer`
+            is given but selects none of the present formats.
     """
     formats = tuple(formats)
     hits = search_files(root, name_filter=_numbered_filter(stem, formats), max_depth=1)
@@ -111,18 +109,18 @@ def detect_numbered_format(
 class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     """A folder of contiguously numbered `{index:05d}_<stem>.<ext>` files.
 
-    Each such folder is one acquisition's frames, hence same-shape; subclasses
-    implement `frame_shape` from their header or first file. Factors the
-    discovery and validation shared by every modality folder (phase, intensity,
-    hologram, ...). A subclass declares the filename parts and validation depth
-    as class attributes, implements `load_file`, and supplies its per-format
-    consistency check by overriding `_validate_content`.
+    Each such folder is one acquisition's frames, hence same-shape; subclasses implement
+    `frame_shape` from their header or first file. Factors the discovery and validation
+    shared by every modality folder (phase, intensity, hologram, ...). A subclass
+    declares the filename parts and validation depth as class attributes, implements
+    `load_file`, and supplies its per-format consistency check by overriding
+    `_validate_content`.
 
     Class attributes:
         FILE_STEM: The ``<stem>`` in ``{index:05d}_<stem>.<ext>`` (e.g. "phase").
         FILE_EXT: The file extension without the dot (e.g. "bin").
-        LEVELS: The validation levels this folder accepts (a subset of
-            "names" / "headers" / "data").
+        LEVELS: The validation levels this folder accepts (a subset of "names" /
+            "headers" / "data").
         DEFAULT_LEVEL: The level `validate` / `validate_file` use when given none.
     """
 
@@ -135,9 +133,9 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     def list_files(self, root: Path) -> list[Path]:
         """List the `NNNNN_<stem>.<ext>` files under `root`, in index order.
 
-        `search_files` sorts lexicographically by default, which (with the
-        fixed-width ``{index:05d}`` zero-padding) is exactly numeric index
-        order, so no extra sort is needed.
+        `search_files` sorts lexicographically by default, which (with the fixed-width
+        ``{index:05d}`` zero-padding) is exactly numeric index order, so no extra sort
+        is needed.
         """
         name_filter = _numbered_filter(self.FILE_STEM, (self.FILE_EXT,))
         files = search_files(root, name_filter=name_filter, max_depth=1)
@@ -168,12 +166,12 @@ class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     ) -> None:
         """Validate the file at `index` to `level` (defaults to `DEFAULT_LEVEL`).
 
-        Always checks the contiguous name; any deeper level defers to the
-        per-format `_validate_content`.
+        Always checks the contiguous name; any deeper level defers to the per-format
+        `_validate_content`.
 
         Raises:
-            ValueError: If `level` is unsupported, the numbering is
-                non-contiguous, or `_validate_content` rejects the file.
+            ValueError: If `level` is unsupported, the numbering is non-contiguous, or
+                `_validate_content` rejects the file.
         """
         resolved = replace_if_none(level, self.DEFAULT_LEVEL)
         resolved = ensure_one_of(resolved, self.LEVELS, name="level")

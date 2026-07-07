@@ -30,9 +30,9 @@ if TYPE_CHECKING:
 class HologramRawHeader:
     """The fixed-size header of a Lyncée Tec Koala hologram `.raw` file.
 
-    Four little-endian int32 fields (width, height, bit depth in bits per
-    pixel, and frame count), followed immediately by `frame_count`
-    row-major frames of `height x width` pixels.
+    Four little-endian int32 fields (width, height, bit depth in bits per pixel, and
+    frame count), followed immediately by `frame_count` row-major frames of `height x
+    width` pixels.
 
     Attributes:
         width: Frame width in pixels.
@@ -105,8 +105,8 @@ class HologramRawHeader:
         """Read and validate a header from an open binary stream.
 
         Raises:
-            ValueError: If the stream is too small for a header, or holds
-                invalid header fields.
+            ValueError: If the stream is too small for a header, or holds invalid header
+                fields.
         """
         raw = f.read(expected := cls.HEADER_SIZE)
         if (actual := len(raw)) < expected:
@@ -157,23 +157,21 @@ def save_hologram_raw(
 ) -> None:
     """Save uint8 holograms as a Lyncée Tec Koala `.raw` file.
 
-    The file is a 16-byte `HologramRawHeader` (8-bit) followed by the row-major
-    frames. Frames are written one at a time, so a large source (a memmapped
-    `HologramRawFile` or a big folder) is never held in memory as a whole stack.
-    Written atomically.
+    The file is a 16-byte `HologramRawHeader` (8-bit) followed by the row-major frames.
+    Frames are written one at a time, so a large source (a memmapped `HologramRawFile`
+    or a big folder) is never held in memory as a whole stack. Written atomically.
 
     Args:
         path: The `.raw` file to write.
-        frames: The holograms to save (a single 2D image, an ``(N, H, W)``
-            stack array, or any uint8 `DataSequence` such as a `HologramSequence`
-            or a `kaparoo` composer like a `ConcatSequence`). All frames must
-            share one shape.
+        frames: The holograms to save (a single 2D image, an ``(N, H, W)`` stack array,
+            or any uint8 `DataSequence` such as a `HologramSequence` or a `kaparoo`
+            composer like a `ConcatSequence`). All frames must share one shape.
         overwrite: Whether to replace `path` if it already exists. Defaults to False.
 
     Raises:
-        ValueError: If `path` has a non-`.raw` extension, an array is not a 2D
-            image or an ``(N, H, W)`` stack, the sequence or stack is empty, or
-            its frames are not same-shaped uint8.
+        ValueError: If `path` has a non-`.raw` extension, an array is not a 2D image or
+            an ``(N, H, W)`` stack, the sequence or stack is empty, or its frames are
+            not same-shaped uint8.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -231,13 +229,13 @@ class HologramRawFile(
 ):
     """An ordered sequence of holograms in a single Lyncée Tec Koala `.raw` file.
 
-    Read lazily and read-only, so a large multi-frame file is never loaded
-    whole. Each item is a fresh, writable copy of one frame (metadata is the
-    frame index), ready for `torch.from_numpy`; for zero-copy bulk access, use
-    the read-only `frames` memmap directly.
+    Read lazily and read-only, so a large multi-frame file is never loaded whole. Each
+    item is a fresh, writable copy of one frame (metadata is the frame index), ready for
+    `torch.from_numpy`; for zero-copy bulk access, use the read-only `frames` memmap
+    directly.
 
-    Pickles to just its path, so it is cheap to hand to worker processes (e.g. a
-    PyTorch `DataLoader`).
+    Pickles to just its path, so it is cheap to hand to worker processes (e.g. a PyTorch
+    `DataLoader`).
 
     Args:
         path: The `.raw` file to read.
@@ -245,9 +243,9 @@ class HologramRawFile(
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If `path` does not have a `.raw` extension, the header is
-            invalid, or the file size does not match the header
-            (`HEADER_SIZE + frame_count * frame_nbytes`).
+        ValueError: If `path` does not have a `.raw` extension, the header is invalid,
+            or the file size does not match the header (`HEADER_SIZE + frame_count *
+            frame_nbytes`).
     """
 
     def __init__(self, path: StrPath) -> None:

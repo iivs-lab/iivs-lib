@@ -1,11 +1,11 @@
 """Default optical and geometric parameters for the lab's transmission DHM.
 
-Override per experiment when the setup differs. The phase helpers
-(`save_phase_bin`, the phase-to-height conversion) take the refractive-index
-*difference* ``n_object - n_medium``, so only that delta is defined, not the
-individual indices. Pixel size normally comes from the `.bin` header
-(`PhaseBinHeader`); the per-magnification ``PIXEL_SIZE_*`` constants are a
-header-less fallback, measured on this setup's 10X / 20X / 40X objectives.
+Override per experiment when the setup differs. The phase helpers (`save_phase_bin`, the
+phase-to-height conversion) take the refractive-index *difference* ``n_object -
+n_medium``, so only that delta is defined, not the individual indices. Pixel size
+normally comes from the `.bin` header (`PhaseBinHeader`); the per-magnification
+``PIXEL_SIZE_*`` constants are a header-less fallback, measured on this setup's 10X /
+20X / 40X objectives.
 """
 
 from __future__ import annotations

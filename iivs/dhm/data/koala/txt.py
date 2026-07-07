@@ -22,19 +22,19 @@ if TYPE_CHECKING:
 class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
     """Stateless (de)serializer between a `Float/Txt` header and a `KoalaBinHeader`.
 
-    Not a header value object; it is never instantiated and carries no state;
-    every method is a classmethod, and `from_lines` / `from_file` return the
-    modality's `KoalaBinHeader` (`H`), not a `KoalaTxtHeaderCodec`. It is the
-    text twin of the binary (de)serialization that lives on `KoalaBinHeader`
-    itself (`to_dtype` / `from_dtype`), kept separate so the header value class
-    stays free of text-format knowledge.
+    Not a header value object; it is never instantiated and carries no state; every
+    method is a classmethod, and `from_lines` / `from_file` return the modality's
+    `KoalaBinHeader` (`H`), not a `KoalaTxtHeaderCodec`. It is the text twin of the
+    binary (de)serialization that lives on `KoalaBinHeader` itself (`to_dtype` /
+    `from_dtype`), kept separate so the header value class stays free of text-format
+    knowledge.
 
-    The first two lines are always ``h=<H> w=<W>`` and ``pixel size=<m> m``; a
-    modality may add more (phase carries a `data unit` and a `height conversion
-    factor` line). A subclass sets `HEADER_LINES` / `MODALITY` and bridges those
-    extra lines both ways (`_from_geometry` parses them into `H`, `_extra_lines`
-    serializes them back), so `phase` and `intensity` share the line-count
-    check, the `h/w` + `pixel size` regex, and the file read/write.
+    The first two lines are always ``h=<H> w=<W>`` and ``pixel size=<m> m``; a modality
+    may add more (phase carries a `data unit` and a `height conversion factor` line). A
+    subclass sets `HEADER_LINES` / `MODALITY` and bridges those extra lines both ways
+    (`_from_geometry` parses them into `H`, `_extra_lines` serializes them back), so
+    `phase` and `intensity` share the line-count check, the `h/w` + `pixel size` regex,
+    and the file read/write.
 
     Type Parameters:
         H: The header the subclass produces (e.g. `PhaseBinHeader`).
@@ -134,17 +134,17 @@ def load_txt[H: KoalaBinHeader](
 ) -> tuple[NDArray[np.float32], H]:
     """Read a Koala `Float/Txt` file's float32 image and header (the shared engine).
 
-    Reads the header via `header_codec`, then the float grid that follows.
-    Koala may write the grid as `height` rows *or* as a single long line, so
-    the read is layout-agnostic. The per-modality `load_*_txt` wrappers bind
-    their codec and add the `return_header` ergonomics.
+    Reads the header via `header_codec`, then the float grid that follows. Koala may
+    write the grid as `height` rows *or* as a single long line, so the read is
+    layout-agnostic. The per-modality `load_*_txt` wrappers bind their codec and add the
+    `return_header` ergonomics.
 
     Args:
         path: The `.txt` file to read.
         header_codec: The `KoalaTxtHeaderCodec` subclass to parse the header with.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
-            decoded data: "ignore" (default) accepts them silently, "warn" emits
-            a RuntimeWarning, "raise" raises a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
+            data: "ignore" (default) accepts them silently, "warn" emits a
+            RuntimeWarning, "raise" raises a ValueError.
 
     Returns:
         An ``(image, header)`` tuple: the float32 image of shape
@@ -153,9 +153,9 @@ def load_txt[H: KoalaBinHeader](
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the header or grid is malformed, the grid does not fill
-            the header shape, or the data holds non-finite values while
-            `on_nonfinite` is "raise".
+        ValueError: If the header or grid is malformed, the grid does not fill the
+            header shape, or the data holds non-finite values while `on_nonfinite` is
+            "raise".
     """
     path = ensure_file_exists(path)
     lines = path.read_text().splitlines()
@@ -186,8 +186,8 @@ def write_txt(
     """Atomically write a Koala `Float/Txt` file: the `header` text then the grid.
 
     `header` is the already-serialized key=value header (see
-    `KoalaTxtHeaderCodec.to_lines`); `data` follows as ``%.8e`` rows. The text
-    twin of `write_bin`, shared by the per-modality `save_*_txt`.
+    `KoalaTxtHeaderCodec.to_lines`); `data` follows as ``%.8e`` rows. The text twin of
+    `write_bin`, shared by the per-modality `save_*_txt`.
 
     Raises:
         FileExistsError: If `path` exists and `overwrite` is False.

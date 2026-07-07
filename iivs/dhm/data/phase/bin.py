@@ -46,8 +46,8 @@ class PhaseBinHeader(KoalaBinHeader):
         width: Image width in pixels.
         height: Image height in pixels.
         pixel_size: Physical size of one (square) pixel, in m.
-        height_scale: Height represented by one rad of phase, in m;
-            the phase-to-height conversion factor.
+        height_scale: Height represented by one rad of phase, in m; the phase-to-height
+            conversion factor.
         unit: Physical unit of the stored phase values.
         version: Format version. Fixed at 1.
         endian: Byte-order flag. Fixed at 0 (little-endian).
@@ -100,14 +100,14 @@ class PhaseBinHeader(KoalaBinHeader):
 def read_phase_bin_header(path: StrPath) -> PhaseBinHeader:
     """Read only the header of a Lyncée Tec Koala .bin file, without the pixels.
 
-    Reads just the fixed-size header, so it stays cheap when curating many files
-    by metadata (shape, field of view) without decoding the images.
+    Reads just the fixed-size header, so it stays cheap when curating many files by
+    metadata (shape, field of view) without decoding the images.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the file is too small, declares an unsupported header
-            size, or has invalid header fields.
+        ValueError: If the file is too small, declares an unsupported header size, or
+            has invalid header fields.
     """
     return PhaseBinHeader.from_file(path)
 
@@ -149,13 +149,13 @@ def load_phase_bin(
 
     Args:
         path: The .bin file to read.
-        return_header: Whether to also return the parsed `PhaseBinHeader`.
-            Defaults to False.
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the
-            decoded data: "ignore" (default) accepts silently, "warn" emits a
-            RuntimeWarning, "raise" raises a ValueError (useful to reject
-            corrupted files). Defaults to "ignore", since a structurally valid
-            file's contents are accepted by default.
+        return_header: Whether to also return the parsed `PhaseBinHeader`. Defaults to
+            False.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
+            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
+            "raise" raises a ValueError (useful to reject corrupted files). Defaults to
+            "ignore", since a structurally valid file's contents are accepted by
+            default.
 
     Returns:
         The phase image as a 2D float32 array, or an (image, header) tuple
@@ -234,10 +234,10 @@ def save_phase_bin(
 ) -> None:
     """Save a 2D float32 phase image as a Lyncée Tec Koala .bin file.
 
-    The phase-to-height scale is given either directly as `height_scale`,
-    or as a `wavelength` and refractive-index difference `refractive_delta`
-    pair (then height per rad = wavelength / (2*pi * refractive_delta)).
-    Exactly one of the two forms must be given.
+    The phase-to-height scale is given either directly as `height_scale`, or as a
+    `wavelength` and refractive-index difference `refractive_delta` pair (then height
+    per rad = wavelength / (2*pi * refractive_delta)). Exactly one of the two forms must
+    be given.
 
     Written atomically, so a failed write never leaves a partial or clobbered file.
 
@@ -259,9 +259,9 @@ def save_phase_bin(
             rejects with a ValueError.
 
     Raises:
-        ValueError: If `path` has a non-`.bin` extension, neither or both scale
-            forms are given, `data` is not a single 2D float32 image, or it holds
-            non-finite values while `on_nonfinite` is "raise".
+        ValueError: If `path` has a non-`.bin` extension, neither or both scale forms
+            are given, `data` is not a single 2D float32 image, or it holds non-finite
+            values while `on_nonfinite` is "raise".
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -300,10 +300,10 @@ class PhaseBinList(PhaseFileList):
 
     Args:
         files: The `.bin` files to expose, in the given order.
-        target_unit: Unit to return images in, applied per file via that
-            file's own `height_scale`. Defaults to None, which keeps each
-            file's stored unit. A file whose stored unit cannot reach
-            `target_unit` raises `ValueError` when that item is accessed.
+        target_unit: Unit to return images in, applied per file via that file's own
+            `height_scale`. Defaults to None, which keeps each file's stored unit. A
+            file whose stored unit cannot reach `target_unit` raises `ValueError` when
+            that item is accessed.
 
     Raises:
         ValueError: If any path does not have a `.bin` extension.
@@ -336,16 +336,16 @@ class PhaseBinFolder(PhaseFileFolder, PhaseBinList):
     and validation are inherited; this supplies only the `.bin` extension.
 
     Args:
-        root: The folder to scan. Must exist, be a directory, and contain at
-            least one matching file.
+        root: The folder to scan. Must exist, be a directory, and contain at least one
+            matching file.
         target_unit: Unit to return loaded images in (None keeps the stored).
-        validate: Run `validate` to this level at construction, or None to
-            skip. Defaults to "headers".
+        validate: Run `validate` to this level at construction, or None to skip.
+            Defaults to "headers".
 
     Raises:
         DirectoryNotFoundError: If `root` does not exist.
         NotADirectoryError: If `root` exists but is not a directory.
         FileNotFoundError: If no `NNNNN_phase.bin` files are found in `root`.
-        ValueError: If `target_unit` cannot be converted from the stored unit,
-            or if `validate` is set and the sequence fails validation.
+        ValueError: If `target_unit` cannot be converted from the stored unit, or if
+            `validate` is set and the sequence fails validation.
     """

@@ -48,8 +48,8 @@ def save_hologram_tif(
         overwrite: Whether to replace `path` if it already exists. Defaults to False.
 
     Raises:
-        ValueError: If `path` has a non-`.tif` extension, or `data` is not a 2D
-            uint8 array.
+        ValueError: If `path` has a non-`.tif` extension, or `data` is not a 2D uint8
+            array.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -67,11 +67,11 @@ def save_hologram_tif(
 class HologramTifList(ImageTifList, HologramSequence[Path]):
     """A hologram sequence over an explicit, arbitrary list of `.tif` files.
 
-    Imposes no naming, contiguity, or single-folder constraint: the files
-    may live anywhere and each is decoded independently, so they may differ in
-    shape (hence a plain `HologramSequence`, no `frame_shape`). Each item is the
-    decoded uint8 image and its metadata is the source path. `HologramTifFolder`
-    is the auto-discovered, same-shape special case.
+    Imposes no naming, contiguity, or single-folder constraint: the files may live
+    anywhere and each is decoded independently, so they may differ in shape (hence a
+    plain `HologramSequence`, no `frame_shape`). Each item is the decoded uint8 image
+    and its metadata is the source path. `HologramTifFolder` is the auto-discovered,
+    same-shape special case.
 
     Args:
         files: The `.tif` files to expose, in the given order.
@@ -81,14 +81,14 @@ class HologramTifList(ImageTifList, HologramSequence[Path]):
 class HologramTifFolder(ImageTifFolder, HologramTifList):
     """An ordered sequence of Lyncée Tec Koala `NNNNN_holo.tif` uint8 holograms.
 
-    The auto-discovered, same-shape special case of `HologramTifList`: lists the
-    direct children matching `{index:05d}_holo.tif` (exactly five digits,
-    case-sensitive) in index order, sharing one (lazily read) `frame_shape`.
+    The auto-discovered, same-shape special case of `HologramTifList`: lists the direct
+    children matching `{index:05d}_holo.tif` (exactly five digits, case-sensitive) in
+    index order, sharing one (lazily read) `frame_shape`.
 
     Args:
         root: The folder to scan.
-        validate: Validation level at construction ("names" or "data"), or None
-            to skip. Defaults to "names".
+        validate: Validation level at construction ("names" or "data"), or None to skip.
+            Defaults to "names".
     """
 
     FILE_STEM: ClassVar[str] = "holo"

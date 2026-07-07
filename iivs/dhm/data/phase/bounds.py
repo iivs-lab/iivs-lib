@@ -20,10 +20,10 @@ class PhaseBounds:
     """The phase display bounds in a Lyncée Tec Koala ``phbounds.txt``, in nanometers.
 
     Lyncée Tec Koala renders the quantitative float phase into the uint8 `Image/*.tif`
-    previews by linearly mapping ``[min_nm, max_nm]`` onto ``0-255``; these are
-    the global min and max of that phase over the acquisition.
-    A `PhaseFloatSequence` can recompute them straight from its `Float` source
-    via `bounds_nm`, so the previews are never the authoritative source.
+    previews by linearly mapping ``[min_nm, max_nm]`` onto ``0-255``; these are the
+    global min and max of that phase over the acquisition. A `PhaseFloatSequence` can
+    recompute them straight from its `Float` source via `bounds_nm`, so the previews are
+    never the authoritative source.
 
     Attributes:
         min_nm: Lower display bound, in nanometers.
@@ -91,11 +91,11 @@ class PhaseBounds:
     def decode_preview(self, preview: NDArray[np.uint8]) -> NDArray[np.float32]:
         """Map a uint8 Koala preview back toward phase, in nanometers (lossy).
 
-        The inverse of Koala's display rendering: ``0`` maps to `min_nm`, ``255``
-        to `max_nm`, linearly. The result is 8-bit quantized (a coarse
-        reconstruction with step ``(max_nm - min_nm) / 255``), never a substitute
-        for the quantitative `Float` source. A degenerate ``min_nm == max_nm``
-        maps every pixel to that single value.
+        The inverse of Koala's display rendering: ``0`` maps to `min_nm`, ``255`` to
+        `max_nm`, linearly. The result is 8-bit quantized (a coarse reconstruction with
+        step ``(max_nm - min_nm) / 255``), never a substitute for the quantitative
+        `Float` source. A degenerate ``min_nm == max_nm`` maps every pixel to that
+        single value.
 
         Args:
             preview: A uint8 preview image (or stack), values in ``0-255``.
@@ -107,14 +107,14 @@ class PhaseBounds:
         """Render phase (nm) into a uint8 Koala-style preview (the forward map).
 
         Linearly maps ``[min_nm, max_nm]`` onto ``0-255`` with rounding, clamping
-        out-of-range values to the ends, as Koala renders `Image/*.tif`. The
-        round trip ``decode_preview(encode_preview(x))`` recovers `x` only up to
-        the 8-bit quantization. A degenerate ``min_nm == max_nm`` maps everything
-        to ``0`` (division by a zero span is avoided).
+        out-of-range values to the ends, as Koala renders `Image/*.tif`. The round trip
+        ``decode_preview(encode_preview(x))`` recovers `x` only up to the 8-bit
+        quantization. A degenerate ``min_nm == max_nm`` maps everything to ``0``
+        (division by a zero span is avoided).
 
         Args:
-            phase_nm: Phase image(s) in nanometers (e.g. a `Float` frame put in
-                nm via `convert_phase_unit`).
+            phase_nm: Phase image(s) in nanometers (e.g. a `Float` frame put in nm via
+                `convert_phase_unit`).
         """
         span = self.max_nm - self.min_nm
         values = np.asarray(phase_nm, dtype=np.float64)
