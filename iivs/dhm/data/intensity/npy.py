@@ -29,8 +29,7 @@ def load_intensity_npy(
     The `.npy` twin of `load_intensity_bin` / `load_intensity_txt`, but **image
     only**: a `.npy` carries no Koala header, so there is no `return_header`
     form and no `read_intensity_npy_header`. The `pixel_size` metadata must be
-    supplied separately (e.g. via `IntensityNpyFolder`). Loaded with
-    `numpy.load(allow_pickle=False)`, so a pickled object array is rejected.
+    supplied separately (e.g. via `IntensityNpyFolder`).
 
     Args:
         path: The `.npy` file to read.
@@ -88,10 +87,9 @@ class IntensityNpyFolder(IntensityFileFolder):
 
     A `.npy` array carries no Koala header, so the only metadata the `.bin` /
     `.txt` formats embed (`pixel_size`) is supplied to the constructor
-    instead and shared by every frame (intensity has no unit or height scale).
-    Files are loaded with `numpy.load(allow_pickle=False)`, so a pickled object
-    array is rejected; create them with `numpy.save` (uncompressed `.npy`, one
-    2-D float32 frame per file).
+    instead and shared by every frame (intensity has no unit or height scale). A
+    pickled object array is rejected; create the files with `numpy.save`
+    (uncompressed `.npy`, one 2-D float32 frame per file).
 
     Args:
         root: The folder to scan.

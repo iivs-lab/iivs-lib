@@ -101,9 +101,8 @@ class PhaseBinHeader(KoalaBinHeader):
 def read_phase_bin_header(path: StrPath) -> PhaseBinHeader:
     """Read only the header of a Lyncée Tec Koala .bin file, without the pixels.
 
-    A thin wrapper over `PhaseBinHeader.from_file`; reads just the
-    fixed-size header, so it stays cheap when curating many files by
-    metadata (shape, field of view) without decoding the images.
+    Reads just the fixed-size header, so it stays cheap when curating many files
+    by metadata (shape, field of view) without decoding the images.
 
     Raises:
         FileNotFoundError: If `path` does not exist.

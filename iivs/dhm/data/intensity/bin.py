@@ -80,9 +80,8 @@ class IntensityBinHeader(KoalaBinHeader):
 def read_intensity_bin_header(path: StrPath) -> IntensityBinHeader:
     """Read only the header of a Koala intensity `.bin` file, without the pixels.
 
-    A thin wrapper over `IntensityBinHeader.from_file`; reads just the
-    fixed-size header, so it stays cheap when curating many files by metadata
-    (shape, field of view) without decoding the images.
+    Reads just the fixed-size header, so it stays cheap when curating many files
+    by metadata (shape, field of view) without decoding the images.
 
     Raises:
         FileNotFoundError: If `path` does not exist.

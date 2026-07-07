@@ -129,9 +129,6 @@ class PhaseBounds:
 def read_phbounds(path: StrPath) -> PhaseBounds:
     """Read a Lyncée Tec Koala ``phbounds.txt`` into a `PhaseBounds`.
 
-    The free-function alias for `PhaseBounds.from_file` (as `read_phase_bin_header`
-    is for `PhaseBinHeader.from_file`), for callers that prefer a functional API.
-
     Raises:
         As `PhaseBounds.from_file` (wrong extension, missing file, or a malformed
         or unordered record).
@@ -143,9 +140,6 @@ def write_phbounds(
     path: StrPath, bounds: PhaseBounds, *, overwrite: bool = False
 ) -> None:
     """Write `bounds` to a Lyncée Tec Koala ``phbounds.txt``.
-
-    The free-function alias for `PhaseBounds.to_file`, for callers that prefer a
-    functional API.
 
     Args:
         path: The `.txt` file to write (``.txt`` is appended if `path` has no suffix).

@@ -31,9 +31,7 @@ def load_phase_npy(
     The `.npy` twin of `load_phase_bin` / `load_phase_txt`, but **image only**:
     a `.npy` carries no Koala header, so there is no `return_header` form and no
     `read_phase_npy_header`; the `pixel_size` / `unit` / `height_scale`
-    metadata must be supplied separately (e.g. via `PhaseNpyFolder`). Loaded
-    with `numpy.load(allow_pickle=False)`, so a pickled object array is
-    rejected.
+    metadata must be supplied separately (e.g. via `PhaseNpyFolder`).
 
     Args:
         path: The `.npy` file to read.
@@ -92,9 +90,8 @@ class PhaseNpyFolder(PhaseFileFolder):
     A `.npy` array carries no Koala header, so the acquisition metadata the
     `.bin` / `.txt` formats embed (`pixel_size`, `unit`, and the phase-to-height
     `height_scale`) is supplied to the constructor instead and shared by every
-    frame. Files are loaded with `numpy.load(allow_pickle=False)`, so a pickled
-    object array is rejected; create them with `numpy.save` (uncompressed `.npy`,
-    one 2-D float32 frame per file).
+    frame. A pickled object array is rejected; create the files with `numpy.save`
+    (uncompressed `.npy`, one 2-D float32 frame per file).
 
     Args:
         root: The folder to scan.
