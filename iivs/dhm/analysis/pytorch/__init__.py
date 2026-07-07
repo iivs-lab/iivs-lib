@@ -1,9 +1,9 @@
 """Torch-native OPD / dry-mass helpers (install the ``iivs-lib[torch]`` extra).
 
-Tensor-in / tensor-out twins of `iivs.dhm.analysis.opd` and
-`iivs.dhm.analysis.drymass` that preserve the input tensor's device and autograd
-graph. The physical calibration (the scalar factors) is reused from the NumPy
-engines, so only the elementwise ops are torch-native.
+Tensor-in / tensor-out twins of `iivs.dhm.analysis.opd` and `iivs.dhm.analysis.drymass`
+that preserve the input tensor's device and autograd graph. The physical calibration
+(the scalar factors) is reused from the NumPy engines, so only the elementwise ops are
+torch-native.
 """
 
 from __future__ import annotations

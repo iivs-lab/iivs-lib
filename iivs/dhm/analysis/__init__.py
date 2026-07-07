@@ -1,8 +1,8 @@
 """Quantitative analysis derived from DHM phase data (OPD, dry mass, ...).
 
-The NumPy engines and one-shot helpers are re-exported here; the Torch twins
-live in `iivs.dhm.analysis.pytorch` (install the ``iivs-lib[torch]`` extra) and
-are *not* re-exported, so importing this package never requires PyTorch.
+The NumPy engines and one-shot helpers are re-exported here; the Torch twins live in
+`iivs.dhm.analysis.pytorch` (install the ``iivs-lib[torch]`` extra) and are *not*
+re-exported, so importing this package never requires PyTorch.
 """
 
 from __future__ import annotations

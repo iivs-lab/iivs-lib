@@ -24,22 +24,22 @@ class DryMass(nn.Module):
     """Torch `nn.Module` for dry mass (pg) from OPD or phase.
 
     The torch twin of `iivs.dhm.analysis.drymass.DryMassCalculator` (named for the
-    quantity, per the `nn.Module` convention). Binds the pixel size, specific
-    refractive increment, and an `OpticalPathDifference` (for the phase path) once;
-    the per-pixel `drymass_scale` (a plain float) is reused from the NumPy engine.
-    `calc_from_opd` sums the masked OPD over the last two axes (H, W) in ``float64``
-    (for precision) and scales, returning a tensor in the input's dtype (never a
-    Python `float`), so it stays on the input's device, dtype, and autograd graph
-    (a `float()` cast would sync off-device and drop gradients). Inputs are batched
-    (``(..., H, W)``); a ``(N, H, W)`` mask adds a trailing channel axis
-    (``(..., N)``); ``reduce=False`` returns the per-pixel mass-density map instead
-    of the sum. The OPD must already be background-corrected.
+    quantity, per the `nn.Module` convention). Binds the pixel size, specific refractive
+    increment, and an `OpticalPathDifference` (for the phase path) once; the per-pixel
+    `drymass_scale` (a plain float) is reused from the NumPy engine. `calc_from_opd`
+    sums the masked OPD over the last two axes (H, W) in ``float64`` (for precision) and
+    scales, returning a tensor in the input's dtype (never a Python `float`), so it
+    stays on the input's device, dtype, and autograd graph (a `float()` cast would sync
+    off-device and drop gradients). Inputs are batched (``(..., H, W)``); a ``(N, H,
+    W)`` mask adds a trailing channel axis (``(..., N)``); ``reduce=False`` returns the
+    per-pixel mass-density map instead of the sum. The OPD must already be
+    background-corrected.
 
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        opd_module: The `OpticalPathDifference` used by `calc_from_phase` (a
-            registered submodule).
+        opd_module: The `OpticalPathDifference` used by `calc_from_phase` (a registered
+            submodule).
         drymass_scale: pg of dry mass per nm of summed OPD (a plain float).
     """
 
@@ -82,20 +82,19 @@ class DryMass(nn.Module):
 
         Args:
             opd: OPD map(s), in nm, shape ``(..., H, W)``.
-            mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)`` for
-                `N` objects; multiplied in (broadcast), the 3-D form adding a
-                trailing channel axis.
-            reduce: If True (default), sum over (H, W) and return the dry mass,
-                shape ``(...)`` (or ``(..., N)`` with a ``(N, H, W)`` mask), as a
-                tensor (0-dim for a single image). If False, return the per-pixel
-                mass-density map (``opd * scale``, masked) without summing.
+            mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)`` for `N`
+                objects; multiplied in (broadcast), the 3-D form adding a trailing
+                channel axis.
+            reduce: If True (default), sum over (H, W) and return the dry mass, shape
+                ``(...)`` (or ``(..., N)`` with a ``(N, H, W)`` mask), as a tensor
+                (0-dim for a single image). If False, return the per-pixel mass-density
+                map (``opd * scale``, masked) without summing.
 
         Raises:
-            ValueError: If `opd` is not at least 2-D ``(..., H, W)``; if `mask`
-                is not 2-D ``(H, W)`` or 3-D ``(N, H, W)`` (a per-frame /
-                higher-rank mask like ``(T, N, H, W)`` is unsupported; loop
-                over its leading axes); or if `mask`'s ``(H, W)`` does not match
-                `opd`'s.
+            ValueError: If `opd` is not at least 2-D ``(..., H, W)``; if `mask` is not
+                2-D ``(H, W)`` or 3-D ``(N, H, W)`` (a per-frame / higher-rank mask like
+                ``(T, N, H, W)`` is unsupported; loop over its leading axes); or if
+                `mask`'s ``(H, W)`` does not match `opd`'s.
         """
         if opd.ndim < 2:
             msg = f"opd must be at least 2D (..., H, W) (got {opd.ndim}D)"
@@ -168,8 +167,7 @@ def calc_drymass(
     Keeps `opd`'s device and the autograd graph.
 
     Args:
-        opd: OPD map(s), in nm, shape ``(..., H, W)``, already
-            background-corrected.
+        opd: OPD map(s), in nm, shape ``(..., H, W)``, already background-corrected.
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
         mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)``.
@@ -192,8 +190,8 @@ def calc_drymass_from_phase(
 ) -> Tensor:
     """Dry mass [pg] from a phase map (rad); a one-shot `DryMass`.
 
-    Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`;
-    keeps the input's device and the autograd graph.
+    Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`; keeps
+    the input's device and the autograd graph.
 
     Args:
         phase: Phase map(s), in rad, shape ``(..., H, W)``, already

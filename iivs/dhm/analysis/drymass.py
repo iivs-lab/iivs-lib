@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 class DryMassCalculator:
     """Integrate OPD (or phase) into dry mass (pg) at a fixed pixel size and alpha.
 
-    Bind the pixel size, specific refractive increment, and (for the phase
-    path) an `OPDConverter` once; the per-pixel mass factor is precomputed::
+    Bind the pixel size, specific refractive increment, and (for the phase path) an
+    `OPDConverter` once; the per-pixel mass factor is precomputed::
 
         dmc = DryMassCalculator(pixel_size=px)  # alpha, wavelength default
         dmc = DryMassCalculator.from_wavelength(pixel_size=px, wavelength=666e-9)
@@ -33,8 +33,8 @@ class DryMassCalculator:
 
     Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg, summed in
     float64 over the last two axes (H, W) and returned as float32. Inputs are batched
-    (``(..., H, W)``) and a ``(N, H, W)`` mask adds a trailing channel axis.
-    See `calc_from_opd` for the shape / `reduce` details. The OPD must already be
+    (``(..., H, W)``) and a ``(N, H, W)`` mask adds a trailing channel axis. See
+    `calc_from_opd` for the shape / `reduce` details. The OPD must already be
     background-corrected (≈ 0 outside the object); segmentation and background
     estimation stay the caller's responsibility.
 
@@ -44,9 +44,8 @@ class DryMassCalculator:
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        opd_converter: Phase-to-OPD converter used by `calc_from_phase`.
-            Defaults to one at the default wavelength; inject your own or use
-            `from_wavelength`.
+        opd_converter: Phase-to-OPD converter used by `calc_from_phase`. Defaults to one
+            at the default wavelength; inject your own or use `from_wavelength`.
     """
 
     pixel_size: float
@@ -111,21 +110,19 @@ class DryMassCalculator:
 
         Args:
             opd: OPD map(s), in nm, shape ``(..., H, W)``.
-            mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)`` for
-                `N` objects; multiplied in (broadcast), the 3-D form adding a
-                trailing channel axis.
-            reduce: If True (default), sum the per-pixel mass over (H, W) and
-                return the dry mass, shape ``(...)`` (or ``(..., N)`` with a
-                ``(N, H, W)`` mask). If False, return the per-pixel mass-density
-                map (``opd * scale``, masked) without summing, shape
-                ``(..., H, W)`` (or ``(..., N, H, W)``).
+            mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)`` for `N`
+                objects; multiplied in (broadcast), the 3-D form adding a trailing
+                channel axis.
+            reduce: If True (default), sum the per-pixel mass over (H, W) and return the
+                dry mass, shape ``(...)`` (or ``(..., N)`` with a ``(N, H, W)`` mask).
+                If False, return the per-pixel mass-density map (``opd * scale``,
+                masked) without summing, shape ``(..., H, W)`` (or ``(..., N, H, W)``).
 
         Raises:
-            ValueError: If `opd` is not at least 2-D ``(..., H, W)``; if `mask`
-                is not 2-D ``(H, W)`` or 3-D ``(N, H, W)`` (a per-frame /
-                higher-rank mask like ``(T, N, H, W)`` is unsupported; loop
-                over its leading axes); or if `mask`'s ``(H, W)`` does not match
-                `opd`'s.
+            ValueError: If `opd` is not at least 2-D ``(..., H, W)``; if `mask` is not
+                2-D ``(H, W)`` or 3-D ``(N, H, W)`` (a per-frame / higher-rank mask like
+                ``(T, N, H, W)`` is unsupported; loop over its leading axes); or if
+                `mask`'s ``(H, W)`` does not match `opd`'s.
         """
         if opd.ndim < 2:
             msg = f"opd must be at least 2D (..., H, W) (got {opd.ndim}D)"
