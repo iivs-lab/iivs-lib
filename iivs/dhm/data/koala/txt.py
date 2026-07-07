@@ -54,14 +54,18 @@ class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
         Raises:
             ValueError: If there are too few lines, or the geometry is malformed.
         """
-        if len(lines) < cls.HEADER_LINES:
-            msg = f"{cls.MODALITY} txt header needs {cls.HEADER_LINES} lines (got {len(lines)}): {path}"
+        actual = len(lines)
+        expected = cls.HEADER_LINES
+        modality = cls.MODALITY
+
+        if actual < expected:
+            msg = f"{modality} txt header needs {expected} lines (got {actual}): {path}"
             raise ValueError(msg)
 
         hw = cls._HW_RE.search(lines[0])
         pixel_size = cls._PIXEL_SIZE_RE.search(lines[1])
         if hw is None or pixel_size is None:
-            msg = f"malformed {cls.MODALITY} txt header: {path}"
+            msg = f"malformed {modality} txt header: {path}"
             raise ValueError(msg)
 
         return cls._from_geometry(
