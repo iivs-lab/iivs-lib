@@ -75,12 +75,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `torch>=2.9` floor (wheels for both cp313 and cp314).
 - `iivs.common.data`: hoist the dtype-generic image bases out of the (now)
   `iivs.dhm.data.koala` layer — `load_tif` (read any single-page `.tif`, keeping
-  its stored dtype) and `ImageFileList[U]` (the header-less image list template,
-  generic in the pixel dtype). `koala` keeps the uint8 bindings: `load_uint8_tif`
+  its stored dtype) and `ArrayFileList[U]` (the header-less array-list template,
+  generic in the item dtype). `koala` keeps the uint8 bindings: `load_uint8_tif`
   (`= validate_uint8_array(load_tif(...))`), the Koala-numbered `ImageFileFolder`,
   and the `.tif` concretes `ImageTifList` / `ImageTifFolder`. Same behavior; the
   uint8 assumption (Koala previews are 8-bit) stays in `koala`, so a future 16-bit
-  source binds `ImageFileList[np.uint16]` on the shared `load_tif`.
+  source binds `ArrayFileList[np.uint16]` on the shared `load_tif`.
 - Rename `iivs.dhm.data.common` to `iivs.dhm.data.koala`. The dhm-internal
   cross-modality layer holds Lyncée Tec Koala's proprietary `.bin` / `Float/Txt`
   codecs and its `{index:05d}_<stem>.<ext>` export convention, so the vendor name
