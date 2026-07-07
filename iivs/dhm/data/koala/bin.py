@@ -259,9 +259,7 @@ def write_bin(
 ) -> None:
     """Atomically write `header` followed by `pixels` as a Koala `.bin` file.
 
-    Content is staged to a temp file in the destination's directory and moved
-    into place on success, so a failed write never leaves a partial or
-    clobbered file.
+    A failed write never leaves a partial or clobbered file.
 
     Args:
         path: The destination file to write (written as-is; the caller ensures

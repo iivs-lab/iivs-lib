@@ -40,8 +40,7 @@ def save_hologram_tif(
 ) -> None:
     """Save a 2D uint8 hologram as a `.tif` file.
 
-    The file is written atomically: content is staged to a temp file in the
-    destination's directory and moved into place on success.
+    Written atomically.
 
     Args:
         path: The `.tif` file to write.

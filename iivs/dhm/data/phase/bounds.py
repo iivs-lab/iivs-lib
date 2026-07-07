@@ -76,8 +76,8 @@ class PhaseBounds:
     def to_file(self, path: StrPath, *, overwrite: bool = False) -> None:
         """Write to a Lyncée Tec Koala ``phbounds.txt`` (a `[nm]` tag then `min max`).
 
-        Written atomically: staged to a temp file and moved into place on
-        success. `np.save`-style: a path with no suffix gets ``.txt`` appended.
+        Written atomically. `np.save`-style: a path with no suffix gets ``.txt``
+        appended.
 
         Raises:
             ValueError: If `path` has a non-`.txt` extension.

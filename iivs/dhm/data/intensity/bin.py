@@ -168,9 +168,8 @@ def save_intensity_bin(
     The phase-only ``hconv`` / ``unit`` bytes are written as Koala's no-op sentinel
     (``-1`` / ``0``); intensity has no height scale or unit.
 
-    The file is written atomically: content is staged to a temp file in the
-    destination's directory and moved into place on success, so a failed
-    write never leaves a partial or clobbered file.
+    Written atomically, so a failed write never leaves a partial or clobbered
+    file.
 
     Args:
         path: The .bin file to write.
