@@ -62,17 +62,16 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
     def parse(cls, path: StrPath) -> tuple[Timestamp, ...]:
         """Read, validate, and parse a ``timestamps.txt`` into `Timestamp`s.
 
-        Every non-blank line must match ``<5-digit index> <HH:MM:SS.fff>
-        <YYYY.MM.DD> <elapsed_ms>``, the frame indices must run contiguously
-        from 0, and the elapsed times must be non-decreasing. Blank lines are
-        ignored.
+        Every non-blank line must match ``<5-digit index> <HH:MM:SS.fff> <YYYY.MM.DD>
+        <elapsed_ms>``, the frame indices must run contiguously from 0, and the elapsed
+        times must be non-decreasing. Blank lines are ignored.
 
         Raises:
             FileNotFoundError: If `path` does not exist.
             NotAFileError: If `path` exists but is not a regular file.
-            ValueError: If `path` does not have a `.txt` extension, a line does
-                not match the expected format, the frame indices are not
-                contiguous from 0, or an elapsed time decreases.
+            ValueError: If `path` does not have a `.txt` extension, a line does not
+                match the expected format, the frame indices are not contiguous from 0,
+                or an elapsed time decreases.
         """
         path = ensure_file_exists(path, ext="txt")
 

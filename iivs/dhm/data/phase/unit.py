@@ -15,9 +15,9 @@ if TYPE_CHECKING:
 class PhaseUnit(IntEnum):
     """Physical unit of a phase image.
 
-    UNKNOWN, RADIANS, and METERS are the units stored on disk (the
-    ``unit_code`` byte). NANOMETERS is a code-only convenience unit, never
-    written to a file: saving converts it to METERS.
+    UNKNOWN, RADIANS, and METERS are the units stored on disk (the ``unit_code`` byte).
+    NANOMETERS is a code-only convenience unit, never written to a file: saving converts
+    it to METERS.
     """
 
     UNKNOWN = 0
@@ -62,25 +62,23 @@ def convert_phase_unit(
 ) -> NDArray[np.float32]:
     """Rescale a phase/height image between `PhaseUnit` representations.
 
-    The units form the chain RADIANS <-> METERS <-> NANOMETERS: phase in
-    RADIANS and height in METERS are bridged by `height_scale` (m per
-    rad), while METERS and NANOMETERS differ by the fixed 1e9 nm/m.
+    The units form the chain RADIANS <-> METERS <-> NANOMETERS: phase in RADIANS and
+    height in METERS are bridged by `height_scale` (m per rad), while METERS and
+    NANOMETERS differ by the fixed 1e9 nm/m.
 
     Args:
         data: The phase/height image to convert; never modified.
         source: The unit `data` is currently in.
         target: The unit to convert to.
-        height_scale: m per rad. Used only when the conversion
-            crosses RADIANS <-> METERS; ignored for a pure METERS <->
-            NANOMETERS rescale.
+        height_scale: m per rad. Used only when the conversion crosses
+            RADIANS <-> METERS; ignored for a pure METERS <-> NANOMETERS rescale.
 
     Returns:
         A new float32 array in `target`, or `data` itself (unchanged) when
         `source == target`.
 
     Raises:
-        ValueError: If the conversion is undefined (e.g. it involves the
-            UNKNOWN unit).
+        ValueError: If the conversion is undefined (e.g. it involves the UNKNOWN unit).
     """
     if source is target:
         return data
