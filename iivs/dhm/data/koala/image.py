@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 import numpy as np
 from numpy.typing import NDArray
 
-from iivs.common.data import ImageFileList, load_tif, validate_uint8_array
+from iivs.common.data import ArrayFileList, load_tif, validate_uint8_array
 from iivs.dhm.data.koala.sequence import SequentialFileFolder
 
 if TYPE_CHECKING:
@@ -38,11 +38,11 @@ def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
     return validate_uint8_array(load_tif(path), allow_stack=False)
 
 
-class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ImageFileList[np.uint8]):
+class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ArrayFileList[np.uint8]):
     """A uint8 image folder: numbered discovery + one shared (lazily read) shape.
 
     The auto-discovered, same-shape specialization of `iivs.common.data`'s
-    `ImageFileList`, over the Koala `{index:05d}_<stem>.<ext>` numbering
+    `ArrayFileList`, over the Koala `{index:05d}_<stem>.<ext>` numbering
     (`SequentialFileFolder`). A header-less image file carries no shape metadata, so
     `frame_shape` is read lazily from the first file (via the subclass `load_file`) and
     every image is required to match it. Concrete folders set `FILE_EXT` / `FILE_STEM`,
@@ -92,11 +92,11 @@ class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ImageFileList[np.
             raise ValueError(msg)
 
 
-class ImageTifList(ImageFileList[np.uint8]):
+class ImageTifList(ArrayFileList[np.uint8]):
     """A uint8 `.tif` image sequence over an arbitrary list of files.
 
     Supplies the `.tif` codec (`load_uint8_tif`) over `iivs.common.data`'s
-    `ImageFileList`. A modality adds its role by also inheriting its
+    `ArrayFileList`. A modality adds its role by also inheriting its
     `<Modality>ImageSequence` (e.g. `PhaseTifList(ImageTifList,
     PhaseImageSequence[Path])`). `ImageTifFolder` is the auto-discovered, same-shape
     specialization.

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import tifffile
 
-from iivs.common.data import ImageFileList, load_tif
+from iivs.common.data import ArrayFileList, load_tif
 
 # --- load_tif ---
 
@@ -33,10 +33,10 @@ def test_load_tif_missing_file(tmp_path):
         load_tif(tmp_path / "nope.tif")
 
 
-# --- ImageFileList (via a minimal uint8 concrete) ---
+# --- ArrayFileList (via a minimal uint8 concrete) ---
 
 
-class _U8TifList(ImageFileList[np.uint8]):
+class _U8TifList(ArrayFileList[np.uint8]):
     FILE_EXT = "tif"
 
     def load_file(self, path):

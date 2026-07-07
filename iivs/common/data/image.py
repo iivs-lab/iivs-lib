@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("ImageFileList", "load_tif")
+__all__ = ("ArrayFileList", "load_tif")
 
 from abc import abstractmethod
 from pathlib import Path
@@ -33,12 +33,12 @@ def load_tif(path: StrPath) -> NDArray[Any]:
     return tifffile.imread(path)
 
 
-class ImageFileList[U: np.generic](FileListSequence[NDArray[U], Path]):
-    """An image sequence over an arbitrary list of files, via a `load_file` codec.
+class ArrayFileList[U: np.generic](FileListSequence[NDArray[U], Path]):
+    """An ndarray sequence over an arbitrary list of files, via a `load_file` codec.
 
-    The format-agnostic body for header-less image sources (`.tif`, `.npy`, ...): each
+    The format-agnostic body for header-less array sources (`.tif`, `.npy`, ...): each
     file is decoded independently, so the files may live anywhere and differ in shape.
-    Generic in the pixel dtype `U`; a concrete subclass binds `U` and supplies
+    Generic in the array dtype `U`; a concrete subclass binds `U` and supplies
     `load_file` (and `FILE_EXT`) for its on-disk format. Item metadata is the source
     path.
 
