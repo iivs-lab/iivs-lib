@@ -122,6 +122,18 @@ applying it by hand.
   - Surface what callers cannot infer from the signature alone:
     invariants, edge cases, what subclasses must override, policy
     trade-offs. Skip restating what the code already shows.
+  - *Contracts, not mechanism* — litmus: would a caller's behaviour
+    change if the line were false? Cut prose that only says how the code
+    is wired: delegation ("a thin wrapper over X", "the free-function
+    alias for X"), the methods a base provides or a subclass inherits,
+    inheritance wiring ("the .bin codec over X", "inherited from X"), and
+    storage / API internals ("held internally as an np.memmap",
+    "numpy.load(allow_pickle=False)", "staged to a temp file and moved
+    into place"). Keep the guarantee those deliver ("written atomically",
+    "never loaded whole", "a pickled array is rejected"), relationship
+    notes that carry behaviour ("the `.npy` twin of X"), and what a
+    subclass must override. A closed hierarchy's base may still name its
+    subclasses (the family map above); a technique-agnostic layer may not.
   - Use [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)
     sections (`Args:`, `Returns:`, `Yields:`, `Raises:`,
     `Type Parameters:`); omit types from `Args:` since the signature
@@ -137,6 +149,12 @@ applying it by hand.
   - Reference identifiers in backticks (`my_method`, `param`,
     `MyClass.method`). Literal option values get backticks too
     (`"merge"`, `"error"`), as identifiers do.
+  - Wrap prose and `Args` / `Returns` / `Raises` descriptions to fill
+    each line toward the 88-column limit; don't break early when the next
+    word still fits. Leave rST literal blocks (after `::`) and code
+    examples verbatim.
+  - No `--` (double-hyphen) in docstring or message prose; use a
+    parenthesis, colon, or semicolon.
 - Exception messages use a terse, lower-case house style: no leading
   capital, no trailing period. Prefer `f"<subject> must be <constraint>
   (got {value})"` for validation, or a short imperative for
