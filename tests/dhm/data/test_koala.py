@@ -60,6 +60,14 @@ def test_load_txt_rejects_malformed_grid(tmp_path):
         load_txt(path, IntensityTxtHeaderCodec)
 
 
+def test_load_txt_rejects_non_txt_extension(tmp_path):
+    # `.txt` has no content magic, so the reader gates on the extension.
+    path = tmp_path / "x.dat"
+    path.write_text("h=2 w=2\npixel size=1e-06 m\n1 2\n3 4\n")
+    with pytest.raises(ValueError, match="unsupported extension"):
+        load_txt(path, IntensityTxtHeaderCodec)
+
+
 # ========================== #
 #       load_uint8_tif       #
 # ========================== #

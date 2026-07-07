@@ -101,9 +101,10 @@ class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
         Raises:
             FileNotFoundError: If `path` does not exist.
             NotAFileError: If `path` exists but is not a regular file.
-            ValueError: If the header is missing or malformed.
+            ValueError: If `path` is not `.txt`, or the header is missing or
+                malformed.
         """
-        path = ensure_file_exists(path)
+        path = ensure_file_exists(path, ext="txt")
         with path.open() as f:
             lines = [f.readline() for _ in range(cls.HEADER_LINES)]
         return cls.from_lines(lines, path)
@@ -153,11 +154,11 @@ def load_txt[H: KoalaBinHeader](
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the header or grid is malformed, the grid does not fill the
-            header shape, or the data holds non-finite values while `on_nonfinite` is
-            "raise".
+        ValueError: If `path` is not `.txt`, the header or grid is malformed, the
+            grid does not fill the header shape, or the data holds non-finite values
+            while `on_nonfinite` is "raise".
     """
-    path = ensure_file_exists(path)
+    path = ensure_file_exists(path, ext="txt")
     lines = path.read_text().splitlines()
     header = header_codec.from_lines(lines, path)
 
