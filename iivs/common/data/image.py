@@ -21,9 +21,9 @@ if TYPE_CHECKING:
 def load_tif(path: StrPath) -> NDArray[Any]:
     """Load a single raster from a `.tif` file, keeping its stored dtype.
 
-    Decodes any single-page tif via `tifffile` (LZW and other codecs handled by
-    the core `imagecodecs` dependency) and returns the array as stored. A caller
-    needing a specific dtype validates the result (e.g. `validate_uint_array`).
+    Decodes any single-page tif via `tifffile` (LZW and other codecs handled by the core
+    `imagecodecs` dependency) and returns the array as stored. A caller needing a
+    specific dtype validates the result (e.g. `validate_uint_array`).
 
     Raises:
         FileNotFoundError: If `path` does not exist.
@@ -36,11 +36,11 @@ def load_tif(path: StrPath) -> NDArray[Any]:
 class ImageFileList[U: np.generic](FileListSequence[NDArray[U], Path]):
     """An image sequence over an arbitrary list of files, via a `load_file` codec.
 
-    The format-agnostic body for header-less image sources (`.tif`, `.npy`, ...):
-    each file is decoded independently, so the files may live anywhere and differ
-    in shape. Generic in the pixel dtype `U`; a concrete subclass binds `U` and
-    supplies `load_file` (and `FILE_EXT`) for its on-disk format. Item metadata is
-    the source path.
+    The format-agnostic body for header-less image sources (`.tif`, `.npy`, ...): each
+    file is decoded independently, so the files may live anywhere and differ in shape.
+    Generic in the pixel dtype `U`; a concrete subclass binds `U` and supplies
+    `load_file` (and `FILE_EXT`) for its on-disk format. Item metadata is the source
+    path.
 
     Args:
         files: The files to expose, in the given order.

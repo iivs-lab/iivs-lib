@@ -46,8 +46,8 @@ class Timestamp:
     ) -> tuple[Timestamp, ...]:
         """Build a series of `Timestamp`s from cumulative elapsed times.
 
-        The first frame's interval is 0.0; each later frame's interval is its
-        gap from the previous frame.
+        The first frame's interval is 0.0; each later frame's interval is its gap from
+        the previous frame.
         """
         if not elapsed_times_ms:
             return ()
@@ -63,13 +63,13 @@ class Timestamp:
 class TimestampSequence(DataSequence[Timestamp, int]):
     """A read-only sequence of per-frame `Timestamp`s, from any source.
 
-    Annotate parameters with this interface to accept any timing source, however
-    the timestamps are obtained. Each item is a `Timestamp` and its metadata is
-    the frame index.
+    Annotate parameters with this interface to accept any timing source, however the
+    timestamps are obtained. Each item is a `Timestamp` and its metadata is the frame
+    index.
 
-    Subclasses populate `self._timestamps` (the ordered frames) in their
-    ``__init__`` and implement `mean_interval_ms`; the sequence protocol
-    (`__len__`, `get_item`, `get_meta`) is served from it here.
+    Subclasses populate `self._timestamps` (the ordered frames) in their ``__init__``
+    and implement `mean_interval_ms`; the sequence protocol (`__len__`, `get_item`,
+    `get_meta`) is served from it here.
     """
 
     _timestamps: tuple[Timestamp, ...]
