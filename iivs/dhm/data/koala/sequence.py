@@ -111,14 +111,12 @@ def detect_numbered_format(
 class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     """A folder of contiguously numbered `{index:05d}_<stem>.<ext>` files.
 
-    Each such folder is one acquisition's frames, hence same-shape: it mixes in
-    `FrameShapedMixin`, and subclasses implement `frame_shape` from their header
-    or first file. Factors the discovery and validation shared by every
-    modality folder (phase, intensity, hologram, ...): `list_files` (numbered
-    discovery), `get_meta` (= source path), the `validate` loop, and the
-    name-contiguity check. A subclass declares the filename parts and validation
-    depth as class attributes, implements `load_file`, and supplies its
-    per-format consistency check by overriding `_validate_content`.
+    Each such folder is one acquisition's frames, hence same-shape; subclasses
+    implement `frame_shape` from their header or first file. Factors the
+    discovery and validation shared by every modality folder (phase, intensity,
+    hologram, ...). A subclass declares the filename parts and validation depth
+    as class attributes, implements `load_file`, and supplies its per-format
+    consistency check by overriding `_validate_content`.
 
     Class attributes:
         FILE_STEM: The ``<stem>`` in ``{index:05d}_<stem>.<ext>`` (e.g. "phase").

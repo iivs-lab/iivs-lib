@@ -118,8 +118,8 @@ class ImageTifFolder(ImageFileFolder, ImageTifList):
     """A uint8 `.tif` folder: `ImageFileFolder` over the `.tif` codec.
 
     The auto-discovered, same-shape specialization of `ImageTifList`. Concrete
-    folders set `FILE_STEM` (and inherit `FILE_EXT = "tif"`) and add their image
-    role, e.g. `PhaseTifFolder(ImageTifFolder, PhaseTifList)`.
+    folders set `FILE_STEM` and add their image role, e.g.
+    `PhaseTifFolder(ImageTifFolder, PhaseTifList)`.
 
     Args:
         root: The folder to scan.

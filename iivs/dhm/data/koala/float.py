@@ -40,10 +40,8 @@ class KoalaFloatFileList[H: KoalaBinHeader](
 ):
     """Format-agnostic float32 file list over a ``(read_header, decode)`` codec.
 
-    The machinery shared by the phase and intensity `Float/{Bin,Txt}` (and
-    header-less `.npy`) sources: the `.<FILE_EXT>` check, `get_meta` (= source
-    path), the cheap header-only `get_header`, and `load_with_header` (image +
-    header in one read). A concrete subclass supplies `FILE_EXT` and the
+    The shared base for the Koala float32 sources (phase / intensity `Float`, and
+    header-less `.npy`). A concrete subclass supplies `FILE_EXT` and the
     `_read_header` / `_decode` codec, where `_decode` returns ``(image,
     header)``. `load_file` returns the decoded image after `_postprocess`,
     which a subclass overrides to transform it (e.g. phase's unit conversion);
@@ -126,8 +124,7 @@ class KoalaFloatFileFolder[H: KoalaBinHeader](
     The auto-discovered, same-shape specialization of `KoalaFloatFileList`:
     reads one shared acquisition `header` from the first file, exposes
     `frame_shape` from it, and checks every other file's header against it.
-    Concrete folders supply `FILE_STEM` (and inherit `FILE_EXT` and the codec
-    from the matching `*List`).
+    Concrete folders supply `FILE_STEM`.
     """
 
     LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")

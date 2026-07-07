@@ -132,9 +132,8 @@ def load_txt[H: KoalaBinHeader](
 
     Reads the header via `header_codec`, then the float grid that follows.
     Koala may write the grid as `height` rows *or* as a single long line, so
-    every value is read (layout-agnostic), reshaped to the header shape, and
-    validated. The per-modality `load_*_txt` wrappers bind their codec and add
-    the `return_header` ergonomics.
+    the read is layout-agnostic. The per-modality `load_*_txt` wrappers bind
+    their codec and add the `return_header` ergonomics.
 
     Args:
         path: The `.txt` file to read.

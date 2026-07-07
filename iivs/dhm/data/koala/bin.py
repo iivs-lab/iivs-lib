@@ -27,10 +27,8 @@ _PIXEL_DTYPE = np.dtype("<f4")  # on-disk pixels: little-endian float32
 class KoalaBinHeader(ABC):
     """Base for the fixed-size 23-byte Lyncée Tec Koala .bin header.
 
-    Holds the geometry (width, height, pixel_size) and the on-disk format
-    machinery shared by every `.bin` modality (phase, intensity): the packed
-    `DTYPE`, the structural read (size / version / byte-order checks), and the
-    geometry conveniences. The trailing ``hconv`` / ``unit`` bytes carry
+    Holds the geometry (width, height, pixel_size) shared by every `.bin`
+    modality (phase, intensity). The trailing ``hconv`` / ``unit`` bytes carry
     modality-specific meaning, so subclasses own them via `from_dtype` /
     `to_dtype`; phase reads them as a height scale plus `PhaseUnit`, while
     intensity treats them as Koala's no-op sentinel.
