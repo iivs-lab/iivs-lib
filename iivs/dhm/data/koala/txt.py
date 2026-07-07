@@ -112,8 +112,8 @@ class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
     def to_lines(cls, header: H) -> str:
         """Serialize `header` to its `Float/Txt` header text (inverse of `from_lines`).
 
-        Emits the shared ``h/w`` + ``pixel size`` geometry, then any
-        modality-specific lines from `_extra_lines`.
+        Emits the shared ``h/w`` + ``pixel size`` geometry, then any modality-specific
+        lines from `_extra_lines`.
         """
         geometry = (
             f"h={header.height} w={header.width}\npixel size={header.pixel_size} m\n"
