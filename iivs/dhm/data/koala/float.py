@@ -15,7 +15,7 @@ from numpy.typing import NDArray
 
 from iivs.common.data import ArrayFileList
 from iivs.dhm.data.koala.bin import KoalaBinHeader
-from iivs.dhm.data.koala.sequence import KoalaFrameFolder
+from iivs.dhm.data.koala.frame import KoalaFrameFolder
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
 
     from iivs.common.data import OnNonFinite
-    from iivs.dhm.data.koala.sequence import ValidationLevel
+    from iivs.dhm.data.koala.frame import ValidationLevel
 
 
 type FloatFormat = Literal["bin", "txt", "npy"]

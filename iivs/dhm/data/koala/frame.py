@@ -78,10 +78,8 @@ def detect_koala_format(
         ValueError: If multiple formats are present and `prefer` is `None`, or `prefer`
             is given but selects none of the present formats.
     """
-    formats = tuple(formats)
-    hits = search_files(
-        root, name_filter=_koala_frame_filter(stem, formats), max_depth=1
-    )
+    koala_filter = _koala_frame_filter(stem, tuple(formats))
+    hits = search_files(root, name_filter=koala_filter, max_depth=1)
     found = {file_extension(hit) for hit in hits}
     present = [fmt for fmt in formats if fmt in found]
 
@@ -171,9 +169,8 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         resolved = ensure_one_of(resolved, self.LEVELS, name="level")
 
         path = self.get_file(index)
-        name = path.name
         expected = koala_frame_name(index, stem=self.FILE_STEM, ext=self.FILE_EXT)
-        if name != expected:
+        if (name := path.name) != expected:
             msg = f"non-contiguous: expected {expected} at index {index}, got {name}"
             raise ValueError(msg)
 

@@ -16,7 +16,7 @@ from kaparoo.filesystem import ensure_file_exists
 from numpy.typing import NDArray
 
 from iivs.common.data import ArrayFileList, validate_uint8_array
-from iivs.dhm.data.koala.sequence import KoalaFrameFolder
+from iivs.dhm.data.koala.frame import KoalaFrameFolder
 
 if TYPE_CHECKING:
     from pathlib import Path

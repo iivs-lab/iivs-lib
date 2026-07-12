@@ -14,7 +14,7 @@ them:
 - `float` — the float32 file list/folder bases over a ``(read_header, decode)``
   codec, generic in the header type (`KoalaFloatFileList`,
   `KoalaFloatFileFolder`; shared by phase and intensity).
-- `sequence` — the numbered-folder base (`KoalaFrameFolder`) plus its naming
+- `frame` — the numbered-folder base (`KoalaFrameFolder`) plus its naming
   / discovery helpers (`koala_frame_name`, `detect_koala_format`). The extension
   helpers `file_extension`, `ensure_file_extension` (with its `add=True` mode),
   and the `UnsupportedExtensionError` raised on a bad extension are imported
@@ -55,16 +55,16 @@ from iivs.dhm.data.koala.float import (
     KoalaFloatFileFolder,
     KoalaFloatFileList,
 )
+from iivs.dhm.data.koala.frame import (
+    KoalaFrameFolder,
+    ValidationLevel,
+    detect_koala_format,
+    koala_frame_name,
+)
 from iivs.dhm.data.koala.image import (
     ImageFileFolder,
     ImageTifFolder,
     ImageTifList,
     load_uint8_tif,
-)
-from iivs.dhm.data.koala.sequence import (
-    KoalaFrameFolder,
-    ValidationLevel,
-    detect_koala_format,
-    koala_frame_name,
 )
 from iivs.dhm.data.koala.txt import KoalaTxtHeaderCodec, load_txt, write_txt
