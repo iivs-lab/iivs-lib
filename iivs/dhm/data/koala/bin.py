@@ -25,7 +25,7 @@ _PIXEL_DTYPE = np.dtype("<f4")  # on-disk pixels: little-endian float32
 
 @dataclass(frozen=True, slots=True)
 class KoalaBinHeader(ABC):
-    """Base for the fixed-size 23-byte Lyncée Tec Koala .bin header.
+    """Base for the fixed-size 23-byte Lyncée Tec Koala `.bin` header.
 
     Holds the geometry (width, height, pixel_size) shared by every `.bin` modality
     (phase, intensity). The trailing ``hconv`` / ``unit`` bytes carry modality-specific
@@ -153,8 +153,9 @@ class KoalaBinHeader(ABC):
                 unsupported header size, version, or byte order.
         """
         raw = f.read(cls.HEADER_SIZE)
-        if len(raw) < cls.HEADER_SIZE:
-            msg = f"file must be at least {cls.HEADER_SIZE} bytes for a header (got {len(raw)})"
+        n = len(raw)
+        if n < cls.HEADER_SIZE:
+            msg = f"file needs at least {cls.HEADER_SIZE} bytes for a header (got {n})"
             raise ValueError(msg)
 
         record = np.frombuffer(raw, dtype=cls.DTYPE, count=1)[0]
@@ -165,7 +166,7 @@ class KoalaBinHeader(ABC):
 
         version = int(record["version"])
         if version != cls.SUPPORTED_VERSION:
-            msg = f"unsupported header version {version} (expected {cls.SUPPORTED_VERSION})"
+            msg = f"unsupported version {version} (expected {cls.SUPPORTED_VERSION})"
             raise ValueError(msg)
 
         endian = int(record["endian"])
@@ -237,9 +238,10 @@ def load_bin[H: KoalaBinHeader](
         header = header_cls.from_stream(f)
         raw = f.read()
 
+    n = len(raw)
     expected = header.pixel_count * _PIXEL_DTYPE.itemsize
-    if len(raw) != expected:
-        msg = f"pixel count must be {header.pixel_count} ({expected} bytes), got {len(raw)}"
+    if n != expected:
+        msg = f"pixel count must be {header.pixel_count} ({expected} bytes), got {n}"
         raise ValueError(msg)
 
     pixels = np.frombuffer(raw, dtype=_PIXEL_DTYPE)
