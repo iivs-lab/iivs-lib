@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 __all__ = (
-    "SequentialFileFolder",
+    "KoalaFrameFolder",
     "ValidationLevel",
     "detect_koala_format",
     "koala_frame_name",
@@ -35,8 +35,7 @@ def _koala_frame_filter(stem: str, exts: tuple[str, ...]) -> Regex:
     """A cached name filter for ``{index:05d}_{stem}.<ext>`` files.
 
     Built once per ``(stem, exts)``, since both are fixed by the folder type; shared by
-    `SequentialFileFolder.list_files` (one `ext`) and `detect_koala_format`
-    (several).
+    `KoalaFrameFolder.list_files` (one `ext`) and `detect_koala_format` (several).
     """
     return Regex(rf"\d{{5}}_{stem}\.({'|'.join(exts)})")
 
@@ -45,7 +44,7 @@ def koala_frame_name(index: int, *, stem: str, ext: str) -> str:
     """The contiguous Koala filename ``{index:05d}_{stem}.{ext}``.
 
     The single source of truth for Koala's frame-naming convention, used both to
-    discover/validate a `SequentialFileFolder` and to write a converted folder.
+    discover/validate a `KoalaFrameFolder` and to write a converted folder.
     """
     return f"{index:05d}_{stem}.{ext}"
 
@@ -108,7 +107,7 @@ def detect_koala_format(
     raise ValueError(msg)
 
 
-class SequentialFileFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
+class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     """A folder of contiguously numbered `{index:05d}_<stem>.<ext>` files.
 
     Each such folder is one acquisition's frames, hence same-shape; subclasses implement

@@ -16,7 +16,7 @@ from kaparoo.filesystem import ensure_file_exists
 from numpy.typing import NDArray
 
 from iivs.common.data import ArrayFileList, validate_uint8_array
-from iivs.dhm.data.koala.sequence import SequentialFileFolder
+from iivs.dhm.data.koala.sequence import KoalaFrameFolder
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -41,12 +41,12 @@ def load_uint8_tif(path: StrPath) -> NDArray[np.uint8]:
     return validate_uint8_array(tifffile.imread(path), allow_stack=False)
 
 
-class ImageFileFolder(SequentialFileFolder[NDArray[np.uint8]], ArrayFileList[np.uint8]):
+class ImageFileFolder(KoalaFrameFolder[NDArray[np.uint8]], ArrayFileList[np.uint8]):
     """A uint8 image folder: numbered discovery + one shared (lazily read) shape.
 
     The auto-discovered, same-shape specialization of `iivs.common.data`'s
     `ArrayFileList`, over the Koala `{index:05d}_<stem>.<ext>` numbering
-    (`SequentialFileFolder`). A header-less image file carries no shape metadata, so
+    (`KoalaFrameFolder`). A header-less image file carries no shape metadata, so
     `frame_shape` is read lazily from the first file (via the subclass `load_file`) and
     every image is required to match it. Concrete folders set `FILE_EXT` / `FILE_STEM`,
     supply a `load_file`, and add their image role, e.g. `ImageTifFolder` (tif) or

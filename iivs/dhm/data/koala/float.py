@@ -15,7 +15,7 @@ from numpy.typing import NDArray
 
 from iivs.common.data import ArrayFileList
 from iivs.dhm.data.koala.bin import KoalaBinHeader
-from iivs.dhm.data.koala.sequence import SequentialFileFolder
+from iivs.dhm.data.koala.sequence import KoalaFrameFolder
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -101,7 +101,7 @@ class KoalaFloatFileList[H: KoalaBinHeader](ArrayFileList[np.float32]):
 
 
 class KoalaFloatFileFolder[H: KoalaBinHeader](
-    SequentialFileFolder[NDArray[np.float32]], KoalaFloatFileList[H]
+    KoalaFrameFolder[NDArray[np.float32]], KoalaFloatFileList[H]
 ):
     """Format-agnostic float32 folder: numbered discovery + one shared header.
 
