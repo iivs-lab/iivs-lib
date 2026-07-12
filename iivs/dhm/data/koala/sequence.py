@@ -147,10 +147,6 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         """Return the source path of the file at `index`."""
         return self.get_file(index)
 
-    def expected_name(self, index: int) -> str:
-        """The contiguous filename expected at `index`."""
-        return koala_frame_name(index, stem=self.FILE_STEM, ext=self.FILE_EXT)
-
     def validate(self, *, level: ValidationLevel | None = None) -> None:
         """Validate every file to `level` (defaults to `DEFAULT_LEVEL`)."""
         for index in range(len(self)):
@@ -176,7 +172,7 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
 
         path = self.get_file(index)
         name = path.name
-        expected = self.expected_name(index)
+        expected = koala_frame_name(index, stem=self.FILE_STEM, ext=self.FILE_EXT)
         if name != expected:
             msg = f"non-contiguous: expected {expected} at index {index}, got {name}"
             raise ValueError(msg)
