@@ -185,8 +185,7 @@ def save_hologram_raw(
         )
         if stack.ndim == 2:
             stack = stack[np.newaxis]
-        ndim = stack.ndim
-        if ndim != 3:
+        if (ndim := stack.ndim) != 3:
             msg = f"frames array must be a 2D image or an (N, H, W) stack (got {ndim}D)"
             raise ValueError(msg)
 

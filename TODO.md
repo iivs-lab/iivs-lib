@@ -18,13 +18,6 @@ the data layer and beyond — not formal milestones.
   `save_phase_folder`, `PhaseNpyFolder`) — into one shape-less type. Also
   cross-modality (intensity carries only `pixel_size`), so a separate proposal.
 
-## `iivs.dhm.data`
-
-- **`hologram` focused review.** The one modality without a dedicated design
-  pass (only incidental shared changes so far). Check docstring/contract
-  consistency across `tif` / `raw` / `npy` / `convert`, and whether
-  `HologramRawHeader` is coherent with the phase/intensity header patterns.
-
 ## Beyond the data layer
 
 - **`iivs.dhm.analysis` — split `MaskedReduction` out of dry mass.** Make
