@@ -93,10 +93,7 @@ def detect_koala_format(
         return present[0]
 
     if prefer is None:
-        msg = (
-            f"ambiguous: {root} holds multiple {stem} formats ({present}); "
-            f"pass prefer to pick one"
-        )
+        msg = f"ambiguous: multiple {stem} formats in {root} ({present}); pass prefer"
         raise ValueError(msg)
 
     order = [prefer] if isinstance(prefer, str) else list(prefer)
@@ -178,9 +175,10 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         resolved = ensure_one_of(resolved, self.LEVELS, name="level")
 
         path = self.get_file(index)
+        name = path.name
         expected = self.expected_name(index)
-        if path.name != expected:
-            msg = f"non-contiguous numbering: expected {expected} at index {index}, got {path.name}"
+        if name != expected:
+            msg = f"non-contiguous: expected {expected} at index {index}, got {name}"
             raise ValueError(msg)
 
         if resolved != "names":
