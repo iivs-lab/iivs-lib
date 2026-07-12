@@ -117,7 +117,8 @@ def load_intensity(
         when `return_header` is True (with `header` `None` for `.npy`).
 
     Raises:
-        ValueError: If `path`'s extension is not bin, txt, or npy.
+        ValueError: If `path`'s extension is not bin, txt, or npy (plus the per-format
+            errors of the chosen reader).
     """
     ext = file_extension(path)
     if ext == "bin":

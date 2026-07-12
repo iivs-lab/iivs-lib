@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 
 class PhaseTxtHeaderCodec(KoalaTxtHeaderCodec[PhaseBinHeader]):
-    """Reads a Koala `Float/Txt` phase header into a `PhaseBinHeader`.
+    """The phase `Float/Txt` header codec (produces a `PhaseBinHeader`).
 
     The 4-line header adds a `data unit` and a `height conversion factor` line to the
     shared `h/w` + `pixel size` pair::

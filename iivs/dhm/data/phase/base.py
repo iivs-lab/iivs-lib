@@ -86,7 +86,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
         wavelength: float | None = None,
         refractive_delta: float | None = None,
     ) -> PhaseFloatSequence[M]:
-        """A lazy float32 phase reconstruction of these previews (Image -> Float).
+        """Reconstruct these previews as a lazy float32 phase sequence (Image -> Float).
 
         Each uint8 frame is mapped back through `bounds` (`PhaseBounds.decode_preview`)
         on access, then converted from nanometers to `target_unit`. The result is a
@@ -124,9 +124,8 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
 class PhaseImageView(PhaseImageSequence[Path]):
     """A lazy uint8 preview over a quantitative phase list (the `to_image` result).
 
-    Wraps a `PhaseFileList`; `get_item` decodes the frame, converts it to nm, and
-    renders it through the bound `PhaseBounds` on access. Per-frame metadata (the source
-    path) passes through unchanged.
+    Each frame is the source phase converted to nm and rendered through the bound
+    `PhaseBounds` on access; the per-frame metadata (the source path) is unchanged.
     """
 
     def __init__(self, source: PhaseFileList, bounds: PhaseBounds) -> None:
@@ -172,11 +171,9 @@ class PhaseFloatView[M](
 ):
     """A lazy phase reconstruction over a preview sequence (the `to_float` result).
 
-    A `kaparoo` `TransformedSequence` that maps each uint8 preview back to float32 phase
-    (`bounds.decode_preview` to nm, then `convert_phase_unit` to `target_unit`), retyped
-    as a `PhaseFloatSequence`. The values are 8-bit-quantized (a reconstruction, never
-    the quantitative `Float` source). `source` (the wrapped previews) and the per-frame
-    metadata pass-through come from `TransformedSequence`.
+    Maps each uint8 preview back to float32 phase (`bounds.decode_preview` to nm, then
+    `convert_phase_unit` to `target_unit`). The values are 8-bit-quantized (a
+    reconstruction, never the quantitative `Float` source).
     """
 
     def __init__(
@@ -291,7 +288,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         return PhaseBounds(min_nm=minimum, max_nm=maximum)
 
     def to_image(self, bounds: PhaseBounds | None = None) -> PhaseImageSequence[Path]:
-        """A lazy uint8 Koala-style preview of this phase, in nm (Float -> Image).
+        """Render this phase as a lazy uint8 Koala preview, in nm (Float -> Image).
 
         Each frame is converted to nanometers via its own `height_scale` (so the result
         is correct regardless of `target_unit`), then rendered through `bounds`

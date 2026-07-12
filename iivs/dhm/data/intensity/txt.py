@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 
 class IntensityTxtHeaderCodec(KoalaTxtHeaderCodec[IntensityBinHeader]):
-    """Reads a Koala `Float/Txt` intensity header into an `IntensityBinHeader`.
+    """The intensity `Float/Txt` header codec (produces an `IntensityBinHeader`).
 
     The 2-line header is just the shared `h/w` + `pixel size` pair; intensity carries no
     unit or height-conversion line, unlike phase::
