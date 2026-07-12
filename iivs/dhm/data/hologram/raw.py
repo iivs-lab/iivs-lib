@@ -185,8 +185,9 @@ def save_hologram_raw(
         )
         if stack.ndim == 2:
             stack = stack[np.newaxis]
-        if stack.ndim != 3:
-            msg = f"frames array must be a 2D image or an (N, H, W) stack (got {stack.ndim}D)"
+        ndim = stack.ndim
+        if ndim != 3:
+            msg = f"frames array must be a 2D image or an (N, H, W) stack (got {ndim}D)"
             raise ValueError(msg)
 
         count, height, width = stack.shape[0], stack.shape[1], stack.shape[2]
@@ -204,9 +205,7 @@ def save_hologram_raw(
         height, width = shape[0], shape[1]
         frame_iter = frames
 
-    header = HologramRawHeader(
-        width=width, height=height, bit_depth=8, frame_count=count
-    )
+    header = HologramRawHeader(width, height, bit_depth=8, frame_count=count)
 
     with StagedFile(path, binary=True, overwrite=overwrite) as staged:
         header.to_dtype().tofile(staged.file)
