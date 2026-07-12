@@ -152,7 +152,8 @@ class PhaseImageView(PhaseImageSequence[Path]):
 
     @override
     def get_item(self, index: int) -> NDArray[np.uint8]:
-        return self._bounds.encode_preview(self._source._decode_nm(index))  # noqa: SLF001
+        nm = self._source._decode_nm(index)  # noqa: SLF001
+        return self._bounds.encode_preview(nm)
 
 
 class PhaseFloatSequence[M](PhaseSequence[NDArray[np.float32], M]):
