@@ -13,10 +13,6 @@ the data layer and beyond — not formal milestones.
 - **`bound` / `value_range` (min/max in `target_unit`).** A likely
   cross-modality API (phase / intensity / hologram), so design it deliberately
   rather than committing to it on `phase` alone.
-- **`PhaseCalibration` value object.** Whether to bundle the scattered
-  `pixel_size` / scale / `unit` metadata — 3 consumers (`save_phase`,
-  `save_phase_folder`, `PhaseNpyFolder`) — into one shape-less type. Also
-  cross-modality (intensity carries only `pixel_size`), so a separate proposal.
 
 ## Beyond the data layer
 
@@ -38,20 +34,6 @@ the data layer and beyond — not formal milestones.
 
   Sequence: ① shrink `DryMass` / `DryMassCalculator` to per-pixel; ② add the
   shared `MaskedReduction` (NumPy + Torch, label + one-hot).
-- **`iivs.common.data`.** Re-check the technique-agnostic layer once the above
-  settle (e.g. where a shared `MaskedReduction` or calibration type would live).
-- **Extract `kaparoo-numpy` (deferred).** The numpy-generic, iivs-agnostic parts
-  of `iivs.common.data` — the array validators (`validate_*_array`), `.npy` I/O
-  (`read_npy_shape` / `write_npy`), and the array-file base (`ArrayFileList`) —
-  are kaparoo-ecosystem utilities, not iivs-specific
-  (`ArrayFileList` already extends `kaparoo`'s `FileListSequence`). Split them
-  into a sibling `kaparoo-numpy` distribution *once a second consumer needs
-  them*: premature now (iivs is the only user, and a separate lib adds
-  release / CI / versioning overhead). `timestamp` is acquisition timing, not
-  numpy — it stays; `FrameShapedMixin` is borderline (same-shape sequences),
-  decide at extraction time. The technique-agnostic rule already keeps these
-  free of `dhm` / modality coupling, so the split is mostly mechanical when
-  triggered.
 
 ## Housekeeping
 
