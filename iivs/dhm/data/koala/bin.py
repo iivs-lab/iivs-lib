@@ -152,10 +152,9 @@ class KoalaBinHeader(ABC):
             ValueError: If the stream is too small for a header, or declares an
                 unsupported header size, version, or byte order.
         """
-        raw = f.read(cls.HEADER_SIZE)
-        n = len(raw)
-        if n < cls.HEADER_SIZE:
-            msg = f"file needs at least {cls.HEADER_SIZE} bytes for a header (got {n})"
+        raw = f.read(expected := cls.HEADER_SIZE)
+        if (actual := len(raw)) < expected:
+            msg = f"file must be at least {expected} bytes for a header (got {actual})"
             raise ValueError(msg)
 
         record = np.frombuffer(raw, dtype=cls.DTYPE, count=1)[0]
