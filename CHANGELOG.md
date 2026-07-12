@@ -10,6 +10,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `iivs.common.visualization`: `auto_rescale`, a Fiji/ImageJ-style auto-contrast
+  for any numeric image or stack (Enhance Contrast + Normalize). It clips
+  `saturated`% of pixels in total via the matching `nanpercentile` bounds
+  (NaN-safe, so a masked phase is ignored), linearly stretches onto `out_range`
+  (or the dtype's span when it is None), and casts back to the input dtype.
+  Technique-agnostic, so phase / intensity / hologram can share it.
 - `iivs.common.data`: the first technique-agnostic data primitives, hoisted out
   of `iivs.dhm.data.koala` — `read_npy_shape` / `write_npy` (the `.npy` reader /
   writer) and `FrameShapedMixin` (the same-shape marker mixin).
