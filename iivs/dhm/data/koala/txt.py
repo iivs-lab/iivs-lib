@@ -129,20 +129,20 @@ class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
 
 def load_txt[H: KoalaBinHeader](
     path: StrPath,
-    header_codec: type[KoalaTxtHeaderCodec[H]],
+    codec: type[KoalaTxtHeaderCodec[H]],
     *,
     on_nonfinite: OnNonFinite = "ignore",
 ) -> tuple[NDArray[np.float32], H]:
     """Read a Koala `Float/Txt` file's float32 image and header (the shared engine).
 
-    Reads the header via `header_codec`, then the float grid that follows. Koala may
+    Reads the header via `codec`, then the float grid that follows. Koala may
     write the grid as `height` rows *or* as a single long line, so the read is
     layout-agnostic. The per-modality `load_*_txt` wrappers bind their codec and add the
     `return_header` ergonomics.
 
     Args:
         path: The `.txt` file to read.
-        header_codec: The `KoalaTxtHeaderCodec` subclass to parse the header with.
+        codec: The `KoalaTxtHeaderCodec` subclass to parse the header with.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
             data: "ignore" (default) accepts them silently, "warn" emits a
             RuntimeWarning, "raise" raises a ValueError.
@@ -160,10 +160,10 @@ def load_txt[H: KoalaBinHeader](
     """
     path = ensure_file_exists(path, ext="txt")
     lines = path.read_text().splitlines()
-    header = header_codec.from_lines(lines, path)
+    header = codec.from_lines(lines, path)
 
     try:
-        grid = np.loadtxt(lines[header_codec.HEADER_LINES :], dtype=np.float32, ndmin=1)
+        grid = np.loadtxt(lines[codec.HEADER_LINES :], dtype=np.float32, ndmin=1)
     except ValueError as exc:
         msg = f"malformed txt grid: {exc}"
         raise ValueError(msg) from exc
@@ -177,23 +177,25 @@ def load_txt[H: KoalaBinHeader](
     return validate_float32_array(data, on_nonfinite=on_nonfinite), header
 
 
-def write_txt(
+def write_txt[H: KoalaBinHeader](
     path: StrPath,
-    header: str,
+    codec: type[KoalaTxtHeaderCodec[H]],
+    header: H,
     data: NDArray[np.float32],
     *,
     overwrite: bool = False,
 ) -> None:
-    """Atomically write a Koala `Float/Txt` file: the `header` text then the grid.
+    """Atomically write a Koala `Float/Txt` file: `header`'s text then the grid.
 
-    `header` is the already-serialized key=value header (see
-    `KoalaTxtHeaderCodec.to_lines`); `data` follows as ``%.8e`` rows. The text twin of
-    `write_bin`, shared by the per-modality `save_*_txt`.
+    `codec` serializes `header` to its key=value lines; `data` follows as
+    ``%.8e`` rows. The text twin of `write_bin`, shared by the per-modality
+    `save_*_txt`.
 
     Raises:
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    text = codec.to_lines(header)
     with StagedFile(path, binary=True, overwrite=overwrite) as staged:
-        staged.write(header.encode("utf-8"))
+        staged.write(text.encode("utf-8"))
         np.savetxt(staged.file, data, fmt="%.8e")

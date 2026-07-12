@@ -258,7 +258,7 @@ def save_phase_txt(
         height_scale=height_scale,
         unit=unit,
     )
-    write_txt(path, PhaseTxtHeaderCodec.to_lines(header), data, overwrite=overwrite)
+    write_txt(path, PhaseTxtHeaderCodec, header, data, overwrite=overwrite)
 
 
 # ========================== #

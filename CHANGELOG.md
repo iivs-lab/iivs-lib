@@ -133,9 +133,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   into two header-parameterized engines — `load_bin(path, header_cls)` and
   `load_txt(path, header_codec)`, each returning `(image, header)`. They absorb
   and replace the lower-level `read_bin_pixels` and `parse_txt_grid` (removed
-  from the public surface), and `write_txt_grid` is renamed to `write_txt`. Each
-  phase / intensity per-format loader is now a thin wrapper over these, so the
-  duplicated per-modality read bodies are gone.
+  from the public surface), and `write_txt_grid` is renamed to `write_txt`,
+  which now takes the codec and header (`write_txt(path, header_codec, header,
+  data)`) and serializes internally, mirroring `load_txt`. Each phase / intensity
+  per-format loader is now a thin wrapper over these, so the duplicated
+  per-modality read bodies are gone.
 - The Koala `Float/Txt` readers (`load_txt`, the per-modality `load_*_txt`
   wrappers, and `KoalaTxtHeaderCodec.from_file`) now validate the `.txt`
   extension up front, matching the `phbounds.txt` / `timestamps.txt` readers: a

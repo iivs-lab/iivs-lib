@@ -154,7 +154,7 @@ def save_intensity_txt(
     header = IntensityBinHeader(
         width=int(data.shape[1]), height=int(data.shape[0]), pixel_size=pixel_size
     )
-    write_txt(path, IntensityTxtHeaderCodec.to_lines(header), data, overwrite=overwrite)
+    write_txt(path, IntensityTxtHeaderCodec, header, data, overwrite=overwrite)
 
 
 # ========================== #
