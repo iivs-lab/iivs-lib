@@ -58,16 +58,16 @@ class PhaseBounds:
         lines = [line.strip() for line in path.read_text().splitlines() if line.strip()]
 
         if len(lines) != 2:
-            msg = f"{path}: expected 2 non-blank lines (got {len(lines)})"
+            msg = f"expected 2 non-blank lines (got {len(lines)}): {path}"
             raise ValueError(msg)
 
         if lines[0] != cls.UNIT_TAG:
-            msg = f"{path}: first line must be {cls.UNIT_TAG!r} (got {lines[0]!r})"
+            msg = f"first line must be {cls.UNIT_TAG!r} (got {lines[0]!r}): {path}"
             raise ValueError(msg)
 
         parts = lines[1].split()
         if len(parts) != 2:
-            msg = f"{path}: bounds line must be 'min max' (got {lines[1]!r})"
+            msg = f"bounds line must be 'min max' (got {lines[1]!r}): {path}"
             raise ValueError(msg)
 
         return cls(min_nm=float(parts[0]), max_nm=float(parts[1]))
