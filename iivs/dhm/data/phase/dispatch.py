@@ -364,10 +364,8 @@ def phase_folder(
     """
     ext = detect_koala_format(root, stem="phase", formats=FLOAT_FORMATS, prefer=prefer)
     if ext in ("bin", "txt"):
-        if any(
-            arg is not None
-            for arg in (pixel_size, unit, height_scale, wavelength, refractive_delta)
-        ):
+        args = [pixel_size, unit, height_scale, wavelength, refractive_delta]
+        if any(arg is not None for arg in args):
             msg = f".{ext} folders read metadata from the files; drop the metadata args"
             raise ValueError(msg)
         folder = PhaseBinFolder if ext == "bin" else PhaseTxtFolder
@@ -484,13 +482,8 @@ def save_phase_folder(
     ensure_one_of(ext, FLOAT_FORMATS, name="ext")
 
     if ext == "npy":
-        if (
-            pixel_size is not None
-            or height_scale is not None
-            or wavelength is not None
-            or refractive_delta is not None
-            or unit is not PhaseUnit.RADIANS
-        ):
+        args = [pixel_size, height_scale, wavelength, refractive_delta]
+        if any(arg is not None for arg in args) or unit is not PhaseUnit.RADIANS:
             msg = "`.npy` is header-less; ignoring pixel_size / unit / height scale"
             warnings.warn(msg, stacklevel=2)
         save = partial(save_phase_npy, overwrite=overwrite)
