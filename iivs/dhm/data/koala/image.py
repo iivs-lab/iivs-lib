@@ -90,8 +90,10 @@ class ImageFileFolder(KoalaFrameFolder[NDArray[np.uint8]], ArrayFileList[np.uint
         carries no header, so "data" is its only level past "names".
         """
         image = self.load_file(path)
-        if image.shape != self.frame_shape:
-            msg = f"shape of {path.name} must match the first file {self.frame_shape} (got {image.shape})"
+        expected = self.frame_shape
+        if image.shape != expected:
+            name, got = path.name, image.shape
+            msg = f"shape of {name} must match the first file {expected} (got {got})"
             raise ValueError(msg)
 
 
