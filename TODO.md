@@ -18,6 +18,13 @@ display bound, not a data-truth range. Give phase a range read from the actual
   so only `CHANGELOG.md` needs updating.
 - `intensity` is the same `KoalaFloatFileList`, so a unit-less `value_range()`
   fits it too; add it once a consumer actually needs a range.
+- Per-frame is the natural primitive: a `value_ranges(unit) -> NDArray` of shape
+  `(N, 2)` reduces to the global `value_range` in one pass, so computing it costs
+  nothing extra. It would enable a per-frame `intensity.to_image` (intensity
+  previews are normalized per frame, so they carry no global bound) and
+  frame-to-frame drift / QC. Expose it only once a concrete consumer lands; keep
+  it internal otherwise. RADIANS conversion is per-frame (`height_scale`), so
+  decode in the target unit rather than converting a cached nm range.
 - Open: cache the nm reduction (as `bounds_nm` did) or recompute per call.
 
 ## npy metadata — warn vs. silently ignore
