@@ -76,3 +76,15 @@ def test_rejects_saturated_too_high():
 def test_rejects_saturated_negative():
     with pytest.raises(ValueError, match="saturated must be"):
         auto_rescale(np.zeros((2, 2)), saturated=-1)
+
+
+def test_rejects_all_nan():
+    # A fully masked frame has no finite value; rescaling it must raise, not
+    # silently return all-NaN (float) or platform garbage (integer).
+    with pytest.raises(ValueError, match="finite"):
+        auto_rescale(np.full((2, 2), np.nan, dtype=np.float32))
+
+
+def test_rejects_all_infinite():
+    with pytest.raises(ValueError, match="finite"):
+        auto_rescale(np.full((2, 2), np.inf, dtype=np.float64))

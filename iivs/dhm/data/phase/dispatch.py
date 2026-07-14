@@ -475,8 +475,9 @@ def save_phase_folder(
         overwrite: Whether to replace `root` if it already exists. Defaults to False.
 
     Raises:
-        ValueError: If `ext` is not "bin" / "txt" / "npy", or (for "bin" / "txt")
-            `pixel_size` is missing or neither/both scale forms are given.
+        ValueError: If `ext` is not "bin" / "txt" / "npy", (for "bin" / "txt")
+            `pixel_size` is missing or neither/both scale forms are given, or `images`
+            is empty.
         FileExistsError: If `root` exists and `overwrite` is False.
     """
     ensure_one_of(ext, FLOAT_FORMATS, name="ext")
@@ -502,8 +503,13 @@ def save_phase_folder(
         )
 
     with StagedDirectory(root, overwrite=overwrite) as staged:
+        count = 0
         for index, image in enumerate(images):
             save(staged.workdir / koala_frame_name(index, stem=stem, ext=ext), image)
+            count = index + 1
+        if count == 0:
+            msg = "cannot save an empty phase sequence"
+            raise ValueError(msg)
 
 
 def convert_phase_folder(

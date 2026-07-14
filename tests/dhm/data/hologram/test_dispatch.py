@@ -102,6 +102,16 @@ def test_convert_hologram_rejects_unknown_format(tmp_path):
         convert_hologram_sequence(tmp_path, src, ext="bin")
 
 
+@pytest.mark.parametrize("ext", ("tif", "npy"))
+def test_convert_hologram_folder_rejects_empty(tmp_path, ext):
+    # The raw path already rejects empty; the numbered-folder path does too, rather
+    # than committing a folder no reader accepts.
+    out = tmp_path / "out"
+    with pytest.raises(ValueError, match="empty hologram sequence"):
+        convert_hologram_sequence(out, HologramTifList([]), ext=ext)
+    assert not out.exists()  # atomic: no unreadable folder left behind
+
+
 def test_save_hologram_raw_streams_a_sequence(tmp_path):
     stack = _stack()
     src = _raw_source(tmp_path / "src.raw", stack)  # a HologramSequence, not an array

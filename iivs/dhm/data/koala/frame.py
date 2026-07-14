@@ -44,8 +44,17 @@ def koala_frame_name(index: int, *, stem: str, ext: str) -> str:
     """The contiguous Koala filename ``{index:05d}_{stem}.{ext}``.
 
     The single source of truth for Koala's frame-naming convention, used both to
-    discover/validate a `KoalaFrameFolder` and to write a converted folder.
+    discover/validate a `KoalaFrameFolder` and to write a converted folder. The
+    5-digit zero-padded field caps a folder at 100000 frames; discovery matches
+    exactly `\\d{5}`, so a 6-digit name would be silently undiscoverable, hence an
+    out-of-range index is rejected here rather than written unreadable.
+
+    Raises:
+        ValueError: If `index` is negative or exceeds 99999 (the 5-digit field's max).
     """
+    if not 0 <= index <= 99999:  # the 5-digit field's inclusive span
+        msg = f"frame index must be in [0, 99999] (got {index})"
+        raise ValueError(msg)
     return f"{index:05d}_{stem}.{ext}"
 
 

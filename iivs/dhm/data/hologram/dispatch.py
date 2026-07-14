@@ -58,7 +58,7 @@ def convert_hologram_sequence(
         overwrite: Whether to replace an existing destination. Defaults to False.
 
     Raises:
-        ValueError: If `ext` is not "raw", "tif", or "npy".
+        ValueError: If `ext` is not "raw", "tif", or "npy", or `sequence` is empty.
         FileExistsError: If a destination exists and `overwrite` is False.
     """
     ensure_one_of(ext, HOLOGRAM_FORMATS, name="ext")
@@ -72,5 +72,10 @@ def convert_hologram_sequence(
     stem = getattr(sequence, "FILE_STEM", "holo")
 
     with StagedDirectory(dest, overwrite=overwrite) as staged:
+        count = 0
         for index, image in enumerate(sequence):
             save(staged.workdir / koala_frame_name(index, stem=stem, ext=ext), image)
+            count = index + 1
+        if count == 0:
+            msg = "cannot save an empty hologram sequence"
+            raise ValueError(msg)

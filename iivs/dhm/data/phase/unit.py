@@ -29,6 +29,13 @@ class PhaseUnit(IntEnum):
 _NM_PER_M = 1e9
 
 
+def _require_positive_height_scale(height_scale: float) -> None:
+    """Raise unless `height_scale` is a finite, strictly positive factor."""
+    if not (math.isfinite(height_scale) and height_scale > 0):
+        msg = f"height_scale must be positive (got {height_scale})"
+        raise ValueError(msg)
+
+
 def resolve_height_scale(
     height_scale: float | None,
     wavelength: float | None,
@@ -38,19 +45,29 @@ def resolve_height_scale(
 
     The phase-to-height factor (m per rad) is given either directly, or as a
     `wavelength` / `refractive_delta` pair (`height per rad = wavelength / (2*pi *
-    refractive_delta)`). Exactly one of the two forms must be given.
+    refractive_delta)`). Exactly one of the two forms must be given, and the resolved
+    factor must be finite and strictly positive.
 
     Raises:
         ValueError: Unless exactly one form is fully given (neither, both, or a
-            half-filled pair all raise).
+            half-filled pair all raise), or the resolved factor is not positive (a
+            zero / negative `height_scale`, or a zero / non-positive `refractive_delta`).
     """
     if height_scale is not None and wavelength is None and refractive_delta is None:
-        return height_scale
-    if height_scale is None and wavelength is not None and refractive_delta is not None:
-        return wavelength / (math.tau * refractive_delta)
+        scale = height_scale
+    elif (
+        height_scale is None and wavelength is not None and refractive_delta is not None
+    ):
+        if refractive_delta == 0:
+            msg = "refractive_delta must be nonzero"
+            raise ValueError(msg)
+        scale = wavelength / (math.tau * refractive_delta)
+    else:
+        msg = "give exactly one of: height_scale, or wavelength and refractive_delta"
+        raise ValueError(msg)
 
-    msg = "give exactly one of: height_scale, or wavelength and refractive_delta"
-    raise ValueError(msg)
+    _require_positive_height_scale(scale)
+    return scale
 
 
 def convert_phase_unit(
@@ -70,15 +87,16 @@ def convert_phase_unit(
         data: The phase/height image to convert; never modified.
         source: The unit `data` is currently in.
         target: The unit to convert to.
-        height_scale: m per rad. Used only when the conversion crosses RADIANS <->
-            METERS; ignored for a pure METERS <-> NANOMETERS rescale.
+        height_scale: m per rad. Used (and required positive) only when the conversion
+            crosses RADIANS <-> METERS; ignored for a pure METERS <-> NANOMETERS rescale.
 
     Returns:
         A new float32 array in `target`, or `data` itself (unchanged) when
         `source == target`.
 
     Raises:
-        ValueError: If the conversion is undefined (e.g. it involves the UNKNOWN unit).
+        ValueError: If the conversion is undefined (e.g. it involves the UNKNOWN unit),
+            or `height_scale` is not positive for a conversion that crosses RADIANS.
     """
     if source is target:
         return data
@@ -87,10 +105,12 @@ def convert_phase_unit(
     # NANOMETERS); converting the other way uses its reciprocal.
     match sorted((source, target)):
         case [PhaseUnit.RADIANS, PhaseUnit.METERS]:
+            _require_positive_height_scale(height_scale)
             scale = height_scale
         case [PhaseUnit.METERS, PhaseUnit.NANOMETERS]:
             scale = _NM_PER_M
         case [PhaseUnit.RADIANS, PhaseUnit.NANOMETERS]:
+            _require_positive_height_scale(height_scale)
             scale = height_scale * _NM_PER_M
         case _:
             msg = f"cannot convert phase from {source.name} to {target.name}"

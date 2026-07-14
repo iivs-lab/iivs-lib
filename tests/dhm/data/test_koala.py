@@ -60,6 +60,15 @@ def test_load_txt_rejects_malformed_grid(tmp_path):
         load_txt(path, IntensityTxtHeaderCodec)
 
 
+def test_load_txt_rejects_hash_in_grid(tmp_path):
+    # comments=None: '#' is not a comment marker, so a trailing '# ...' (which
+    # np.loadtxt's default would silently drop, yielding a wrong 2x2 grid) is
+    # rejected as a malformed grid instead.
+    path = _write_txt(tmp_path, height=2, width=2, grid="1 2\n3 4 # dropped\n")
+    with pytest.raises(ValueError, match="malformed txt grid"):
+        load_txt(path, IntensityTxtHeaderCodec)
+
+
 def test_load_txt_rejects_non_txt_extension(tmp_path):
     # `.txt` has no content magic, so the reader gates on the extension.
     path = tmp_path / "x.dat"
@@ -197,6 +206,14 @@ def test_heterogeneous_list_lacks_the_mixin(tmp_path):
 
 def test_koala_frame_name():
     assert koala_frame_name(7, stem="phase", ext="bin") == "00007_phase.bin"
+
+
+@pytest.mark.parametrize("index", (-1, 100000))
+def test_koala_frame_name_rejects_out_of_range_index(index):
+    # The 5-digit field caps a folder at 100000 frames; a 6-digit name would be
+    # silently undiscoverable, so an out-of-range index fails fast on write.
+    with pytest.raises(ValueError, match=r"frame index must be in \[0, 99999\]"):
+        koala_frame_name(index, stem="phase", ext="bin")
 
 
 def test_ensure_file_extension_add_appends_when_absent(tmp_path):

@@ -495,6 +495,13 @@ def test_save_phase_folder_npy_warns_on_metadata(tmp_path):
         save_phase_folder(tmp_path / "out", images, ext="npy", pixel_size=1e-6)
 
 
+def test_save_phase_folder_rejects_empty(tmp_path):
+    out = tmp_path / "out"
+    with pytest.raises(ValueError, match="empty phase sequence"):
+        save_phase_folder(out, [], ext="npy")
+    assert not out.exists()  # atomic: no unreadable folder left behind
+
+
 def test_save_phase_folder_stem_override(tmp_path):
     images = [np.zeros((2, 2), np.float32)]
     out = tmp_path / "out"

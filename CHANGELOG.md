@@ -14,7 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   for any numeric image or stack (Enhance Contrast + Normalize). It clips
   `saturated`% of pixels in total via the matching `nanpercentile` bounds
   (NaN-safe, so a masked phase is ignored), linearly stretches onto `out_range`
-  (or the dtype's span when it is None), and casts back to the input dtype.
+  (or the dtype's span when it is None), and casts back to the input dtype. An
+  input with no finite value (all NaN / inf) raises rather than returning garbage.
   Technique-agnostic, so phase / intensity / hologram can share it.
 - `iivs.common.data`: the first technique-agnostic data primitives, hoisted out
   of `iivs.dhm.data.koala` — `read_npy_shape` / `write_npy` (the `.npy` reader /
@@ -135,7 +136,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Replace `PhaseFloatSequence.bounds_nm` with `value_range`. Every array sequence
   now has `value_range(index=None)` (the shared `iivs.common.data.ValueRangeMixin`):
   the global `(min, max)` over all frames (read once, then cached), or one frame's
-  when `index` is given (empty sequences raise). Phase widens it with a `unit`:
+  when `index` is given. Non-finite values (NaN, +/-inf) are ignored, so a masked
+  frame's background NaNs do not distort the range; an empty sequence, or one with
+  no finite values, raises. Phase widens it with a `unit`:
   `value_range()` ranges
   over the loaded values (`target_unit`), while `value_range(unit=NANOMETERS)`
   decodes each frame to a fixed unit first (what `bounds_nm` computed) and is what
@@ -161,6 +164,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `iivs.dhm.data.koala.write_bin` now rejects a pixel block whose shape
   disagrees with the header, instead of writing a malformed `.bin`.
+- `convert_phase_unit` / `resolve_height_scale` reject a non-positive or
+  non-finite height scale (a zero / negative `height_scale`, or a zero
+  `refractive_delta`) up front, instead of silently zeroing the image on a
+  RADIANS -> METERS conversion or raising a bare `ZeroDivisionError` on the
+  reverse.
+- The Koala `Float/Txt` grid reader no longer treats `#` as a comment marker, so
+  a stray `#` in the float grid is rejected as a malformed grid rather than
+  silently truncating the line.
+- The numbered-folder writers (`save_phase_folder` / `save_intensity_folder` /
+  `convert_hologram_sequence`) reject an empty sequence and a frame index past
+  the 5-digit field (`> 99999`), instead of writing a folder that no reader can
+  rediscover.
 
 ## [0.1.0] - 2026-06-05
 

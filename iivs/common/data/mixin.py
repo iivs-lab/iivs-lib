@@ -42,27 +42,43 @@ class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
 
     @cached_property
     def _global_value_range(self) -> tuple[float, float]:
+        if len(self) == 0:
+            msg = "value range is undefined for an empty sequence"
+            raise ValueError(msg)
+
         minimum, maximum = math.inf, -math.inf
         for i in range(len(self)):
             frame = self.get_item(i)
-            minimum = min(minimum, float(frame.min()))
-            maximum = max(maximum, float(frame.max()))
+            finite = frame[np.isfinite(frame)]
+            if finite.size:
+                minimum = min(minimum, float(finite.min()))
+                maximum = max(maximum, float(finite.max()))
         if minimum > maximum:
-            msg = "value range is undefined for an empty sequence"
+            msg = "value range is undefined (every value is non-finite)"
             raise ValueError(msg)
         return minimum, maximum
 
     def value_range(self, index: int | None = None) -> tuple[float, float]:
         """The `(min, max)` over every frame (cached), or of frame `index`.
 
+        Non-finite values (NaN, +/-inf) are ignored, so the range reflects only the
+        real data (e.g. a masked frame's background NaNs do not distort it).
+
         Args:
             index: A single frame to range over, or None (default) for the global
                 range, which is computed once and then cached.
 
         Raises:
-            ValueError: If the global range is requested but the sequence is empty.
+            ValueError: If the global range is requested on an empty sequence, or the
+                sequence (or `index`'s frame) has no finite values at all.
         """
         if index is None:
             return self._global_value_range
         frame = self.get_item(index)
-        return float(frame.min()), float(frame.max())
+        finite = frame[np.isfinite(frame)]
+        if finite.size == 0:
+            msg = (
+                f"value range of frame {index} is undefined (every value is non-finite)"
+            )
+            raise ValueError(msg)
+        return float(finite.min()), float(finite.max())

@@ -37,6 +37,44 @@ def test_value_range_over_folder(tmp_path):
     assert folder.value_range(1) == pytest.approx((5.0, 5.0))  # one frame, by index
 
 
+def test_value_range_ignores_non_finite(tmp_path):
+    # A NaN pixel is dropped from the range; only the finite values count.
+    save_intensity_bin(
+        tmp_path / "00000_intensity.bin",
+        np.array([[1.0, np.nan], [3.0, 5.0]], dtype=np.float32),
+        pixel_size=1e-6,
+        on_nonfinite="ignore",
+    )
+    save_intensity_bin(
+        tmp_path / "00001_intensity.bin",
+        np.array([[np.nan, 4.0], [2.0, 8.0]], dtype=np.float32),
+        pixel_size=1e-6,
+        on_nonfinite="ignore",
+    )
+    folder = IntensityBinFolder(tmp_path)
+    assert folder.value_range() == pytest.approx((1.0, 8.0))  # global, NaNs ignored
+    assert folder.value_range(0) == pytest.approx((1.0, 5.0))  # per-frame, NaN ignored
+
+
+def test_value_range_all_non_finite_raises(tmp_path):
+    save_intensity_bin(
+        tmp_path / "00000_intensity.bin",
+        np.full((2, 2), np.nan, dtype=np.float32),
+        pixel_size=1e-6,
+        on_nonfinite="ignore",
+    )
+    folder = IntensityBinFolder(tmp_path)
+    with pytest.raises(ValueError, match="non-finite"):
+        folder.value_range()  # global: every value is NaN
+    with pytest.raises(ValueError, match="non-finite"):
+        folder.value_range(0)  # per-frame: every value is NaN
+
+
+def test_value_range_empty_list_raises():
+    with pytest.raises(ValueError, match="empty"):
+        IntensityBinList([]).value_range()  # the shared mixin's empty guard
+
+
 # ========================== #
 #           Header           #
 # ========================== #

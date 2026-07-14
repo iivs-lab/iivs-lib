@@ -36,7 +36,8 @@ def auto_rescale[T: np.number](
         The rescaled array in `array`'s dtype (integers rounded to nearest).
 
     Raises:
-        ValueError: If `array` is empty, or `saturated` is not in [0, 100).
+        ValueError: If `array` is empty, has no finite value (all NaN / inf), or
+            `saturated` is not in [0, 100).
     """
     if not 0 <= saturated < 100:
         msg = f"saturated must be in [0, 100) (got {saturated})"
@@ -44,6 +45,10 @@ def auto_rescale[T: np.number](
 
     if array.size == 0:
         msg = "array must be non-empty"
+        raise ValueError(msg)
+
+    if not np.any(np.isfinite(array)):
+        msg = "array must have at least one finite value"
         raise ValueError(msg)
 
     if out_range is None:

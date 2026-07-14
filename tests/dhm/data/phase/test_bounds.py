@@ -228,6 +228,46 @@ def test_value_range_empty_sequence_raises():
         _ = PhaseBinList([]).value_range(unit=PhaseUnit.NANOMETERS)  # phase's unit path
 
 
+def test_value_range_unit_ignores_non_finite(tmp_path):
+    # NaN pixels are dropped from the unit-converted range too.
+    save_phase_bin(
+        tmp_path / "00000_phase.bin",
+        np.array([[1.0, np.nan]], dtype=np.float32),  # 1.0 rad -> 200 nm
+        pixel_size=1e-6,
+        height_scale=2e-7,
+        on_nonfinite="ignore",
+    )
+    save_phase_bin(
+        tmp_path / "00001_phase.bin",
+        np.array([[np.nan, 3.0]], dtype=np.float32),  # 3.0 rad -> 600 nm
+        pixel_size=1e-6,
+        height_scale=2e-7,
+        on_nonfinite="ignore",
+    )
+    folder = PhaseBinFolder(tmp_path)
+    assert folder.value_range(unit=PhaseUnit.NANOMETERS) == pytest.approx(
+        (200.0, 600.0)
+    )
+    assert folder.value_range(0, unit=PhaseUnit.NANOMETERS) == pytest.approx(
+        (200.0, 200.0)
+    )
+
+
+def test_value_range_unit_all_non_finite_raises(tmp_path):
+    save_phase_bin(
+        tmp_path / "00000_phase.bin",
+        np.full((1, 2), np.nan, dtype=np.float32),
+        pixel_size=1e-6,
+        height_scale=2e-7,
+        on_nonfinite="ignore",
+    )
+    folder = PhaseBinFolder(tmp_path)
+    with pytest.raises(ValueError, match="non-finite"):
+        folder.value_range(unit=PhaseUnit.NANOMETERS)  # global-in
+    with pytest.raises(ValueError, match="non-finite"):
+        folder.value_range(0, unit=PhaseUnit.NANOMETERS)  # per-frame unit path
+
+
 def test_value_range_rejects_unknown_unit(tmp_path):
     path = tmp_path / "00000_phase.bin"
     with pytest.warns(UserWarning, match="UNKNOWN"):  # save_phase_bin warns

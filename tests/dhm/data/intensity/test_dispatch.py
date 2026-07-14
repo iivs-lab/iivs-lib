@@ -410,3 +410,10 @@ def test_save_intensity_folder_rejects_unknown_format(tmp_path):
     images = [np.zeros((2, 2), np.float32)]
     with pytest.raises(ValueError, match="ext must be"):
         save_intensity_folder(tmp_path / "out", images, ext="raw")
+
+
+def test_save_intensity_folder_rejects_empty(tmp_path):
+    out = tmp_path / "out"
+    with pytest.raises(ValueError, match="empty intensity sequence"):
+        save_intensity_folder(out, [], ext="npy")
+    assert not out.exists()  # atomic: no unreadable folder left behind

@@ -163,7 +163,11 @@ def load_txt[H: KoalaBinHeader](
     header = codec.from_lines(lines, path)
 
     try:
-        grid = np.loadtxt(lines[codec.HEADER_LINES :], dtype=np.float32, ndmin=1)
+        # comments=None: a stray '#' in a data line is a malformed grid, not a comment
+        # to silently truncate (Koala never writes '#' in the float grid).
+        grid = np.loadtxt(
+            lines[codec.HEADER_LINES :], dtype=np.float32, ndmin=1, comments=None
+        )
     except ValueError as exc:
         msg = f"malformed txt grid: {exc}"
         raise ValueError(msg) from exc

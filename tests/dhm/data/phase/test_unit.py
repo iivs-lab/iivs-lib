@@ -43,6 +43,23 @@ def test_resolve_height_scale_rejects_invalid_forms(
         resolve_height_scale(height_scale, wavelength, refractive_delta)
 
 
+@pytest.mark.parametrize("height_scale", (0.0, -1e-7, math.inf, math.nan))
+def test_resolve_height_scale_rejects_nonpositive(height_scale):
+    with pytest.raises(ValueError, match="height_scale must be positive"):
+        resolve_height_scale(height_scale, None, None)
+
+
+def test_resolve_height_scale_rejects_zero_refractive_delta():
+    with pytest.raises(ValueError, match="refractive_delta must be nonzero"):
+        resolve_height_scale(None, 666e-9, 0.0)
+
+
+def test_resolve_height_scale_rejects_negative_wavelength_pair():
+    # A negative wavelength derives a negative factor, rejected as non-positive.
+    with pytest.raises(ValueError, match="height_scale must be positive"):
+        resolve_height_scale(None, -666e-9, 0.5)
+
+
 # --- convert_phase_unit ---
 
 
@@ -117,3 +134,18 @@ def test_convert_phase_unit_rejects_unknown():
             target=PhaseUnit.UNKNOWN,
             height_scale=2.0,
         )
+
+
+@pytest.mark.parametrize(
+    ("source", "target"),
+    (
+        (PhaseUnit.RADIANS, PhaseUnit.METERS),  # RADIANS <-> METERS branch
+        (PhaseUnit.NANOMETERS, PhaseUnit.RADIANS),  # RADIANS <-> NANOMETERS branch
+    ),
+)
+def test_convert_phase_unit_rejects_nonpositive_height_scale(source, target):
+    # A zero height_scale would silently zero the image (rad->m) or divide by zero
+    # (m->rad); both are rejected up front for the RADIANS-crossing conversions.
+    data = np.array([[1.0, 2.0]], dtype=np.float32)
+    with pytest.raises(ValueError, match="height_scale must be positive"):
+        convert_phase_unit(data, source=source, target=target, height_scale=0.0)
