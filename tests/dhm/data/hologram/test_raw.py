@@ -20,6 +20,15 @@ def _write_raw(path, *, n=3, h=2, w=3, bit_depth=8):
     return frames
 
 
+def test_value_range_over_raw(tmp_path):
+    # Holograms are unit-less uint8, so they use the shared `ValueRangeMixin` directly.
+    path = tmp_path / "holo.raw"
+    _write_raw(path, n=3, h=2, w=3)  # frames hold 0..17
+    holos = HologramRawFile(path)
+    assert holos.value_range() == pytest.approx((0.0, 17.0))  # global
+    assert holos.value_range(1) == pytest.approx((6.0, 11.0))  # one frame, by index
+
+
 def test_header_fields_and_layout(tmp_path):
     path = tmp_path / "holo.raw"
     _write_raw(path, n=5, h=2, w=3)

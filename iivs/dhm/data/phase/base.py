@@ -3,7 +3,6 @@ from __future__ import annotations
 __all__ = ("PhaseFloatSequence", "PhaseImageSequence", "PhaseSequence")
 
 import math
-from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
@@ -94,7 +93,7 @@ class PhaseImageSequence[M](PhaseSequence[NDArray[np.uint8], M]):
         it imitates; use the real `Float` sequence when the exact values matter.
         `bounds` must be supplied (a preview cannot recover them); read it from the
         acquisition's `phbounds.txt` or recompute it from the `Float` twin's
-        `bounds_nm`.
+        `value_range(unit=NANOMETERS)`.
 
         NANOMETERS (the default) and METERS need no scale; RADIANS needs `height_scale`
         (m per rad), or `wavelength` + `refractive_delta` to derive it.
@@ -151,7 +150,7 @@ class PhaseImageView(PhaseImageSequence[Path]):
 
     @override
     def get_item(self, index: int) -> NDArray[np.uint8]:
-        nm = self._source._decode_nm(index)  # noqa: SLF001
+        nm = self._source._decode_in(index, PhaseUnit.NANOMETERS)  # noqa: SLF001
         return self._bounds.encode_preview(nm)
 
 
@@ -248,44 +247,49 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
             image, source=header.unit, target=target, height_scale=header.height_scale
         )
 
-    def _decode_nm(self, index: int) -> NDArray[np.float32]:
-        """Decode frame `index` and convert it to nanometers via its own header.
+    def _decode_in(self, index: int, unit: PhaseUnit) -> NDArray[np.float32]:
+        """Decode frame `index` and convert it to `unit` via its own header.
 
-        The unit-agnostic frame source for `bounds_nm` and `to_image`: reads the raw
-        stored values (ignoring `target_unit`) and converts to nm with that frame's
-        `height_scale`.
+        Reads the raw stored values (ignoring `target_unit`) and converts to `unit`
+        with that frame's `height_scale`. Backs `value_range(unit=...)` and the
+        `to_image` preview render (which uses nanometers).
         """
         image, header = self._decode(self.get_file(index))
         return convert_phase_unit(
-            image,
-            source=header.unit,
-            target=PhaseUnit.NANOMETERS,
-            height_scale=header.height_scale,
+            image, source=header.unit, target=unit, height_scale=header.height_scale
         )
 
-    @cached_property
-    def bounds_nm(self) -> PhaseBounds:
-        """Global phase display bounds over every frame, in nanometers.
+    @override
+    def value_range(
+        self, index: int | None = None, unit: PhaseUnit | None = None
+    ) -> tuple[float, float]:
+        """The phase `(min, max)`: over every frame or of frame `index`, in `unit`.
 
-        Recomputes the `phbounds.txt` values straight from the float source: each frame
-        is converted to nanometers via its own `height_scale`, then reduced to one
-        global ``(min, max)``. Reads every file once on first access (regardless of
-        `target_unit`) and caches the result.
+        Widens the inherited `value_range` with a `unit`. With `unit=None` (default)
+        the range is over the values as loaded (`target_unit`); with a `PhaseUnit`
+        each frame is decoded to that unit via its own `height_scale` first (ignoring
+        `target_unit`), so the range is in a fixed unit regardless of how the sequence
+        loads. `to_image` uses `value_range(unit=NANOMETERS)` for its display bounds.
 
         Raises:
-            ValueError: If the sequence is empty, or a frame's stored unit cannot be
-                converted to nanometers (e.g. an UNKNOWN unit).
+            ValueError: If the whole-sequence range is requested but the sequence is
+                empty, or a frame's stored unit cannot be converted to `unit`.
         """
-        minimum, maximum = math.inf, -math.inf
-        for index in range(len(self)):
-            nm = self._decode_nm(index)
-            minimum = min(minimum, float(nm.min()))
-            maximum = max(maximum, float(nm.max()))
+        if unit is None:
+            return super().value_range(index)
+        if index is not None:
+            frame = self._decode_in(index, unit)
+            return float(frame.min()), float(frame.max())
 
+        minimum, maximum = math.inf, -math.inf
+        for i in range(len(self)):
+            frame = self._decode_in(i, unit)
+            minimum = min(minimum, float(frame.min()))
+            maximum = max(maximum, float(frame.max()))
         if minimum > maximum:
-            msg = "phase bounds are undefined for an empty sequence"
+            msg = "phase value range is undefined for an empty sequence"
             raise ValueError(msg)
-        return PhaseBounds(min_nm=minimum, max_nm=maximum)
+        return minimum, maximum
 
     def to_image(self, bounds: PhaseBounds | None = None) -> PhaseImageSequence[Path]:
         """Render this phase as a lazy uint8 Koala preview, in nm (Float -> Image).
@@ -293,16 +297,16 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         Each frame is converted to nanometers via its own `height_scale` (so the result
         is correct regardless of `target_unit`), then rendered through `bounds`
         (`PhaseBounds.encode_preview`) on access. With ``bounds=None`` the global
-        `bounds_nm` is used, reading every file once up front (as Koala's `phbounds.txt`
-        spans the whole acquisition); pass `bounds` explicitly to skip that pass or to
-        match an existing `phbounds.txt`.
+        `value_range(unit=NANOMETERS)` is used, reading every file once up front (as
+        Koala's `phbounds.txt` spans the whole acquisition); pass `bounds` explicitly to
+        skip that pass or to match an existing `phbounds.txt`.
 
         Args:
             bounds: The display bounds to render against, or None to derive them from
-                this source via `bounds_nm`.
+                this source via `value_range(unit=NANOMETERS)`.
         """
         if bounds is None:
-            bounds = self.bounds_nm
+            bounds = PhaseBounds(*self.value_range(unit=PhaseUnit.NANOMETERS))
         return PhaseImageView(self, bounds)
 
 

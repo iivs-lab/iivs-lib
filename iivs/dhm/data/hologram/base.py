@@ -6,8 +6,10 @@ import numpy as np
 from kaparoo.data.sequences import DataSequence
 from numpy.typing import NDArray
 
+from iivs.common.data import ValueRangeMixin
 
-class HologramSequence[M](DataSequence[NDArray[np.uint8], M]):
+
+class HologramSequence[M](DataSequence[NDArray[np.uint8], M], ValueRangeMixin):
     """A read-only sequence of uint8 hologram images, from any source.
 
     Common base for every hologram sequence (a single-acquisition `HologramTifFolder` /

@@ -28,6 +28,15 @@ def _write(root, index, value, shape=(2, 3)):
     )
 
 
+def test_value_range_over_folder(tmp_path):
+    # Intensity is unit-less, so it uses the shared `ValueRangeMixin` directly.
+    _write(tmp_path, 0, 1.0)
+    _write(tmp_path, 1, 5.0)
+    folder = IntensityBinFolder(tmp_path)
+    assert folder.value_range() == pytest.approx((1.0, 5.0))  # global
+    assert folder.value_range(1) == pytest.approx((5.0, 5.0))  # one frame, by index
+
+
 # ========================== #
 #           Header           #
 # ========================== #

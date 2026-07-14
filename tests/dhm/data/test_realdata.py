@@ -31,6 +31,7 @@ from iivs.dhm.data.phase import (
     PhaseBinFolder,
     PhaseTifFolder,
     PhaseTxtFolder,
+    PhaseUnit,
     read_phbounds,
 )
 from iivs.dhm.data.timestamp import TimestampsTxtFile
@@ -139,17 +140,17 @@ def test_phase_to_image_reproduces_koala_previews(koala_sample: Path) -> None:
 
 
 def test_phase_bounds_match_phbounds(koala_sample: Path) -> None:
-    # `bounds_nm` reduces the Float source to one global (min, max) in nm; Koala's
-    # phbounds.txt is that same global range, so the two agree to within the text
-    # file's rounding (measured < 1e-4 nm). Reads every frame, so this stays cheap
-    # only because a fixture is a short (~20-frame) clip.
+    # `value_range(NANOMETERS)` reduces the Float source to one global (min, max) in
+    # nm; Koala's phbounds.txt is that same global range, so the two agree to within
+    # the text file's rounding (measured < 1e-4 nm). Reads every frame, so this stays
+    # cheap only because a fixture is a short (~20-frame) clip.
     folder = PhaseBinFolder(
         _require(koala_sample / "Phase" / "Float" / "Bin"), validate=None
     )
     stored = read_phbounds(_require(koala_sample / "phbounds.txt"))
-    computed = folder.bounds_nm
-    assert computed.min_nm == pytest.approx(stored.min_nm, rel=1e-4, abs=1e-3)
-    assert computed.max_nm == pytest.approx(stored.max_nm, rel=1e-4, abs=1e-3)
+    low, high = folder.value_range(unit=PhaseUnit.NANOMETERS)
+    assert low == pytest.approx(stored.min_nm, rel=1e-4, abs=1e-3)
+    assert high == pytest.approx(stored.max_nm, rel=1e-4, abs=1e-3)
 
 
 # ============================== #

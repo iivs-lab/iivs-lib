@@ -167,49 +167,68 @@ def test_degenerate_bounds_map_to_a_single_value():
     assert np.all(preview == 0)
 
 
-# ========================== #
-#    PhaseFileList.bounds_nm #
-# ========================== #
+# ============================ #
+#  PhaseFileList.value_range   #
+# ============================ #
 
 
-def test_bounds_nm_over_folder(tmp_path):
+def test_value_range_nm_over_folder(tmp_path):
     _save(tmp_path / "00000_phase.bin", np.full((2, 3), 1.0))  # 200 nm
     _save(tmp_path / "00001_phase.bin", np.full((2, 3), 3.0))  # 600 nm
-    bounds = PhaseBinFolder(tmp_path).bounds_nm
-    assert bounds.min_nm == pytest.approx(200.0)
-    assert bounds.max_nm == pytest.approx(600.0)
+    rng = PhaseBinFolder(tmp_path).value_range(unit=PhaseUnit.NANOMETERS)
+    assert rng == pytest.approx((200.0, 600.0))
 
 
-def test_bounds_nm_within_a_frame(tmp_path):
+def test_value_range_within_a_frame(tmp_path):
     path = tmp_path / "00000_phase.bin"
     _save(path, [[0.0, 3.0]])  # 0 .. 600 nm
-    bounds = PhaseBinList([path]).bounds_nm
-    assert bounds.min_nm == pytest.approx(0.0)
-    assert bounds.max_nm == pytest.approx(600.0)
+    rng = PhaseBinList([path]).value_range(unit=PhaseUnit.NANOMETERS)
+    assert rng == pytest.approx((0.0, 600.0))
 
 
-def test_bounds_nm_converts_each_file_by_its_height_scale(tmp_path):
+def test_value_range_converts_each_file_by_its_height_scale(tmp_path):
     a, b = tmp_path / "a.bin", tmp_path / "b.bin"
     _save(a, np.full((1, 2), 1.0), height_scale=2e-7)  # 200 nm
     _save(b, np.full((1, 2), 1.0), height_scale=4e-7)  # 400 nm
-    bounds = PhaseBinList([a, b]).bounds_nm
-    assert bounds.min_nm == pytest.approx(200.0)
-    assert bounds.max_nm == pytest.approx(400.0)
+    rng = PhaseBinList([a, b]).value_range(unit=PhaseUnit.NANOMETERS)
+    assert rng == pytest.approx((200.0, 400.0))
 
 
-def test_bounds_nm_is_independent_of_target_unit(tmp_path):
+def test_value_range_with_unit_is_independent_of_target_unit(tmp_path):
     path = tmp_path / "00000_phase.bin"
     _save(path, np.full((1, 2), 1.0))
     seq = PhaseBinList([path], target_unit=PhaseUnit.RADIANS)
-    assert seq.bounds_nm.max_nm == pytest.approx(200.0)  # nm, not the 1.0 radian
+    _, high = seq.value_range(unit=PhaseUnit.NANOMETERS)
+    assert high == pytest.approx(200.0)  # nm, not the 1.0 radian
 
 
-def test_bounds_nm_empty_sequence_raises():
+def test_value_range_default_unit_follows_target_unit(tmp_path):
+    # No unit -> the range of the values as loaded (target_unit), like any sequence.
+    path = tmp_path / "00000_phase.bin"
+    _save(path, np.full((1, 2), 1.0))  # 1.0 rad -> 200 nm
+    rad = PhaseBinList([path], target_unit=PhaseUnit.RADIANS)
+    nm = PhaseBinList([path], target_unit=PhaseUnit.NANOMETERS)
+    assert rad.value_range() == pytest.approx((1.0, 1.0))
+    assert nm.value_range() == pytest.approx((200.0, 200.0))
+
+
+def test_value_range_of_a_single_frame_by_index(tmp_path):
+    _save(tmp_path / "00000_phase.bin", np.full((1, 2), 1.0))  # 200 nm
+    _save(tmp_path / "00001_phase.bin", np.full((1, 2), 3.0))  # 600 nm
+    folder = PhaseBinFolder(tmp_path)
+    assert folder.value_range(1, unit=PhaseUnit.NANOMETERS) == pytest.approx(
+        (600.0, 600.0)
+    )
+
+
+def test_value_range_empty_sequence_raises():
     with pytest.raises(ValueError, match="empty"):
-        _ = PhaseBinList([]).bounds_nm
+        _ = PhaseBinList([]).value_range()  # via the shared mixin (target_unit)
+    with pytest.raises(ValueError, match="empty"):
+        _ = PhaseBinList([]).value_range(unit=PhaseUnit.NANOMETERS)  # phase's unit path
 
 
-def test_bounds_nm_rejects_unknown_unit(tmp_path):
+def test_value_range_rejects_unknown_unit(tmp_path):
     path = tmp_path / "00000_phase.bin"
     with pytest.warns(UserWarning, match="UNKNOWN"):  # save_phase_bin warns
         save_phase_bin(
@@ -220,16 +239,7 @@ def test_bounds_nm_rejects_unknown_unit(tmp_path):
             unit=PhaseUnit.UNKNOWN,
         )
     with pytest.raises(ValueError, match="cannot convert"):
-        _ = PhaseBinList([path]).bounds_nm
-
-
-def test_bounds_nm_is_cached(tmp_path):
-    path = tmp_path / "00000_phase.bin"
-    _save(path, np.full((1, 2), 1.0))
-    seq = PhaseBinList([path])
-    assert "bounds_nm" not in seq.__dict__  # not computed until first access
-    _ = seq.bounds_nm
-    assert "bounds_nm" in seq.__dict__  # cached afterwards
+        _ = PhaseBinList([path]).value_range(unit=PhaseUnit.NANOMETERS)
 
 
 # ========================== #
@@ -262,9 +272,10 @@ def test_to_image_renders_nm_regardless_of_target_unit(tmp_path):
     assert np.all(preview[1] == 255)
 
 
-def test_to_image_default_bounds_use_bounds_nm(tmp_path):
+def test_to_image_default_bounds_use_value_range(tmp_path):
     folder = _two_frame_folder(tmp_path)
-    assert folder.to_image().bounds == folder.bounds_nm
+    expected = PhaseBounds(*folder.value_range(unit=PhaseUnit.NANOMETERS))
+    assert folder.to_image().bounds == expected
 
 
 def test_to_image_meta_is_source_path(tmp_path):
@@ -276,7 +287,7 @@ def test_to_image_meta_is_source_path(tmp_path):
 
 def test_to_float_roundtrip_within_quantization(tmp_path):
     folder = _two_frame_folder(tmp_path, target_unit=PhaseUnit.NANOMETERS)
-    bounds = folder.bounds_nm
+    bounds = PhaseBounds(*folder.value_range(unit=PhaseUnit.NANOMETERS))
     # Float -> Image -> Float, all in memory (no .tif I/O needed).
     recon = folder.to_image(bounds).to_float(bounds)
     assert isinstance(recon, PhaseFloatSequence)
@@ -289,7 +300,7 @@ def test_to_float_roundtrip_within_quantization(tmp_path):
 def test_to_float_to_radians_uses_height_scale(tmp_path):
     # frames 1.0 / 3.0 rad at height_scale 2e-7 -> 200 / 600 nm; bounds (200, 600).
     folder = _two_frame_folder(tmp_path)  # default target_unit -> RADIANS
-    bounds = folder.bounds_nm
+    bounds = PhaseBounds(*folder.value_range(unit=PhaseUnit.NANOMETERS))
     recon = folder.to_image(bounds).to_float(
         bounds, target_unit=PhaseUnit.RADIANS, height_scale=2e-7
     )

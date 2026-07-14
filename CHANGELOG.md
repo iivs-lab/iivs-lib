@@ -132,9 +132,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `torch<2.9` ships no CPython 3.14 (cp314) wheels, and CI covers 3.14, so 2.9 is
   the floor that resolves across the supported Pythons (cp313 / cp314); installs
   on 3.13 are unaffected, since 2.6+ all ship cp313 wheels.
-- `PhaseFloatSequence.bounds_nm` is now a cached **property**, not a method:
-  access it as `seq.bounds_nm` (no call). It still reads every frame on first
-  access, then caches the global `(min, max)` for the sequence's lifetime.
+- Replace `PhaseFloatSequence.bounds_nm` with `value_range`. Every array sequence
+  now has `value_range(index=None)` (the shared `iivs.common.data.ValueRangeMixin`):
+  the global `(min, max)` over all frames, or one frame's when `index` is given
+  (empty sequences raise). Phase widens it with a `unit`: `value_range()` ranges
+  over the loaded values (`target_unit`), while `value_range(unit=NANOMETERS)`
+  decodes each frame to a fixed unit first (what `bounds_nm` computed) and is what
+  `to_image` derives its default bounds from. `PhaseBounds` stays the
+  `phbounds.txt` / preview object; the data-truth range is now distinct from it.
 - `iivs.dhm.data.koala`: the `.bin` and `Float/Txt` readers are consolidated
   into two header-parameterized engines — `load_bin(path, header_cls)` and
   `load_txt(path, header_codec)`, each returning `(image, header)`. They absorb

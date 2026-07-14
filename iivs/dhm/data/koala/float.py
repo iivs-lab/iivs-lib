@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 import numpy as np
 from numpy.typing import NDArray
 
-from iivs.common.data import ArrayFileList
+from iivs.common.data import ArrayFileList, ValueRangeMixin
 from iivs.dhm.data.koala.bin import KoalaBinHeader
 from iivs.dhm.data.koala.frame import KoalaFrameFolder
 
@@ -34,7 +34,7 @@ FLOAT_FORMATS: tuple[FloatFormat, ...] = ("bin", "txt", "npy")
 """The float formats, for runtime membership checks (the `FloatFormat` values)."""
 
 
-class KoalaFloatFileList[H: KoalaBinHeader](ArrayFileList[np.float32]):
+class KoalaFloatFileList[H: KoalaBinHeader](ArrayFileList[np.float32], ValueRangeMixin):
     """Format-agnostic float32 file list over a ``(read_header, decode)`` codec.
 
     The shared base for the Koala float32 sources (phase / intensity `Float`, and
