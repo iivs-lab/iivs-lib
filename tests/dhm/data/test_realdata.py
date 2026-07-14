@@ -6,8 +6,9 @@ skipped when none are present.
 
 These assert ground-truth invariants that must hold for any genuine Koala export:
 the `Float/Bin` and `Float/Txt` serializations of the same frames decode alike,
-`to_image` reproduces Koala's own uint8 previews, holograms re-encode losslessly,
-and the per-frame modalities share one frame count. They catch format-reading
+`to_image` reproduces Koala's own uint8 previews, the computed nm bounds match
+`phbounds.txt`, holograms re-encode losslessly, and the per-frame modalities share
+one frame count. They catch format-reading
 bugs the synthetic suite cannot, since that suite feeds our readers our own
 writers' output.
 """
@@ -135,6 +136,20 @@ def test_phase_to_image_reproduces_koala_previews(koala_sample: Path) -> None:
         assert np.abs(ours - koala).max() <= 1, (
             f"preview differs by >1 code at frame {i}"
         )
+
+
+def test_phase_bounds_match_phbounds(koala_sample: Path) -> None:
+    # `bounds_nm` reduces the Float source to one global (min, max) in nm; Koala's
+    # phbounds.txt is that same global range, so the two agree to within the text
+    # file's rounding (measured < 1e-4 nm). Reads every frame, so this stays cheap
+    # only because a fixture is a short (~20-frame) clip.
+    folder = PhaseBinFolder(
+        _require(koala_sample / "Phase" / "Float" / "Bin"), validate=None
+    )
+    stored = read_phbounds(_require(koala_sample / "phbounds.txt"))
+    computed = folder.bounds_nm
+    assert computed.min_nm == pytest.approx(stored.min_nm, rel=1e-4, abs=1e-3)
+    assert computed.max_nm == pytest.approx(stored.max_nm, rel=1e-4, abs=1e-3)
 
 
 # ============================== #
