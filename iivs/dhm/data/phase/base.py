@@ -271,24 +271,24 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         each frame is decoded to that unit via its own `height_scale` first (ignoring
         `target_unit`), so the range is in a fixed unit regardless of how the sequence
         loads. `to_image` uses `value_range(unit=NANOMETERS)` for its display bounds.
-        The whole-sequence range is cached (per unit), like the inherited one.
+        The global range is cached (per unit), like the inherited one.
 
         Raises:
-            ValueError: If the whole-sequence range is requested but the sequence is
-                empty, or a frame's stored unit cannot be converted to `unit`.
+            ValueError: If the global range is requested but the sequence is empty, or
+                a frame's stored unit cannot be converted to `unit`.
         """
         if unit is None:
             return super().value_range(index)
         if index is not None:
             frame = self._decode_in(index, unit)
             return float(frame.min()), float(frame.max())
-        return self._whole_value_range_in(unit)
+        return self._global_value_range_in(unit)
 
     @cached_property
     def _value_range_by_unit(self) -> dict[PhaseUnit, tuple[float, float]]:
         return {}
 
-    def _whole_value_range_in(self, unit: PhaseUnit) -> tuple[float, float]:
+    def _global_value_range_in(self, unit: PhaseUnit) -> tuple[float, float]:
         """The cached global `(min, max)` with every frame decoded to `unit`."""
         cache = self._value_range_by_unit
         if unit not in cache:

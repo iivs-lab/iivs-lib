@@ -36,12 +36,12 @@ class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
     `(min, max)` of its values: `value_range()` over every frame, or `value_range(index)`
     of one frame. Values are taken as `get_item` yields them (e.g. a modality's
     `target_unit`); a subclass may widen the signature to convert first (see phase). The
-    whole-sequence range reads every frame, so it is computed once and cached for the
-    sequence's lifetime; per-frame ranges are cheap and recomputed each call.
+    global range reads every frame, so it is computed once and cached for the sequence's
+    lifetime; per-frame ranges are cheap and recomputed each call.
     """
 
     @cached_property
-    def _whole_value_range(self) -> tuple[float, float]:
+    def _global_value_range(self) -> tuple[float, float]:
         minimum, maximum = math.inf, -math.inf
         for i in range(len(self)):
             frame = self.get_item(i)
@@ -56,14 +56,13 @@ class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
         """The `(min, max)` over every frame (cached), or of frame `index`.
 
         Args:
-            index: A single frame to range over, or None (default) for the whole-
-                sequence range, which is computed once and then cached.
+            index: A single frame to range over, or None (default) for the global
+                range, which is computed once and then cached.
 
         Raises:
-            ValueError: If the whole-sequence range is requested but the sequence is
-                empty.
+            ValueError: If the global range is requested but the sequence is empty.
         """
         if index is None:
-            return self._whole_value_range
+            return self._global_value_range
         frame = self.get_item(index)
         return float(frame.min()), float(frame.max())
