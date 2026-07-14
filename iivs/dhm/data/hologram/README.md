@@ -77,6 +77,18 @@ not just a file-backed `HologramSequence` — a `kaparoo` composer (e.g. a
 `ConcatSequence` of acquisitions) works too, so holograms need no separate
 `save_hologram_folder`.
 
+## Time-lapse composition (`open_holograms`)
+
+`open_holograms(holo_dir)` opens one acquisition's `Holograms/` folder as a single
+`HologramSequence` — the `*.raw` stack if present, else the numbered tif folder —
+raising if a folder holds both (a real acquisition yields only one). The folder's layout
+is the `HOLOGRAM_TREE` `hierarchy` spec, and `search_holograms(root, ...)` returns the
+hologram sequence of every time-lapse under `root` that has a `Holograms/` folder (via
+`kaparoo`'s `search_dirs`, with `predicate` a check on the `HologramSequence`). All
+three are what
+[`iivs.dhm.data.timelapse`](../README.md#opening-a-whole-time-lapse-koalatimelapse)'s
+`KoalaTimelapse` composes for the holograms.
+
 ## Example
 
 ```python

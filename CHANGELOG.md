@@ -10,6 +10,32 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `iivs.dhm.data.timelapse`: `KoalaTimelapse`, a top-level opener that composes a whole
+  Lyncée Tec Koala time-lapse from per-modality groups over the standard layout,
+  tolerating absent modalities. `phase` / `intensity` are a `PhaseGroup` /
+  `IntensityGroup` (each exposing `float_bin` / `float_txt` — which may coexist — a
+  `.bin`-preferred `quantitative`, and the uint8 `previews`); `holograms` is the `.raw`
+  stack or numbered tif folder (raising if a folder holds both, which no real
+  acquisition does); `timestamps` reads `timestamps.txt`, else synthesizes
+  `TimestampsFixedFPS` from a `fps` fallback (when the frame count is known), else None;
+  `phase_bounds` reads `phbounds.txt`. Consistency is exposed as flat properties:
+  `frame_counts`, `counts_agree`, `has_reconstruction`, and `has_holograms`.
+  `search_timelapses(root, *, require=None, name_filter=None, part_filter=None,
+  predicate=None, exclude=None, min_depth=1, max_depth=None, ordered=True, fps=None)`
+  delegates the walk to `kaparoo`'s `search_dirs` (no manual recursion) and returns the
+  `KoalaTimelapse` list under a directory: `require` names the modality folders / files
+  that must all be present (default: any one modality), and `predicate` is a check on
+  the built `KoalaTimelapse` (not its path). Each modality owns its subtree, opener, and
+  searches — `phase.PHASE_TREE` / `PhaseGroup` / `search_phase_{bin,txt,preview}_folders`,
+  `intensity.INTENSITY_TREE` / `IntensityGroup` /
+  `search_intensity_{bin,txt,preview}_folders`, `hologram.HOLOGRAM_TREE` /
+  `open_holograms` / `search_holograms` — which `KOALA_TIMELAPSE_TREE` composes and
+  `KoalaTimelapse.validate` checks a root against. The per-modality searches find each
+  time-lapse's folder of one format (returning that concrete folder, e.g.
+  `list[PhaseBinFolder]`, with `predicate` on it), sharing `search_timelapses`'s
+  signature and delegating to the shared `iivs.dhm.data.koala` helpers `open_folder`
+  (tolerant folder open), `search_modality_dirs` (the `search_dirs`-backed walk), and
+  `search_modality_folders` (walk + open + filter).
 - `iivs.common.visualization`: `auto_rescale`, a Fiji/ImageJ-style auto-contrast
   for any numeric image or stack (Enhance Contrast + Normalize). It clips
   `saturated`% of pixels in total via the matching `nanpercentile` bounds

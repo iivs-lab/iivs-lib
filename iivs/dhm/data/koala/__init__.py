@@ -44,6 +44,9 @@ __all__ = (
     "load_bin",
     "load_txt",
     "load_uint8_tif",
+    "open_folder",
+    "search_modality_dirs",
+    "search_modality_folders",
     "write_bin",
     "write_txt",
 )
@@ -60,6 +63,9 @@ from iivs.dhm.data.koala.frame import (
     ValidationLevel,
     detect_koala_format,
     koala_frame_name,
+    open_folder,
+    search_modality_dirs,
+    search_modality_folders,
 )
 from iivs.dhm.data.koala.image import (
     ImageFileFolder,

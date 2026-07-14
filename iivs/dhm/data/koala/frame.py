@@ -5,6 +5,8 @@ __all__ = (
     "ValidationLevel",
     "detect_koala_format",
     "koala_frame_name",
+    "open_folder",
+    "search_modality_dirs",
 )
 
 from functools import cache
@@ -13,17 +15,20 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from kaparoo.data.sequences import FileFolderSequence
 from kaparoo.filesystem import file_extension
-from kaparoo.filesystem.search import search_files
+from kaparoo.filesystem.search import search_dirs, search_files
 from kaparoo.filters import Regex
 from kaparoo.utils import ensure_one_of, replace_if_none
 
 from iivs.common.data.mixin import FrameShapedMixin
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Iterable, Sequence
     from typing import Literal
 
+    from kaparoo.filesystem.exclude import ExcludeRule
     from kaparoo.filesystem.types import StrPath
+    from kaparoo.filters import Filter
+    from kaparoo.filters.types import FilterDict
 
 
 type ValidationLevel = Literal["names", "headers", "data"]
@@ -56,6 +61,112 @@ def koala_frame_name(index: int, *, stem: str, ext: str) -> str:
         msg = f"frame index must be in [0, 99999] (got {index})"
         raise ValueError(msg)
     return f"{index:05d}_{stem}.{ext}"
+
+
+def open_folder[T](path: StrPath, folder: Callable[..., T]) -> T | None:
+    """Open `folder(path, validate=None)` when `path` is a populated directory, else None.
+
+    The tolerant opener the modality groups build on: an absent directory, or a
+    `FileNotFoundError` from an empty numbered folder, becomes None instead of raising.
+
+    Type Parameters:
+        T: The opened folder type (e.g. `PhaseBinFolder`).
+    """
+    path = Path(path)
+    if path.is_dir():
+        try:
+            return folder(path, validate=None)
+        except FileNotFoundError:
+            return None
+    return None
+
+
+def search_modality_dirs(
+    root: StrPath,
+    folder: str,
+    *,
+    name_filter: Filter | FilterDict | None = None,
+    part_filter: Filter | FilterDict | None = None,
+    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
+    min_depth: int = 1,
+    max_depth: int | None = None,
+    ordered: bool = True,
+) -> list[Path]:
+    """Return each `<time-lapse>/<folder>` path under `root`, via `search_dirs`.
+
+    Finds the time-lapse directories that hold a `folder` subdirectory (e.g. `Phase`) and
+    returns that subdirectory for each, so a modality search can wrap it. The walk is
+    delegated to `search_dirs` (no manual recursion): `name_filter` matches the *time-lapse*
+    folder's name, `part_filter` its parent's relative path, and the depth / `exclude` /
+    `ordered` controls carry through.
+
+    Args:
+        root: The directory to scan.
+        folder: The modality subdirectory each time-lapse must hold (e.g. "Phase").
+        name_filter: Filter on each candidate time-lapse folder's own name.
+        part_filter: Filter on each visited parent directory's relative path.
+        exclude: Path(s) to prune, as in `search_dirs`.
+        min_depth: Shallowest depth to include (>= 1).
+        max_depth: Deepest depth to include, or None for unlimited.
+        ordered: Sort the results by path. Defaults to True.
+
+    Returns:
+        The `<time-lapse>/<folder>` directories, in `search_dirs` order.
+    """
+    dirs = search_dirs(
+        root,
+        name_filter=name_filter,
+        part_filter=part_filter,
+        predicate=lambda path: (path / folder).is_dir(),
+        exclude=exclude,
+        min_depth=min_depth,
+        max_depth=max_depth,
+        ordered=ordered,
+    )
+    return [Path(directory) / folder for directory in dirs]
+
+
+def search_modality_folders[T](
+    root: StrPath,
+    subpath: str,
+    folder: Callable[..., T],
+    *,
+    name_filter: Filter | FilterDict | None = None,
+    part_filter: Filter | FilterDict | None = None,
+    predicate: Callable[[T], bool] | None = None,
+    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
+    min_depth: int = 1,
+    max_depth: int | None = None,
+    ordered: bool = True,
+) -> list[T]:
+    """Open each `<time-lapse>/<subpath>` folder under `root`, skipping absent / empty ones.
+
+    Finds the time-lapses holding `subpath` (a relative folder like ``"Phase/Float/Bin"``)
+    via `search_modality_dirs`, opens each with `open_folder` (so an empty one drops out
+    as None), and keeps the survivors passing `predicate` (a check on the opened folder).
+    The `search_dirs` filters (`name_filter` on the time-lapse folder's name, ...) carry
+    through.
+
+    Type Parameters:
+        T: The opened folder type (e.g. `PhaseBinFolder`).
+    """
+    opened = (
+        open_folder(directory, folder)
+        for directory in search_modality_dirs(
+            root,
+            subpath,
+            name_filter=name_filter,
+            part_filter=part_filter,
+            exclude=exclude,
+            min_depth=min_depth,
+            max_depth=max_depth,
+            ordered=ordered,
+        )
+    )
+    present = [item for item in opened if item is not None]
+    if predicate is None:
+        return present
+    return [item for item in present if predicate(item)]
 
 
 def detect_koala_format(

@@ -16,6 +16,8 @@ from iivs.dhm.data.koala import (
     koala_frame_name,
     load_txt,
     load_uint8_tif,
+    open_folder,
+    search_modality_dirs,
     write_bin,
 )
 from iivs.dhm.data.phase.base import PhaseSequence
@@ -206,6 +208,31 @@ def test_heterogeneous_list_lacks_the_mixin(tmp_path):
 
 def test_koala_frame_name():
     assert koala_frame_name(7, stem="phase", ext="bin") == "00007_phase.bin"
+
+
+def test_open_folder_opens_a_populated_folder(tmp_path):
+    _write(tmp_path, 0)  # one numbered phase.bin
+    assert isinstance(open_folder(tmp_path, PhaseBinFolder), PhaseBinFolder)
+
+
+def test_open_folder_absent_directory_is_none(tmp_path):
+    assert open_folder(tmp_path / "nope", PhaseBinFolder) is None
+
+
+def test_open_folder_empty_folder_is_none(tmp_path):
+    empty = tmp_path / "empty"
+    empty.mkdir()  # a directory with no numbered files
+    assert open_folder(empty, PhaseBinFolder) is None
+
+
+def test_search_modality_dirs(tmp_path):
+    (tmp_path / "sA" / "Phase").mkdir(parents=True)
+    (tmp_path / "sB" / "Phase").mkdir(parents=True)
+    (tmp_path / "other").mkdir()  # holds no Phase/ subdir
+
+    found = search_modality_dirs(tmp_path, "Phase")
+    assert [p.parent.name for p in found] == ["sA", "sB"]  # the time-lapse folders
+    assert all(p.name == "Phase" for p in found)
 
 
 @pytest.mark.parametrize("index", (-1, 100000))

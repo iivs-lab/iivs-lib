@@ -1,7 +1,7 @@
-"""Invariant checks against a real Lyncée Tec Koala sample.
+"""Invariant checks against a real Lyncée Tec Koala time-lapse.
 
-Opt-in: place samples under `tests/fixtures/` (see `tests/conftest.py`), then
-`pytest -m realdata`. Every test is parametrized over each sample found and
+Opt-in: place time-lapses under `tests/fixtures/` (see `tests/conftest.py`), then
+`pytest -m realdata`. Every test is parametrized over each time-lapse found and
 skipped when none are present.
 
 These assert ground-truth invariants that must hold for any genuine Koala export:
@@ -43,23 +43,23 @@ pytestmark = pytest.mark.realdata
 
 
 def _require(path: Path) -> Path:
-    """Return `path`, or skip the test when the sample lacks it (absent or empty).
+    """Return `path`, or skip the test when the time-lapse lacks it (absent or empty).
 
     A folder that exists but holds no files (e.g. a reconstruction not yet
-    regenerated) skips too, so a partially built sample fails softly rather than
+    regenerated) skips too, so a partially built time-lapse fails softly rather than
     erroring in a reader that rejects an empty folder.
     """
     if not path.exists():
-        pytest.skip(f"sample is missing {path.name}")
+        pytest.skip(f"time-lapse is missing {path.name}")
     if path.is_dir() and not any(path.iterdir()):
-        pytest.skip(f"sample folder {path.name} is empty")
+        pytest.skip(f"time-lapse folder {path.name} is empty")
     return path
 
 
 def _sample_indices(n: int) -> tuple[int, ...]:
     """A first / middle / last spread of frame indices over a length-`n` sequence.
 
-    A real sample holds hundreds to thousands of frames; decoding just these keeps
+    A real time-lapse holds hundreds to thousands of frames; decoding just these keeps
     the suite fast while still exercising both ends of the sequence.
     """
     if n <= 0:
@@ -67,9 +67,9 @@ def _sample_indices(n: int) -> tuple[int, ...]:
     return tuple(sorted({0, n // 2, n - 1}))
 
 
-def _open_holograms(sample: Path) -> HologramRawFile | HologramTifFolder:
-    """The sample's holograms: a single `.raw` stack or a per-frame tif folder."""
-    holo_dir = _require(sample / "Holograms")
+def _open_holograms(timelapse: Path) -> HologramRawFile | HologramTifFolder:
+    """The time-lapse's holograms: a single `.raw` stack or a per-frame tif folder."""
+    holo_dir = _require(timelapse / "Holograms")
     raws = sorted(holo_dir.glob("*.raw"))
     if raws:
         return HologramRawFile(raws[0])
@@ -81,9 +81,9 @@ def _open_holograms(sample: Path) -> HologramRawFile | HologramTifFolder:
 # ============================== #
 
 
-def test_phase_bin_folder_loads(koala_sample: Path) -> None:
+def test_phase_bin_folder_loads(koala_timelapse: Path) -> None:
     folder = PhaseBinFolder(
-        _require(koala_sample / "Phase" / "Float" / "Bin"), validate=None
+        _require(koala_timelapse / "Phase" / "Float" / "Bin"), validate=None
     )
     assert len(folder) > 0
 
@@ -101,15 +101,15 @@ def test_phase_bin_folder_loads(koala_sample: Path) -> None:
     assert frame.shape == folder.frame_shape
 
 
-def test_phase_bin_matches_txt(koala_sample: Path) -> None:
+def test_phase_bin_matches_txt(koala_timelapse: Path) -> None:
     # Koala's Float/Bin and Float/Txt hold the same frames; the two readers must
     # agree to within the text export's ~float32 precision (measured max abs diff
     # ~5e-7 on real data).
     bin_folder = PhaseBinFolder(
-        _require(koala_sample / "Phase" / "Float" / "Bin"), validate=None
+        _require(koala_timelapse / "Phase" / "Float" / "Bin"), validate=None
     )
     txt_folder = PhaseTxtFolder(
-        _require(koala_sample / "Phase" / "Float" / "Txt"), validate=None
+        _require(koala_timelapse / "Phase" / "Float" / "Txt"), validate=None
     )
     assert len(bin_folder) == len(txt_folder)
 
@@ -119,14 +119,16 @@ def test_phase_bin_matches_txt(koala_sample: Path) -> None:
         assert np.allclose(b, t, rtol=1e-5, atol=1e-5), f"bin/txt disagree at frame {i}"
 
 
-def test_phase_to_image_reproduces_koala_previews(koala_sample: Path) -> None:
+def test_phase_to_image_reproduces_koala_previews(koala_timelapse: Path) -> None:
     # to_image renders the Float source through phbounds.txt; it must match Koala's
     # own uint8 previews to within one 8-bit code (measured max code diff == 1).
     bin_folder = PhaseBinFolder(
-        _require(koala_sample / "Phase" / "Float" / "Bin"), validate=None
+        _require(koala_timelapse / "Phase" / "Float" / "Bin"), validate=None
     )
-    previews = PhaseTifFolder(_require(koala_sample / "Phase" / "Image"), validate=None)
-    bounds = read_phbounds(_require(koala_sample / "phbounds.txt"))
+    previews = PhaseTifFolder(
+        _require(koala_timelapse / "Phase" / "Image"), validate=None
+    )
+    bounds = read_phbounds(_require(koala_timelapse / "phbounds.txt"))
     assert len(bin_folder) == len(previews)
 
     rendered = bin_folder.to_image(bounds)
@@ -139,15 +141,15 @@ def test_phase_to_image_reproduces_koala_previews(koala_sample: Path) -> None:
         )
 
 
-def test_phase_bounds_match_phbounds(koala_sample: Path) -> None:
+def test_phase_bounds_match_phbounds(koala_timelapse: Path) -> None:
     # `value_range(NANOMETERS)` reduces the Float source to one global (min, max) in
     # nm; Koala's phbounds.txt is that same global range, so the two agree to within
     # the text file's rounding (measured < 1e-4 nm). Reads every frame, so this stays
     # cheap only because a fixture is a short (~20-frame) clip.
     folder = PhaseBinFolder(
-        _require(koala_sample / "Phase" / "Float" / "Bin"), validate=None
+        _require(koala_timelapse / "Phase" / "Float" / "Bin"), validate=None
     )
-    stored = read_phbounds(_require(koala_sample / "phbounds.txt"))
+    stored = read_phbounds(_require(koala_timelapse / "phbounds.txt"))
     low, high = folder.value_range(unit=PhaseUnit.NANOMETERS)
     assert low == pytest.approx(stored.min_nm, rel=1e-4, abs=1e-3)
     assert high == pytest.approx(stored.max_nm, rel=1e-4, abs=1e-3)
@@ -158,12 +160,12 @@ def test_phase_bounds_match_phbounds(koala_sample: Path) -> None:
 # ============================== #
 
 
-def test_intensity_bin_matches_txt(koala_sample: Path) -> None:
+def test_intensity_bin_matches_txt(koala_timelapse: Path) -> None:
     bin_folder = IntensityBinFolder(
-        _require(koala_sample / "Intensity" / "Float" / "Bin"), validate=None
+        _require(koala_timelapse / "Intensity" / "Float" / "Bin"), validate=None
     )
     txt_folder = IntensityTxtFolder(
-        _require(koala_sample / "Intensity" / "Float" / "Txt"), validate=None
+        _require(koala_timelapse / "Intensity" / "Float" / "Txt"), validate=None
     )
     assert len(bin_folder) == len(txt_folder)
 
@@ -178,8 +180,8 @@ def test_intensity_bin_matches_txt(koala_sample: Path) -> None:
 # ============================== #
 
 
-def test_hologram_loads(koala_sample: Path) -> None:
-    holos = _open_holograms(koala_sample)
+def test_hologram_loads(koala_timelapse: Path) -> None:
+    holos = _open_holograms(koala_timelapse)
     assert len(holos) > 0
 
     frame = holos[0]
@@ -188,9 +190,9 @@ def test_hologram_loads(koala_sample: Path) -> None:
     assert frame.shape == holos.frame_shape
 
 
-def test_hologram_reencode_is_lossless(koala_sample: Path, tmp_path: Path) -> None:
+def test_hologram_reencode_is_lossless(koala_timelapse: Path, tmp_path: Path) -> None:
     # Holograms are uint8 with no quantization, so raw/tif -> npy round-trips exactly.
-    holos = _open_holograms(koala_sample)
+    holos = _open_holograms(koala_timelapse)
     n = min(3, len(holos))
     dest = tmp_path / "holo_npy"
 
@@ -207,8 +209,8 @@ def test_hologram_reencode_is_lossless(koala_sample: Path, tmp_path: Path) -> No
 # ============================== #
 
 
-def test_timestamps_load(koala_sample: Path) -> None:
-    ts = TimestampsTxtFile(_require(koala_sample / "timestamps.txt"))
+def test_timestamps_load(koala_timelapse: Path) -> None:
+    ts = TimestampsTxtFile(_require(koala_timelapse / "timestamps.txt"))
     assert len(ts) > 0
     assert ts.mean_frame_rate > 0
     assert ts.mean_interval_ms > 0
@@ -218,25 +220,27 @@ def test_timestamps_load(koala_sample: Path) -> None:
     assert elapsed == sorted(elapsed)  # elapsed time is non-decreasing
 
 
-def test_frame_counts_agree(koala_sample: Path) -> None:
-    # One time-lapse sample -> every per-frame modality has the same count.
+def test_frame_counts_agree(koala_timelapse: Path) -> None:
+    # One time-lapse -> every per-frame modality has the same count.
     counts = {
         "phase_bin": len(
             PhaseBinFolder(
-                _require(koala_sample / "Phase" / "Float" / "Bin"), validate=None
+                _require(koala_timelapse / "Phase" / "Float" / "Bin"), validate=None
             )
         ),
         "phase_txt": len(
             PhaseTxtFolder(
-                _require(koala_sample / "Phase" / "Float" / "Txt"), validate=None
+                _require(koala_timelapse / "Phase" / "Float" / "Txt"), validate=None
             )
         ),
         "intensity_bin": len(
             IntensityBinFolder(
-                _require(koala_sample / "Intensity" / "Float" / "Bin"), validate=None
+                _require(koala_timelapse / "Intensity" / "Float" / "Bin"), validate=None
             )
         ),
-        "timestamps": len(TimestampsTxtFile(_require(koala_sample / "timestamps.txt"))),
-        "holograms": len(_open_holograms(koala_sample)),
+        "timestamps": len(
+            TimestampsTxtFile(_require(koala_timelapse / "timestamps.txt"))
+        ),
+        "holograms": len(_open_holograms(koala_timelapse)),
     }
     assert len(set(counts.values())) == 1, f"frame counts disagree: {counts}"

@@ -6,6 +6,7 @@ lazy sequences, plus `convert_hologram_sequence` format conversion.
 
 __all__ = (
     "HOLOGRAM_FORMATS",
+    "HOLOGRAM_TREE",
     "HologramFormat",
     "HologramNpyFolder",
     "HologramRawFile",
@@ -16,10 +17,12 @@ __all__ = (
     "convert_hologram_sequence",
     "load_hologram_npy",
     "load_hologram_tif",
+    "open_holograms",
     "read_hologram_raw_header",
     "save_hologram_npy",
     "save_hologram_raw",
     "save_hologram_tif",
+    "search_holograms",
 )
 
 from iivs.dhm.data.hologram.base import HologramSequence
@@ -27,6 +30,11 @@ from iivs.dhm.data.hologram.dispatch import (
     HOLOGRAM_FORMATS,
     HologramFormat,
     convert_hologram_sequence,
+)
+from iivs.dhm.data.hologram.group import (
+    HOLOGRAM_TREE,
+    open_holograms,
+    search_holograms,
 )
 from iivs.dhm.data.hologram.npy import (
     HologramNpyFolder,

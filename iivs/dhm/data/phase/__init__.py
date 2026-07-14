@@ -6,11 +6,13 @@ readers/writers and lazy sequences, plus `convert_phase_*` format conversion and
 """
 
 __all__ = (
+    "PHASE_TREE",
     "PhaseBinFolder",
     "PhaseBinHeader",
     "PhaseBinList",
     "PhaseBounds",
     "PhaseFloatSequence",
+    "PhaseGroup",
     "PhaseImageSequence",
     "PhaseNpyFolder",
     "PhaseSequence",
@@ -37,6 +39,9 @@ __all__ = (
     "save_phase_folder",
     "save_phase_npy",
     "save_phase_txt",
+    "search_phase_bin_folders",
+    "search_phase_preview_folders",
+    "search_phase_txt_folders",
     "write_phbounds",
 )
 
@@ -63,6 +68,13 @@ from iivs.dhm.data.phase.dispatch import (
     read_phase_header,
     save_phase,
     save_phase_folder,
+)
+from iivs.dhm.data.phase.group import (
+    PHASE_TREE,
+    PhaseGroup,
+    search_phase_bin_folders,
+    search_phase_preview_folders,
+    search_phase_txt_folders,
 )
 from iivs.dhm.data.phase.npy import PhaseNpyFolder, load_phase_npy, save_phase_npy
 from iivs.dhm.data.phase.tif import PhaseTifFolder, PhaseTifList

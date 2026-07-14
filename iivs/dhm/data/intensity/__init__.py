@@ -5,10 +5,12 @@ their readers/writers and lazy sequences, plus `convert_intensity_*` format conv
 """
 
 __all__ = (
+    "INTENSITY_TREE",
     "IntensityBinFolder",
     "IntensityBinHeader",
     "IntensityBinList",
     "IntensityFloatSequence",
+    "IntensityGroup",
     "IntensityImageSequence",
     "IntensityNpyFolder",
     "IntensitySequence",
@@ -32,6 +34,9 @@ __all__ = (
     "save_intensity_folder",
     "save_intensity_npy",
     "save_intensity_txt",
+    "search_intensity_bin_folders",
+    "search_intensity_preview_folders",
+    "search_intensity_txt_folders",
 )
 
 from iivs.dhm.data.intensity.base import (
@@ -56,6 +61,13 @@ from iivs.dhm.data.intensity.dispatch import (
     read_intensity_header,
     save_intensity,
     save_intensity_folder,
+)
+from iivs.dhm.data.intensity.group import (
+    INTENSITY_TREE,
+    IntensityGroup,
+    search_intensity_bin_folders,
+    search_intensity_preview_folders,
+    search_intensity_txt_folders,
 )
 from iivs.dhm.data.intensity.npy import (
     IntensityNpyFolder,
