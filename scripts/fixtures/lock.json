@@ -1,0 +1,14 @@
+{
+  "repository": "iivs-lab/iivs-lib-fixtures",
+  "release": "v1",
+  "samples": {
+    "10hz_tif": {
+      "archive": "10hz_tif.tar.xz",
+      "sha256": "5a2b4e159244300f899043421614cce69004c99746e59811037485e2c57f2af5"
+    },
+    "20hz_raw": {
+      "archive": "20hz_raw.tar.xz",
+      "sha256": "45d6dafdf38f734c679db07787bb7db505d117a4519d0a46eda08026fd2805a7"
+    }
+  }
+}

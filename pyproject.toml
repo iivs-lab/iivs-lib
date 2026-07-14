@@ -280,6 +280,10 @@ ignore = [
     "FBT",    # `@pytest.mark.parametrize` uses bool positional args
     "ARG",    # pytest fixtures look like unused arguments
 ]
+"scripts/**" = [
+    "S603",   # maintainer scripts shell out to the fixed `gh` CLI, not user input
+    "S607",   # `gh` is resolved from PATH by design (no absolute path)
+]
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
