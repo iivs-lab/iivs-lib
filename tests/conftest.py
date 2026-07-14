@@ -1,37 +1,35 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
 
+# Real Koala samples live in the git-ignored `tests/fixtures/` (a sample is ~GB, so
+# it never lives in the repo). When the folder is absent or holds no samples, the
+# real-data suite skips instead of failing.
+_FIXTURES_ROOT = Path(__file__).parent / "fixtures"
 
-def _acquisition_dirs() -> list[Path]:
-    """Real Koala acquisition folders under `$IIVS_KOALA_DATA`.
 
-    Each acquisition is an immediate subdirectory holding a `Phase/` or `Holograms/`
-    tree. Returns `[]` when the variable is unset or points nowhere usable, which
-    turns the parametrized `koala_acq` fixture into a skip.
-    """
-    root = os.environ.get("IIVS_KOALA_DATA")
-    if not root:
+def _is_sample(path: Path) -> bool:
+    """Test whether `path` is a Koala sample folder (holds `Phase/` or `Holograms/`)."""
+    if not path.is_dir():
+        return False
+    return (path / "Phase").is_dir() or (path / "Holograms").is_dir()
+
+
+def _samples() -> list[Path]:
+    """The Koala sample folders under `tests/fixtures/`, sorted by name (empty if absent)."""
+    if not _FIXTURES_ROOT.is_dir():
         return []
-    base = Path(root)
-    if not base.is_dir():
-        return []
-    return sorted(
-        d
-        for d in base.iterdir()
-        if d.is_dir() and ((d / "Phase").is_dir() or (d / "Holograms").is_dir())
-    )
+    return sorted(child for child in _FIXTURES_ROOT.iterdir() if _is_sample(child))
 
 
-@pytest.fixture(params=_acquisition_dirs(), ids=lambda p: p.name)
-def koala_acq(request: pytest.FixtureRequest) -> Path:
-    """A real Lyncée Tec Koala acquisition root, one per fixture parameter.
+@pytest.fixture(params=_samples(), ids=lambda sample: sample.name)
+def koala_sample(request: pytest.FixtureRequest) -> Path:
+    """One real Lyncée Tec Koala sample: its holograms, timing, and reconstructions.
 
-    Opt-in: set `IIVS_KOALA_DATA` to a directory of acquisition folders. Unset (CI,
-    or a contributor without the proprietary data) leaves the parameter set empty,
-    so every test requesting this fixture is skipped rather than failing.
+    Opt-in: drop samples under `tests/fixtures/`. With none present (CI, or a
+    contributor without the proprietary data) the parameter set is empty, so every
+    test requesting this fixture is skipped rather than failing.
     """
     return request.param

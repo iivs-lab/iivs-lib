@@ -137,7 +137,7 @@ addopts = [
     "--cov-report=term-missing",
 ]
 markers = [
-    "realdata: exercises a real Koala acquisition; opt-in via IIVS_KOALA_DATA (see tests/conftest.py)",
+    "realdata: exercises a real Koala sample; opt-in by placing samples under tests/fixtures/ (see tests/conftest.py)",
 ]
 # See the following documentation for more information
 # https://docs.pytest.org/en/stable/reference/customize.html

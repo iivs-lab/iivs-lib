@@ -25,6 +25,9 @@ temp/
 # Tool caches (consolidated location for mypy, pytest, ruff)
 .cache/
 
+# real-data test fixtures (large local Koala samples; never committed)
+/tests/fixtures/
+
 
 # ========================== #
 #     Visual Studio Code     #
