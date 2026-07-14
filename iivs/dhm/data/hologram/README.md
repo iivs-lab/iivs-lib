@@ -46,6 +46,7 @@ listed here so you do not have to chase base classes.
 | `seq.get_meta(i)` | the per-item metadata (see below) |
 | `seq.get_pair(i)` | `(image, meta)` together |
 | `seq.get_items(idxs)` / `get_metas(idxs)` / `get_pairs(idxs)` | the batched forms over a list of indices |
+| `seq.value_range(index=None)` | the uint8 `(min, max)` — global (cached), or of frame `index` |
 
 The **metadata** `get_meta(i)` returns differs by backing:
 

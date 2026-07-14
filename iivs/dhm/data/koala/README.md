@@ -16,7 +16,7 @@ READMEs.
 | --- | --- |
 | `bin` | `KoalaBinHeader` (the 23-byte `.bin` header value object) + `load_bin` / `write_bin`. |
 | `txt` | `KoalaTxtHeaderCodec` (a stateless `Float/Txt` header (de)serializer producing a `KoalaBinHeader`) + `load_txt` / `write_txt`. |
-| `float` | `KoalaFloatFileList[H]` / `KoalaFloatFileFolder[H]` — the float32 list/folder machinery, generic in the header type, over a `(read_header, decode)` codec. |
+| `float` | `KoalaFloatFileList[H]` / `KoalaFloatFileFolder[H]` — the float32 list/folder machinery, generic in the header type, over a `(read_header, decode)` codec; the list mixes in `iivs.common.data`'s `ValueRangeMixin` for `value_range`. |
 | `image` | `ImageFileFolder` (numbered uint8 folder) + the `.tif` concretes `ImageTifList` / `ImageTifFolder` + `load_uint8_tif` — the uint8 preview bindings over `iivs.common.data`'s `ArrayFileList`. |
 | `sequence` | `SequentialFileFolder` (numbered `{index:05d}_<stem>.<ext>` discovery + validation; mixes in `iivs.common.data`'s `FrameShapedMixin`), the `koala_frame_name` builder, and `detect_koala_format`. The path helper `ensure_file_extension` is imported directly from `kaparoo.filesystem`. |
 

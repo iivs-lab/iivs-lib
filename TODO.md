@@ -35,5 +35,5 @@ shared `MaskedReduction` (NumPy + Torch, label + one-hot).
 
 `CHANGELOG.md`'s `[Unreleased]` has accumulated substantial public-API changes
 since `0.1.0` (the suffix-dispatch factories, the `load_bin` / `load_txt`
-engine consolidation, `bounds_nm` as a property, the `imagecodecs` core
-dependency). Cut the next version once the data layer settles.
+engine consolidation, `bounds_nm` replaced by `value_range`, the `imagecodecs`
+core dependency). Cut the next version once the data layer settles.

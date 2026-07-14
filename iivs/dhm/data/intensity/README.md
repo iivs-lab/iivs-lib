@@ -6,8 +6,10 @@ its uint8 display preview.
 
 Intensity mirrors [`phase`](../phase/README.md) but carries **no unit or height
 scale**: the `.bin` / `.txt` header is just the geometry (Koala writes the
-phase-only bytes as a no-op sentinel), so there is no `PhaseUnit` analogue, no
-`target_unit`, and no `bounds_nm`.
+phase-only bytes as a no-op sentinel), so there is no `PhaseUnit` analogue and no
+`target_unit`. It still has the shared, unit-less `value_range()` (the data's
+`(min, max)`), but no unit-aware overload and no `phbounds.txt` display-bounds
+record — its previews are normalized per frame.
 
 ## Endpoints by format
 

@@ -87,7 +87,7 @@ base classes.
 | `seq.get_header(i)` | the header of file `i`, **without** decoding pixels |
 | `seq.load_with_header(i)` | `(image, header)` in a single read |
 | `seq.target_unit` | the unit images are returned in (`None` = each file's own) |
-| `seq.bounds_nm` | global `(min, max)` display bounds in nm — a `PhaseBounds`, recomputed straight from the float data |
+| `seq.value_range(index=None, unit=None)` | the `(min, max)` of the values — global (cached), or of frame `index`; `unit=None` follows `target_unit`, or pass a `PhaseUnit` for a fixed unit. Non-finite values are ignored |
 
 **Lists** (`*List`) add `seq.get_file(i)` (the `Path` at `i`) and `seq.files`
 (an immutable snapshot of all paths).
@@ -118,17 +118,19 @@ is why `intensity` has no bounds record — see its README.)
 - `PhaseBounds.from_file(path)` / `bounds.to_file(path)` — read / write a
   `phbounds.txt` (a `[nm]` tag then `min max`). `read_phbounds` / `write_phbounds`
   are the free-function aliases.
-- `float_seq.bounds_nm` recomputes the bounds straight from a quantitative
-  source, so the previews are never the authoritative value.
+- `float_seq.value_range(unit=NANOMETERS)` recomputes the global `(min, max)`
+  straight from a quantitative source, so the previews are never the authoritative
+  value; wrap it as `PhaseBounds(*float_seq.value_range(unit=NANOMETERS))` for a
+  display-bounds record.
 - `bounds.decode_preview(u8)` maps a uint8 `Image/*.tif` preview back toward
   phase in nm (lossy — 8-bit quantized, step `(max−min)/255`); `bounds.encode_preview(nm)`
   is the forward render (`[min, max]`→`0–255`, clamped) that mirrors Koala. Pair
-  a preview with a `PhaseBounds` from disk or the `Float` twin's `bounds_nm`:
-  `bounds.decode_preview(preview_seq[i])`.
+  a preview with a `PhaseBounds` from disk or one built from the `Float` twin's
+  `value_range(unit=NANOMETERS)`: `bounds.decode_preview(preview_seq[i])`.
 - Whole-sequence twins of that map (lazy — each frame is converted on access):
   `float_seq.to_image(bounds=None)` returns a uint8 `PhaseImageSequence`
   (frames are put in nm via their header first, so `target_unit` is irrelevant;
-  `None` derives `bounds` from `bounds_nm`), and
+  `None` derives `bounds` from `value_range(unit=NANOMETERS)`), and
   `image_seq.to_float(bounds, *, target_unit=NANOMETERS, height_scale=…)`
   returns a float32 `PhaseFloatSequence` **reconstruction** — 8-bit-quantized,
   *not* the quantitative `Float` source. `target_unit` picks the output unit
@@ -149,7 +151,7 @@ len(acq)                      # frame count
 
 height_nm = acq[0]            # first frame, already in nm (target_unit)
 img, hdr = acq.load_with_header(0)   # image + its header in one read
-bounds = acq.bounds_nm      # global PhaseBounds over all frames
+lo, hi = acq.value_range(unit=PhaseUnit.NANOMETERS)  # global (min, max) in nm
 
 for frame in acq:             # lazy iteration
     ...
