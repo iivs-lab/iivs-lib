@@ -141,6 +141,15 @@ opd = phase * conv.opd_scale                  # phase: Tensor -> OPD (nm), grad 
 mass = opd[mask].sum() * calc.drymass_scale   # OPD -> dry mass (pg), grad kept
 ```
 
+### `iivs.common.visualization`
+
+Technique-agnostic display helpers, shared across every modality.
+
+- **`auto_rescale`** — ImageJ-style auto-contrast (Enhance Contrast + Normalize):
+  clips `saturated`% of pixels via NaN-safe percentile bounds, stretches onto
+  `out_range` (or the dtype's full span), and casts back to the input dtype.
+  Works on any numeric image or stack, so phase / intensity / hologram share it.
+
 ## 📋 TODO
 
 See [TODO.md](./TODO.md) for tracked open items.
