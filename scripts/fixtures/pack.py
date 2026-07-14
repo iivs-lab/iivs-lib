@@ -72,10 +72,14 @@ def main() -> None:
 
     repo, tag = lock["repository"], lock["release"]
     assets = " ".join(f'"{args.out / s["archive"]}"' for s in samples.values())
-    print("\n# publish (create the repo/release once, then upload):")
-    print(f"gh repo create {repo} --private")
-    print(f"gh release create {tag} -R {repo} -t {tag} -n 'Koala test fixtures'")
+    # Immutable releases lock assets at publish, so create a draft, attach the
+    # assets, then publish.
+    print("\n# publish (draft -> attach assets -> publish):")
+    print(
+        f"gh release create {tag} -R {repo} -t {tag} -n 'Koala test fixtures' --draft"
+    )
     print(f"gh release upload {tag} -R {repo} {assets}")
+    print(f"gh release edit {tag} -R {repo} --draft=false")
 
 
 if __name__ == "__main__":
