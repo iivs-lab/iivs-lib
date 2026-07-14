@@ -3,13 +3,11 @@ from __future__ import annotations
 __all__ = ("HologramSequence",)
 
 import numpy as np
-from kaparoo.data.sequences import DataSequence
-from numpy.typing import NDArray
 
 from iivs.common.data import ValueRangeMixin
 
 
-class HologramSequence[M](DataSequence[NDArray[np.uint8], M], ValueRangeMixin):
+class HologramSequence[M](ValueRangeMixin[np.uint8, M]):
     """A read-only sequence of uint8 hologram images, from any source.
 
     Common base for every hologram sequence (a single-acquisition `HologramTifFolder` /

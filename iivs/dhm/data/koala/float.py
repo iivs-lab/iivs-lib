@@ -8,6 +8,7 @@ __all__ = (
 )
 
 from abc import abstractmethod
+from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 import numpy as np
@@ -18,7 +19,6 @@ from iivs.dhm.data.koala.bin import KoalaBinHeader
 from iivs.dhm.data.koala.frame import KoalaFrameFolder
 
 if TYPE_CHECKING:
-    from pathlib import Path
     from typing import Literal
 
     from kaparoo.filesystem.types import StrPath
@@ -34,7 +34,9 @@ FLOAT_FORMATS: tuple[FloatFormat, ...] = ("bin", "txt", "npy")
 """The float formats, for runtime membership checks (the `FloatFormat` values)."""
 
 
-class KoalaFloatFileList[H: KoalaBinHeader](ArrayFileList[np.float32], ValueRangeMixin):
+class KoalaFloatFileList[H: KoalaBinHeader](
+    ArrayFileList[np.float32], ValueRangeMixin[np.float32, Path]
+):
     """Format-agnostic float32 file list over a ``(read_header, decode)`` codec.
 
     The shared base for the Koala float32 sources (phase / intensity `Float`, and

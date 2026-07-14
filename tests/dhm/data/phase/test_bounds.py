@@ -242,6 +242,16 @@ def test_value_range_rejects_unknown_unit(tmp_path):
         _ = PhaseBinList([path]).value_range(unit=PhaseUnit.NANOMETERS)
 
 
+def test_value_range_caches_the_global_but_not_per_frame(tmp_path):
+    _save(tmp_path / "00000_phase.bin", np.full((1, 2), 1.0))
+    _save(tmp_path / "00001_phase.bin", np.full((1, 2), 3.0))
+    seq = PhaseBinFolder(tmp_path)
+    assert seq.value_range() is seq.value_range()  # whole-sequence range is cached
+    unit = PhaseUnit.NANOMETERS
+    assert seq.value_range(unit=unit) is seq.value_range(unit=unit)  # cached per unit
+    assert seq.value_range(0) is not seq.value_range(0)  # per-frame is recomputed
+
+
 # ========================== #
 #    to_image / to_float   #
 # ========================== #

@@ -3,6 +3,7 @@ from __future__ import annotations
 __all__ = ("PhaseFloatSequence", "PhaseImageSequence", "PhaseSequence")
 
 import math
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
@@ -270,6 +271,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         each frame is decoded to that unit via its own `height_scale` first (ignoring
         `target_unit`), so the range is in a fixed unit regardless of how the sequence
         loads. `to_image` uses `value_range(unit=NANOMETERS)` for its display bounds.
+        The whole-sequence range is cached (per unit), like the inherited one.
 
         Raises:
             ValueError: If the whole-sequence range is requested but the sequence is
@@ -280,16 +282,26 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         if index is not None:
             frame = self._decode_in(index, unit)
             return float(frame.min()), float(frame.max())
+        return self._whole_value_range_in(unit)
 
-        minimum, maximum = math.inf, -math.inf
-        for i in range(len(self)):
-            frame = self._decode_in(i, unit)
-            minimum = min(minimum, float(frame.min()))
-            maximum = max(maximum, float(frame.max()))
-        if minimum > maximum:
-            msg = "phase value range is undefined for an empty sequence"
-            raise ValueError(msg)
-        return minimum, maximum
+    @cached_property
+    def _value_range_by_unit(self) -> dict[PhaseUnit, tuple[float, float]]:
+        return {}
+
+    def _whole_value_range_in(self, unit: PhaseUnit) -> tuple[float, float]:
+        """The cached global `(min, max)` with every frame decoded to `unit`."""
+        cache = self._value_range_by_unit
+        if unit not in cache:
+            minimum, maximum = math.inf, -math.inf
+            for i in range(len(self)):
+                frame = self._decode_in(i, unit)
+                minimum = min(minimum, float(frame.min()))
+                maximum = max(maximum, float(frame.max()))
+            if minimum > maximum:
+                msg = "phase value range is undefined for an empty sequence"
+                raise ValueError(msg)
+            cache[unit] = (minimum, maximum)
+        return cache[unit]
 
     def to_image(self, bounds: PhaseBounds | None = None) -> PhaseImageSequence[Path]:
         """Render this phase as a lazy uint8 Koala preview, in nm (Float -> Image).

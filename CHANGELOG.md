@@ -134,8 +134,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   on 3.13 are unaffected, since 2.6+ all ship cp313 wheels.
 - Replace `PhaseFloatSequence.bounds_nm` with `value_range`. Every array sequence
   now has `value_range(index=None)` (the shared `iivs.common.data.ValueRangeMixin`):
-  the global `(min, max)` over all frames, or one frame's when `index` is given
-  (empty sequences raise). Phase widens it with a `unit`: `value_range()` ranges
+  the global `(min, max)` over all frames (read once, then cached), or one frame's
+  when `index` is given (empty sequences raise). Phase widens it with a `unit`:
+  `value_range()` ranges
   over the loaded values (`target_unit`), while `value_range(unit=NANOMETERS)`
   decodes each frame to a fixed unit first (what `bounds_nm` computed) and is what
   `to_image` derives its default bounds from. `PhaseBounds` stays the
