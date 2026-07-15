@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING
 
 from kaparoo.filesystem.hierarchy import Directory, File, ValidationReport, validate
 from kaparoo.filesystem.search import search_dirs
-from kaparoo.filters import Glob
+from kaparoo.filters import Any
+from kaparoo.utils import fold_optional
 
 from iivs.common.data.timestamp import TimestampsFixedFPS
 from iivs.dhm.data.hologram.layout import HOLOGRAM_TREE, open_holograms
@@ -44,7 +45,7 @@ _MARKERS = (PHASE, INTENSITY, HOLOGRAMS)
 _REQUIRABLE = frozenset((*_MARKERS, TIMESTAMPS, PHBOUNDS))
 
 KOALA_TIMELAPSE_TREE = Directory(
-    Glob("*"),  # any time-lapse-root name; matched via `root_as_top`
+    Any(),  # any time-lapse-root name; matched via `root_as_top`
     [
         PHASE_TREE,
         INTENSITY_TREE,
@@ -151,7 +152,7 @@ class KoalaTimelapse:
             holo = self.holograms
         except ValueError:
             return None
-        return len(holo) if holo is not None else None
+        return fold_optional(holo, len, None)
 
     @property
     def num_frames(self) -> int | None:
@@ -163,7 +164,7 @@ class KoalaTimelapse:
         count = self._frame_count()
         if count is not None:
             return count
-        return len(self.timestamps) if self.timestamps is not None else None
+        return fold_optional(self.timestamps, len, None)
 
     @property
     def is_consistent(self) -> bool:
@@ -182,7 +183,7 @@ class KoalaTimelapse:
                 self.phase.num_frames,
                 self.intensity.num_frames,
                 self._hologram_count(),
-                len(self.timestamps) if self.timestamps is not None else None,
+                fold_optional(self.timestamps, len, None),
             )
             if c is not None
         }

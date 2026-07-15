@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 from kaparoo.filesystem.hierarchy import Directory
 from kaparoo.filesystem.search import search_dirs
+from kaparoo.utils import fold_optional
 
 from iivs.dhm.data.koala.constants import BIN, FLOAT, IMAGE, TXT
 
@@ -241,14 +242,16 @@ class ReconstructionGroup[
         The `bin` / `txt` / `tif` counts agree when the acquisition is fully
         reconstructed; `is_consistent` reports whether they actually do.
         """
-        ref = self._reference
-        return len(ref) if ref is not None else None
+        return fold_optional(self._reference, len, None)
 
     @property
     def frame_shape(self) -> tuple[int, int] | None:
         """The (height, width) shared by the present sources, or None when empty."""
-        ref = self._reference
-        return ref.frame_shape if ref is not None else None
+
+        def get_shape(ref: KoalaFrameFolder) -> tuple[int, int]:
+            return ref.frame_shape
+
+        return fold_optional(self._reference, get_shape, None)
 
     @property
     def is_consistent(self) -> bool:
