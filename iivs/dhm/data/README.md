@@ -36,7 +36,7 @@ layout, tolerating absent parts. Holograms, phase, and intensity are **independe
 
 | Accessor | Result |
 | --- | --- |
-| `tl.phase` / `tl.intensity` | a `PhaseGroup` / `IntensityGroup` (always present); each has `.bin_folder` / `.txt_folder` (the `Float/{Bin,Txt}` sources, which may coexist), `.quantitative` (`.bin`-preferred), `.tif_folder` (the uint8 `Image` preview) — each `None` when absent — plus the shared `.num_frames` / `.frame_shape` and an `.is_consistent` cross-format check |
+| `tl.phase` / `tl.intensity` | a `PhaseGroup` / `IntensityGroup` (always present); each has `.bin_folder` / `.txt_folder` (the `Float/{Bin,Txt}` sources, which may coexist), `.quantitative` (`.bin`-preferred), `.tif_folder` (the uint8 `Image` preview) — each `None` when absent — plus the shared `.num_frames` / `.frame_shape` and the `.is_consistent` (tolerant) / `.is_usable` (has quantitative data and is consistent) cross-format checks |
 | `tl.holograms` | the `Holograms/holo.raw` stack **or** numbered tif folder, or `None` (raises if a folder holds both) |
 | `tl.timestamps` | `timestamps.txt` if present, else `TimestampsFixedFPS` from `frame_rate` (when the frame count is known), else `None` |
 | `tl.phase_bounds` | the `phbounds.txt` `PhaseBounds`, or `None` |

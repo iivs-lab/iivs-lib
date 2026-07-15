@@ -61,6 +61,7 @@ def test_group_opens_every_format(tmp_path):
     assert group.num_frames == 2
     assert group.frame_shape == (2, 3)
     assert group.is_consistent
+    assert group.is_usable  # quantitative data present and consistent
     assert group.root == phase
 
 
@@ -72,6 +73,7 @@ def test_group_quantitative_falls_back_to_txt(tmp_path):
     assert isinstance(group.quantitative, PhaseTxtFolder)
     assert group.num_frames == 2  # from the lone txt source
     assert group.is_consistent
+    assert group.is_usable  # a single quantitative format (no bin/tif) still counts
 
 
 def test_group_inconsistent_counts(tmp_path):
@@ -98,6 +100,27 @@ def test_group_inconsistent_shapes(tmp_path):
     group = PhaseGroup(phase)
     assert group.num_frames == 2  # counts agree
     assert not group.is_consistent  # but the shapes differ
+    assert not group.is_usable
+
+
+def test_group_preview_only_is_not_usable(tmp_path):
+    phase = tmp_path / "Phase"
+    _img(phase / "Image", 2)  # a uint8 preview, but no quantitative data
+    group = PhaseGroup(phase)
+    assert group.tif_folder is not None
+    assert group.quantitative is None
+    assert group.is_consistent  # the lone preview trivially agrees with itself
+    assert not group.is_usable  # but there is no quantitative data
+
+
+def test_group_not_usable_when_present_formats_disagree(tmp_path):
+    phase = tmp_path / "Phase"
+    _bin(phase / "Float" / "Bin", 2)
+    _img(phase / "Image", 3)  # quantitative present, but the preview count differs
+    group = PhaseGroup(phase)
+    assert group.quantitative is not None
+    assert not group.is_consistent
+    assert not group.is_usable
 
 
 def test_group_absent_is_all_none(tmp_path):
@@ -109,6 +132,7 @@ def test_group_absent_is_all_none(tmp_path):
     assert group.num_frames is None
     assert group.frame_shape is None
     assert group.is_consistent  # vacuously, nothing to disagree
+    assert not group.is_usable  # but an absent group has no usable data
 
 
 def test_group_repr(tmp_path):

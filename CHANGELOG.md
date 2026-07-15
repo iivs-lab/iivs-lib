@@ -15,7 +15,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   tolerating absent modalities. `phase` / `intensity` are a `PhaseGroup` /
   `IntensityGroup` (each exposing `bin_folder` / `txt_folder` — which may coexist — a
   `.bin`-preferred `quantitative`, the uint8 `tif_folder`, the shared `num_frames` /
-  `frame_shape`, and an `is_consistent` cross-format check); `holograms` is the `.raw`
+  `frame_shape`, and the `is_consistent` (tolerant) / `is_usable` (has quantitative
+  data and is consistent) cross-format checks); `holograms` is the `.raw`
   stack or numbered tif folder (raising if a folder holds both, which no real
   acquisition does); `timestamps` reads `timestamps.txt`, else synthesizes
   `TimestampsFixedFPS` from a `frame_rate` fallback (when the frame count is known), else None;

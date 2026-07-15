@@ -42,8 +42,9 @@ class IntensityGroup(
 
     Exposes each format present: `bin_folder` / `txt_folder` (the `Float/{Bin,Txt}`
     sources, which may coexist) and `tif_folder` (the uint8 `Image` preview), plus the
-    `.bin`-preferred `quantitative`, the shared `num_frames` / `frame_shape`, and the
-    `is_consistent` cross-format check. Each accessor is None when its source is absent.
+    `.bin`-preferred `quantitative`, the shared `num_frames` / `frame_shape`, the
+    tolerant `is_consistent` and the non-vacuous `is_usable` checks. Each accessor is
+    None when its source is absent.
 
     Args:
         root: The `Intensity/` folder. Not required to exist: a missing one makes every

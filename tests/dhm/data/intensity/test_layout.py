@@ -61,6 +61,7 @@ def test_group_opens_every_format(tmp_path):
     assert group.num_frames == 2
     assert group.frame_shape == (2, 3)
     assert group.is_consistent
+    assert group.is_usable  # quantitative data present and consistent
     assert group.root == intensity
 
 
@@ -83,6 +84,7 @@ def test_group_absent_is_all_none(tmp_path):
     assert group.num_frames is None
     assert group.frame_shape is None
     assert group.is_consistent  # vacuously, nothing to disagree
+    assert not group.is_usable  # but an absent group has no usable data
 
 
 def test_group_repr(tmp_path):

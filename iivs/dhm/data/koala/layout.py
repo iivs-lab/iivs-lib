@@ -172,7 +172,8 @@ class ReconstructionGroup[
     ``<Modality>/`` folder exposing each format present: `bin_folder` / `txt_folder`
     (the quantitative `Float/{Bin,Txt}` sources, which may coexist) and `tif_folder`
     (the uint8 `Image` preview), plus the `.bin`-preferred `quantitative`, the shared
-    `num_frames` / `frame_shape`, and the `is_consistent` cross-format check. Each
+    `num_frames` / `frame_shape`, the tolerant `is_consistent` cross-format check, and
+    the non-vacuous `is_usable` (has quantitative data and is consistent). Each
     accessor is None when its source is absent. A subclass binds the concrete folder
     subtypes.
 
@@ -265,3 +266,16 @@ class ReconstructionGroup[
         counts = {len(f) for f in present}
         shapes = {f.frame_shape for f in present}
         return len(counts) <= 1 and len(shapes) <= 1
+
+    @property
+    def is_usable(self) -> bool:
+        """Whether the group holds quantitative data and it is self-consistent.
+
+        The non-vacuous counterpart to `is_consistent`: True when a quantitative source
+        (`bin` or `txt`) is present and every present format agrees in count and shape.
+        Unlike `is_consistent` (vacuously True for an absent group), this is False for an
+        empty or preview-only folder, so it marks a real reconstruction. The `tif`
+        preview is optional, and `bin` / `txt` are the same data in two serializations,
+        so a single-format export still counts.
+        """
+        return self.quantitative is not None and self.is_consistent
