@@ -3,9 +3,9 @@ from __future__ import annotations
 __all__ = (
     "ReconstructionGroup",
     "open_folder",
+    "open_timelapse_subfolders",
     "reconstruction_tree",
     "search_timelapse_subdirs",
-    "search_timelapse_subfolders",
 )
 
 from functools import cached_property
@@ -97,7 +97,7 @@ def search_timelapse_subdirs(
     return [Path(directory) / subpath for directory in dirs]
 
 
-def search_timelapse_subfolders[T](
+def open_timelapse_subfolders[T](
     root: StrPath,
     subpath: str,
     folder: Callable[..., T],
@@ -219,7 +219,7 @@ class ReconstructionGroup[
     @property
     def quantitative(self) -> B | T | None:
         """The quantitative source, `Float/Bin` preferred over `Float/Txt`, or None."""
-        return self.bin_folder or self.txt_folder
+        return self.bin_folder if self.bin_folder is not None else self.txt_folder
 
     @cached_property
     def frame_counts(self) -> dict[str, int]:

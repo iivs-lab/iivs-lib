@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from kaparoo.filesystem.hierarchy import Directory, Exclusive, File
-from kaparoo.filters import Glob, Regex
+from kaparoo.filters import Regex
 
 from iivs.dhm.data.hologram.raw import HologramRawFile
 from iivs.dhm.data.hologram.tif import HologramTifFolder
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
     from iivs.dhm.data.hologram.base import HologramSequence
 
+_HOLOGRAM_RAW = "holo.raw"
 _HOLOGRAM_TIF = r"\d{5}_holo\.tif"
 
 HOLOGRAM_TREE = Directory(
@@ -30,38 +31,39 @@ HOLOGRAM_TREE = Directory(
         # A single multi-frame stack XOR numbered per-frame previews; a real
         # acquisition yields only one, so both present is a violation.
         Exclusive(
-            File(Glob("*.raw")),
+            File(_HOLOGRAM_RAW),
             File(Regex(_HOLOGRAM_TIF)),
         ),
     ],
 )
 """The `Holograms/` subtree of a Koala acquisition, as a `hierarchy` spec.
 
-Holds either a `*.raw` stack or numbered `*.tif` previews, never both.
+Holds either the `holo.raw` stack or numbered `*.tif` previews, never both.
 """
 
 
 def open_holograms(root: StrPath) -> HologramSequence | None:
     """Open a `Holograms/` folder as a single hologram sequence, or None when absent.
 
-    Returns the `*.raw` stack if present, else the numbered tif folder, tolerating an
+    Returns the `holo.raw` stack if present, else the numbered tif folder, tolerating an
     absent or empty folder as None.
 
     Raises:
-        ValueError: If the folder holds both a `.raw` stack and numbered `.tif` previews
-            (a real acquisition produces only one).
+        ValueError: If the folder holds both the `holo.raw` stack and numbered `.tif`
+            previews (a real acquisition produces only one).
     """
     holo_dir = Path(root)
     if not holo_dir.is_dir():
         return None
 
-    raws = sorted(holo_dir.glob("*.raw"))
+    raw = holo_dir / _HOLOGRAM_RAW
+    has_raw = raw.is_file()
     tif_folder = open_folder(holo_dir, HologramTifFolder)
-    if raws and tif_folder is not None:
+    if has_raw and tif_folder is not None:
         msg = "holograms hold both a .raw stack and .tif previews (expected one)"
         raise ValueError(msg)
 
-    return HologramRawFile(raws[0]) if raws else tif_folder
+    return HologramRawFile(raw) if has_raw else tif_folder
 
 
 def search_holograms(

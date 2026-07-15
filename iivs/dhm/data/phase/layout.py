@@ -16,8 +16,8 @@ from iivs.dhm.data.koala import (
     PHASE_FLOAT_TXT,
     PHASE_IMAGE,
     ReconstructionGroup,
+    open_timelapse_subfolders,
     reconstruction_tree,
-    search_timelapse_subfolders,
 )
 from iivs.dhm.data.phase.bin import PhaseBinFolder
 from iivs.dhm.data.phase.tif import PhaseTifFolder
@@ -69,7 +69,7 @@ def search_phase_bin_folders(
     checks the opened `PhaseBinFolder`. `name_filter` matches the time-lapse folder's
     own name.
     """
-    return search_timelapse_subfolders(
+    return open_timelapse_subfolders(
         root,
         PHASE_FLOAT_BIN,
         PhaseBinFolder,
@@ -99,7 +99,7 @@ def search_phase_txt_folders(
     The `.txt` twin of `search_phase_bin_folders`; `predicate` checks the opened
     `PhaseTxtFolder`.
     """
-    return search_timelapse_subfolders(
+    return open_timelapse_subfolders(
         root,
         PHASE_FLOAT_TXT,
         PhaseTxtFolder,
@@ -129,7 +129,7 @@ def search_phase_tif_folders(
     The preview twin of `search_phase_bin_folders`; `predicate` checks the opened
     `PhaseTifFolder`.
     """
-    return search_timelapse_subfolders(
+    return open_timelapse_subfolders(
         root,
         PHASE_IMAGE,
         PhaseTifFolder,

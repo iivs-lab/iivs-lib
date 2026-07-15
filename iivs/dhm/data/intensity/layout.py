@@ -19,8 +19,8 @@ from iivs.dhm.data.koala import (
     INTENSITY_FLOAT_TXT,
     INTENSITY_IMAGE,
     ReconstructionGroup,
+    open_timelapse_subfolders,
     reconstruction_tree,
-    search_timelapse_subfolders,
 )
 
 if TYPE_CHECKING:
@@ -73,7 +73,7 @@ def search_intensity_bin_folders(
     checks the opened `IntensityBinFolder`. `name_filter` matches the time-lapse
     folder's own name.
     """
-    return search_timelapse_subfolders(
+    return open_timelapse_subfolders(
         root,
         INTENSITY_FLOAT_BIN,
         IntensityBinFolder,
@@ -103,7 +103,7 @@ def search_intensity_txt_folders(
     The `.txt` twin of `search_intensity_bin_folders`; `predicate` checks the opened
     `IntensityTxtFolder`.
     """
-    return search_timelapse_subfolders(
+    return open_timelapse_subfolders(
         root,
         INTENSITY_FLOAT_TXT,
         IntensityTxtFolder,
@@ -133,7 +133,7 @@ def search_intensity_tif_folders(
     The preview twin of `search_intensity_bin_folders`; `predicate` checks the opened
     `IntensityTifFolder`.
     """
-    return search_timelapse_subfolders(
+    return open_timelapse_subfolders(
         root,
         INTENSITY_IMAGE,
         IntensityTifFolder,

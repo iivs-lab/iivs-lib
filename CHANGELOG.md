@@ -23,9 +23,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `search_timelapses(root, *, require=None, name_filter=None, part_filter=None,
   predicate=None, exclude=None, min_depth=1, max_depth=None, ordered=True, frame_rate=None)`
   delegates the walk to `kaparoo`'s `search_dirs` (no manual recursion) and returns the
-  `KoalaTimelapse` list under a directory: `require` names the modality folders / files
-  that must all be present (default: any one modality), and `predicate` is a check on
-  the built `KoalaTimelapse` (not its path). Each modality owns its subtree, opener, and
+  `KoalaTimelapse` list under a directory: `require` names the root-level markers /
+  files that must all be present (one or more of `Phase` / `Intensity` / `Holograms` /
+  `timestamps.txt` / `phbounds.txt`; an unknown name raises), None or empty meaning any
+  one modality, and `predicate` is a check on the built `KoalaTimelapse` (not its path). Each modality owns its subtree, opener, and
   searches — `phase.PHASE_TREE` / `PhaseGroup` / `search_phase_{bin,txt,tif}_folders`,
   `intensity.INTENSITY_TREE` / `IntensityGroup` /
   `search_intensity_{bin,txt,tif}_folders`, `hologram.HOLOGRAM_TREE` /
@@ -35,7 +36,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `list[PhaseBinFolder]`, with `predicate` on it), sharing `search_timelapses`'s
   signature and delegating to the shared `iivs.dhm.data.koala` helpers `open_folder`
   (tolerant folder open), `search_timelapse_subdirs` (the subfolder walk), and
-  `search_timelapse_subfolders` (walk + open + filter). Phase / intensity share a
+  `open_timelapse_subfolders` (walk + open + filter). Phase / intensity share a
   `koala.ReconstructionGroup` base and the `koala.reconstruction_tree` spec builder; each
   modality's `layout` module holds its group, tree, and searches. The fixed Koala layout
   vocabulary lives in `koala.constants`: the atomic names (`koala.PHASE` / `INTENSITY` /

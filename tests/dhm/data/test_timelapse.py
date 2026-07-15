@@ -307,6 +307,20 @@ def test_search_timelapses_require_file(tmp_path):
     assert [t.root.name for t in found] == ["with_ts"]
 
 
+def test_search_timelapses_rejects_unknown_require(tmp_path):
+    # A bare subfolder name ("Bin") is not a root-level marker, so it is rejected up
+    # front rather than silently matching nothing.
+    with pytest.raises(ValueError, match=r"unknown require name\(s\) \['Bin'\]"):
+        search_timelapses(tmp_path, require=["Phase", "Bin"])
+
+
+def test_search_timelapses_empty_require_is_any_modality(tmp_path):
+    _build(tmp_path / "full")  # has Phase
+    (tmp_path / "plain").mkdir()  # no modality folder
+    found = search_timelapses(tmp_path, require=[])  # empty => any-modality default
+    assert [t.root.name for t in found] == ["full"]
+
+
 def test_search_timelapses_forwards_fps(tmp_path):
     n = _build(tmp_path / "t", holograms="raw", timestamps=False)
     (timelapse,) = search_timelapses(tmp_path, frame_rate=20.0)

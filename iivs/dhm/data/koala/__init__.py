@@ -24,8 +24,8 @@ them:
   and the per-modality path combinations built from them (`PHASE_FLOAT_BIN`,
   `PHASE_IMAGE`, `INTENSITY_FLOAT_BIN`, ...).
 - `layout` — the shared time-lapse machinery the per-modality `layout` modules build on:
-  the tolerant folder opener (`open_folder`), the time-lapse subfolder walkers
-  (`search_timelapse_subdirs`, `search_timelapse_subfolders`),
+  the tolerant folder opener (`open_folder`), the time-lapse subfolder helpers
+  (`search_timelapse_subdirs` for paths, `open_timelapse_subfolders` for opened folders),
   the reconstruction group base (`ReconstructionGroup`), and the
   `<Modality>/{Float/{Bin,Txt}, Image}` spec builder (`reconstruction_tree`).
 
@@ -70,9 +70,9 @@ __all__ = (
     "load_txt",
     "load_uint8_tif",
     "open_folder",
+    "open_timelapse_subfolders",
     "reconstruction_tree",
     "search_timelapse_subdirs",
-    "search_timelapse_subfolders",
     "write_bin",
     "write_txt",
 )
@@ -116,8 +116,8 @@ from iivs.dhm.data.koala.image import (
 from iivs.dhm.data.koala.layout import (
     ReconstructionGroup,
     open_folder,
+    open_timelapse_subfolders,
     reconstruction_tree,
     search_timelapse_subdirs,
-    search_timelapse_subfolders,
 )
 from iivs.dhm.data.koala.txt import KoalaTxtHeaderCodec, load_txt, write_txt

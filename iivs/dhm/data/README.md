@@ -37,7 +37,7 @@ layout, tolerating absent parts. Holograms, phase, and intensity are **independe
 | Accessor | Result |
 | --- | --- |
 | `tl.phase` / `tl.intensity` | a `PhaseGroup` / `IntensityGroup` (always present); each has `.bin_folder` / `.txt_folder` (the `Float/{Bin,Txt}` sources, which may coexist), `.quantitative` (`.bin`-preferred), and `.tif_folder` (the uint8 `Image` preview) — each `None` when absent |
-| `tl.holograms` | the `Holograms/*.raw` stack **or** numbered tif folder, or `None` (raises if a folder holds both) |
+| `tl.holograms` | the `Holograms/holo.raw` stack **or** numbered tif folder, or `None` (raises if a folder holds both) |
 | `tl.timestamps` | `timestamps.txt` if present, else `TimestampsFixedFPS` from `frame_rate` (when the frame count is known), else `None` |
 | `tl.phase_bounds` | the `phbounds.txt` `PhaseBounds`, or `None` |
 
@@ -54,9 +54,10 @@ predicate=None, exclude=None, min_depth=1, max_depth=None, ordered=True, frame_r
 returns the `KoalaTimelapse` list for the acquisition folders found under `root`. It
 delegates the walk to `kaparoo`'s `search_dirs` (no manual recursion), so it shares the
 same `name_filter` (on the time-lapse folder's own name), `part_filter`, `exclude`,
-`min_depth` / `max_depth`, and `ordered`. `require` names the modality folders / files
-that must all be present (default: any one modality); `predicate` is a final check on
-the built **`KoalaTimelapse`** (not its path).
+`min_depth` / `max_depth`, and `ordered`. `require` names the root-level markers / files
+that must all be present — one or more of `Phase` / `Intensity` / `Holograms` /
+`timestamps.txt` / `phbounds.txt` (an unknown name raises); None or empty means any one
+modality. `predicate` is a final check on the built **`KoalaTimelapse`** (not its path).
 
 ```python
 from iivs.dhm.data.timelapse import KoalaTimelapse, search_timelapses

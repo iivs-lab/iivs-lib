@@ -13,7 +13,7 @@ no float header, no `get_header` / `load_with_header`, and no unit handling.
 
 | Koala source | Reader / writer | Sequence |
 | --- | --- | --- |
-| `Holograms/*.raw` (one multi-frame stack) | `read_hologram_raw_header` / `save_hologram_raw` | `HologramRawFile` |
+| `Holograms/holo.raw` (one multi-frame stack) | `read_hologram_raw_header` / `save_hologram_raw` | `HologramRawFile` |
 | `.tif` (one uint8 image per file) | `load_hologram_tif` / `save_hologram_tif` | `HologramTifList` / `HologramTifFolder` |
 | `.npy` (one uint8 image per file) | `load_hologram_npy` / `save_hologram_npy` | `HologramNpyFolder` |
 
@@ -80,7 +80,7 @@ not just a file-backed `HologramSequence` — a `kaparoo` composer (e.g. a
 ## Time-lapse composition (`open_holograms`)
 
 `open_holograms(holo_dir)` opens one acquisition's `Holograms/` folder as a single
-`HologramSequence` — the `*.raw` stack if present, else the numbered tif folder —
+`HologramSequence` — the `holo.raw` stack if present, else the numbered tif folder —
 raising if a folder holds both (a real acquisition yields only one). The folder's layout
 is the `HOLOGRAM_TREE` `hierarchy` spec, and `search_holograms(root, ...)` returns the
 hologram sequence of every time-lapse under `root` that has a `Holograms/` folder (via

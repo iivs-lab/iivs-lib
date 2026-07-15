@@ -20,7 +20,7 @@ READMEs.
 | `image` | `ImageFileFolder` (numbered uint8 folder) + the `.tif` concretes `ImageTifList` / `ImageTifFolder` + `load_uint8_tif` — the uint8 preview bindings over `iivs.common.data`'s `ArrayFileList`. |
 | `frame` | `KoalaFrameFolder` (numbered `{index:05d}_<stem>.<ext>` discovery + validation; mixes in `iivs.common.data`'s `FrameShapedMixin`), the `koala_frame_name` builder, and `detect_koala_format`. The path helper `ensure_file_extension` is imported directly from `kaparoo.filesystem`. |
 | `constants` | The fixed Koala layout vocabulary: the atomic names (`PHASE`, `INTENSITY`, `HOLOGRAMS`, `FLOAT`, `BIN`, `TXT`, `IMAGE`, `TIMESTAMPS`, `PHBOUNDS`) and the per-modality path combinations built from them (`PHASE_FLOAT_BIN`, `PHASE_IMAGE`, `INTENSITY_FLOAT_BIN`, ...). |
-| `layout` | The shared time-lapse machinery the per-modality `layout` modules build on: `open_folder` (tolerant folder open), the time-lapse subfolder walkers `search_timelapse_subdirs` / `search_timelapse_subfolders`, the reconstruction group base `ReconstructionGroup`, and the `<Modality>/{Float/{Bin,Txt}, Image}` spec builder `reconstruction_tree`. |
+| `layout` | The shared time-lapse machinery the per-modality `layout` modules build on: `open_folder` (tolerant folder open), the time-lapse subfolder helpers `search_timelapse_subdirs` (paths) / `open_timelapse_subfolders` (opened folders), the reconstruction group base `ReconstructionGroup`, and the `<Modality>/{Float/{Bin,Txt}, Image}` spec builder `reconstruction_tree`. |
 
 ## Design notes
 

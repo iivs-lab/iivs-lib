@@ -39,6 +39,10 @@ if TYPE_CHECKING:
 # reconstruction). `search_timelapses` treats a directory holding any of them as one.
 _MARKERS = (PHASE, INTENSITY, HOLOGRAMS)
 
+# The names `search_timelapses`'s `require` accepts: the root-relative markers and files.
+# A subfolder like `Bin` is never a root child, so it is not requirable here.
+_REQUIRABLE = frozenset((*_MARKERS, TIMESTAMPS, PHBOUNDS))
+
 KOALA_TIMELAPSE_TREE = Directory(
     Glob("*"),  # any time-lapse-root name; matched via `root_as_top`
     [
@@ -104,7 +108,7 @@ class KoalaTimelapse:
 
     @cached_property
     def holograms(self) -> HologramSequence | None:
-        """The holograms: a `*.raw` stack or the numbered tif folder, or None.
+        """The holograms: the `holo.raw` stack or the numbered tif folder, or None.
 
         Raises:
             ValueError: If the `Holograms` folder holds both a `.raw` stack and numbered
@@ -219,11 +223,11 @@ def _looks_like_timelapse(path: Path) -> bool:
 def _requirer(require: Iterable[str] | None) -> Callable[[Path], bool]:
     """Build the predicate that identifies a time-lapse directory.
 
-    With `require=None` a directory qualifies when it holds any modality folder;
+    With `require` None or empty a directory qualifies when it holds any modality folder;
     otherwise it must hold every listed name (a modality folder like `"Phase"`, or a
     file like `"timestamps.txt"`), each checked for existence relative to the directory.
     """
-    if require is None:
+    if not require:
         return _looks_like_timelapse
 
     required = tuple(require)
@@ -250,17 +254,19 @@ def search_timelapses(
     """Return a `KoalaTimelapse` for each Koala acquisition folder under `root`.
 
     A directory qualifies when it holds every name in `require` (a modality folder like
-    `"Phase"`, or a file like `"timestamps.txt"`); with `require=None` it qualifies on
-    holding any modality folder. A candidate must also pass `part_filter` (on its
-    parent's relative path), `name_filter` (on the time-lapse folder's own name), and
-    lie within `[min_depth, max_depth]`; `exclude` prunes subtrees. Each surviving
+    `"Phase"`, or a file like `"timestamps.txt"`); with `require` None or empty it
+    qualifies on holding any modality folder. A candidate must also pass `part_filter`
+    (on its parent's relative path), `name_filter` (on the time-lapse folder's own name),
+    and lie within `[min_depth, max_depth]`; `exclude` prunes subtrees. Each surviving
     directory is wrapped in a `KoalaTimelapse`, then `predicate` (a check on the
     *`KoalaTimelapse`*, not its path) filters the wrapped objects.
 
     Args:
         root: The directory to scan.
-        require: Names that must all be present for a directory to qualify (modality
-            folders and / or files). None (default) requires only any one modality.
+        require: Names that must all be present for a directory to qualify, each a
+            root-level marker or file (`Phase` / `Intensity` / `Holograms` /
+            `timestamps.txt` / `phbounds.txt`); an unknown name raises. None (default)
+            or empty requires only any one modality.
         name_filter: Filter on each candidate time-lapse folder's own name.
         part_filter: Filter on each visited parent directory's relative path.
         predicate: A final check on the built `KoalaTimelapse`; None (default) keeps
@@ -275,8 +281,16 @@ def search_timelapses(
         The matching time-lapses.
 
     Raises:
+        ValueError: If `require` holds a name outside the root-level markers / files.
         DirectoryNotFoundError: If `root` does not exist.
     """
+    if require is not None:
+        require = tuple(require)
+        unknown = sorted(set(require) - _REQUIRABLE)
+        if unknown:
+            msg = f"unknown require name(s) {unknown}: expected {sorted(_REQUIRABLE)}"
+            raise ValueError(msg)
+
     directories = search_dirs(
         root,
         part_filter=part_filter,
