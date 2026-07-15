@@ -346,6 +346,11 @@ def phase_folder(
     the header-less `.npy` folder instead **requires** `pixel_size` and `unit` (and a
     scale form).
 
+    `root` is one numbered directory, opened by its detected serialization
+    (`bin` / `txt` / `npy`). For the whole Koala `Phase/` modality (the
+    `Float/{Bin,Txt}` sources plus the `Image` preview, with consistency checks), use
+    `PhaseGroup` instead.
+
     Args:
         root: The folder to scan.
         pixel_size, unit, height_scale, wavelength, refractive_delta: The metadata for a

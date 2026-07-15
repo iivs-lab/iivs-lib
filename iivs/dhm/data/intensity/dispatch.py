@@ -249,6 +249,11 @@ def intensity_folder(
     `pixel_size` from the files, so it must be omitted for them; the header-less `.npy`
     folder instead **requires** `pixel_size`.
 
+    `root` is one numbered directory, opened by its detected serialization
+    (`bin` / `txt` / `npy`). For the whole Koala `Intensity/` modality (the
+    `Float/{Bin,Txt}` sources plus the `Image` preview, with consistency checks), use
+    `IntensityGroup` instead.
+
     Args:
         root: The folder to scan.
         pixel_size: The pixel size for a `.npy` folder (omit for `.bin` / `.txt`).

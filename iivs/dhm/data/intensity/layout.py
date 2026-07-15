@@ -46,6 +46,10 @@ class IntensityGroup(
     tolerant `is_consistent` and the non-vacuous `is_usable` checks, and `validate` for
     per-file content. Each accessor is None when its source is absent.
 
+    There is no `npy` accessor: `.npy` is a re-encoding target, not part of the Koala
+    layout. To open one numbered folder by its serialization (including `.npy`), use
+    `intensity_folder`.
+
     Args:
         root: The `Intensity/` folder. Not required to exist: a missing one makes every
             accessor None.
