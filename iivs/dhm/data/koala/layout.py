@@ -1,6 +1,15 @@
 from __future__ import annotations
 
 __all__ = (
+    "BIN",
+    "FLOAT",
+    "HOLOGRAMS",
+    "IMAGE",
+    "INTENSITY",
+    "PHASE",
+    "PHBOUNDS",
+    "TIMESTAMPS",
+    "TXT",
     "ModalityGroup",
     "float_modality_tree",
     "open_folder",
@@ -25,10 +34,24 @@ if TYPE_CHECKING:
 
     from iivs.dhm.data.koala.frame import KoalaFrameFolder
 
-_FLOAT = "Float"
-_BIN = "Bin"
-_TXT = "Txt"
-_IMAGE = "Image"
+
+# ============================================================ #
+#                       layout names                           #
+# ============================================================ #
+
+# Koala's fixed acquisition-layout vocabulary: the modality folders (`PHASE`,
+# `INTENSITY`, `HOLOGRAMS`), the float32 subfolders (`FLOAT`, `BIN`, `TXT`) and the
+# preview folder (`IMAGE`), plus the root files (`TIMESTAMPS`, `PHBOUNDS`). Per-modality
+# path combinations (e.g. `PHASEFLOATBIN`) live in each modality's `layout` module.
+PHASE = "Phase"
+INTENSITY = "Intensity"
+HOLOGRAMS = "Holograms"
+FLOAT = "Float"
+BIN = "Bin"
+TXT = "Txt"
+IMAGE = "Image"
+TIMESTAMPS = "timestamps.txt"
+PHBOUNDS = "phbounds.txt"
 
 
 # ============================================================ #
@@ -159,9 +182,9 @@ def float_modality_tree(name: str) -> hierarchy.Directory:
         name,
         [
             hierarchy.Directory(
-                _FLOAT, [hierarchy.Directory(_BIN), hierarchy.Directory(_TXT)]
+                FLOAT, [hierarchy.Directory(BIN), hierarchy.Directory(TXT)]
             ),
-            hierarchy.Directory(_IMAGE),
+            hierarchy.Directory(IMAGE),
         ],
     )
 
@@ -205,17 +228,17 @@ class ModalityGroup[B: KoalaFrameFolder, T: KoalaFrameFolder, P: KoalaFrameFolde
     @cached_property
     def float_bin(self) -> B | None:
         """The quantitative `Float/Bin` source, or None when it is absent."""
-        return open_folder(self._root / _FLOAT / _BIN, self._bin_folder)
+        return open_folder(self._root / FLOAT / BIN, self._bin_folder)
 
     @cached_property
     def float_txt(self) -> T | None:
         """The quantitative `Float/Txt` source, or None when it is absent."""
-        return open_folder(self._root / _FLOAT / _TXT, self._txt_folder)
+        return open_folder(self._root / FLOAT / TXT, self._txt_folder)
 
     @cached_property
     def previews(self) -> P | None:
         """The uint8 `Image` preview folder, or None when it is absent."""
-        return open_folder(self._root / _IMAGE, self._preview_folder)
+        return open_folder(self._root / IMAGE, self._preview_folder)
 
     @property
     def quantitative(self) -> B | T | None:

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 __all__ = (
+    "INTENSITY_FLOAT_BIN",
+    "INTENSITY_FLOAT_TXT",
+    "INTENSITY_IMAGE",
     "INTENSITY_TREE",
     "IntensityGroup",
     "search_intensity_bin_folders",
@@ -14,6 +17,11 @@ from iivs.dhm.data.intensity.bin import IntensityBinFolder
 from iivs.dhm.data.intensity.tif import IntensityTifFolder
 from iivs.dhm.data.intensity.txt import IntensityTxtFolder
 from iivs.dhm.data.koala import (
+    BIN,
+    FLOAT,
+    IMAGE,
+    INTENSITY,
+    TXT,
     ModalityGroup,
     float_modality_tree,
     search_modality_folders,
@@ -27,12 +35,14 @@ if TYPE_CHECKING:
     from kaparoo.filters import Filter
     from kaparoo.filters.types import FilterDict
 
-_INTENSITY = "Intensity"
-_BIN_SUBPATH = f"{_INTENSITY}/Float/Bin"
-_TXT_SUBPATH = f"{_INTENSITY}/Float/Txt"
-_PREVIEW_SUBPATH = f"{_INTENSITY}/Image"
+INTENSITY_FLOAT_BIN = f"{INTENSITY}/{FLOAT}/{BIN}"
+"""The `Intensity/Float/Bin` folder's time-lapse-relative path."""
+INTENSITY_FLOAT_TXT = f"{INTENSITY}/{FLOAT}/{TXT}"
+"""The `Intensity/Float/Txt` folder's time-lapse-relative path."""
+INTENSITY_IMAGE = f"{INTENSITY}/{IMAGE}"
+"""The `Intensity/Image` preview folder's time-lapse-relative path."""
 
-INTENSITY_TREE = float_modality_tree(_INTENSITY)
+INTENSITY_TREE = float_modality_tree(INTENSITY)
 """The `Intensity/` subtree of a Koala time-lapse (`Float/{Bin,Txt}` + `Image`), a spec."""
 
 
@@ -76,7 +86,7 @@ def search_intensity_bin_folders(
     """
     return search_modality_folders(
         root,
-        _BIN_SUBPATH,
+        INTENSITY_FLOAT_BIN,
         IntensityBinFolder,
         name_filter=name_filter,
         part_filter=part_filter,
@@ -106,7 +116,7 @@ def search_intensity_txt_folders(
     """
     return search_modality_folders(
         root,
-        _TXT_SUBPATH,
+        INTENSITY_FLOAT_TXT,
         IntensityTxtFolder,
         name_filter=name_filter,
         part_filter=part_filter,
@@ -136,7 +146,7 @@ def search_intensity_preview_folders(
     """
     return search_modality_folders(
         root,
-        _PREVIEW_SUBPATH,
+        INTENSITY_IMAGE,
         IntensityTifFolder,
         name_filter=name_filter,
         part_filter=part_filter,

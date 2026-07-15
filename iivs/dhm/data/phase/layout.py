@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 __all__ = (
+    "PHASE_FLOAT_BIN",
+    "PHASE_FLOAT_TXT",
+    "PHASE_IMAGE",
     "PHASE_TREE",
     "PhaseGroup",
     "search_phase_bin_folders",
@@ -11,6 +14,11 @@ __all__ = (
 from typing import TYPE_CHECKING
 
 from iivs.dhm.data.koala import (
+    BIN,
+    FLOAT,
+    IMAGE,
+    PHASE,
+    TXT,
     ModalityGroup,
     float_modality_tree,
     search_modality_folders,
@@ -27,12 +35,14 @@ if TYPE_CHECKING:
     from kaparoo.filters import Filter
     from kaparoo.filters.types import FilterDict
 
-_PHASE = "Phase"
-_BIN_SUBPATH = f"{_PHASE}/Float/Bin"
-_TXT_SUBPATH = f"{_PHASE}/Float/Txt"
-_PREVIEW_SUBPATH = f"{_PHASE}/Image"
+PHASE_FLOAT_BIN = f"{PHASE}/{FLOAT}/{BIN}"
+"""The `Phase/Float/Bin` folder's time-lapse-relative path."""
+PHASE_FLOAT_TXT = f"{PHASE}/{FLOAT}/{TXT}"
+"""The `Phase/Float/Txt` folder's time-lapse-relative path."""
+PHASE_IMAGE = f"{PHASE}/{IMAGE}"
+"""The `Phase/Image` preview folder's time-lapse-relative path."""
 
-PHASE_TREE = float_modality_tree(_PHASE)
+PHASE_TREE = float_modality_tree(PHASE)
 """The `Phase/` subtree of a Koala time-lapse (`Float/{Bin,Txt}` + `Image`), a spec."""
 
 
@@ -72,7 +82,7 @@ def search_phase_bin_folders(
     """
     return search_modality_folders(
         root,
-        _BIN_SUBPATH,
+        PHASE_FLOAT_BIN,
         PhaseBinFolder,
         name_filter=name_filter,
         part_filter=part_filter,
@@ -102,7 +112,7 @@ def search_phase_txt_folders(
     """
     return search_modality_folders(
         root,
-        _TXT_SUBPATH,
+        PHASE_FLOAT_TXT,
         PhaseTxtFolder,
         name_filter=name_filter,
         part_filter=part_filter,
@@ -132,7 +142,7 @@ def search_phase_preview_folders(
     """
     return search_modality_folders(
         root,
-        _PREVIEW_SUBPATH,
+        PHASE_IMAGE,
         PhaseTifFolder,
         name_filter=name_filter,
         part_filter=part_filter,

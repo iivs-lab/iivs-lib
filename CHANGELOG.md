@@ -37,7 +37,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (tolerant folder open), `search_modality_dirs` (the `search_dirs`-backed walk), and
   `search_modality_folders` (walk + open + filter). Phase / intensity share a
   `koala.ModalityGroup` base and the `koala.float_modality_tree` spec builder; each
-  modality's `layout` module holds its group, tree, and searches.
+  modality's `layout` module holds its group, tree, and searches. The fixed Koala layout
+  names are public constants (`koala.PHASE` / `INTENSITY` / `HOLOGRAMS` / `FLOAT` / `BIN`
+  / `TXT` / `IMAGE` / `TIMESTAMPS` / `PHBOUNDS`), with the per-modality path combinations
+  (`phase.PHASE_FLOAT_BIN`, `intensity.INTENSITY_IMAGE`, ...) in each `layout` module.
 - `iivs.common.visualization`: `auto_rescale`, a Fiji/ImageJ-style auto-contrast
   for any numeric image or stack (Enhance Contrast + Normalize). It clips
   `saturated`% of pixels in total via the matching `nanpercentile` bounds

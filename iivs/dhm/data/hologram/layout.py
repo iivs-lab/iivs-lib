@@ -10,7 +10,7 @@ from kaparoo.filters import Glob, Regex
 
 from iivs.dhm.data.hologram.raw import HologramRawFile
 from iivs.dhm.data.hologram.tif import HologramTifFolder
-from iivs.dhm.data.koala import open_folder, search_modality_dirs
+from iivs.dhm.data.koala import HOLOGRAMS, open_folder, search_modality_dirs
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -22,11 +22,10 @@ if TYPE_CHECKING:
 
     from iivs.dhm.data.hologram.base import HologramSequence
 
-_HOLOGRAMS = "Holograms"
 _HOLOGRAM_TIF = r"\d{5}_holo\.tif"
 
 HOLOGRAM_TREE = hierarchy.Directory(
-    _HOLOGRAMS,
+    HOLOGRAMS,
     [
         # A single multi-frame stack XOR numbered per-frame previews; a real
         # acquisition yields only one, so both present is a violation.
@@ -104,7 +103,7 @@ def search_holograms(
         open_holograms(directory)
         for directory in search_modality_dirs(
             root,
-            _HOLOGRAMS,
+            HOLOGRAMS,
             name_filter=name_filter,
             part_filter=part_filter,
             exclude=exclude,

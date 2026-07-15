@@ -13,6 +13,7 @@ from kaparoo.filters import Glob
 from iivs.common.data.timestamp import TimestampsFixedFPS
 from iivs.dhm.data.hologram.layout import HOLOGRAM_TREE, open_holograms
 from iivs.dhm.data.intensity.layout import INTENSITY_TREE, IntensityGroup
+from iivs.dhm.data.koala import HOLOGRAMS, INTENSITY, PHASE, PHBOUNDS, TIMESTAMPS
 from iivs.dhm.data.phase.bounds import read_phbounds
 from iivs.dhm.data.phase.layout import PHASE_TREE, PhaseGroup
 from iivs.dhm.data.timestamp import TimestampsTxtFile
@@ -34,15 +35,9 @@ if TYPE_CHECKING:
 #                          layout                              #
 # ============================================================ #
 
-_PHASE = "Phase"
-_INTENSITY = "Intensity"
-_HOLOGRAMS = "Holograms"
-_TIMESTAMPS = "timestamps.txt"
-_PHBOUNDS = "phbounds.txt"
-
 # The top-level folders that mark a directory as a Koala time-lapse (its holograms, or a
 # reconstruction). `search_timelapses` treats a directory holding any of them as one.
-_MARKERS = (_PHASE, _INTENSITY, _HOLOGRAMS)
+_MARKERS = (PHASE, INTENSITY, HOLOGRAMS)
 
 KOALA_TIMELAPSE_TREE = hierarchy.Directory(
     Glob("*"),  # any time-lapse-root name; matched via `root_as_top`
@@ -50,8 +45,8 @@ KOALA_TIMELAPSE_TREE = hierarchy.Directory(
         PHASE_TREE,
         INTENSITY_TREE,
         HOLOGRAM_TREE,
-        hierarchy.File(_TIMESTAMPS),
-        hierarchy.File(_PHBOUNDS),
+        hierarchy.File(TIMESTAMPS),
+        hierarchy.File(PHBOUNDS),
     ],
 )
 """The standard Lyncée Tec Koala time-lapse layout, composed from the per-modality
@@ -100,12 +95,12 @@ class KoalaTimelapse:
     @cached_property
     def phase(self) -> PhaseGroup:
         """The phase modality group (its `Float/{Bin,Txt}` sources and `Image` preview)."""
-        return PhaseGroup(self._root / _PHASE)
+        return PhaseGroup(self._root / PHASE)
 
     @cached_property
     def intensity(self) -> IntensityGroup:
         """The intensity modality group (its `Float/{Bin,Txt}` sources and preview)."""
-        return IntensityGroup(self._root / _INTENSITY)
+        return IntensityGroup(self._root / INTENSITY)
 
     @cached_property
     def holograms(self) -> HologramSequence | None:
@@ -115,7 +110,7 @@ class KoalaTimelapse:
             ValueError: If the `Holograms` folder holds both a `.raw` stack and numbered
                 `.tif` previews (a real acquisition produces only one).
         """
-        return open_holograms(self._root / _HOLOGRAMS)
+        return open_holograms(self._root / HOLOGRAMS)
 
     @cached_property
     def timestamps(self) -> TimestampSequence | None:
@@ -124,7 +119,7 @@ class KoalaTimelapse:
         Reads `timestamps.txt` when present; otherwise, with an `fps` set and a known
         frame count, synthesizes evenly spaced `TimestampsFixedFPS`; else None.
         """
-        path = self._root / _TIMESTAMPS
+        path = self._root / TIMESTAMPS
         if path.is_file():
             return TimestampsTxtFile(path)
 
@@ -136,7 +131,7 @@ class KoalaTimelapse:
     @cached_property
     def phase_bounds(self) -> PhaseBounds | None:
         """The `phbounds.txt` display bounds, or None when it is absent."""
-        path = self._root / _PHBOUNDS
+        path = self._root / PHBOUNDS
         return read_phbounds(path) if path.is_file() else None
 
     # -- consistency --
