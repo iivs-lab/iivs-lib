@@ -134,6 +134,19 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
     LEVELS: ClassVar[tuple[str, ...]] = ("names",)
     DEFAULT_LEVEL: ClassVar[str] = "names"
 
+    def __init__(
+        self, root: StrPath, *, validate: ValidationLevel | None = None
+    ) -> None:
+        """Discover the numbered files under `root`; validate each to `validate` if set.
+
+        `validate=None` opens from discovery alone (no content validation); a
+        `ValidationLevel` checks every file to that depth. A subclass sets its own
+        default and may run validation itself after any extra setup.
+        """
+        super().__init__(root)
+        if validate is not None:
+            self.validate(level=validate)
+
     @override
     def list_files(self, root: Path) -> list[Path]:
         """List the `NNNNN_<stem>.<ext>` files under `root`, in index order.

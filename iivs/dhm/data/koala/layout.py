@@ -35,11 +35,11 @@ if TYPE_CHECKING:
 # ============================================================ #
 
 
-def open_folder[T](path: StrPath, folder: Callable[..., T]) -> T | None:
+def open_folder[T: KoalaFrameFolder](path: StrPath, folder: type[T]) -> T | None:
     """Open `path` with `folder` when it is a populated directory, else None.
 
     Tolerant: an absent directory, or a present-but-empty numbered folder, yields None
-    rather than raising.
+    rather than raising. Opened without content validation (`validate=None`).
 
     Type Parameters:
         T: The opened folder type (e.g. `PhaseBinFolder`).
@@ -97,10 +97,10 @@ def search_timelapse_subdirs(
     return [Path(directory) / subpath for directory in dirs]
 
 
-def open_timelapse_subfolders[T](
+def open_timelapse_subfolders[T: KoalaFrameFolder](
     root: StrPath,
     subpath: str,
-    folder: Callable[..., T],
+    folder: type[T],
     *,
     name_filter: Filter | FilterDict | None = None,
     part_filter: Filter | FilterDict | None = None,
@@ -189,9 +189,11 @@ class ReconstructionGroup[
         tif_cls: type[P],
     ) -> None:
         self._root = Path(root)
-        self._bin_cls = bin_cls
-        self._txt_cls = txt_cls
-        self._tif_cls = tif_cls
+        # Opened eagerly (not `cached_property`): ty mis-types a generic `cached_property`
+        # return `B | None` as `None`, which then reads as unreachable downstream.
+        self._bin_folder: B | None = open_folder(self._root / FLOAT / BIN, bin_cls)
+        self._txt_folder: T | None = open_folder(self._root / FLOAT / TXT, txt_cls)
+        self._tif_folder: P | None = open_folder(self._root / IMAGE, tif_cls)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({str(self._root)!r})"
@@ -201,32 +203,38 @@ class ReconstructionGroup[
         """The modality folder (e.g. `Phase/`)."""
         return self._root
 
-    @cached_property
+    @property
     def bin_folder(self) -> B | None:
         """The quantitative `Float/Bin` source, or None when it is absent."""
-        return open_folder(self._root / FLOAT / BIN, self._bin_cls)
+        return self._bin_folder
 
-    @cached_property
+    @property
     def txt_folder(self) -> T | None:
         """The quantitative `Float/Txt` source, or None when it is absent."""
-        return open_folder(self._root / FLOAT / TXT, self._txt_cls)
+        return self._txt_folder
 
-    @cached_property
+    @property
     def tif_folder(self) -> P | None:
         """The uint8 `Image` preview folder, or None when it is absent."""
-        return open_folder(self._root / IMAGE, self._tif_cls)
+        return self._tif_folder
 
     @property
     def quantitative(self) -> B | T | None:
         """The quantitative source, `Float/Bin` preferred over `Float/Txt`, or None."""
-        return self.bin_folder if self.bin_folder is not None else self.txt_folder
+        if self.bin_folder is not None:
+            return self.bin_folder
+        if self.txt_folder is not None:
+            return self.txt_folder
+        return None
 
     @cached_property
     def frame_counts(self) -> dict[str, int]:
         """The frame count of each present source, keyed by `bin` / `txt` / `tif`."""
-        sources: dict[str, KoalaFrameFolder | None] = {
-            "bin": self.bin_folder,
-            "txt": self.txt_folder,
-            "tif": self.tif_folder,
-        }
-        return {name: len(seq) for name, seq in sources.items() if seq is not None}
+        counts: dict[str, int] = {}
+        if self.bin_folder is not None:
+            counts["bin"] = len(self.bin_folder)
+        if self.txt_folder is not None:
+            counts["txt"] = len(self.txt_folder)
+        if self.tif_folder is not None:
+            counts["tif"] = len(self.tif_folder)
+        return counts

@@ -66,10 +66,7 @@ class ImageFileFolder(KoalaFrameFolder[NDArray[np.uint8]], ArrayFileList[np.uint
         *,
         validate: Literal["names", "data"] | None = "names",
     ) -> None:
-        super().__init__(root)  # discovers the files; rejects an empty folder
-
-        if validate is not None:
-            self.validate(level=validate)
+        super().__init__(root, validate=validate)  # discover + validate to level
 
     @cached_property
     @override
