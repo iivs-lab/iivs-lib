@@ -190,7 +190,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "imagecodecs", specifier = ">=2026.5.10" },
-    { name = "kaparoo-python", specifier = ">=0.10.0" },
+    { name = "kaparoo-python", specifier = ">=0.11.0" },
     { name = "numpy", specifier = ">=2.4.6" },
     { name = "tifffile", specifier = ">=2026.6.1" },
     { name = "torch", marker = "extra == 'torch'", specifier = ">=2.9" },
@@ -247,11 +247,11 @@ wheels = [
 
 [[package]]
 name = "kaparoo-python"
-version = "0.10.0"
+version = "0.11.0"
 source = { registry = "https://pypi.org/simple/" }
-sdist = { url = "https://files.pythonhosted.org/packages/dc/31/984f9bda6fb3782dd79637bdc2e3b6d7abbd6ea92177b2cb2e17d1505337/kaparoo_python-0.10.0.tar.gz", hash = "sha256:ef1b0bc25adb51ecd32f70aa92764d3f192fd4d39c0ff447eb293c87943c515e", size = 102884, upload-time = "2026-07-06T18:33:07.338Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6a/ba/0536428f330a33592d83755f586fc43feaa3c4cc58adaec09ecaccf95e27/kaparoo_python-0.11.0.tar.gz", hash = "sha256:0a33ff88f56e3c8311d5d6b8a52a7c0b79baeffbd0a036ac1a9a422d88136058", size = 104350, upload-time = "2026-07-15T15:42:55.623Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/1e/0754cf36a24422606ccfafc095bb7689d834ef457339e3450de86547e274/kaparoo_python-0.10.0-py3-none-any.whl", hash = "sha256:95d2746665d3144e5a40d7ec170d8599071b528aca32b81f35c74bd979304fe0", size = 98455, upload-time = "2026-07-06T18:33:06.048Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/ac/bda5eff019cc975aaa25404615cc40d47494e0c0a13ea65a64fe6fa4378e/kaparoo_python-0.11.0-py3-none-any.whl", hash = "sha256:942f71b6e6e53161f3937fccef744816226dba72df177510d3d8abbd840bf624", size = 99910, upload-time = "2026-07-15T15:42:54.282Z" },
 ]
 
 [[package]]
