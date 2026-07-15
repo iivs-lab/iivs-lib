@@ -58,7 +58,9 @@ def test_group_opens_every_format(tmp_path):
     assert isinstance(group.tif_folder, IntensityTifFolder)
     assert isinstance(group.quantitative, IntensityFloatSequence)
     assert group.quantitative is group.bin_folder  # .bin preferred
-    assert group.frame_counts == {"bin": 2, "txt": 2, "tif": 2}
+    assert group.num_frames == 2
+    assert group.frame_shape == (2, 3)
+    assert group.is_consistent
     assert group.root == intensity
 
 
@@ -68,7 +70,8 @@ def test_group_quantitative_falls_back_to_txt(tmp_path):
     group = IntensityGroup(intensity)
     assert group.bin_folder is None
     assert isinstance(group.quantitative, IntensityTxtFolder)
-    assert group.frame_counts == {"txt": 2}
+    assert group.num_frames == 2  # from the lone txt source
+    assert group.is_consistent
 
 
 def test_group_absent_is_all_none(tmp_path):
@@ -77,7 +80,9 @@ def test_group_absent_is_all_none(tmp_path):
     assert group.txt_folder is None
     assert group.tif_folder is None
     assert group.quantitative is None
-    assert group.frame_counts == {}
+    assert group.num_frames is None
+    assert group.frame_shape is None
+    assert group.is_consistent  # vacuously, nothing to disagree
 
 
 def test_group_repr(tmp_path):

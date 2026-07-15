@@ -71,7 +71,8 @@ class KoalaTimelapse:
     `IntensityGroup`) with the holograms, timestamps, and `phbounds.txt` display bounds,
     over the standard Koala layout. Holograms, phase, and intensity are independent (any
     subset may be present); when several are, their frame counts must agree
-    (`counts_agree`). Every source opens lazily on first use.
+    (`is_consistent`). Sources open lazily on first use (a modality's format folders
+    together, when the modality is first accessed).
 
     Args:
         root: The time-lapse root (the folder holding `Phase/`, `Holograms/`,
@@ -140,33 +141,52 @@ class KoalaTimelapse:
 
     # -- consistency --
 
-    @cached_property
-    def frame_counts(self) -> dict[str, int]:
-        """The frame count of each present source, keyed by `<modality>_<format>`.
+    def _hologram_count(self) -> int | None:
+        """The hologram frame count, or None when absent or ambiguous (raw+tif).
 
-        Merges the phase / intensity groups' own `frame_counts` (prefixed) with the
-        holograms and timing. Absent sources are omitted; `counts_agree` reduces this to
-        a single yes/no.
+        Tolerant view for the count / consistency queries: `holograms` raises on the
+        raw+tif conflict (`validate`'s domain), which this treats as uncountable.
         """
-        counts = {
-            f"{prefix}_{name}": count
-            for prefix, group in (("phase", self.phase), ("intensity", self.intensity))
-            for name, count in group.frame_counts.items()
-        }
-        if self.holograms is not None:
-            counts["holograms"] = len(self.holograms)
-        if self.timestamps is not None:
-            counts["timestamps"] = len(self.timestamps)
-        return counts
+        try:
+            holo = self.holograms
+        except ValueError:
+            return None
+        return len(holo) if holo is not None else None
 
     @property
-    def counts_agree(self) -> bool:
-        """Whether every present source has the same frame count.
+    def num_frames(self) -> int | None:
+        """The acquisition's frame count, from the first present source, or None.
 
-        Vacuously True when nothing (or one source) is present; one time-lapse
-        acquisition's phase, intensity, holograms, and timing must all agree.
+        Phase, intensity, holograms, and timing share this count in a coherent
+        acquisition (`is_consistent`).
         """
-        return len(set(self.frame_counts.values())) <= 1
+        count = self._frame_count()
+        if count is not None:
+            return count
+        return len(self.timestamps) if self.timestamps is not None else None
+
+    @property
+    def is_consistent(self) -> bool:
+        """Whether the acquisition is coherent: each modality consistent, one length.
+
+        Each phase / intensity group is internally consistent, and every present source
+        (phase, intensity, holograms, timing) shares one frame count. Shape is not
+        compared across modalities (holograms are raw interferograms); a raw+tif
+        `Holograms/` conflict is `validate`'s concern, so it is left uncounted here.
+        """
+        if not (self.phase.is_consistent and self.intensity.is_consistent):
+            return False
+        counts = {
+            c
+            for c in (
+                self.phase.num_frames,
+                self.intensity.num_frames,
+                self._hologram_count(),
+                len(self.timestamps) if self.timestamps is not None else None,
+            )
+            if c is not None
+        }
+        return len(counts) <= 1
 
     @property
     def has_reconstruction(self) -> bool:
@@ -181,8 +201,11 @@ class KoalaTimelapse:
 
     @property
     def has_holograms(self) -> bool:
-        """Whether the raw holograms are present."""
-        return self.holograms is not None
+        """Whether a `Holograms/` source is present (True even if raw and tif conflict)."""
+        try:
+            return self.holograms is not None
+        except ValueError:
+            return True
 
     def validate(self) -> ValidationReport:
         """Check the root's structure against `KOALA_TIMELAPSE_TREE`.
@@ -190,28 +213,26 @@ class KoalaTimelapse:
         Lenient about extras (OME metadata, logs, ...) and optional modalities, so the
         report flags only a `Holograms` folder holding both raw and tif and, via
         `matched`, records which parts of the layout are present. The report's
-        truthiness is its `ok`. This checks the layout only; use `counts_agree` and each
-        modality's own `validate` for data consistency.
+        truthiness is its `ok`. This checks the layout only; use `is_consistent` for
+        frame-count / shape agreement.
         """
         return validate(
             KOALA_TIMELAPSE_TREE, self._root, root_as_top=True, allow_extra=True
         )
 
     def _frame_count(self) -> int | None:
-        """The frame count from the first present data source, or None if there is none.
+        """The frame count for synthesizing timing, from phase / intensity / holograms.
 
-        Excludes `timestamps` so it can back the synthesized `TimestampsFixedFPS`.
+        Excludes `timestamps` so it can back the synthesized `TimestampsFixedFPS` without
+        a cycle; a raw+tif `Holograms/` is uncountable (`_hologram_count`), not fatal.
         """
-        sources = (
-            self.holograms,
-            self.phase.quantitative,
-            self.phase.tif_folder,
-            self.intensity.quantitative,
-            self.intensity.tif_folder,
-        )
-        for source in sources:
-            if source is not None:
-                return len(source)
+        for count in (
+            self.phase.num_frames,
+            self.intensity.num_frames,
+            self._hologram_count(),
+        ):
+            if count is not None:
+                return count
         return None
 
 

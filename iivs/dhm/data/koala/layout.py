@@ -8,7 +8,6 @@ __all__ = (
     "search_timelapse_subdirs",
 )
 
-from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -171,9 +170,10 @@ class ReconstructionGroup[
     The shared base for the Koala reconstruction groups (phase, intensity): a
     ``<Modality>/`` folder exposing each format present: `bin_folder` / `txt_folder`
     (the quantitative `Float/{Bin,Txt}` sources, which may coexist) and `tif_folder`
-    (the uint8 `Image` preview), plus the `.bin`-preferred `quantitative` convenience
-    and `frame_counts`. Each accessor is None when its source is absent. A subclass
-    binds the concrete folder subtypes.
+    (the uint8 `Image` preview), plus the `.bin`-preferred `quantitative`, the shared
+    `num_frames` / `frame_shape`, and the `is_consistent` cross-format check. Each
+    accessor is None when its source is absent. A subclass binds the concrete folder
+    subtypes.
 
     Type Parameters:
         B: The `Float/Bin` folder type (e.g. `PhaseBinFolder`).
@@ -191,9 +191,9 @@ class ReconstructionGroup[
         self._root = Path(root)
         # Opened eagerly (not `cached_property`): ty mis-types a generic `cached_property`
         # return `B | None` as `None`, which then reads as unreachable downstream.
-        self._bin_folder: B | None = open_folder(self._root / FLOAT / BIN, bin_cls)
-        self._txt_folder: T | None = open_folder(self._root / FLOAT / TXT, txt_cls)
-        self._tif_folder: P | None = open_folder(self._root / IMAGE, tif_cls)
+        self._bin_folder = open_folder(self._root / FLOAT / BIN, bin_cls)
+        self._txt_folder = open_folder(self._root / FLOAT / TXT, txt_cls)
+        self._tif_folder = open_folder(self._root / IMAGE, tif_cls)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({str(self._root)!r})"
@@ -227,14 +227,38 @@ class ReconstructionGroup[
             return self.txt_folder
         return None
 
-    @cached_property
-    def frame_counts(self) -> dict[str, int]:
-        """The frame count of each present source, keyed by `bin` / `txt` / `tif`."""
-        counts: dict[str, int] = {}
-        if self.bin_folder is not None:
-            counts["bin"] = len(self.bin_folder)
-        if self.txt_folder is not None:
-            counts["txt"] = len(self.txt_folder)
-        if self.tif_folder is not None:
-            counts["tif"] = len(self.tif_folder)
-        return counts
+    @property
+    def _reference(self) -> KoalaFrameFolder | None:
+        """The reference source: quantitative data if present, else the preview."""
+        if self.quantitative is not None:
+            return self.quantitative
+        return self.tif_folder
+
+    @property
+    def num_frames(self) -> int | None:
+        """The frame count shared by the present sources, or None when empty.
+
+        The `bin` / `txt` / `tif` counts agree when the acquisition is fully
+        reconstructed; `is_consistent` reports whether they actually do.
+        """
+        ref = self._reference
+        return len(ref) if ref is not None else None
+
+    @property
+    def frame_shape(self) -> tuple[int, int] | None:
+        """The (height, width) shared by the present sources, or None when empty."""
+        ref = self._reference
+        return ref.frame_shape if ref is not None else None
+
+    @property
+    def is_consistent(self) -> bool:
+        """Whether the present sources agree in frame count and shape.
+
+        Vacuously True when nothing (or one source) is present; a correct acquisition's
+        `bin` / `txt` / `tif` share one shape (and one count when fully reconstructed).
+        """
+        sources = (self.bin_folder, self.txt_folder, self.tif_folder)
+        present = [f for f in sources if f is not None]
+        counts = {len(f) for f in present}
+        shapes = {f.frame_shape for f in present}
+        return len(counts) <= 1 and len(shapes) <= 1

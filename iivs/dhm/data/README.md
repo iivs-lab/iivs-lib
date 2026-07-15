@@ -36,15 +36,17 @@ layout, tolerating absent parts. Holograms, phase, and intensity are **independe
 
 | Accessor | Result |
 | --- | --- |
-| `tl.phase` / `tl.intensity` | a `PhaseGroup` / `IntensityGroup` (always present); each has `.bin_folder` / `.txt_folder` (the `Float/{Bin,Txt}` sources, which may coexist), `.quantitative` (`.bin`-preferred), and `.tif_folder` (the uint8 `Image` preview) — each `None` when absent |
+| `tl.phase` / `tl.intensity` | a `PhaseGroup` / `IntensityGroup` (always present); each has `.bin_folder` / `.txt_folder` (the `Float/{Bin,Txt}` sources, which may coexist), `.quantitative` (`.bin`-preferred), `.tif_folder` (the uint8 `Image` preview) — each `None` when absent — plus the shared `.num_frames` / `.frame_shape` and an `.is_consistent` cross-format check |
 | `tl.holograms` | the `Holograms/holo.raw` stack **or** numbered tif folder, or `None` (raises if a folder holds both) |
 | `tl.timestamps` | `timestamps.txt` if present, else `TimestampsFixedFPS` from `frame_rate` (when the frame count is known), else `None` |
 | `tl.phase_bounds` | the `phbounds.txt` `PhaseBounds`, or `None` |
 
-Consistency is exposed as flat properties: `frame_counts` (per present source, keyed
-`<modality>_<format>`), `counts_agree` (one time-lapse ⇒ every source shares a length),
-`has_reconstruction` (phase or intensity present, vs a holograms-only acquisition), and
-`has_holograms`. `tl.validate()` returns a `hierarchy.ValidationReport` of the root's
+Consistency is exposed as flat properties: `num_frames` (the acquisition's frame count,
+from the first present source, or `None`), `is_consistent` (each modality internally
+consistent and every present source — phase / intensity / holograms / timing — sharing
+one length), `has_reconstruction` (phase or intensity present, vs a holograms-only
+acquisition), and `has_holograms`. `tl.validate()` returns a
+`hierarchy.ValidationReport` of the root's
 *structure* against `KOALA_TIMELAPSE_TREE`, which **composes** each modality's own
 subtree (`phase.PHASE_TREE`, `intensity.INTENSITY_TREE`, `hologram.HOLOGRAM_TREE`) plus
 the root `timestamps.txt` / `phbounds.txt`.
@@ -65,12 +67,12 @@ from iivs.dhm.data.timelapse import KoalaTimelapse, search_timelapses
 tl = KoalaTimelapse("scan/2026-01-15_cardiomyocytes")
 phase_nm = tl.phase.quantitative      # a PhaseFloatSequence (bin preferred), or None
 holo0 = tl.holograms[0]               # first hologram frame
-assert tl.counts_agree                # phase / intensity / holograms / timing align
+assert tl.is_consistent               # phase / intensity / holograms / timing align
 assert tl.validate().ok               # matches the expected layout
 
 # every time-lapse under scans/ that has phase, timing synthesized at 20 fps when absent
 for t in search_timelapses("scans/", require=["Phase"], frame_rate=20.0):
-    print(t.root.name, t.frame_counts)
+    print(t.root.name, t.num_frames)
 ```
 
 Each modality package owns its piece — `PhaseGroup` + `PHASE_TREE`, `IntensityGroup` +

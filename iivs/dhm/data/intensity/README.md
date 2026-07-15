@@ -107,7 +107,8 @@ convenience that reads it off the header for you.
 
 `IntensityGroup(intensity_dir)` opens one acquisition's `Intensity/` folder:
 `.bin_folder` / `.txt_folder` (which may coexist), `.quantitative` (`.bin`-preferred),
-`.tif_folder` (the uint8 `Image` preview), and `.frame_counts`. The folder's layout is
+`.tif_folder` (the uint8 `Image` preview), the shared `.num_frames` / `.frame_shape`,
+and an `.is_consistent` cross-format check. The folder's layout is
 the `INTENSITY_TREE` `hierarchy` spec, and the format-specific searches
 `search_intensity_bin_folders(root, ...)` / `search_intensity_txt_folders` /
 `search_intensity_tif_folders` return that one folder (an `IntensityBinFolder` /

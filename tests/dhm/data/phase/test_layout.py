@@ -58,7 +58,9 @@ def test_group_opens_every_format(tmp_path):
     assert isinstance(group.tif_folder, PhaseTifFolder)
     assert isinstance(group.quantitative, PhaseFloatSequence)
     assert group.quantitative is group.bin_folder  # .bin preferred
-    assert group.frame_counts == {"bin": 2, "txt": 2, "tif": 2}
+    assert group.num_frames == 2
+    assert group.frame_shape == (2, 3)
+    assert group.is_consistent
     assert group.root == phase
 
 
@@ -68,7 +70,34 @@ def test_group_quantitative_falls_back_to_txt(tmp_path):
     group = PhaseGroup(phase)
     assert group.bin_folder is None
     assert isinstance(group.quantitative, PhaseTxtFolder)
-    assert group.frame_counts == {"txt": 2}
+    assert group.num_frames == 2  # from the lone txt source
+    assert group.is_consistent
+
+
+def test_group_inconsistent_counts(tmp_path):
+    phase = tmp_path / "Phase"
+    _bin(phase / "Float" / "Bin", 3)
+    _txt(phase / "Float" / "Txt", 2)  # one fewer -> counts disagree
+    group = PhaseGroup(phase)
+    assert group.num_frames == 3  # from the .bin reference
+    assert not group.is_consistent
+
+
+def test_group_inconsistent_shapes(tmp_path):
+    phase = tmp_path / "Phase"
+    _bin(phase / "Float" / "Bin", 2)  # frames are (2, 3)
+    txt = phase / "Float" / "Txt"
+    txt.mkdir(parents=True)
+    for i in range(2):  # same count, but a different frame shape (3, 2)
+        save_phase_txt(
+            txt / f"{i:05d}_phase.txt",
+            np.full((3, 2), float(i + 1), np.float32),
+            pixel_size=1e-6,
+            height_scale=2e-7,
+        )
+    group = PhaseGroup(phase)
+    assert group.num_frames == 2  # counts agree
+    assert not group.is_consistent  # but the shapes differ
 
 
 def test_group_absent_is_all_none(tmp_path):
@@ -77,7 +106,9 @@ def test_group_absent_is_all_none(tmp_path):
     assert group.txt_folder is None
     assert group.tif_folder is None
     assert group.quantitative is None
-    assert group.frame_counts == {}
+    assert group.num_frames is None
+    assert group.frame_shape is None
+    assert group.is_consistent  # vacuously, nothing to disagree
 
 
 def test_group_repr(tmp_path):

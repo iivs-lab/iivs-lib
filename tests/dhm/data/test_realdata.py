@@ -34,6 +34,7 @@ from iivs.dhm.data.phase import (
     PhaseUnit,
     read_phbounds,
 )
+from iivs.dhm.data.timelapse import KoalaTimelapse
 from iivs.dhm.data.timestamp import TimestampsTxtFile
 
 if TYPE_CHECKING:
@@ -220,27 +221,9 @@ def test_timestamps_load(koala_timelapse: Path) -> None:
     assert elapsed == sorted(elapsed)  # elapsed time is non-decreasing
 
 
-def test_frame_counts_agree(koala_timelapse: Path) -> None:
-    # One time-lapse -> every per-frame modality has the same count.
-    counts = {
-        "phase_bin": len(
-            PhaseBinFolder(
-                _require(koala_timelapse / "Phase" / "Float" / "Bin"), validate=None
-            )
-        ),
-        "phase_txt": len(
-            PhaseTxtFolder(
-                _require(koala_timelapse / "Phase" / "Float" / "Txt"), validate=None
-            )
-        ),
-        "intensity_bin": len(
-            IntensityBinFolder(
-                _require(koala_timelapse / "Intensity" / "Float" / "Bin"), validate=None
-            )
-        ),
-        "timestamps": len(
-            TimestampsTxtFile(_require(koala_timelapse / "timestamps.txt"))
-        ),
-        "holograms": len(_open_holograms(koala_timelapse)),
-    }
-    assert len(set(counts.values())) == 1, f"frame counts disagree: {counts}"
+def test_timelapse_is_consistent(koala_timelapse: Path) -> None:
+    # A real, fully-reconstructed time-lapse: each modality's formats agree in count and
+    # shape, and phase / intensity / holograms / timing all share one frame count.
+    timelapse = KoalaTimelapse(koala_timelapse)
+    assert timelapse.num_frames is not None
+    assert timelapse.is_consistent

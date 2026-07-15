@@ -121,37 +121,43 @@ def test_holograms_both_raw_and_tif_raises(tmp_path):
     assert not report.ok
     assert report.violations
 
+    # Status / count queries stay tolerant: they never raise on the raw+tif conflict,
+    # leaving the holograms uncounted rather than propagating `validate`'s error.
+    assert timelapse.has_holograms
+    assert timelapse.num_frames == 2  # from phase / intensity, holograms uncountable
+    assert timelapse.is_consistent
+
 
 # ============================== #
 #           consistency          #
 # ============================== #
 
 
-def test_frame_counts_merge_the_groups(tmp_path):
+def test_num_frames_and_consistency(tmp_path):
     n = _build(tmp_path, holograms="raw")
     timelapse = KoalaTimelapse(tmp_path)
-    assert timelapse.frame_counts == {
-        "phase_bin": n,
-        "phase_txt": n,
-        "phase_tif": n,
-        "intensity_bin": n,
-        "intensity_txt": n,
-        "intensity_tif": n,
-        "holograms": n,
-        "timestamps": n,
-    }
-    assert timelapse.counts_agree
+    assert timelapse.num_frames == n
+    assert timelapse.is_consistent
     assert timelapse.has_reconstruction
     assert timelapse.has_holograms
 
 
-def test_counts_disagree_is_detected(tmp_path):
+def test_inconsistent_group_fails_timelapse_consistency(tmp_path):
+    n = _build(tmp_path, n=3)
+    # Drop one phase `.bin` frame so phase's bin (2) disagrees with its txt / tif (3).
+    (tmp_path / "Phase" / "Float" / "Bin" / f"{n - 1:05d}_phase.bin").unlink()
+    timelapse = KoalaTimelapse(tmp_path)
+    assert not timelapse.phase.is_consistent
+    assert not timelapse.is_consistent  # a single inconsistent group fails the whole
+
+
+def test_inconsistent_is_detected(tmp_path):
     _build(tmp_path, n=3)
     _write_timestamps(tmp_path, 2)  # one fewer timing row than the frames
     timelapse = KoalaTimelapse(tmp_path)
-    assert timelapse.frame_counts["timestamps"] == 2
-    assert timelapse.frame_counts["phase_bin"] == 3
-    assert not timelapse.counts_agree
+    assert timelapse.num_frames == 3  # from the modality data, not the short timing
+    assert len(timelapse.timestamps) == 2
+    assert not timelapse.is_consistent
 
 
 def test_holograms_only_has_no_reconstruction(tmp_path):
@@ -162,8 +168,8 @@ def test_holograms_only_has_no_reconstruction(tmp_path):
     assert timelapse.intensity.quantitative is None
     assert not timelapse.has_reconstruction
     assert timelapse.has_holograms
-    assert timelapse.frame_counts == {"holograms": 4}
-    assert timelapse.counts_agree
+    assert timelapse.num_frames == 4
+    assert timelapse.is_consistent
 
 
 # ============================== #
@@ -209,8 +215,8 @@ def test_absent_modalities_are_none(tmp_path):
     assert timelapse.holograms is None
     assert timelapse.timestamps is None
     assert timelapse.phase_bounds is None
-    assert timelapse.frame_counts == {}
-    assert timelapse.counts_agree
+    assert timelapse.num_frames is None
+    assert timelapse.is_consistent
     assert not timelapse.has_reconstruction
     assert not timelapse.has_holograms
 
@@ -226,7 +232,6 @@ def test_accessors_are_cached(tmp_path):
     timelapse = KoalaTimelapse(tmp_path)
     assert timelapse.phase is timelapse.phase
     assert timelapse.holograms is timelapse.holograms
-    assert timelapse.frame_counts is timelapse.frame_counts
 
 
 # ============================== #
