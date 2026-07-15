@@ -19,6 +19,7 @@ from iivs.dhm.data.koala.constants import BIN, FLOAT, IMAGE, TXT
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+    from typing import Literal
 
     from kaparoo.filesystem.exclude import ExcludeRule
     from kaparoo.filesystem.types import StrPath
@@ -174,8 +175,9 @@ class ReconstructionGroup[
     (the uint8 `Image` preview), plus the `.bin`-preferred `quantitative`, the shared
     `num_frames` / `frame_shape`, the tolerant `is_consistent` cross-format check, and
     the non-vacuous `is_usable` (has quantitative data and is consistent). Each
-    accessor is None when its source is absent. A subclass binds the concrete folder
-    subtypes.
+    accessor is None when its source is absent. `validate` checks per-file content
+    across the present formats (distinct from the structural checks above). A subclass
+    binds the concrete folder subtypes.
 
     Type Parameters:
         B: The `Float/Bin` folder type (e.g. `PhaseBinFolder`).
@@ -279,3 +281,24 @@ class ReconstructionGroup[
         so a single-format export still counts.
         """
         return self.quantitative is not None and self.is_consistent
+
+    def validate(self, *, level: Literal["names", "data"] | None = None) -> None:
+        """Validate every present format's files to `level`.
+
+        Delegates to each present format folder's own `validate`, skipping the absent
+        ones (an empty group validates nothing). `level=None` (default) lets each folder
+        use its own default depth: the quantitative `bin` / `txt` check headers, the
+        `tif` preview checks names. `"names"` (contiguous naming) and `"data"` (full
+        decode) apply uniformly to every present format. `"headers"` is a
+        format-specific depth (the `tif` preview has no header), so it is not offered
+        here; call `bin_folder.validate(level="headers")` for that.
+
+        This checks file *content*, unlike the structural `is_consistent` / `is_usable`.
+
+        Raises:
+            ValueError: If a file fails validation (a non-contiguous name, or a bad
+                header / payload at the deeper levels).
+        """
+        for folder in (self.bin_folder, self.txt_folder, self.tif_folder):
+            if folder is not None:
+                folder.validate(level=level)

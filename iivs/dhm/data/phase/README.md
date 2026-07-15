@@ -143,8 +143,9 @@ is why `intensity` has no bounds record — see its README.)
 `PhaseGroup(phase_dir)` opens one acquisition's `Phase/` folder: `.bin_folder` /
 `.txt_folder` (the `Float/{Bin,Txt}` sources, which may coexist), `.quantitative`
 (`.bin`-preferred), `.tif_folder` (the uint8 `Image` preview), the shared `.num_frames`
-/ `.frame_shape`, and the `.is_consistent` (tolerant) / `.is_usable` (has
-quantitative data and is consistent) cross-format checks. The
+/ `.frame_shape`, the `.is_consistent` (tolerant) / `.is_usable` (has quantitative data
+and is consistent) cross-format checks, and `.validate(level=...)` for per-file content
+checks across the present formats. The
 folder's layout is the `PHASE_TREE` `hierarchy` spec, and the format-specific searches
 `search_phase_bin_folders(root, ...)` / `search_phase_txt_folders` /
 `search_phase_tif_folders` return that one folder (a `PhaseBinFolder` /

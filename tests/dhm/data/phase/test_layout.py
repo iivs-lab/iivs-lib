@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import tifffile
 from kaparoo.filesystem.hierarchy import Directory
 from kaparoo.filters import Literal
@@ -133,6 +134,41 @@ def test_group_absent_is_all_none(tmp_path):
     assert group.frame_shape is None
     assert group.is_consistent  # vacuously, nothing to disagree
     assert not group.is_usable  # but an absent group has no usable data
+
+
+def test_group_validate_passes_on_good_data(tmp_path):
+    phase = tmp_path / "Phase"
+    _bin(phase / "Float" / "Bin", 2)
+    _txt(phase / "Float" / "Txt", 2)
+    _img(phase / "Image", 2)
+    group = PhaseGroup(phase)
+    group.validate()  # each present format to its own default depth
+    group.validate(level="names")  # uniform contiguous-name check
+    group.validate(level="data")  # uniform full-decode check
+
+
+def test_group_validate_raises_on_bad_quantitative(tmp_path):
+    phase = tmp_path / "Phase"
+    _bin(phase / "Float" / "Bin", 3)
+    (phase / "Float" / "Bin" / "00001_phase.bin").unlink()  # gap: 00000, 00002
+    group = PhaseGroup(phase)
+    with pytest.raises(ValueError, match="non-contiguous"):
+        group.validate(level="names")
+
+
+def test_group_validate_checks_the_preview_too(tmp_path):
+    phase = tmp_path / "Phase"
+    _img(phase / "Image", 3)  # a preview-only group
+    (phase / "Image" / "00001_phase.tif").unlink()  # gap in the tif preview
+    group = PhaseGroup(phase)
+    with pytest.raises(ValueError, match="non-contiguous"):
+        group.validate()  # the tif preview is validated, not just bin/txt
+
+
+def test_group_validate_is_noop_when_absent(tmp_path):
+    group = PhaseGroup(tmp_path / "Phase")  # nothing present
+    group.validate()  # does not raise
+    group.validate(level="data")
 
 
 def test_group_repr(tmp_path):
