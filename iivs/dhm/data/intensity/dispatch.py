@@ -284,6 +284,29 @@ def intensity_folder(
 # ========================== #
 
 
+@overload
+def save_intensity_folder(
+    root: StrPath,
+    images: Iterable[NDArray[np.float32]],
+    *,
+    ext: Literal["bin", "txt"],
+    pixel_size: float,
+    stem: str = ...,
+    overwrite: bool = ...,
+) -> None: ...
+
+
+@overload
+def save_intensity_folder(
+    root: StrPath,
+    images: Iterable[NDArray[np.float32]],
+    *,
+    ext: Literal["npy"],
+    stem: str = ...,
+    overwrite: bool = ...,
+) -> None: ...
+
+
 def save_intensity_folder(
     root: StrPath,
     images: Iterable[NDArray[np.float32]],
@@ -299,7 +322,8 @@ def save_intensity_folder(
     (a file sequence, a `kaparoo` composer such as `ConcatSequence` or a sliced or
     windowed view, or a plain list), so it accepts sources that carry no Koala header.
     Because that header cannot be recovered from a composed sequence, the `bin` / `txt`
-    `pixel_size` is given here explicitly; the header-less `npy` ignores it.
+    `pixel_size` is given here explicitly; the header-less `npy` takes none (the typed
+    overloads reject it, and a dynamic `ext="npy"` call warns and drops any passed).
     `convert_intensity_folder` is the convenience that reads `pixel_size` off a file
     folder's header for you.
 
@@ -355,10 +379,11 @@ def convert_intensity_folder(
 
     The file-folder convenience over `save_intensity_folder`: each frame becomes one
     numbered file sharing the folder's single header. `bin` / `txt` preserve
-    `pixel_size` (read from the folder); the header-less `npy` drops it. For a composed
-    or transformed sequence (e.g. a `kaparoo` `ConcatSequence`), which has no folder
-    header, use `save_intensity_folder` directly with explicit `pixel_size`. The new
-    folder is built atomically, so a failed run leaves any existing `root` untouched.
+    `pixel_size` (read from the folder); the header-less `npy` cannot store it, so
+    converting to `npy` drops it and warns. For a composed or transformed sequence
+    (e.g. a `kaparoo` `ConcatSequence`), which has no folder header, use
+    `save_intensity_folder` directly with explicit `pixel_size`. The new folder is built
+    atomically, so a failed run leaves any existing `root` untouched.
 
     Args:
         root: Destination folder to create and fill with the re-encoded frames.
@@ -370,18 +395,21 @@ def convert_intensity_folder(
         ValueError: If `ext` is not "bin", "txt", or "npy".
         FileExistsError: If `root` exists and `overwrite` is False.
     """
-    kwargs = {}
-
-    if ext in ("bin", "txt"):
-        kwargs = {"pixel_size": folder.header.pixel_size}
+    if ext == "npy":
+        msg = "`.npy` is header-less; dropping pixel_size"
+        warnings.warn(msg, stacklevel=2)
+        save_intensity_folder(
+            root, folder, ext="npy", stem=folder.FILE_STEM, overwrite=overwrite
+        )
+        return
 
     save_intensity_folder(
         root,
         folder,
         ext=ext,
+        pixel_size=folder.header.pixel_size,
         stem=folder.FILE_STEM,
         overwrite=overwrite,
-        **kwargs,
     )
 
 

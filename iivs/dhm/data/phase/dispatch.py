@@ -396,7 +396,7 @@ def save_phase_folder(
     root: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
-    ext: FloatFormat,
+    ext: Literal["bin", "txt"],
     pixel_size: float,
     height_scale: float,
     unit: PhaseUnit = ...,
@@ -410,7 +410,7 @@ def save_phase_folder(
     root: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
-    ext: FloatFormat,
+    ext: Literal["bin", "txt"],
     pixel_size: float,
     wavelength: float,
     refractive_delta: float,
@@ -425,7 +425,7 @@ def save_phase_folder(
     root: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
-    ext: FloatFormat,
+    ext: Literal["npy"],
     stem: str = ...,
     overwrite: bool = ...,
 ) -> None: ...
@@ -452,8 +452,9 @@ def save_phase_folder(
     carry no Koala header. Because that header cannot be recovered from a composed
     sequence, the `bin` / `txt` metadata (`pixel_size`, the phase-to-height scale, and
     the `unit` the frames are already in) is given here explicitly; the header-less
-    `npy` ignores it. `convert_phase_folder` is the convenience that reads this metadata
-    off a file folder's header for you.
+    `npy` takes none (the typed overloads reject it, and a dynamic `ext="npy"` call
+    warns and drops any passed). `convert_phase_folder` is the convenience that reads
+    this metadata off a file folder's header for you.
 
     Each frame becomes `{index:05d}_<stem>.<ext>`. The folder is built atomically, so a
     failed run leaves any existing `root` untouched.
@@ -524,10 +525,11 @@ def convert_phase_folder(
     The file-folder convenience over `save_phase_folder`: each frame becomes one
     numbered file sharing the folder's single header. `bin` / `txt` preserve
     `pixel_size`, `height_scale`, and the effective `unit` (read from the folder); the
-    header-less `npy` drops them. For a composed or transformed sequence (e.g. a
-    `kaparoo` `ConcatSequence`, or a `to_float` view), which has no folder header, use
-    `save_phase_folder` directly with explicit metadata. The new folder is built
-    atomically, so a failed run leaves any existing `root` untouched.
+    header-less `npy` cannot store them, so converting to `npy` drops them and warns.
+    For a composed or transformed sequence (e.g. a `kaparoo` `ConcatSequence`, or a
+    `to_float` view), which has no folder header, use `save_phase_folder` directly with
+    explicit metadata. The new folder is built atomically, so a failed run leaves any
+    existing `root` untouched.
 
     Args:
         root: Destination folder to create and fill with the re-encoded frames.
@@ -539,23 +541,24 @@ def convert_phase_folder(
         ValueError: If `ext` is not "bin", "txt", or "npy".
         FileExistsError: If `root` exists and `overwrite` is False.
     """
-    kwargs = {}
+    if ext == "npy":
+        msg = "`.npy` is header-less; dropping pixel_size / unit / height scale"
+        warnings.warn(msg, stacklevel=2)
+        save_phase_folder(
+            root, folder, ext="npy", stem=folder.FILE_STEM, overwrite=overwrite
+        )
+        return
 
-    if ext in ("bin", "txt"):
-        header = folder.header
-        kwargs = {
-            "pixel_size": header.pixel_size,
-            "height_scale": header.height_scale,
-            "unit": replace_if_none(folder.target_unit, header.unit),
-        }
-
+    header = folder.header
     save_phase_folder(
         root,
         folder,
         ext=ext,
+        pixel_size=header.pixel_size,
+        height_scale=header.height_scale,
+        unit=replace_if_none(folder.target_unit, header.unit),
         stem=folder.FILE_STEM,
         overwrite=overwrite,
-        **kwargs,
     )
 
 

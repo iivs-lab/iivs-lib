@@ -98,7 +98,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   takes that metadata explicitly, so it accepts header-less sources — `kaparoo`
   composers (`ConcatSequence`, sliced/windowed views), `to_float` / `to_image`
   reconstructions, or a plain list of arrays. `convert_phase_folder` now delegates
-  to it.
+  to it. Typed overloads split on `ext`: `bin` / `txt` require the header metadata,
+  `npy` accepts none, so passing metadata for `npy` (or omitting it for
+  `bin` / `txt`) is a type error rather than a runtime warning.
 - `iivs.dhm.data.intensity`: the same suffix-dispatch entry points as `phase`
   (`load_intensity`, `read_intensity_header`, `save_intensity`, `intensity_list`,
   `intensity_folder`, the standalone `load_intensity_npy`), plus
@@ -106,12 +108,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   any intensity image sequence (composer outputs, …) to a numbered folder.
   Intensity's only header field is `pixel_size`. `convert_intensity_folder` now
   delegates to `save_intensity_folder`, and `intensity_folder` takes the same
-  `prefer` conflict-resolution argument as `phase_folder`.
+  `prefer` conflict-resolution argument as `phase_folder`. Same typed-overload
+  split on `ext` as `save_phase_folder`: `bin` / `txt` require `pixel_size`, `npy`
+  accepts none (a mismatch is a type error).
 - `iivs.dhm.data.hologram.load_hologram_npy(path)` — the standalone `.npy` uint8
   reader, the twin of `load_hologram_tif`.
 
 ### Changed
 
+- `convert_phase_folder` / `convert_intensity_folder` now emit a warning when the
+  target is the header-less `npy`: the source's `pixel_size` (and, for phase, the
+  height scale and `unit`) cannot be stored and are dropped. Previously the drop
+  was silent.
 - Lower the minimum Python to **3.13** (from 3.14). The code uses only PEP 695
   generics (3.12+) and `kaparoo-python` supports 3.13, so 3.13 runs the full
   suite unchanged; CI now covers 3.13 and 3.14.

@@ -299,7 +299,8 @@ def test_convert_intensity_to_txt(tmp_path):
 def test_convert_intensity_to_npy(tmp_path):
     src = _bin_folder(tmp_path / "src", [1.0, 2.0])
     out = tmp_path / "out"
-    convert_intensity_folder(out, src, ext="npy")
+    with pytest.warns(UserWarning, match="header-less"):  # header cannot go into npy
+        convert_intensity_folder(out, src, ext="npy")
     dst = IntensityNpyFolder(out, pixel_size=src.header.pixel_size)
     np.testing.assert_array_equal(dst[0], src[0])
 
