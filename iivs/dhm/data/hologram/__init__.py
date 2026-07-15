@@ -31,7 +31,7 @@ from iivs.dhm.data.hologram.dispatch import (
     HologramFormat,
     convert_hologram_sequence,
 )
-from iivs.dhm.data.hologram.group import (
+from iivs.dhm.data.hologram.layout import (
     HOLOGRAM_TREE,
     open_holograms,
     search_holograms,

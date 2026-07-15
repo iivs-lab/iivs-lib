@@ -7,7 +7,7 @@ from kaparoo.filters import Literal
 
 from iivs.dhm.data.intensity.base import IntensityFloatSequence
 from iivs.dhm.data.intensity.bin import IntensityBinFolder, save_intensity_bin
-from iivs.dhm.data.intensity.group import (
+from iivs.dhm.data.intensity.layout import (
     INTENSITY_TREE,
     IntensityGroup,
     search_intensity_bin_folders,

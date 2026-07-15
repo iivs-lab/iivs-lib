@@ -11,10 +11,10 @@ from kaparoo.filesystem.search import search_dirs
 from kaparoo.filters import Glob
 
 from iivs.common.data.timestamp import TimestampsFixedFPS
-from iivs.dhm.data.hologram.group import HOLOGRAM_TREE, open_holograms
-from iivs.dhm.data.intensity.group import INTENSITY_TREE, IntensityGroup
+from iivs.dhm.data.hologram.layout import HOLOGRAM_TREE, open_holograms
+from iivs.dhm.data.intensity.layout import INTENSITY_TREE, IntensityGroup
 from iivs.dhm.data.phase.bounds import read_phbounds
-from iivs.dhm.data.phase.group import PHASE_TREE, PhaseGroup
+from iivs.dhm.data.phase.layout import PHASE_TREE, PhaseGroup
 from iivs.dhm.data.timestamp import TimestampsTxtFile
 
 if TYPE_CHECKING:

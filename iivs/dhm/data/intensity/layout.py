@@ -8,16 +8,16 @@ __all__ = (
     "search_intensity_txt_folders",
 )
 
-from functools import cached_property
-from pathlib import Path
 from typing import TYPE_CHECKING
-
-from kaparoo.filesystem import hierarchy
 
 from iivs.dhm.data.intensity.bin import IntensityBinFolder
 from iivs.dhm.data.intensity.tif import IntensityTifFolder
 from iivs.dhm.data.intensity.txt import IntensityTxtFolder
-from iivs.dhm.data.koala import open_folder, search_modality_folders
+from iivs.dhm.data.koala import (
+    ModalityGroup,
+    float_modality_tree,
+    search_modality_folders,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -27,36 +27,23 @@ if TYPE_CHECKING:
     from kaparoo.filters import Filter
     from kaparoo.filters.types import FilterDict
 
-    from iivs.dhm.data.intensity.base import IntensityFloatSequence
-
 _INTENSITY = "Intensity"
-_FLOAT = "Float"
-_BIN = "Bin"
-_TXT = "Txt"
-_IMAGE = "Image"
+_BIN_SUBPATH = f"{_INTENSITY}/Float/Bin"
+_TXT_SUBPATH = f"{_INTENSITY}/Float/Txt"
+_PREVIEW_SUBPATH = f"{_INTENSITY}/Image"
 
-INTENSITY_TREE = hierarchy.Directory(
-    _INTENSITY,
-    [
-        hierarchy.Directory(
-            _FLOAT, [hierarchy.Directory(_BIN), hierarchy.Directory(_TXT)]
-        ),
-        hierarchy.Directory(_IMAGE),
-    ],
-)
-"""The `Intensity/` subtree of a Koala acquisition, as a `hierarchy` spec.
-
-`Float/Bin` and `Float/Txt` are independent siblings (the same intensity in two
-serializations may coexist); `Image` is the uint8 preview folder.
-"""
+INTENSITY_TREE = float_modality_tree(_INTENSITY)
+"""The `Intensity/` subtree of a Koala time-lapse (`Float/{Bin,Txt}` + `Image`), a spec."""
 
 
-class IntensityGroup:
-    """The intensity modality within a Koala acquisition, from its `Intensity/` folder.
+class IntensityGroup(
+    ModalityGroup[IntensityBinFolder, IntensityTxtFolder, IntensityTifFolder]
+):
+    """The intensity modality within a Koala time-lapse, from its `Intensity/` folder.
 
-    Opens each format present: the quantitative `Float/Bin` / `Float/Txt` sources (which
-    may coexist) and the uint8 `Image` preview. Each accessor is None when its source is
-    absent, and `quantitative` is the `.bin`-preferred convenience over the two floats.
+    Exposes each format present: `float_bin` / `float_txt` (the `Float/{Bin,Txt}` sources,
+    which may coexist) and `previews` (the uint8 `Image` folder), plus the `.bin`-preferred
+    `quantitative` and `frame_counts`. Each accessor is None when its source is absent.
 
     Args:
         root: The `Intensity/` folder. Not required to exist: a missing one makes every
@@ -64,45 +51,9 @@ class IntensityGroup:
     """
 
     def __init__(self, root: StrPath) -> None:
-        self._root = Path(root)
-
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}({str(self._root)!r})"
-
-    @property
-    def root(self) -> Path:
-        """The `Intensity/` folder."""
-        return self._root
-
-    @cached_property
-    def float_bin(self) -> IntensityBinFolder | None:
-        """The quantitative `Float/Bin` source, or None when it is absent."""
-        return open_folder(self._root / _FLOAT / _BIN, IntensityBinFolder)
-
-    @cached_property
-    def float_txt(self) -> IntensityTxtFolder | None:
-        """The quantitative `Float/Txt` source, or None when it is absent."""
-        return open_folder(self._root / _FLOAT / _TXT, IntensityTxtFolder)
-
-    @cached_property
-    def previews(self) -> IntensityTifFolder | None:
-        """The uint8 `Image` preview folder, or None when it is absent."""
-        return open_folder(self._root / _IMAGE, IntensityTifFolder)
-
-    @property
-    def quantitative(self) -> IntensityFloatSequence | None:
-        """The quantitative source, `Float/Bin` preferred over `Float/Txt`, or None."""
-        return self.float_bin or self.float_txt
-
-    @cached_property
-    def frame_counts(self) -> dict[str, int]:
-        """The frame count of each present source, keyed by accessor name."""
-        sources = {
-            "float_bin": self.float_bin,
-            "float_txt": self.float_txt,
-            "previews": self.previews,
-        }
-        return {name: len(seq) for name, seq in sources.items() if seq is not None}
+        super().__init__(
+            root, IntensityBinFolder, IntensityTxtFolder, IntensityTifFolder
+        )
 
 
 def search_intensity_bin_folders(
@@ -125,7 +76,7 @@ def search_intensity_bin_folders(
     """
     return search_modality_folders(
         root,
-        f"{_INTENSITY}/{_FLOAT}/{_BIN}",
+        _BIN_SUBPATH,
         IntensityBinFolder,
         name_filter=name_filter,
         part_filter=part_filter,
@@ -155,7 +106,7 @@ def search_intensity_txt_folders(
     """
     return search_modality_folders(
         root,
-        f"{_INTENSITY}/{_FLOAT}/{_TXT}",
+        _TXT_SUBPATH,
         IntensityTxtFolder,
         name_filter=name_filter,
         part_filter=part_filter,
@@ -185,7 +136,7 @@ def search_intensity_preview_folders(
     """
     return search_modality_folders(
         root,
-        f"{_INTENSITY}/{_IMAGE}",
+        _PREVIEW_SUBPATH,
         IntensityTifFolder,
         name_filter=name_filter,
         part_filter=part_filter,

@@ -7,7 +7,7 @@ from kaparoo.filters import Literal
 
 from iivs.dhm.data.phase.base import PhaseFloatSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, save_phase_bin
-from iivs.dhm.data.phase.group import (
+from iivs.dhm.data.phase.layout import (
     PHASE_TREE,
     PhaseGroup,
     search_phase_bin_folders,

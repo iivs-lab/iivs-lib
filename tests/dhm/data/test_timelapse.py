@@ -10,11 +10,11 @@ from iivs.common.data.timestamp import TimestampsFixedFPS
 from iivs.dhm.data.hologram.raw import HologramRawFile, save_hologram_raw
 from iivs.dhm.data.hologram.tif import HologramTifFolder
 from iivs.dhm.data.intensity.bin import save_intensity_bin
-from iivs.dhm.data.intensity.group import IntensityGroup
+from iivs.dhm.data.intensity.layout import IntensityGroup
 from iivs.dhm.data.intensity.txt import save_intensity_txt
 from iivs.dhm.data.phase.bin import PhaseBinFolder, save_phase_bin
 from iivs.dhm.data.phase.bounds import PhaseBounds, write_phbounds
-from iivs.dhm.data.phase.group import PhaseGroup
+from iivs.dhm.data.phase.layout import PhaseGroup
 from iivs.dhm.data.phase.txt import save_phase_txt
 from iivs.dhm.data.timelapse import (
     KOALA_TIMELAPSE_TREE,

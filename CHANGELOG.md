@@ -35,7 +35,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `list[PhaseBinFolder]`, with `predicate` on it), sharing `search_timelapses`'s
   signature and delegating to the shared `iivs.dhm.data.koala` helpers `open_folder`
   (tolerant folder open), `search_modality_dirs` (the `search_dirs`-backed walk), and
-  `search_modality_folders` (walk + open + filter).
+  `search_modality_folders` (walk + open + filter). Phase / intensity share a
+  `koala.ModalityGroup` base and the `koala.float_modality_tree` spec builder; each
+  modality's `layout` module holds its group, tree, and searches.
 - `iivs.common.visualization`: `auto_rescale`, a Fiji/ImageJ-style auto-contrast
   for any numeric image or stack (Enhance Contrast + Normalize). It clips
   `saturated`% of pixels in total via the matching `nanpercentile` bounds

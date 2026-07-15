@@ -62,7 +62,7 @@ from iivs.dhm.data.intensity.dispatch import (
     save_intensity,
     save_intensity_folder,
 )
-from iivs.dhm.data.intensity.group import (
+from iivs.dhm.data.intensity.layout import (
     INTENSITY_TREE,
     IntensityGroup,
     search_intensity_bin_folders,

@@ -69,7 +69,7 @@ from iivs.dhm.data.phase.dispatch import (
     save_phase,
     save_phase_folder,
 )
-from iivs.dhm.data.phase.group import (
+from iivs.dhm.data.phase.layout import (
     PHASE_TREE,
     PhaseGroup,
     search_phase_bin_folders,

@@ -5,7 +5,7 @@ import pytest
 import tifffile
 from kaparoo.filesystem import hierarchy
 
-from iivs.dhm.data.hologram.group import (
+from iivs.dhm.data.hologram.layout import (
     HOLOGRAM_TREE,
     open_holograms,
     search_holograms,
