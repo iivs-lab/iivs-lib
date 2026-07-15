@@ -285,8 +285,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
             frame = self._decode_in(index, unit)
             finite = frame[np.isfinite(frame)]
             if finite.size == 0:
-                msg = f"phase value range of frame {index} is undefined (every value is non-finite)"
-                raise ValueError(msg)
+                raise ValueError(self._undefined_range_msg(index))
             return float(finite.min()), float(finite.max())
         return self._global_value_range_in(unit)
 
@@ -299,8 +298,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         cache = self._value_range_by_unit
         if unit not in cache:
             if len(self) == 0:
-                msg = "phase value range is undefined for an empty sequence"
-                raise ValueError(msg)
+                raise ValueError(self._EMPTY_RANGE_MSG)
 
             minimum, maximum = math.inf, -math.inf
             for i in range(len(self)):
@@ -310,8 +308,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
                     minimum = min(minimum, float(finite.min()))
                     maximum = max(maximum, float(finite.max()))
             if minimum > maximum:
-                msg = "phase value range is undefined (every value is non-finite)"
-                raise ValueError(msg)
+                raise ValueError(self._undefined_range_msg(None))
             cache[unit] = (minimum, maximum)
         return cache[unit]
 

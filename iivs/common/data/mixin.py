@@ -5,6 +5,7 @@ __all__ = ("FrameShapedMixin", "ValueRangeMixin")
 import math
 from abc import ABC, abstractmethod
 from functools import cached_property
+from typing import ClassVar
 
 import numpy as np
 from kaparoo.data.sequences import DataSequence
@@ -33,29 +34,35 @@ class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
     """Mixin adding `value_range` to a `DataSequence` of numeric image frames.
 
     Mix into a `DataSequence[NDArray[T], M]` with matching `T` / `M` to expose the
-    `(min, max)` of its values: `value_range()` over every frame, or `value_range(index)`
-    of one frame. Values are taken as `get_item` yields them (e.g. a modality's
-    `target_unit`); a subclass may widen the signature to convert first (see phase). The
-    global range reads every frame, so it is computed once and cached for the sequence's
-    lifetime; per-frame ranges are cheap and recomputed each call.
+    `(min, max)` of its values: `value_range()` over all frames, or `value_range(index)`
+    of one frame. Values are taken as `get_item` yields them; a subclass may widen the
+    signature to convert first. The global range reads every frame, so it is computed
+    once and cached for the sequence's lifetime; per-frame ranges are cheap and
+    recomputed each call.
     """
+
+    _EMPTY_RANGE_MSG: ClassVar[str] = "value range is undefined for an empty sequence"
+
+    @staticmethod
+    def _undefined_range_msg(index: int | None) -> str:
+        """The error text for a value range with no finite input (`None` = global)."""
+        where = f"of frame {index} " if index is not None else ""
+        return f"value range {where}is undefined (all non-finite)"
 
     @cached_property
     def _global_value_range(self) -> tuple[float, float]:
         if len(self) == 0:
-            msg = "value range is undefined for an empty sequence"
-            raise ValueError(msg)
+            raise ValueError(self._EMPTY_RANGE_MSG)
 
         minimum, maximum = math.inf, -math.inf
         for i in range(len(self)):
             frame = self.get_item(i)
-            finite = frame[np.isfinite(frame)]
+            finite: NDArray[T] = frame[np.isfinite(frame)]
             if finite.size:
                 minimum = min(minimum, float(finite.min()))
                 maximum = max(maximum, float(finite.max()))
         if minimum > maximum:
-            msg = "value range is undefined (every value is non-finite)"
-            raise ValueError(msg)
+            raise ValueError(self._undefined_range_msg(None))
         return minimum, maximum
 
     def value_range(self, index: int | None = None) -> tuple[float, float]:
@@ -75,10 +82,7 @@ class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
         if index is None:
             return self._global_value_range
         frame = self.get_item(index)
-        finite = frame[np.isfinite(frame)]
+        finite: NDArray[T] = frame[np.isfinite(frame)]
         if finite.size == 0:
-            msg = (
-                f"value range of frame {index} is undefined (every value is non-finite)"
-            )
-            raise ValueError(msg)
+            raise ValueError(self._undefined_range_msg(index))
         return float(finite.min()), float(finite.max())
