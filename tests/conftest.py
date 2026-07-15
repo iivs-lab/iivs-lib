@@ -18,7 +18,7 @@ def _is_timelapse(path: Path) -> bool:
 
 
 def _timelapses() -> list[Path]:
-    """The Koala time-lapse folders under `tests/fixtures/`, sorted (empty if absent)."""
+    """The time-lapse folders under `tests/fixtures/`, sorted (empty if absent)."""
     if not _FIXTURES_ROOT.is_dir():
         return []
     return sorted(child for child in _FIXTURES_ROOT.iterdir() if _is_timelapse(child))

@@ -140,12 +140,12 @@ is why `intensity` has no bounds record — see its README.)
 
 ## Time-lapse composition (`PhaseGroup`)
 
-`PhaseGroup(phase_dir)` opens one acquisition's `Phase/` folder: `.float_bin` /
-`.float_txt` (the `Float/{Bin,Txt}` sources, which may coexist), `.quantitative`
-(`.bin`-preferred), `.previews` (the uint8 `Image` folder), and `.frame_counts`. The
+`PhaseGroup(phase_dir)` opens one acquisition's `Phase/` folder: `.bin_folder` /
+`.txt_folder` (the `Float/{Bin,Txt}` sources, which may coexist), `.quantitative`
+(`.bin`-preferred), `.tif_folder` (the uint8 `Image` preview), and `.frame_counts`. The
 folder's layout is the `PHASE_TREE` `hierarchy` spec, and the format-specific searches
 `search_phase_bin_folders(root, ...)` / `search_phase_txt_folders` /
-`search_phase_preview_folders` return that one folder (a `PhaseBinFolder` /
+`search_phase_tif_folders` return that one folder (a `PhaseBinFolder` /
 `PhaseTxtFolder` / `PhaseTifFolder`) for every time-lapse under `root` that has it (via
 `kaparoo`'s `search_dirs`, with `predicate` a check on the opened folder). These are what
 [`iivs.dhm.data.timelapse`](../README.md#opening-a-whole-time-lapse-koalatimelapse)'s

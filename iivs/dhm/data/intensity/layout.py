@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 __all__ = (
-    "INTENSITY_FLOAT_BIN",
-    "INTENSITY_FLOAT_TXT",
-    "INTENSITY_IMAGE",
     "INTENSITY_TREE",
     "IntensityGroup",
     "search_intensity_bin_folders",
-    "search_intensity_preview_folders",
+    "search_intensity_tif_folders",
     "search_intensity_txt_folders",
 )
 
@@ -17,14 +14,13 @@ from iivs.dhm.data.intensity.bin import IntensityBinFolder
 from iivs.dhm.data.intensity.tif import IntensityTifFolder
 from iivs.dhm.data.intensity.txt import IntensityTxtFolder
 from iivs.dhm.data.koala import (
-    BIN,
-    FLOAT,
-    IMAGE,
     INTENSITY,
-    TXT,
-    ModalityGroup,
-    float_modality_tree,
-    search_modality_folders,
+    INTENSITY_FLOAT_BIN,
+    INTENSITY_FLOAT_TXT,
+    INTENSITY_IMAGE,
+    ReconstructionGroup,
+    reconstruction_tree,
+    search_timelapse_subfolders,
 )
 
 if TYPE_CHECKING:
@@ -35,25 +31,19 @@ if TYPE_CHECKING:
     from kaparoo.filters import Filter
     from kaparoo.filters.types import FilterDict
 
-INTENSITY_FLOAT_BIN = f"{INTENSITY}/{FLOAT}/{BIN}"
-"""The `Intensity/Float/Bin` folder's time-lapse-relative path."""
-INTENSITY_FLOAT_TXT = f"{INTENSITY}/{FLOAT}/{TXT}"
-"""The `Intensity/Float/Txt` folder's time-lapse-relative path."""
-INTENSITY_IMAGE = f"{INTENSITY}/{IMAGE}"
-"""The `Intensity/Image` preview folder's time-lapse-relative path."""
-
-INTENSITY_TREE = float_modality_tree(INTENSITY)
-"""The `Intensity/` subtree of a Koala time-lapse (`Float/{Bin,Txt}` + `Image`), a spec."""
+INTENSITY_TREE = reconstruction_tree(INTENSITY)
+"""The `Intensity/` subtree of a Koala time-lapse (`Float/{Bin,Txt}` + `Image`)."""
 
 
 class IntensityGroup(
-    ModalityGroup[IntensityBinFolder, IntensityTxtFolder, IntensityTifFolder]
+    ReconstructionGroup[IntensityBinFolder, IntensityTxtFolder, IntensityTifFolder]
 ):
     """The intensity modality within a Koala time-lapse, from its `Intensity/` folder.
 
-    Exposes each format present: `float_bin` / `float_txt` (the `Float/{Bin,Txt}` sources,
-    which may coexist) and `previews` (the uint8 `Image` folder), plus the `.bin`-preferred
-    `quantitative` and `frame_counts`. Each accessor is None when its source is absent.
+    Exposes each format present: `bin_folder` / `txt_folder` (the `Float/{Bin,Txt}`
+    sources, which may coexist) and `tif_folder` (the uint8 `Image` preview), plus the
+    `.bin`-preferred `quantitative` and `frame_counts`. Each accessor is None when its
+    source is absent.
 
     Args:
         root: The `Intensity/` folder. Not required to exist: a missing one makes every
@@ -77,14 +67,13 @@ def search_intensity_bin_folders(
     max_depth: int | None = None,
     ordered: bool = True,
 ) -> list[IntensityBinFolder]:
-    """Return the `Intensity/Float/Bin` folder of every time-lapse under `root` with one.
+    """Return the `Intensity/Float/Bin` folder of each time-lapse under `root` with one.
 
-    Delegates to `search_modality_folders` (no manual recursion); a time-lapse without a
-    non-empty `Intensity/Float/Bin` is skipped, and `predicate` checks the opened
-    `IntensityBinFolder`. `name_filter` matches the time-lapse folder's name; the other
-    `search_dirs` controls carry through.
+    A time-lapse without a non-empty `Intensity/Float/Bin` is skipped, and `predicate`
+    checks the opened `IntensityBinFolder`. `name_filter` matches the time-lapse
+    folder's own name.
     """
-    return search_modality_folders(
+    return search_timelapse_subfolders(
         root,
         INTENSITY_FLOAT_BIN,
         IntensityBinFolder,
@@ -109,12 +98,12 @@ def search_intensity_txt_folders(
     max_depth: int | None = None,
     ordered: bool = True,
 ) -> list[IntensityTxtFolder]:
-    """Return the `Intensity/Float/Txt` folder of every time-lapse under `root` with one.
+    """Return the `Intensity/Float/Txt` folder of each time-lapse under `root` with one.
 
     The `.txt` twin of `search_intensity_bin_folders`; `predicate` checks the opened
     `IntensityTxtFolder`.
     """
-    return search_modality_folders(
+    return search_timelapse_subfolders(
         root,
         INTENSITY_FLOAT_TXT,
         IntensityTxtFolder,
@@ -128,7 +117,7 @@ def search_intensity_txt_folders(
     )
 
 
-def search_intensity_preview_folders(
+def search_intensity_tif_folders(
     root: StrPath,
     *,
     name_filter: Filter | FilterDict | None = None,
@@ -144,7 +133,7 @@ def search_intensity_preview_folders(
     The preview twin of `search_intensity_bin_folders`; `predicate` checks the opened
     `IntensityTifFolder`.
     """
-    return search_modality_folders(
+    return search_timelapse_subfolders(
         root,
         INTENSITY_IMAGE,
         IntensityTifFolder,

@@ -3,7 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import tifffile
-from kaparoo.filesystem import DirectoryNotFoundError, hierarchy
+from kaparoo.filesystem import DirectoryNotFoundError
+from kaparoo.filesystem.hierarchy import Directory
 from kaparoo.filters import Literal
 
 from iivs.common.data.timestamp import TimestampsFixedFPS
@@ -95,7 +96,7 @@ def test_composes_modality_groups(tmp_path):
     assert isinstance(timelapse.phase, PhaseGroup)
     assert isinstance(timelapse.intensity, IntensityGroup)
     assert timelapse.phase.root == tmp_path / "Phase"
-    assert isinstance(timelapse.phase.float_bin, PhaseBinFolder)  # group access
+    assert isinstance(timelapse.phase.bin_folder, PhaseBinFolder)  # group access
 
     assert isinstance(timelapse.holograms, HologramRawFile)
     assert len(timelapse.holograms) == n
@@ -130,12 +131,12 @@ def test_frame_counts_merge_the_groups(tmp_path):
     n = _build(tmp_path, holograms="raw")
     timelapse = KoalaTimelapse(tmp_path)
     assert timelapse.frame_counts == {
-        "phase_float_bin": n,
-        "phase_float_txt": n,
-        "phase_previews": n,
-        "intensity_float_bin": n,
-        "intensity_float_txt": n,
-        "intensity_previews": n,
+        "phase_bin": n,
+        "phase_txt": n,
+        "phase_tif": n,
+        "intensity_bin": n,
+        "intensity_txt": n,
+        "intensity_tif": n,
         "holograms": n,
         "timestamps": n,
     }
@@ -149,7 +150,7 @@ def test_counts_disagree_is_detected(tmp_path):
     _write_timestamps(tmp_path, 2)  # one fewer timing row than the frames
     timelapse = KoalaTimelapse(tmp_path)
     assert timelapse.frame_counts["timestamps"] == 2
-    assert timelapse.frame_counts["phase_float_bin"] == 3
+    assert timelapse.frame_counts["phase_bin"] == 3
     assert not timelapse.counts_agree
 
 
@@ -172,7 +173,7 @@ def test_holograms_only_has_no_reconstruction(tmp_path):
 
 def test_timestamps_fixed_fps_when_no_file(tmp_path):
     n = _build(tmp_path, holograms="raw", timestamps=False)
-    ts = KoalaTimelapse(tmp_path, fps=10.0).timestamps
+    ts = KoalaTimelapse(tmp_path, frame_rate=10.0).timestamps
     assert isinstance(ts, TimestampsFixedFPS)
     assert len(ts) == n
     assert ts.mean_frame_rate == pytest.approx(10.0)
@@ -180,7 +181,9 @@ def test_timestamps_fixed_fps_when_no_file(tmp_path):
 
 def test_timestamps_file_wins_over_fps(tmp_path):
     _build(tmp_path, timestamps=True)
-    assert isinstance(KoalaTimelapse(tmp_path, fps=10.0).timestamps, TimestampsTxtFile)
+    assert isinstance(
+        KoalaTimelapse(tmp_path, frame_rate=10.0).timestamps, TimestampsTxtFile
+    )
 
 
 def test_timestamps_none_without_file_or_fps(tmp_path):
@@ -190,7 +193,7 @@ def test_timestamps_none_without_file_or_fps(tmp_path):
 
 def test_timestamps_fps_without_frames_is_none(tmp_path):
     (tmp_path / "Phase").mkdir(parents=True)  # a marker dir, but no frame data
-    assert KoalaTimelapse(tmp_path, fps=10.0).timestamps is None
+    assert KoalaTimelapse(tmp_path, frame_rate=10.0).timestamps is None
 
 
 # ============================== #
@@ -232,7 +235,7 @@ def test_accessors_are_cached(tmp_path):
 
 
 def test_spec_is_a_directory():
-    assert isinstance(KOALA_TIMELAPSE_TREE, hierarchy.Directory)
+    assert isinstance(KOALA_TIMELAPSE_TREE, Directory)
 
 
 def test_validate_ok_on_wellformed_timelapse(tmp_path):
@@ -268,7 +271,7 @@ def test_search_timelapses_returns_sorted_list(tmp_path):
 
 def test_search_timelapses_finds_nested_by_depth(tmp_path):
     _build(tmp_path / "group" / "nested")  # a time-lapse at depth 2
-    # default (unbounded depth) finds it; max_depth=1 does not ('group' is no time-lapse)
+    # default (unbounded depth) finds it; max_depth=1 does not ('group' is not one)
     assert [t.root.name for t in search_timelapses(tmp_path)] == ["nested"]
     assert search_timelapses(tmp_path, max_depth=1) == []
 
@@ -306,7 +309,7 @@ def test_search_timelapses_require_file(tmp_path):
 
 def test_search_timelapses_forwards_fps(tmp_path):
     n = _build(tmp_path / "t", holograms="raw", timestamps=False)
-    (timelapse,) = search_timelapses(tmp_path, fps=20.0)
+    (timelapse,) = search_timelapses(tmp_path, frame_rate=20.0)
     assert isinstance(timelapse.timestamps, TimestampsFixedFPS)
     assert len(timelapse.timestamps) == n
 

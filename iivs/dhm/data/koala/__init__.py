@@ -19,12 +19,15 @@ them:
   helpers `file_extension`, `ensure_file_extension` (with its `add=True` mode),
   and the `UnsupportedExtensionError` raised on a bad extension are imported
   directly from `kaparoo.filesystem` where needed, not re-exported here.
-- `layout` — the fixed Koala layout-name constants (`PHASE`, `INTENSITY`, `HOLOGRAMS`,
-  `FLOAT`, `BIN`, `TXT`, `IMAGE`, `TIMESTAMPS`, `PHBOUNDS`) and the shared time-lapse
-  machinery the per-modality `layout` modules build on: the tolerant folder opener
-  (`open_folder`), the `search_dirs`-backed walkers (`search_modality_dirs`,
-  `search_modality_folders`), the float32 modality group base (`ModalityGroup`), and the
-  `<Modality>/{Float/{Bin,Txt}, Image}` spec builder (`float_modality_tree`).
+- `constants` — the fixed Koala layout vocabulary: the atomic names (`PHASE`,
+  `INTENSITY`, `HOLOGRAMS`, `FLOAT`, `BIN`, `TXT`, `IMAGE`, `TIMESTAMPS`, `PHBOUNDS`)
+  and the per-modality path combinations built from them (`PHASE_FLOAT_BIN`,
+  `PHASE_IMAGE`, `INTENSITY_FLOAT_BIN`, ...).
+- `layout` — the shared time-lapse machinery the per-modality `layout` modules build on:
+  the tolerant folder opener (`open_folder`), the time-lapse subfolder walkers
+  (`search_timelapse_subdirs`, `search_timelapse_subfolders`),
+  the reconstruction group base (`ReconstructionGroup`), and the
+  `<Modality>/{Float/{Bin,Txt}, Image}` spec builder (`reconstruction_tree`).
 
 The technique-agnostic primitives live in `iivs.common.data`: the `.npy` reader / writer
 (`read_npy_shape`, `write_npy`), the same-shape mixin `FrameShapedMixin`, the array
@@ -40,7 +43,13 @@ __all__ = (
     "HOLOGRAMS",
     "IMAGE",
     "INTENSITY",
+    "INTENSITY_FLOAT_BIN",
+    "INTENSITY_FLOAT_TXT",
+    "INTENSITY_IMAGE",
     "PHASE",
+    "PHASE_FLOAT_BIN",
+    "PHASE_FLOAT_TXT",
+    "PHASE_IMAGE",
     "PHBOUNDS",
     "TIMESTAMPS",
     "TXT",
@@ -53,22 +62,39 @@ __all__ = (
     "KoalaFloatFileList",
     "KoalaFrameFolder",
     "KoalaTxtHeaderCodec",
-    "ModalityGroup",
+    "ReconstructionGroup",
     "ValidationLevel",
     "detect_koala_format",
-    "float_modality_tree",
     "koala_frame_name",
     "load_bin",
     "load_txt",
     "load_uint8_tif",
     "open_folder",
-    "search_modality_dirs",
-    "search_modality_folders",
+    "reconstruction_tree",
+    "search_timelapse_subdirs",
+    "search_timelapse_subfolders",
     "write_bin",
     "write_txt",
 )
 
 from iivs.dhm.data.koala.bin import KoalaBinHeader, load_bin, write_bin
+from iivs.dhm.data.koala.constants import (
+    BIN,
+    FLOAT,
+    HOLOGRAMS,
+    IMAGE,
+    INTENSITY,
+    INTENSITY_FLOAT_BIN,
+    INTENSITY_FLOAT_TXT,
+    INTENSITY_IMAGE,
+    PHASE,
+    PHASE_FLOAT_BIN,
+    PHASE_FLOAT_TXT,
+    PHASE_IMAGE,
+    PHBOUNDS,
+    TIMESTAMPS,
+    TXT,
+)
 from iivs.dhm.data.koala.float import (
     FLOAT_FORMATS,
     FloatFormat,
@@ -88,19 +114,10 @@ from iivs.dhm.data.koala.image import (
     load_uint8_tif,
 )
 from iivs.dhm.data.koala.layout import (
-    BIN,
-    FLOAT,
-    HOLOGRAMS,
-    IMAGE,
-    INTENSITY,
-    PHASE,
-    PHBOUNDS,
-    TIMESTAMPS,
-    TXT,
-    ModalityGroup,
-    float_modality_tree,
+    ReconstructionGroup,
     open_folder,
-    search_modality_dirs,
-    search_modality_folders,
+    reconstruction_tree,
+    search_timelapse_subdirs,
+    search_timelapse_subfolders,
 )
 from iivs.dhm.data.koala.txt import KoalaTxtHeaderCodec, load_txt, write_txt

@@ -17,7 +17,7 @@ from iivs.dhm.data.koala import (
     load_txt,
     load_uint8_tif,
     open_folder,
-    search_modality_dirs,
+    search_timelapse_subdirs,
     write_bin,
 )
 from iivs.dhm.data.phase.base import PhaseSequence
@@ -225,12 +225,12 @@ def test_open_folder_empty_folder_is_none(tmp_path):
     assert open_folder(empty, PhaseBinFolder) is None
 
 
-def test_search_modality_dirs(tmp_path):
+def test_search_timelapse_subdirs(tmp_path):
     (tmp_path / "sA" / "Phase").mkdir(parents=True)
     (tmp_path / "sB" / "Phase").mkdir(parents=True)
     (tmp_path / "other").mkdir()  # holds no Phase/ subdir
 
-    found = search_modality_dirs(tmp_path, "Phase")
+    found = search_timelapse_subdirs(tmp_path, "Phase")
     assert [p.parent.name for p in found] == ["sA", "sB"]  # the time-lapse folders
     assert all(p.name == "Phase" for p in found)
 

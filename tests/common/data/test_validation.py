@@ -27,7 +27,10 @@ def test_rejects_non_float32():
 
 def test_rejects_unknown_on_nonfinite():
     with pytest.raises(ValueError, match="on_nonfinite must be"):
-        validate_float32_array(np.zeros((2, 2), dtype=np.float32), on_nonfinite="bogus")  # ty: ignore[invalid-argument-type]
+        validate_float32_array(
+            np.zeros((2, 2), dtype=np.float32),
+            on_nonfinite="bogus",  # ty: ignore[invalid-argument-type]
+        )
 
 
 def test_ignore_accepts_nonfinite():

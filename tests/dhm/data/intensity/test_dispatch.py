@@ -35,7 +35,7 @@ IMG = np.arange(6, dtype=np.float32).reshape(2, 3)
 
 
 def _save(path, ext):
-    """Write IMG at `path` through `save_intensity`, supplying pixel_size for bin/txt."""
+    """Write IMG at `path` via `save_intensity`, supplying pixel_size for bin/txt."""
     if ext == "npy":
         save_intensity(path, IMG)
     else:

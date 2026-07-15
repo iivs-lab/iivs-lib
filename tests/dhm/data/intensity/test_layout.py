@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import tifffile
-from kaparoo.filesystem import hierarchy
+from kaparoo.filesystem.hierarchy import Directory
 from kaparoo.filters import Literal
 
 from iivs.dhm.data.intensity.base import IntensityFloatSequence
@@ -11,7 +11,7 @@ from iivs.dhm.data.intensity.layout import (
     INTENSITY_TREE,
     IntensityGroup,
     search_intensity_bin_folders,
-    search_intensity_preview_folders,
+    search_intensity_tif_folders,
     search_intensity_txt_folders,
 )
 from iivs.dhm.data.intensity.tif import IntensityTifFolder
@@ -53,12 +53,12 @@ def test_group_opens_every_format(tmp_path):
     _img(intensity / "Image", 2)
     group = IntensityGroup(intensity)
 
-    assert isinstance(group.float_bin, IntensityBinFolder)
-    assert isinstance(group.float_txt, IntensityTxtFolder)
-    assert isinstance(group.previews, IntensityTifFolder)
+    assert isinstance(group.bin_folder, IntensityBinFolder)
+    assert isinstance(group.txt_folder, IntensityTxtFolder)
+    assert isinstance(group.tif_folder, IntensityTifFolder)
     assert isinstance(group.quantitative, IntensityFloatSequence)
-    assert group.quantitative is group.float_bin  # .bin preferred
-    assert group.frame_counts == {"float_bin": 2, "float_txt": 2, "previews": 2}
+    assert group.quantitative is group.bin_folder  # .bin preferred
+    assert group.frame_counts == {"bin": 2, "txt": 2, "tif": 2}
     assert group.root == intensity
 
 
@@ -66,16 +66,16 @@ def test_group_quantitative_falls_back_to_txt(tmp_path):
     intensity = tmp_path / "Intensity"
     _txt(intensity / "Float" / "Txt", 2)  # no Float/Bin
     group = IntensityGroup(intensity)
-    assert group.float_bin is None
+    assert group.bin_folder is None
     assert isinstance(group.quantitative, IntensityTxtFolder)
-    assert group.frame_counts == {"float_txt": 2}
+    assert group.frame_counts == {"txt": 2}
 
 
 def test_group_absent_is_all_none(tmp_path):
     group = IntensityGroup(tmp_path / "Intensity")  # the folder does not exist
-    assert group.float_bin is None
-    assert group.float_txt is None
-    assert group.previews is None
+    assert group.bin_folder is None
+    assert group.txt_folder is None
+    assert group.tif_folder is None
     assert group.quantitative is None
     assert group.frame_counts == {}
 
@@ -86,18 +86,18 @@ def test_group_repr(tmp_path):
 
 
 def test_intensity_tree_models_the_intensity_folder():
-    assert isinstance(INTENSITY_TREE, hierarchy.Directory)
+    assert isinstance(INTENSITY_TREE, Directory)
     assert INTENSITY_TREE.name.matches("Intensity")
 
 
-def _intensity_timelapse(root, *, bins=True, txts=True, previews=True, n=2):
+def _intensity_timelapse(root, *, bins=True, txts=True, tifs=True, n=2):
     """Build an `Intensity/` folder under `root` with the requested formats."""
     intensity = root / "Intensity"
     if bins:
         _bin(intensity / "Float" / "Bin", n)
     if txts:
         _txt(intensity / "Float" / "Txt", n)
-    if previews:
+    if tifs:
         _img(intensity / "Image", n)
 
 
@@ -116,12 +116,12 @@ def test_search_intensity_bin_folders(tmp_path):
     assert [_timelapse_name(f) for f in folders] == ["tlA", "tlB"]
 
 
-def test_search_intensity_txt_and_preview_folders(tmp_path):
+def test_search_intensity_txt_and_tif_folders(tmp_path):
     _intensity_timelapse(tmp_path / "tl")
     txts = search_intensity_txt_folders(tmp_path)
-    previews = search_intensity_preview_folders(tmp_path)
+    tifs = search_intensity_tif_folders(tmp_path)
     assert [type(f).__name__ for f in txts] == ["IntensityTxtFolder"]
-    assert [type(f).__name__ for f in previews] == ["IntensityTifFolder"]
+    assert [type(f).__name__ for f in tifs] == ["IntensityTifFolder"]
 
 
 def test_search_intensity_bin_folders_name_filter_and_predicate(tmp_path):

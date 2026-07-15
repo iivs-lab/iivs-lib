@@ -1,28 +1,21 @@
 from __future__ import annotations
 
 __all__ = (
-    "BIN",
-    "FLOAT",
-    "HOLOGRAMS",
-    "IMAGE",
-    "INTENSITY",
-    "PHASE",
-    "PHBOUNDS",
-    "TIMESTAMPS",
-    "TXT",
-    "ModalityGroup",
-    "float_modality_tree",
+    "ReconstructionGroup",
     "open_folder",
-    "search_modality_dirs",
-    "search_modality_folders",
+    "reconstruction_tree",
+    "search_timelapse_subdirs",
+    "search_timelapse_subfolders",
 )
 
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from kaparoo.filesystem import hierarchy
+from kaparoo.filesystem.hierarchy import Directory
 from kaparoo.filesystem.search import search_dirs
+
+from iivs.dhm.data.koala.constants import BIN, FLOAT, IMAGE, TXT
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -32,26 +25,9 @@ if TYPE_CHECKING:
     from kaparoo.filters import Filter
     from kaparoo.filters.types import FilterDict
 
+    from iivs.dhm.data.koala.float import KoalaFloatFileFolder
     from iivs.dhm.data.koala.frame import KoalaFrameFolder
-
-
-# ============================================================ #
-#                       layout names                           #
-# ============================================================ #
-
-# Koala's fixed acquisition-layout vocabulary: the modality folders (`PHASE`,
-# `INTENSITY`, `HOLOGRAMS`), the float32 subfolders (`FLOAT`, `BIN`, `TXT`) and the
-# preview folder (`IMAGE`), plus the root files (`TIMESTAMPS`, `PHBOUNDS`). Per-modality
-# path combinations (e.g. `PHASEFLOATBIN`) live in each modality's `layout` module.
-PHASE = "Phase"
-INTENSITY = "Intensity"
-HOLOGRAMS = "Holograms"
-FLOAT = "Float"
-BIN = "Bin"
-TXT = "Txt"
-IMAGE = "Image"
-TIMESTAMPS = "timestamps.txt"
-PHBOUNDS = "phbounds.txt"
+    from iivs.dhm.data.koala.image import ImageTifFolder
 
 
 # ============================================================ #
@@ -60,11 +36,10 @@ PHBOUNDS = "phbounds.txt"
 
 
 def open_folder[T](path: StrPath, folder: Callable[..., T]) -> T | None:
-    """Open `folder(path, validate=None)` when `path` is a populated directory, else None.
+    """Open `path` with `folder` when it is a populated directory, else None.
 
-    The tolerant opener the modality groups and searches build on: an absent directory,
-    or a `FileNotFoundError` from an empty numbered folder, becomes None instead of
-    raising.
+    Tolerant: an absent directory, or a present-but-empty numbered folder, yields None
+    rather than raising.
 
     Type Parameters:
         T: The opened folder type (e.g. `PhaseBinFolder`).
@@ -78,9 +53,9 @@ def open_folder[T](path: StrPath, folder: Callable[..., T]) -> T | None:
     return None
 
 
-def search_modality_dirs(
+def search_timelapse_subdirs(
     root: StrPath,
-    folder: str,
+    subpath: str,
     *,
     name_filter: Filter | FilterDict | None = None,
     part_filter: Filter | FilterDict | None = None,
@@ -89,41 +64,40 @@ def search_modality_dirs(
     max_depth: int | None = None,
     ordered: bool = True,
 ) -> list[Path]:
-    """Return each `<time-lapse>/<folder>` path under `root`, via `search_dirs`.
+    """Return each `<time-lapse>/<subpath>` path under `root`.
 
-    Finds the time-lapse directories that hold a `folder` subdirectory (e.g. `Phase`) and
-    returns that subdirectory for each, so a modality search can wrap it. The walk is
-    delegated to `search_dirs` (no manual recursion): `name_filter` matches the
-    *time-lapse* folder's name, `part_filter` its parent's relative path, and the depth /
-    `exclude` / `ordered` controls carry through.
+    Finds each time-lapse directory holding `subpath` (a relative folder like `Phase` or
+    `Phase/Float/Bin`) and returns that subfolder. `name_filter` matches the
+    *time-lapse* folder's own name and `part_filter` its parent's relative path.
 
     Args:
         root: The directory to scan.
-        folder: The modality subdirectory each time-lapse must hold (e.g. "Phase").
+        subpath: The relative subfolder each time-lapse must hold (e.g. "Phase" or
+            "Phase/Float/Bin").
         name_filter: Filter on each candidate time-lapse folder's own name.
         part_filter: Filter on each visited parent directory's relative path.
-        exclude: Path(s) to prune, as in `search_dirs`.
+        exclude: Path(s) to prune from the walk.
         min_depth: Shallowest depth to include (>= 1).
         max_depth: Deepest depth to include, or None for unlimited.
         ordered: Sort the results by path. Defaults to True.
 
     Returns:
-        The `<time-lapse>/<folder>` directories, in `search_dirs` order.
+        The matching `<time-lapse>/<subpath>` directories.
     """
     dirs = search_dirs(
         root,
         name_filter=name_filter,
         part_filter=part_filter,
-        predicate=lambda path: (path / folder).is_dir(),
+        predicate=lambda path: (path / subpath).is_dir(),
         exclude=exclude,
         min_depth=min_depth,
         max_depth=max_depth,
         ordered=ordered,
     )
-    return [Path(directory) / folder for directory in dirs]
+    return [Path(directory) / subpath for directory in dirs]
 
 
-def search_modality_folders[T](
+def search_timelapse_subfolders[T](
     root: StrPath,
     subpath: str,
     folder: Callable[..., T],
@@ -136,20 +110,19 @@ def search_modality_folders[T](
     max_depth: int | None = None,
     ordered: bool = True,
 ) -> list[T]:
-    """Open each `<time-lapse>/<subpath>` folder under `root`, skipping absent / empty ones.
+    """Open each `<time-lapse>/<subpath>` folder under `root`.
 
-    Finds the time-lapses holding `subpath` (a relative folder like ``"Phase/Float/Bin"``)
-    via `search_modality_dirs`, opens each with `open_folder` (so an empty one drops out
-    as None), and keeps the survivors passing `predicate` (a check on the opened folder).
-    The `search_dirs` filters (`name_filter` on the time-lapse folder's name, ...) carry
-    through.
+    Finds the time-lapses holding `subpath` (a relative path like
+    ``"Phase/Float/Bin"``), opens each (an empty one drops out as None), then keeps
+    those passing `predicate` (a check on the opened folder). `name_filter` matches the
+    time-lapse folder's own name.
 
     Type Parameters:
         T: The opened folder type (e.g. `PhaseBinFolder`).
     """
     opened = (
         open_folder(directory, folder)
-        for directory in search_modality_dirs(
+        for directory in search_timelapse_subdirs(
             root,
             subpath,
             name_filter=name_filter,
@@ -171,51 +144,54 @@ def search_modality_folders[T](
 # ============================================================ #
 
 
-def float_modality_tree(name: str) -> hierarchy.Directory:
-    """The `<name>/{Float/{Bin,Txt}, Image}` subtree shared by the float32 modalities.
+def reconstruction_tree(name: str) -> Directory:
+    """The `<name>/{Float/{Bin,Txt}, Image}` subtree shared by the reconstructions.
 
-    `Float/Bin` and `Float/Txt` are independent siblings (the same data in two
-    serializations may coexist); `Image` is the uint8 preview folder. Phase and intensity
-    each build their spec from this with their own `name`.
+    The layout of a Koala reconstruction modality (phase, intensity), as opposed to the
+    raw `Holograms`. `Float/Bin` and `Float/Txt` are independent siblings (the same data
+    in two serializations may coexist); `Image` is the uint8 preview folder. Phase and
+    intensity each build their spec from this with their own `name`.
     """
-    return hierarchy.Directory(
+    return Directory(
         name,
         [
-            hierarchy.Directory(
-                FLOAT, [hierarchy.Directory(BIN), hierarchy.Directory(TXT)]
-            ),
-            hierarchy.Directory(IMAGE),
+            Directory(FLOAT, [Directory(BIN), Directory(TXT)]),
+            Directory(IMAGE),
         ],
     )
 
 
-class ModalityGroup[B: KoalaFrameFolder, T: KoalaFrameFolder, P: KoalaFrameFolder]:
-    """A float32 modality's format folders within one time-lapse, opened from its folder.
+class ReconstructionGroup[
+    B: KoalaFloatFileFolder,
+    T: KoalaFloatFileFolder,
+    P: ImageTifFolder,
+]:
+    """A reconstruction's format folders within one time-lapse, opened from its folder.
 
-    The shared base for the Koala float32 modality groups (phase, intensity): a
-    ``<Modality>/`` folder exposing each format present, `float_bin` / `float_txt` (the
-    `Float/{Bin,Txt}` sources, which may coexist) and `previews` (the uint8 `Image`
-    folder), plus the `.bin`-preferred `quantitative` convenience and `frame_counts`.
-    Each accessor is None when its source is absent. A subclass binds the concrete
-    `KoalaFrameFolder` subtypes (its ``__init__`` passing them to `super().__init__`).
+    The shared base for the Koala reconstruction groups (phase, intensity): a
+    ``<Modality>/`` folder exposing each format present: `bin_folder` / `txt_folder`
+    (the quantitative `Float/{Bin,Txt}` sources, which may coexist) and `tif_folder`
+    (the uint8 `Image` preview), plus the `.bin`-preferred `quantitative` convenience
+    and `frame_counts`. Each accessor is None when its source is absent. A subclass
+    binds the concrete folder subtypes.
 
     Type Parameters:
         B: The `Float/Bin` folder type (e.g. `PhaseBinFolder`).
         T: The `Float/Txt` folder type.
-        P: The `Image` preview folder type.
+        P: The `Image` preview (`.tif`) folder type.
     """
 
     def __init__(
         self,
         root: StrPath,
-        bin_folder: type[B],
-        txt_folder: type[T],
-        preview_folder: type[P],
+        bin_cls: type[B],
+        txt_cls: type[T],
+        tif_cls: type[P],
     ) -> None:
         self._root = Path(root)
-        self._bin_folder = bin_folder
-        self._txt_folder = txt_folder
-        self._preview_folder = preview_folder
+        self._bin_cls = bin_cls
+        self._txt_cls = txt_cls
+        self._tif_cls = tif_cls
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({str(self._root)!r})"
@@ -226,31 +202,31 @@ class ModalityGroup[B: KoalaFrameFolder, T: KoalaFrameFolder, P: KoalaFrameFolde
         return self._root
 
     @cached_property
-    def float_bin(self) -> B | None:
+    def bin_folder(self) -> B | None:
         """The quantitative `Float/Bin` source, or None when it is absent."""
-        return open_folder(self._root / FLOAT / BIN, self._bin_folder)
+        return open_folder(self._root / FLOAT / BIN, self._bin_cls)
 
     @cached_property
-    def float_txt(self) -> T | None:
+    def txt_folder(self) -> T | None:
         """The quantitative `Float/Txt` source, or None when it is absent."""
-        return open_folder(self._root / FLOAT / TXT, self._txt_folder)
+        return open_folder(self._root / FLOAT / TXT, self._txt_cls)
 
     @cached_property
-    def previews(self) -> P | None:
+    def tif_folder(self) -> P | None:
         """The uint8 `Image` preview folder, or None when it is absent."""
-        return open_folder(self._root / IMAGE, self._preview_folder)
+        return open_folder(self._root / IMAGE, self._tif_cls)
 
     @property
     def quantitative(self) -> B | T | None:
         """The quantitative source, `Float/Bin` preferred over `Float/Txt`, or None."""
-        return self.float_bin or self.float_txt
+        return self.bin_folder or self.txt_folder
 
     @cached_property
     def frame_counts(self) -> dict[str, int]:
-        """The frame count of each present source, keyed by accessor name."""
+        """The frame count of each present source, keyed by `bin` / `txt` / `tif`."""
         sources: dict[str, KoalaFrameFolder | None] = {
-            "float_bin": self.float_bin,
-            "float_txt": self.float_txt,
-            "previews": self.previews,
+            "bin": self.bin_folder,
+            "txt": self.txt_folder,
+            "tif": self.tif_folder,
         }
         return {name: len(seq) for name, seq in sources.items() if seq is not None}

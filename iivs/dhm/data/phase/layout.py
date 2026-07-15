@@ -1,27 +1,23 @@
 from __future__ import annotations
 
 __all__ = (
-    "PHASE_FLOAT_BIN",
-    "PHASE_FLOAT_TXT",
-    "PHASE_IMAGE",
     "PHASE_TREE",
     "PhaseGroup",
     "search_phase_bin_folders",
-    "search_phase_preview_folders",
+    "search_phase_tif_folders",
     "search_phase_txt_folders",
 )
 
 from typing import TYPE_CHECKING
 
 from iivs.dhm.data.koala import (
-    BIN,
-    FLOAT,
-    IMAGE,
     PHASE,
-    TXT,
-    ModalityGroup,
-    float_modality_tree,
-    search_modality_folders,
+    PHASE_FLOAT_BIN,
+    PHASE_FLOAT_TXT,
+    PHASE_IMAGE,
+    ReconstructionGroup,
+    reconstruction_tree,
+    search_timelapse_subfolders,
 )
 from iivs.dhm.data.phase.bin import PhaseBinFolder
 from iivs.dhm.data.phase.tif import PhaseTifFolder
@@ -35,23 +31,17 @@ if TYPE_CHECKING:
     from kaparoo.filters import Filter
     from kaparoo.filters.types import FilterDict
 
-PHASE_FLOAT_BIN = f"{PHASE}/{FLOAT}/{BIN}"
-"""The `Phase/Float/Bin` folder's time-lapse-relative path."""
-PHASE_FLOAT_TXT = f"{PHASE}/{FLOAT}/{TXT}"
-"""The `Phase/Float/Txt` folder's time-lapse-relative path."""
-PHASE_IMAGE = f"{PHASE}/{IMAGE}"
-"""The `Phase/Image` preview folder's time-lapse-relative path."""
-
-PHASE_TREE = float_modality_tree(PHASE)
-"""The `Phase/` subtree of a Koala time-lapse (`Float/{Bin,Txt}` + `Image`), a spec."""
+PHASE_TREE = reconstruction_tree(PHASE)
+"""The `Phase/` subtree of a Koala time-lapse (`Float/{Bin,Txt}` + `Image`)."""
 
 
-class PhaseGroup(ModalityGroup[PhaseBinFolder, PhaseTxtFolder, PhaseTifFolder]):
+class PhaseGroup(ReconstructionGroup[PhaseBinFolder, PhaseTxtFolder, PhaseTifFolder]):
     """The phase modality within a Koala time-lapse, opened from its `Phase/` folder.
 
-    Exposes each format present: `float_bin` / `float_txt` (the `Float/{Bin,Txt}` sources,
-    which may coexist) and `previews` (the uint8 `Image` folder), plus the `.bin`-preferred
-    `quantitative` and `frame_counts`. Each accessor is None when its source is absent.
+    Exposes each format present: `bin_folder` / `txt_folder` (the `Float/{Bin,Txt}`
+    sources, which may coexist) and `tif_folder` (the uint8 `Image` preview), plus the
+    `.bin`-preferred `quantitative` and `frame_counts`. Each accessor is None when its
+    source is absent.
 
     Args:
         root: The `Phase/` folder. Not required to exist: a missing one makes every
@@ -73,14 +63,13 @@ def search_phase_bin_folders(
     max_depth: int | None = None,
     ordered: bool = True,
 ) -> list[PhaseBinFolder]:
-    """Return the `Phase/Float/Bin` folder of every time-lapse under `root` that has one.
+    """Return the `Phase/Float/Bin` folder of each time-lapse under `root` that has one.
 
-    Delegates to `search_modality_folders` (no manual recursion); a time-lapse without a
-    non-empty `Phase/Float/Bin` is skipped, and `predicate` checks the opened
-    `PhaseBinFolder`. `name_filter` matches the time-lapse folder's name; the other
-    `search_dirs` controls carry through.
+    A time-lapse without a non-empty `Phase/Float/Bin` is skipped, and `predicate`
+    checks the opened `PhaseBinFolder`. `name_filter` matches the time-lapse folder's
+    own name.
     """
-    return search_modality_folders(
+    return search_timelapse_subfolders(
         root,
         PHASE_FLOAT_BIN,
         PhaseBinFolder,
@@ -105,12 +94,12 @@ def search_phase_txt_folders(
     max_depth: int | None = None,
     ordered: bool = True,
 ) -> list[PhaseTxtFolder]:
-    """Return the `Phase/Float/Txt` folder of every time-lapse under `root` that has one.
+    """Return the `Phase/Float/Txt` folder of each time-lapse under `root` that has one.
 
     The `.txt` twin of `search_phase_bin_folders`; `predicate` checks the opened
     `PhaseTxtFolder`.
     """
-    return search_modality_folders(
+    return search_timelapse_subfolders(
         root,
         PHASE_FLOAT_TXT,
         PhaseTxtFolder,
@@ -124,7 +113,7 @@ def search_phase_txt_folders(
     )
 
 
-def search_phase_preview_folders(
+def search_phase_tif_folders(
     root: StrPath,
     *,
     name_filter: Filter | FilterDict | None = None,
@@ -140,7 +129,7 @@ def search_phase_preview_folders(
     The preview twin of `search_phase_bin_folders`; `predicate` checks the opened
     `PhaseTifFolder`.
     """
-    return search_modality_folders(
+    return search_timelapse_subfolders(
         root,
         PHASE_IMAGE,
         PhaseTifFolder,

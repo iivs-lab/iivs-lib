@@ -6,7 +6,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from kaparoo.filesystem import hierarchy
+from kaparoo.filesystem.hierarchy import Directory, File, ValidationReport, validate
 from kaparoo.filesystem.search import search_dirs
 from kaparoo.filters import Glob
 
@@ -39,19 +39,19 @@ if TYPE_CHECKING:
 # reconstruction). `search_timelapses` treats a directory holding any of them as one.
 _MARKERS = (PHASE, INTENSITY, HOLOGRAMS)
 
-KOALA_TIMELAPSE_TREE = hierarchy.Directory(
+KOALA_TIMELAPSE_TREE = Directory(
     Glob("*"),  # any time-lapse-root name; matched via `root_as_top`
     [
         PHASE_TREE,
         INTENSITY_TREE,
         HOLOGRAM_TREE,
-        hierarchy.File(TIMESTAMPS),
-        hierarchy.File(PHBOUNDS),
+        File(TIMESTAMPS),
+        File(PHBOUNDS),
     ],
 )
 """The standard Lyncée Tec Koala time-lapse layout, composed from the per-modality
-subtrees (`PHASE_TREE`, `INTENSITY_TREE`, `HOLOGRAM_TREE`) plus the root `timestamps.txt`
-/ `phbounds.txt`. `KoalaTimelapse.validate` checks a root against it.
+subtrees (`PHASE_TREE`, `INTENSITY_TREE`, `HOLOGRAM_TREE`) plus the root
+`timestamps.txt` / `phbounds.txt`. `KoalaTimelapse.validate` checks a root against it.
 """
 
 
@@ -73,14 +73,14 @@ class KoalaTimelapse:
         root: The time-lapse root (the folder holding `Phase/`, `Holograms/`,
             `timestamps.txt`, ...). Not required to exist: a missing root simply makes
             every accessor empty / None.
-        fps: A fallback frame rate. When `timestamps.txt` is absent, timing is
-            synthesized at this rate over the acquisition's frame count; None (default)
-            leaves `timestamps` None instead.
+        frame_rate: A fallback frame rate (in fps). When `timestamps.txt` is absent,
+            timing is synthesized at this rate over the acquisition's frame count; None
+            (default) leaves `timestamps` None instead.
     """
 
-    def __init__(self, root: StrPath, *, fps: float | None = None) -> None:
+    def __init__(self, root: StrPath, *, frame_rate: float | None = None) -> None:
         self._root = Path(root)
-        self._fps = fps
+        self._frame_rate = frame_rate
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({str(self._root)!r})"
@@ -94,7 +94,7 @@ class KoalaTimelapse:
 
     @cached_property
     def phase(self) -> PhaseGroup:
-        """The phase modality group (its `Float/{Bin,Txt}` sources and `Image` preview)."""
+        """The phase modality group (its `Float/{Bin,Txt}` sources and preview)."""
         return PhaseGroup(self._root / PHASE)
 
     @cached_property
@@ -114,18 +114,18 @@ class KoalaTimelapse:
 
     @cached_property
     def timestamps(self) -> TimestampSequence | None:
-        """The per-frame timing: `timestamps.txt`, else fixed-`fps`, else None.
+        """The per-frame timing: `timestamps.txt`, else fixed-`frame_rate`, else None.
 
-        Reads `timestamps.txt` when present; otherwise, with an `fps` set and a known
-        frame count, synthesizes evenly spaced `TimestampsFixedFPS`; else None.
+        Reads `timestamps.txt` when present; otherwise, with a `frame_rate` set and a
+        known frame count, synthesizes evenly spaced `TimestampsFixedFPS`; else None.
         """
         path = self._root / TIMESTAMPS
         if path.is_file():
             return TimestampsTxtFile(path)
 
         count = self._frame_count()
-        if self._fps is not None and count is not None:
-            return TimestampsFixedFPS(frame_rate=self._fps, num_frames=count)
+        if self._frame_rate is not None and count is not None:
+            return TimestampsFixedFPS(frame_rate=self._frame_rate, num_frames=count)
         return None
 
     @cached_property
@@ -180,16 +180,16 @@ class KoalaTimelapse:
         """Whether the raw holograms are present."""
         return self.holograms is not None
 
-    def validate(self) -> hierarchy.ValidationReport:
+    def validate(self) -> ValidationReport:
         """Check the root's structure against `KOALA_TIMELAPSE_TREE`.
 
         Lenient about extras (OME metadata, logs, ...) and optional modalities, so the
         report flags only a `Holograms` folder holding both raw and tif and, via
-        `matched`, records which parts of the layout are present. The report's truthiness
-        is its `ok`. This checks the layout only; use `counts_agree` and each modality's
-        own `validate` for data consistency.
+        `matched`, records which parts of the layout are present. The report's
+        truthiness is its `ok`. This checks the layout only; use `counts_agree` and each
+        modality's own `validate` for data consistency.
         """
-        return hierarchy.validate(
+        return validate(
             KOALA_TIMELAPSE_TREE, self._root, root_as_top=True, allow_extra=True
         )
 
@@ -201,9 +201,9 @@ class KoalaTimelapse:
         sources = (
             self.holograms,
             self.phase.quantitative,
-            self.phase.previews,
+            self.phase.tif_folder,
             self.intensity.quantitative,
-            self.intensity.previews,
+            self.intensity.tif_folder,
         )
         for source in sources:
             if source is not None:
@@ -212,17 +212,16 @@ class KoalaTimelapse:
 
 
 def _looks_like_timelapse(path: Path) -> bool:
-    """Whether `path` holds any Koala modality folder (`Phase` / `Intensity` / `Holograms`)."""
+    """Whether `path` holds any Koala modality folder (`Phase` / `Intensity` / ...)."""
     return any((path / marker).is_dir() for marker in _MARKERS)
 
 
 def _requirer(require: Iterable[str] | None) -> Callable[[Path], bool]:
-    """Build the `search_dirs` predicate identifying a time-lapse directory.
+    """Build the predicate that identifies a time-lapse directory.
 
-    With `require=None` a directory qualifies when it holds any modality folder
-    (`_looks_like_timelapse`); otherwise it must hold every listed name (a modality
-    folder like `"Phase"`, or a file like `"timestamps.txt"`), each checked for existence
-    relative to the directory.
+    With `require=None` a directory qualifies when it holds any modality folder;
+    otherwise it must hold every listed name (a modality folder like `"Phase"`, or a
+    file like `"timestamps.txt"`), each checked for existence relative to the directory.
     """
     if require is None:
         return _looks_like_timelapse
@@ -246,18 +245,17 @@ def search_timelapses(
     min_depth: int = 1,
     max_depth: int | None = None,
     ordered: bool = True,
-    fps: float | None = None,
+    frame_rate: float | None = None,
 ) -> list[KoalaTimelapse]:
     """Return a `KoalaTimelapse` for each Koala acquisition folder under `root`.
 
-    Delegates the walk to `kaparoo`'s `search_dirs` (no manual recursion). A directory
-    qualifies when it holds every name in `require` (a modality folder like `"Phase"`, or
-    a file like `"timestamps.txt"`); with `require=None` it qualifies on holding any
-    modality folder. A candidate must also pass `part_filter` (on its parent's relative
-    path), `name_filter` (on the time-lapse folder's own name), and lie within
-    `[min_depth, max_depth]`; `exclude` prunes subtrees. Each surviving directory is
-    wrapped in a `KoalaTimelapse`, then `predicate` (a check on the *`KoalaTimelapse`*,
-    not its path) filters the wrapped objects.
+    A directory qualifies when it holds every name in `require` (a modality folder like
+    `"Phase"`, or a file like `"timestamps.txt"`); with `require=None` it qualifies on
+    holding any modality folder. A candidate must also pass `part_filter` (on its
+    parent's relative path), `name_filter` (on the time-lapse folder's own name), and
+    lie within `[min_depth, max_depth]`; `exclude` prunes subtrees. Each surviving
+    directory is wrapped in a `KoalaTimelapse`, then `predicate` (a check on the
+    *`KoalaTimelapse`*, not its path) filters the wrapped objects.
 
     Args:
         root: The directory to scan.
@@ -265,18 +263,19 @@ def search_timelapses(
             folders and / or files). None (default) requires only any one modality.
         name_filter: Filter on each candidate time-lapse folder's own name.
         part_filter: Filter on each visited parent directory's relative path.
-        predicate: A final check on the built `KoalaTimelapse`; None (default) keeps all.
-        exclude: Path(s) to prune, as in `search_dirs`.
+        predicate: A final check on the built `KoalaTimelapse`; None (default) keeps
+            all.
+        exclude: Path(s) to prune from the walk.
         min_depth: Shallowest depth to include (>= 1, direct children are depth 1).
         max_depth: Deepest depth to include, or None (default) for unlimited.
         ordered: Sort the results by path. Defaults to True.
-        fps: Passed to each `KoalaTimelapse` as its fallback frame rate.
+        frame_rate: Passed to each `KoalaTimelapse` as its fallback frame rate.
 
     Returns:
-        The matching time-lapses, in `search_dirs` order.
+        The matching time-lapses.
 
     Raises:
-        DirectoryNotFoundError: If `root` does not exist (from `search_dirs`).
+        DirectoryNotFoundError: If `root` does not exist.
     """
     directories = search_dirs(
         root,
@@ -288,7 +287,9 @@ def search_timelapses(
         max_depth=max_depth,
         ordered=ordered,
     )
-    timelapses = (KoalaTimelapse(directory, fps=fps) for directory in directories)
+    timelapses = (
+        KoalaTimelapse(directory, frame_rate=frame_rate) for directory in directories
+    )
     if predicate is None:
         return list(timelapses)
     return [timelapse for timelapse in timelapses if predicate(timelapse)]

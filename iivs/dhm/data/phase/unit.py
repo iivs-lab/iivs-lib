@@ -51,7 +51,7 @@ def resolve_height_scale(
     Raises:
         ValueError: Unless exactly one form is fully given (neither, both, or a
             half-filled pair all raise), or the resolved factor is not positive (a
-            zero / negative `height_scale`, or a zero / non-positive `refractive_delta`).
+            zero / negative `height_scale`, or zero / non-positive `refractive_delta`).
     """
     if height_scale is not None and wavelength is None and refractive_delta is None:
         scale = height_scale
@@ -88,7 +88,7 @@ def convert_phase_unit(
         source: The unit `data` is currently in.
         target: The unit to convert to.
         height_scale: m per rad. Used (and required positive) only when the conversion
-            crosses RADIANS <-> METERS; ignored for a pure METERS <-> NANOMETERS rescale.
+            crosses RADIANS <-> METERS; ignored for pure METERS <-> NANOMETERS rescale.
 
     Returns:
         A new float32 array in `target`, or `data` itself (unchanged) when

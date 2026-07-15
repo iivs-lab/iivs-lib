@@ -5,12 +5,12 @@ __all__ = ("HOLOGRAM_TREE", "open_holograms", "search_holograms")
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from kaparoo.filesystem import hierarchy
+from kaparoo.filesystem.hierarchy import Directory, Exclusive, File
 from kaparoo.filters import Glob, Regex
 
 from iivs.dhm.data.hologram.raw import HologramRawFile
 from iivs.dhm.data.hologram.tif import HologramTifFolder
-from iivs.dhm.data.koala import HOLOGRAMS, open_folder, search_modality_dirs
+from iivs.dhm.data.koala import HOLOGRAMS, open_folder, search_timelapse_subdirs
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -24,14 +24,14 @@ if TYPE_CHECKING:
 
 _HOLOGRAM_TIF = r"\d{5}_holo\.tif"
 
-HOLOGRAM_TREE = hierarchy.Directory(
+HOLOGRAM_TREE = Directory(
     HOLOGRAMS,
     [
         # A single multi-frame stack XOR numbered per-frame previews; a real
         # acquisition yields only one, so both present is a violation.
-        hierarchy.Exclusive(
-            hierarchy.File(Glob("*.raw")),
-            hierarchy.File(Regex(_HOLOGRAM_TIF)),
+        Exclusive(
+            File(Glob("*.raw")),
+            File(Regex(_HOLOGRAM_TIF)),
         ),
     ],
 )
@@ -75,11 +75,10 @@ def search_holograms(
     max_depth: int | None = None,
     ordered: bool = True,
 ) -> list[HologramSequence]:
-    """Return the holograms of each time-lapse under `root` that holds a `Holograms/` folder.
+    """Return the holograms of every time-lapse under `root` that has a `Holograms/`.
 
-    Finds the time-lapse folders via `search_modality_dirs` (delegating to `search_dirs`, no
-    manual recursion) and opens each `Holograms/` with `open_holograms`; an empty folder
-    is skipped, and `predicate` is a final check on the built *`HologramSequence`*.
+    Finds each time-lapse folder holding a `Holograms/` and opens it; an empty folder is
+    skipped, and `predicate` is a final check on the built *`HologramSequence`*.
 
     Args:
         root: The directory to scan.
@@ -87,21 +86,21 @@ def search_holograms(
         part_filter: Filter on each visited parent directory's relative path.
         predicate: A final check on the opened `HologramSequence`; None (default) keeps
             all.
-        exclude: Path(s) to prune, as in `search_dirs`.
+        exclude: Path(s) to prune from the walk.
         min_depth: Shallowest depth to include (>= 1).
         max_depth: Deepest depth to include, or None (default) for unlimited.
         ordered: Sort the results by path. Defaults to True.
 
     Returns:
-        The opened hologram sequences, in `search_dirs` order.
+        The opened hologram sequences.
 
     Raises:
         ValueError: If any matched `Holograms/` holds both a `.raw` stack and `.tif`
-            previews (from `open_holograms`).
+            previews.
     """
     opened = (
         open_holograms(directory)
-        for directory in search_modality_dirs(
+        for directory in search_timelapse_subdirs(
             root,
             HOLOGRAMS,
             name_filter=name_filter,

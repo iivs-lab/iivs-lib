@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import tifffile
-from kaparoo.filesystem import hierarchy
+from kaparoo.filesystem.hierarchy import Directory
 
 from iivs.dhm.data.hologram.layout import (
     HOLOGRAM_TREE,
@@ -61,7 +61,7 @@ def test_absent_dir_is_none(tmp_path):
 
 
 def test_hologram_tree_models_the_holograms_folder():
-    assert isinstance(HOLOGRAM_TREE, hierarchy.Directory)
+    assert isinstance(HOLOGRAM_TREE, Directory)
     assert HOLOGRAM_TREE.name.matches("Holograms")
 
 
