@@ -27,6 +27,7 @@ __all__ = (
     "load_intensity",
     "load_intensity_bin",
     "load_intensity_npy",
+    "load_intensity_tif",
     "load_intensity_txt",
     "read_intensity_bin_header",
     "read_intensity_header",
@@ -78,7 +79,11 @@ from iivs.dhm.data.intensity.npy import (
     load_intensity_npy,
     save_intensity_npy,
 )
-from iivs.dhm.data.intensity.tif import IntensityTifFolder, IntensityTifList
+from iivs.dhm.data.intensity.tif import (
+    IntensityTifFolder,
+    IntensityTifList,
+    load_intensity_tif,
+)
 from iivs.dhm.data.intensity.txt import (
     IntensityTxtFolder,
     IntensityTxtList,

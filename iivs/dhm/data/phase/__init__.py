@@ -29,6 +29,7 @@ __all__ = (
     "load_phase",
     "load_phase_bin",
     "load_phase_npy",
+    "load_phase_tif",
     "load_phase_txt",
     "phase_folder",
     "phase_list",
@@ -81,7 +82,7 @@ from iivs.dhm.data.phase.layout import (
     search_phase_txt_folders,
 )
 from iivs.dhm.data.phase.npy import PhaseNpyFolder, load_phase_npy, save_phase_npy
-from iivs.dhm.data.phase.tif import PhaseTifFolder, PhaseTifList
+from iivs.dhm.data.phase.tif import PhaseTifFolder, PhaseTifList, load_phase_tif
 from iivs.dhm.data.phase.txt import (
     PhaseTxtFolder,
     PhaseTxtList,

@@ -10,6 +10,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `load_phase_tif` / `load_intensity_tif`, giving each modality a single-file reader for
+  its uint8 `Image/*.tif` preview, as `load_hologram_tif` already did. Reading one
+  preview no longer means reaching into `iivs.dhm.data.koala` for `load_uint8_tif`, so
+  every modality now covers all four of its formats from its own package.
 - `validate_ndim` / `validate_dtype` are declared public by `iivs.common.data.validation`,
   so a caller assembling its own validator can compose the same parts the four
   `validate_*_array` front doors do. They stay behind the module path rather than joining

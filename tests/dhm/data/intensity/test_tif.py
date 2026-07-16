@@ -5,11 +5,26 @@ import tifffile
 
 from iivs.common.data import FrameShapedMixin
 from iivs.dhm.data.intensity.base import IntensityImageSequence
-from iivs.dhm.data.intensity.tif import IntensityTifFolder, IntensityTifList
+from iivs.dhm.data.intensity.tif import (
+    IntensityTifFolder,
+    IntensityTifList,
+    load_intensity_tif,
+)
 
 
 def _write(path, data):
     tifffile.imwrite(path, np.asarray(data, dtype=np.uint8))
+
+
+def test_load_intensity_tif(tmp_path):
+    data = np.arange(20, dtype=np.uint8).reshape(4, 5)
+    path = tmp_path / "00000_intensity.tif"
+    _write(path, data)
+
+    image = load_intensity_tif(path)
+
+    np.testing.assert_array_equal(image, data)
+    assert image.dtype == np.uint8  # the 8-bit preview, not the float intensity
 
 
 def test_folder_loads_and_is_image_sequence(tmp_path):

@@ -6,7 +6,7 @@ import tifffile
 
 from iivs.common.data import FrameShapedMixin
 from iivs.dhm.data.phase.base import PhaseFloatSequence, PhaseImageSequence
-from iivs.dhm.data.phase.tif import PhaseTifFolder, PhaseTifList
+from iivs.dhm.data.phase.tif import PhaseTifFolder, PhaseTifList, load_phase_tif
 
 
 def _write(path, data):
@@ -16,6 +16,27 @@ def _write(path, data):
 
 def _write_idx(root, index, value=0, shape=(2, 3)):
     _write(root / f"{index:05d}_phase.tif", np.full(shape, value, dtype=np.uint8))
+
+
+# --- single file ---
+
+
+def test_load_phase_tif(tmp_path):
+    data = np.arange(20, dtype=np.uint8).reshape(4, 5)
+    path = tmp_path / "00000_phase.tif"
+    _write(path, data)
+
+    image = load_phase_tif(path)
+
+    np.testing.assert_array_equal(image, data)
+    assert image.dtype == np.uint8  # the 8-bit preview, not the float phase
+
+
+def test_load_phase_tif_rejects_a_non_uint8_file(tmp_path):
+    path = tmp_path / "00000_phase.tif"
+    tifffile.imwrite(path, np.zeros((2, 3), dtype=np.float32))  # a float tif
+    with pytest.raises(ValueError, match="uint8"):
+        load_phase_tif(path)
 
 
 # --- hierarchy ---
