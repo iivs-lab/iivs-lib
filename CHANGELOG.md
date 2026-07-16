@@ -23,8 +23,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   stack or numbered tif folder (raising if a folder holds both, which no real
   acquisition does); `timestamps` reads `timestamps.txt` (or None; synthesize a
   constant-rate fallback yourself with `TimestampsFixedFPS` when it is absent);
-  `phase_bounds` reads `phbounds.txt`. Consistency is exposed as flat properties:
-  `num_frames`, `is_consistent`, `has_reconstruction`, and `has_holograms`, and
+  `phase_bounds` reads `phbounds.txt`. Status is exposed as flat properties:
+  `num_frames`, `is_consistent`, `is_reconstructable` (holograms + `timestamps.txt`
+  with matching counts — Koala's reconstruction precondition), `has_quantitative_phase`
+  / `has_quantitative_intensity` (a `Float/{Bin,Txt}` output is present), and
+  `has_holograms`, and
   `validate(*, level=None)` content-validates every present source (driving the
   numbered folders' deferred checks; opening the holograms also validates a `.raw`
   stack and surfaces a raw+tif conflict; at `level="data"` the `timestamps.txt` /

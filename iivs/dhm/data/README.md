@@ -41,11 +41,14 @@ layout, tolerating absent parts. Holograms, phase, and intensity are **independe
 | `tl.timestamps` | `timestamps.txt` if present, else `None` (synthesize a constant-rate fallback yourself with `TimestampsFixedFPS`) |
 | `tl.phase_bounds` | the `phbounds.txt` `PhaseBounds`, or `None` |
 
-Consistency is exposed as flat properties: `num_frames` (the acquisition's frame count,
-from the first present source, or `None`), `is_consistent` (each modality internally
+Status is exposed as flat properties: `num_frames` (the acquisition's frame count, from
+the first present source, or `None`), `is_consistent` (each modality internally
 consistent and every present source — phase / intensity / holograms / timing — sharing
-one length), `has_reconstruction` (phase or intensity present, vs a holograms-only
-acquisition), and `has_holograms`. `tl.validate(*, level=None)` content-validates every
+one length), `is_reconstructable` (holograms **and** `timestamps.txt` present with
+matching frame counts — Koala's precondition for a reconstruction),
+`has_quantitative_phase` / `has_quantitative_intensity` (a `Float/{Bin,Txt}`
+reconstruction output is present, distinct from the uint8 preview), and `has_holograms`.
+`tl.validate(*, level=None)` content-validates every
 present source (raising on the first bad file): it drives the numbered folders' deferred
 checks, opening the holograms also validates a `.raw` stack and surfaces a raw+tif
 conflict, and at `level="data"` the `timestamps.txt` / `phbounds.txt` files are parsed

@@ -141,6 +141,7 @@ class KoalaTimelapse:
 
     # -- consistency --
 
+    @cached_property
     def _hologram_count(self) -> int | None:
         """The hologram frame count, or None when absent or ambiguous (raw+tif).
 
@@ -153,16 +154,21 @@ class KoalaTimelapse:
             return None
         return fold_optional(holo, len, None)
 
-    @property
+    @cached_property
     def num_frames(self) -> int | None:
         """The acquisition's frame count, from the first present source, or None.
 
-        Phase, intensity, holograms, and timing share this count in a coherent
-        acquisition (`is_consistent`).
+        Taken from the first present data source (phase, intensity, holograms), else the
+        timing length. Phase, intensity, holograms, and timing share this count in a
+        coherent acquisition (`is_consistent`).
         """
-        count = self._frame_count()
-        if count is not None:
-            return count
+        for count in (
+            self.phase.num_frames,
+            self.intensity.num_frames,
+            self._hologram_count,
+        ):
+            if count is not None:
+                return count
         return fold_optional(self.timestamps, len, None)
 
     @property
@@ -182,7 +188,7 @@ class KoalaTimelapse:
             for c in (
                 self.phase.num_frames,
                 self.intensity.num_frames,
-                self._hologram_count(),
+                self._hologram_count,
                 fold_optional(self.timestamps, len, None),
             )
             if c is not None
@@ -190,15 +196,33 @@ class KoalaTimelapse:
         return len(counts) <= 1
 
     @property
-    def has_reconstruction(self) -> bool:
-        """Whether a quantitative reconstruction (phase or intensity) is present.
+    def is_reconstructable(self) -> bool:
+        """Whether Koala could reconstruct this acquisition.
 
-        False for a holograms-only acquisition not yet reconstructed by Koala.
+        True when the holograms and `timestamps.txt` are both present and share a frame
+        count (Koala's precondition for a reconstruction). A raw+tif `Holograms/` counts
+        as absent (uncountable). Independent of whether a reconstruction output already
+        exists (`has_quantitative_phase` / `has_quantitative_intensity`).
         """
-        return (
-            self.phase.quantitative is not None
-            or self.intensity.quantitative is not None
-        )
+        count = self._hologram_count
+        timing = self.timestamps
+        return count is not None and timing is not None and count == len(timing)
+
+    @property
+    def has_quantitative_phase(self) -> bool:
+        """Whether a quantitative phase reconstruction (`Float/{Bin,Txt}`) is present.
+
+        Distinct from the uint8 `Image` preview, which Koala also produces.
+        """
+        return self.phase.quantitative is not None
+
+    @property
+    def has_quantitative_intensity(self) -> bool:
+        """Whether a quantitative intensity reconstruction (`Float/{Bin,Txt}`) is present.
+
+        Distinct from the uint8 `Image` preview, which Koala also produces.
+        """
+        return self.intensity.quantitative is not None
 
     @property
     def has_holograms(self) -> bool:
@@ -238,22 +262,6 @@ class KoalaTimelapse:
         if level == "data":
             _ = self.timestamps  # opening parses / validates timestamps.txt
             _ = self.phase_bounds  # opening parses / validates phbounds.txt
-
-    def _frame_count(self) -> int | None:
-        """The frame count from the first present data source (phase / intensity /
-        holograms), or None.
-
-        Backs `num_frames`, which falls back to the timing length; a raw+tif
-        `Holograms/` is uncountable (`_hologram_count`), not fatal.
-        """
-        for count in (
-            self.phase.num_frames,
-            self.intensity.num_frames,
-            self._hologram_count(),
-        ):
-            if count is not None:
-                return count
-        return None
 
 
 def _looks_like_timelapse(path: Path) -> bool:

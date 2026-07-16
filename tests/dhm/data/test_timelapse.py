@@ -134,7 +134,9 @@ def test_num_frames_and_consistency(tmp_path):
     timelapse = KoalaTimelapse(tmp_path)
     assert timelapse.num_frames == n
     assert timelapse.is_consistent
-    assert timelapse.has_reconstruction
+    assert timelapse.has_quantitative_phase
+    assert timelapse.has_quantitative_intensity
+    assert timelapse.is_reconstructable  # holograms + timestamps, counts match
     assert timelapse.has_holograms
 
 
@@ -162,10 +164,27 @@ def test_holograms_only_has_no_reconstruction(tmp_path):
     timelapse = KoalaTimelapse(tmp_path)
     assert timelapse.phase.quantitative is None
     assert timelapse.intensity.quantitative is None
-    assert not timelapse.has_reconstruction
+    assert not timelapse.has_quantitative_phase
+    assert not timelapse.has_quantitative_intensity
+    assert not timelapse.is_reconstructable  # holograms present but no timestamps.txt
     assert timelapse.has_holograms
     assert timelapse.num_frames == 4
     assert timelapse.is_consistent
+
+
+def test_not_reconstructable_on_count_mismatch(tmp_path):
+    _build(
+        tmp_path, holograms="raw", n=3
+    )  # holograms 3, timestamps 3 -> reconstructable
+    assert KoalaTimelapse(tmp_path).is_reconstructable
+    _write_timestamps(tmp_path, 2)  # now only 2 timing rows
+    assert not KoalaTimelapse(tmp_path).is_reconstructable  # holograms 3 vs timing 2
+
+
+def test_not_reconstructable_on_hologram_conflict(tmp_path):
+    _build(tmp_path, holograms="raw")
+    _u8_tif(tmp_path / "Holograms" / "00000_holo.tif", 0)  # raw+tif -> uncountable
+    assert not KoalaTimelapse(tmp_path).is_reconstructable
 
 
 # ============================== #
@@ -200,7 +219,9 @@ def test_absent_modalities_are_none(tmp_path):
     assert timelapse.phase_bounds is None
     assert timelapse.num_frames is None
     assert timelapse.is_consistent
-    assert not timelapse.has_reconstruction
+    assert not timelapse.has_quantitative_phase
+    assert not timelapse.has_quantitative_intensity
+    assert not timelapse.is_reconstructable
     assert not timelapse.has_holograms
 
 
@@ -309,7 +330,10 @@ def test_search_timelapses_predicate_filters_on_koala_timelapse(tmp_path):
     holo_only.mkdir()
     _write_holograms(holo_only, "raw", 2)  # holograms only, no reconstruction
 
-    found = search_timelapses(tmp_path, predicate=lambda t: t.has_reconstruction)
+    found = search_timelapses(
+        tmp_path,
+        predicate=lambda t: t.has_quantitative_phase or t.has_quantitative_intensity,
+    )
     assert [t.root.name for t in found] == ["full"]
 
 
