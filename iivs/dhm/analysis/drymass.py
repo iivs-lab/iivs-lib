@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class DryMassCalculator:
-    """Integrate OPD (or phase) into dry mass (pg) at a fixed pixel size and alpha.
+    """An OPD-to-dry-mass (pg) integrator at a fixed pixel size and alpha.
 
     Bind the pixel size, specific refractive increment, and (for the phase path) an
     `OPDConverter` once; the per-pixel mass factor is precomputed::
@@ -105,7 +105,7 @@ class DryMassCalculator:
         mask: NDArray[np.bool_] | None = None,
         reduce: bool = True,
     ) -> NDArray[np.float32]:
-        """Dry mass [pg] from an OPD map (nm), summed over the last two axes (H, W).
+        """Integrate an OPD map (nm) into dry mass [pg] over the last two axes (H, W).
 
         Args:
             opd: OPD map(s), in nm, shape ``(..., H, W)``.
@@ -162,7 +162,7 @@ class DryMassCalculator:
         mask: NDArray[np.bool_] | None = None,
         reduce: bool = True,
     ) -> NDArray[np.float32]:
-        """Dry mass [pg] from a phase map (rad): to OPD, then `calc_from_opd`."""
+        """Integrate a phase map (rad) into dry mass [pg]."""
         opd = self.opd_converter.convert_to_opd(phase)
         return self.calc_from_opd(opd, mask=mask, reduce=reduce)
 
@@ -175,7 +175,7 @@ def calc_drymass(
     mask: NDArray[np.bool_] | None = None,
     reduce: bool = True,
 ) -> NDArray[np.float32]:
-    """Dry mass [pg] of an OPD map (nm); one-shot `DryMassCalculator.calc_from_opd`.
+    """Integrate an OPD map (nm) into dry mass [pg].
 
     Args:
         opd: OPD map(s), in nm (e.g. from `phase_to_opd`), shape ``(..., H, W)``,
@@ -204,7 +204,7 @@ def calc_drymass_from_phase(
     mask: NDArray[np.bool_] | None = None,
     reduce: bool = True,
 ) -> NDArray[np.float32]:
-    """Dry mass [pg] from a phase map (rad); one-shot `DryMassCalculator`.
+    """Integrate a phase map (rad) into dry mass [pg] at `wavelength`.
 
     Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`.
 

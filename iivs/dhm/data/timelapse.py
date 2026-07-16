@@ -45,7 +45,7 @@ if TYPE_CHECKING:
 # reconstruction). `search_timelapses` treats a directory holding any of them as one.
 _MARKERS = (PHASE, INTENSITY, HOLOGRAMS)
 
-# The names `search_timelapses`'s `require` accepts: the root-relative markers and files.
+# The names `search_timelapses`'s `require` takes: the root-relative markers and files.
 # A subfolder like `Bin` is never a root child, so it is not requirable here.
 _REQUIRABLE = frozenset((*_MARKERS, TIMESTAMPS, PHBOUNDS))
 
@@ -120,8 +120,8 @@ class KoalaTimelapse:
         consumer's concern, not this composing layer's; the frames are uint8 either way.
 
         Raises:
-            MultiFormatHologramsError: If the `Holograms` folder holds both a `.raw` stack
-                and numbered `.tif` previews (a real acquisition produces only one).
+            MultiFormatHologramsError: If the `Holograms` folder holds both a `.raw`
+                stack and numbered `.tif` previews (an acquisition produces only one).
         """
         return open_holograms(self._root / HOLOGRAMS)
 
@@ -197,7 +197,7 @@ class KoalaTimelapse:
 
     @property
     def has_holograms(self) -> bool:
-        """Whether a `Holograms/` source is present (True even if raw and tif conflict)."""
+        """Whether a `Holograms/` source is present (True even on a raw+tif clash)."""
         try:
             return self.holograms is not None
         except MultiFormatHologramsError:
@@ -213,7 +213,7 @@ class KoalaTimelapse:
 
     @property
     def has_quantitative_intensity(self) -> bool:
-        """Whether a quantitative intensity reconstruction (`Float/{Bin,Txt}`) is present.
+        """Whether a quantitative intensity reconstruction (`Float/{Bin,Txt}`) exists.
 
         Distinct from the uint8 `Image` preview, which Koala also produces.
         """
@@ -251,13 +251,13 @@ class KoalaTimelapse:
     # -- validation --
 
     def validate(self, *, level: ValidationLevel | None = None) -> None:
-        """Content-validate every present source to `level`; raise on the first bad file.
+        """Content-validate every present source to `level`; raise on the first bad one.
 
         Checks each present modality (phase / intensity, and a tif hologram folder),
         skipping any format that lacks `level` (so `"headers"` covers only the
         `Float/{Bin,Txt}` sources). A raw+tif `Holograms/` conflict and a corrupt
         `holo.raw` surface here too. At `level="data"` the aux `timestamps.txt` /
-        `phbounds.txt` are parsed as well; at shallower levels they are checked only when
+        `phbounds.txt` are parsed as well; at shallower levels they are read only when
         otherwise read.
 
         `level=None` (default) checks each source to its own depth; `"names"` /
@@ -283,14 +283,17 @@ class KoalaTimelapse:
 
 
 def _looks_like_timelapse(path: Path) -> bool:
-    """Whether `path` holds any Koala modality folder (`Phase` / `Intensity` / ...)."""
+    """Test whether `path` holds any Koala modality folder (`Phase`, `Intensity`, ...).
+
+    The marker check behind `search_timelapses`' default `require`.
+    """
     return any((path / marker).is_dir() for marker in _MARKERS)
 
 
 def _requirer(require: Iterable[str] | None) -> Callable[[Path], bool]:
     """Build the predicate that identifies a time-lapse directory.
 
-    With `require` None or empty a directory qualifies when it holds any modality folder;
+    With `require` None or empty a directory qualifies if it holds any modality folder;
     otherwise it must hold every listed name (a modality folder like `"Phase"`, or a
     file like `"timestamps.txt"`), each checked for existence relative to the directory.
     """
@@ -322,7 +325,7 @@ def search_timelapses(
     A directory qualifies when it holds every name in `require` (a modality folder like
     `"Phase"`, or a file like `"timestamps.txt"`); with `require` None or empty it
     qualifies on holding any modality folder. A candidate must also pass `part_filter`
-    (on its parent's relative path), `name_filter` (on the time-lapse folder's own name),
+    (on its parent's relative path), `name_filter` (on the time-lapse folder's name),
     and lie within `[min_depth, max_depth]`; `exclude` prunes subtrees. Each surviving
     directory is wrapped in a `KoalaTimelapse`, then `predicate` (a check on the
     *`KoalaTimelapse`*, not its path) filters the wrapped objects.

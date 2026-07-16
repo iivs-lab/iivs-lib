@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class OPDConverter:
-    """Convert between phase and optical path difference (OPD) at a wavelength.
+    """A phase <-> optical path difference (OPD) converter bound to one wavelength.
 
     Bind the wavelength once, then convert repeatedly in either direction::
 

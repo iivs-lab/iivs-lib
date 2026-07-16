@@ -78,7 +78,7 @@ class DryMass(nn.Module):
         mask: Tensor | None = None,
         reduce: bool = True,
     ) -> Tensor:
-        """Dry mass [pg] from an OPD map (nm), summed over the last two axes (H, W).
+        """Integrate an OPD map (nm) into dry mass [pg] over the last two axes (H, W).
 
         Args:
             opd: OPD map(s), in nm, shape ``(..., H, W)``.
@@ -139,7 +139,7 @@ class DryMass(nn.Module):
         mask: Tensor | None = None,
         reduce: bool = True,
     ) -> Tensor:
-        """Dry mass [pg] from a phase map (rad): to OPD, then `calc_from_opd`."""
+        """Integrate a phase map (rad) into dry mass [pg]."""
         opd = self.opd_module(phase)
         return self.calc_from_opd(opd, mask=mask, reduce=reduce)
 
@@ -150,7 +150,7 @@ class DryMass(nn.Module):
         mask: Tensor | None = None,
         reduce: bool = True,
     ) -> Tensor:
-        """Alias of `calc_from_opd`, so the module is callable."""
+        """Integrate an OPD map (nm) into dry mass [pg]; the `nn.Module` call form."""
         return self.calc_from_opd(opd, mask=mask, reduce=reduce)
 
 
@@ -162,7 +162,7 @@ def calc_drymass(
     mask: Tensor | None = None,
     reduce: bool = True,
 ) -> Tensor:
-    """Dry mass [pg] from an OPD map (nm); a one-shot `DryMass`.
+    """Integrate an OPD map (nm) into dry mass [pg].
 
     Keeps `opd`'s device and the autograd graph.
 
@@ -188,7 +188,7 @@ def calc_drymass_from_phase(
     mask: Tensor | None = None,
     reduce: bool = True,
 ) -> Tensor:
-    """Dry mass [pg] from a phase map (rad); a one-shot `DryMass`.
+    """Integrate a phase map (rad) into dry mass [pg] at `wavelength`.
 
     Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`; keeps
     the input's device and the autograd graph.

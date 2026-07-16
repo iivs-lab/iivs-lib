@@ -45,7 +45,10 @@ class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
 
     @staticmethod
     def _undefined_range_msg(index: int | None) -> str:
-        """The error text for a value range with no finite input (`None` = global)."""
+        """Build the error text for a value range with no finite input.
+
+        `index` is None for the global range, else the offending frame.
+        """
         where = f"of frame {index} " if index is not None else ""
         return f"value range {where}is undefined (all non-finite)"
 
@@ -66,7 +69,7 @@ class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
         return minimum, maximum
 
     def value_range(self, index: int | None = None) -> tuple[float, float]:
-        """The `(min, max)` over every frame (cached), or of frame `index`.
+        """Compute the `(min, max)` over every frame (cached), or of frame `index`.
 
         Non-finite values (NaN, +/-inf) are ignored, so the range reflects only the
         real data (e.g. a masked frame's background NaNs do not distort it).

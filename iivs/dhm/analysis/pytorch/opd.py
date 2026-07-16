@@ -59,7 +59,7 @@ class OpticalPathDifference(nn.Module):
         return opd / self.opd_scale
 
     def forward(self, phase: Tensor) -> Tensor:
-        """Alias of `convert_to_opd` (phase -> OPD), so the module is callable."""
+        """Convert `phase` (rad) to OPD (nm); the `nn.Module` call form."""
         return self.convert_to_opd(phase)
 
 

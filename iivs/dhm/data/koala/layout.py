@@ -157,7 +157,7 @@ def open_timelapse_subfolders[T: KoalaFrameFolder](
 
 
 def reconstruction_tree(name: str) -> Directory:
-    """The `<name>/{Float/{Bin,Txt}, Image}` subtree shared by the reconstructions.
+    """Build the `<name>/{Float/{Bin,Txt}, Image}` subtree the reconstructions share.
 
     The layout of a Koala reconstruction modality (phase, intensity), as opposed to the
     raw `Holograms`. `Float/Bin` and `Float/Txt` are independent siblings (the same data
@@ -256,7 +256,7 @@ class ReconstructionGroup[
 
     @property
     def _all_folders(self) -> tuple[B | None, T | None, P | None]:
-        """The three format sources in `(bin, txt, tif)` order; each None when absent."""
+        """The three format sources in `(bin, txt, tif)` order; None where absent."""
         return (self.bin_folder, self.txt_folder, self.tif_folder)
 
     @property
@@ -317,7 +317,7 @@ class ReconstructionGroup[
 
         The non-vacuous counterpart to `is_consistent`: True when a quantitative source
         (`bin` or `txt`) is present and every present format agrees in count and shape.
-        Unlike `is_consistent` (vacuously True for an absent group), this is False for an
+        Unlike `is_consistent` (vacuously True for an absent group), this is False for
         empty or preview-only folder, so it marks a real reconstruction. The `tif`
         preview is optional, and `bin` / `txt` are the same data in two serializations,
         so a single-format export still counts.

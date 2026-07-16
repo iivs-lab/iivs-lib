@@ -127,8 +127,8 @@ def search_holograms(
         The opened hologram sequences (excluding any skipped on a conflict).
 
     Raises:
-        MultiFormatHologramsError: If a matched `Holograms/` holds both a `.raw` stack and
-            `.tif` previews and `on_conflict` is `"raise"`.
+        MultiFormatHologramsError: If a matched `Holograms/` holds both a `.raw` stack
+            and `.tif` previews, and `on_conflict` is `"raise"`.
         ValueError: If a matched `holo.raw` is corrupt (surfaced regardless of
             `on_conflict`: that is a content error, not the layout ambiguity).
     """
@@ -175,9 +175,10 @@ def search_multi_format_holograms(
     """Return each `Holograms/` under `root` that holds both a `.raw` stack and `.tif`.
 
     These folders cannot be opened as a single `HologramSequence` until one of the two
-    is removed, so `search_holograms(on_conflict="skip")` drops them and `open_holograms`
-    raises `MultiFormatHologramsError`. The auditing counterpart to those, it returns the
-    offending `Holograms/` folders themselves (their parent is the time-lapse).
+    is removed, so `search_holograms(on_conflict="skip")` drops them and
+    `open_holograms` raises `MultiFormatHologramsError`. The auditing counterpart to
+    those, it returns the offending `Holograms/` folders themselves (their parent is
+    the time-lapse).
 
     Args:
         root: The directory to scan.

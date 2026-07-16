@@ -32,7 +32,7 @@ type ValidationLevel = Literal["names", "headers", "data"]
 
 @cache
 def _koala_frame_filter(stem: str, exts: tuple[str, ...]) -> Regex:
-    """A cached name filter for ``{index:05d}_{stem}.<ext>`` files.
+    """Build a cached name filter for ``{index:05d}_{stem}.<ext>`` files.
 
     Built once per ``(stem, exts)``, since both are fixed by the folder type; shared by
     `KoalaFrameFolder.list_files` (one `ext`) and `detect_koala_format` (several).
@@ -41,7 +41,7 @@ def _koala_frame_filter(stem: str, exts: tuple[str, ...]) -> Regex:
 
 
 def koala_frame_name(index: int, *, stem: str, ext: str) -> str:
-    """The contiguous Koala filename ``{index:05d}_{stem}.{ext}``.
+    """Build the contiguous Koala filename ``{index:05d}_{stem}.{ext}``.
 
     The single source of truth for Koala's frame-naming convention, used both to
     discover/validate a `KoalaFrameFolder` and to write a converted folder. The
@@ -144,7 +144,7 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         default and may run validation itself after any extra setup.
 
         Note None means "skip" only here, where it answers whether to validate on open.
-        Every `level=` parameter is past that question, so `validate(level=None)` runs at
+        Every `level=` parameter is past that question, so `validate(level=None)` runs
         `DEFAULT_LEVEL` rather than skipping.
         """
         super().__init__(root)
@@ -221,5 +221,5 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
             self._validate_content(path, level=resolved)
 
     def _validate_content(self, path: Path, *, level: str) -> None:
-        """Per-format consistency check for levels beyond "names" (subclass hook)."""
+        """Check `path`'s content for levels beyond `"names"` (subclass hook)."""
         raise NotImplementedError

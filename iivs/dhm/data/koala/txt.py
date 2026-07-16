@@ -123,7 +123,7 @@ class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
 
     @classmethod
     def _extra_lines(cls, header: H) -> str:  # noqa: ARG003
-        """Modality-specific header lines after the shared geometry (default: none)."""
+        """Serialize any header lines after the shared geometry (default: none)."""
         return ""
 
 

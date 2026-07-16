@@ -270,7 +270,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
     def value_range(
         self, index: int | None = None, unit: PhaseUnit | None = None
     ) -> tuple[float, float]:
-        """Compute the phase `(min, max)`: over every frame or of frame `index`, in `unit`.
+        """Compute the phase `(min, max)` over every frame, or of frame `index`.
 
         With `unit=None` (default) the range is over the values as loaded
         (`target_unit`); with a `PhaseUnit` each frame is decoded to that unit via its
@@ -299,7 +299,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         return {}
 
     def _global_value_range_in(self, unit: PhaseUnit) -> tuple[float, float]:
-        """The cached global `(min, max)` with every frame decoded to `unit`."""
+        """Compute (and cache) the global `(min, max)` with each frame in `unit`."""
         cache = self._value_range_by_unit
         if unit not in cache:
             if len(self) == 0:

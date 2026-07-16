@@ -23,9 +23,9 @@ them:
   `INTENSITY`, `HOLOGRAMS`, `FLOAT`, `BIN`, `TXT`, `IMAGE`, `TIMESTAMPS`, `PHBOUNDS`)
   and the per-modality path combinations built from them (`PHASE_FLOAT_BIN`,
   `PHASE_IMAGE`, `INTENSITY_FLOAT_BIN`, ...).
-- `layout` — the shared time-lapse machinery the per-modality `layout` modules build on:
+- `layout` — the shared time-lapse machinery the per-modality `layout` modules use:
   the tolerant folder opener (`open_folder`), the time-lapse subfolder helpers
-  (`search_timelapse_subdirs` for paths, `open_timelapse_subfolders` for opened folders),
+  (`search_timelapse_subdirs` for paths, `open_timelapse_subfolders` for folders),
   the reconstruction group base (`ReconstructionGroup`), and the
   `<Modality>/{Float/{Bin,Txt}, Image}` spec builder (`reconstruction_tree`).
 
