@@ -24,7 +24,7 @@ from iivs.dhm.data.phase.layout import PHASE_TREE, PhaseGroup
 from iivs.dhm.data.timestamp import TimestampsTxtFile
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Iterator
 
     from kaparoo.filesystem.exclude import ExcludeRule
     from kaparoo.filesystem.types import StrPath
@@ -178,21 +178,20 @@ class KoalaTimelapse:
         return fold_optional(self.timestamps, len, None)
 
     @property
-    def _source_counts(self) -> tuple[int | None, int | None, int | None, int | None]:
+    def _source_counts(self) -> Iterator[int | None]:
         """Each source's frame count in `(holograms, timing, phase, intensity)` order.
 
         Ordered by authority over the acquisition's length: what Koala captured
         (`Holograms/`, then the `timestamps.txt` written beside it) outranks what it
-        later reconstructed. `num_frames` takes the first present one; `is_consistent`
-        checks they all agree. Each is None when its source is absent (or, for the
+        later reconstructed. Yielded lazily, so `num_frames` stops at the first present
+        source instead of reading the rest; `is_consistent` draws the whole run and
+        checks they agree. Each is None when its source is absent (or, for the
         holograms, split across formats).
         """
-        return (
-            self.num_holograms,
-            self.num_timestamps,
-            self.phase.num_frames,
-            self.intensity.num_frames,
-        )
+        yield self.num_holograms
+        yield self.num_timestamps
+        yield self.phase.num_frames
+        yield self.intensity.num_frames
 
     # -- status --
 
@@ -230,8 +229,9 @@ class KoalaTimelapse:
         exists (`has_quantitative_phase` / `has_quantitative_intensity`).
         """
         holo = self.num_holograms
-        timing = self.num_timestamps
-        return holo is not None and timing is not None and holo == timing
+        if holo is None:
+            return False
+        return holo == self.num_timestamps
 
     @property
     def is_consistent(self) -> bool:

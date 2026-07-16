@@ -6,7 +6,6 @@ import tifffile
 from kaparoo.filesystem.hierarchy import Directory
 from kaparoo.filters import Literal
 
-from iivs.dhm.data.koala.layout import open_folder
 from iivs.dhm.data.phase.base import PhaseFloatSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, save_phase_bin
 from iivs.dhm.data.phase.layout import (
@@ -18,6 +17,7 @@ from iivs.dhm.data.phase.layout import (
 )
 from iivs.dhm.data.phase.tif import PhaseTifFolder
 from iivs.dhm.data.phase.txt import PhaseTxtFolder, save_phase_txt
+from tests.dhm.data.helpers import spy_on_open
 
 
 def _bin(folder, n):
@@ -46,18 +46,6 @@ def _img(folder, n):
     folder.mkdir(parents=True)
     for i in range(n):
         tifffile.imwrite(folder / f"{i:05d}_phase.tif", np.full((2, 3), i, np.uint8))
-
-
-def _spy_on_open(monkeypatch):
-    """Record every path a group opens, returning the (live) list of them."""
-    real, opened = open_folder, []
-
-    def spy(path, folder):
-        opened.append(path)
-        return real(path, folder)
-
-    monkeypatch.setattr("iivs.dhm.data.koala.layout.open_folder", spy)
-    return opened
 
 
 def test_group_opens_every_format(tmp_path):
@@ -154,7 +142,7 @@ def test_group_opens_each_format_lazily_and_once(tmp_path, monkeypatch):
     _bin(phase / "Float" / "Bin", 2)
     _txt(phase / "Float" / "Txt", 2)
     _img(phase / "Image", 2)
-    opened = _spy_on_open(monkeypatch)
+    opened = spy_on_open(monkeypatch)
 
     group = PhaseGroup(phase)
     assert opened == []  # constructing a group touches no disk
@@ -172,7 +160,7 @@ def test_group_opens_each_format_lazily_and_once(tmp_path, monkeypatch):
 def test_group_caches_an_absent_format_too(tmp_path, monkeypatch):
     phase = tmp_path / "Phase"
     _bin(phase / "Float" / "Bin", 2)  # Float/Txt is left absent
-    opened = _spy_on_open(monkeypatch)
+    opened = spy_on_open(monkeypatch)
     group = PhaseGroup(phase)
 
     assert group.txt_folder is None

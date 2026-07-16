@@ -24,6 +24,7 @@ from iivs.dhm.data.timelapse import (
     search_timelapses,
 )
 from iivs.dhm.data.timestamp import TimestampsTxtFile
+from tests.dhm.data.helpers import spy_on_open
 
 # ============================== #
 #      time-lapse builders       #
@@ -180,6 +181,25 @@ def test_num_frames_follows_the_source_priority(tmp_path):
     assert KoalaTimelapse(tmp_path).num_frames == 2  # intensity is the last resort
     shutil.rmtree(tmp_path / "Intensity")
     assert KoalaTimelapse(tmp_path).num_frames is None
+
+
+def test_num_frames_reads_only_the_source_it_answers_from(tmp_path, monkeypatch):
+    _build(tmp_path, holograms="raw", n=3)
+    opened = spy_on_open(monkeypatch)
+    timelapse = KoalaTimelapse(tmp_path)
+
+    assert timelapse.num_frames == 3  # the holograms answer it, being first in priority
+    assert opened == []  # so neither reconstruction was opened to reach a count
+    assert "timestamps" not in timelapse.__dict__  # nor was the timing parsed
+
+
+def test_is_reconstructable_skips_the_timing_without_holograms(tmp_path):
+    _build(tmp_path, n=3)
+    shutil.rmtree(tmp_path / "Holograms")
+    timelapse = KoalaTimelapse(tmp_path)
+
+    assert not timelapse.is_reconstructable  # no holograms, so nothing to reconstruct
+    assert "timestamps" not in timelapse.__dict__  # decided before parsing the timing
 
 
 def test_num_holograms_surfaces_a_corrupt_raw(tmp_path):
