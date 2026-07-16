@@ -64,8 +64,8 @@ class DryMass(nn.Module):
         cls,
         *,
         pixel_size: float,
-        alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
         wavelength: float = DEFAULT_WAVELENGTH,
+        alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     ) -> Self:
         """Build a calculator whose phase path uses `wavelength` (in m)."""
         opd_module = OpticalPathDifference(wavelength=wavelength)
