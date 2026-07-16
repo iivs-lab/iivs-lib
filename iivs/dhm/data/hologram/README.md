@@ -84,8 +84,10 @@ not just a file-backed `HologramSequence` — a `kaparoo` composer (e.g. a
 raising if a folder holds both (a real acquisition yields only one). The folder's layout
 is the `HOLOGRAM_TREE` `hierarchy` spec, and `search_holograms(root, ...)` returns the
 hologram sequence of every time-lapse under `root` that has a `Holograms/` folder (via
-`kaparoo`'s `search_dirs`, with `predicate` a check on the `HologramSequence`). All
-three are what
+`kaparoo`'s `search_dirs`, with `predicate` a check on the `HologramSequence`). A
+`Holograms/` holding both a `.raw` stack and `.tif` previews is ambiguous;
+`on_conflict="skip"` (default) drops that time-lapse and warns so one malformed
+acquisition does not abort the scan, while `"raise"` aborts. All three are what
 [`iivs.dhm.data.timelapse`](../README.md#opening-a-whole-time-lapse-koalatimelapse)'s
 `KoalaTimelapse` composes for the holograms.
 

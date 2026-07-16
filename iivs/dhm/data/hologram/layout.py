@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = ("HOLOGRAM_TREE", "open_holograms", "search_holograms")
 
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -14,6 +15,7 @@ from iivs.dhm.data.koala import HOLOGRAMS, open_folder, search_timelapse_subdirs
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+    from typing import Literal
 
     from kaparoo.filesystem.exclude import ExcludeRule
     from kaparoo.filesystem.types import StrPath
@@ -69,6 +71,7 @@ def open_holograms(root: StrPath) -> HologramSequence | None:
 def search_holograms(
     root: StrPath,
     *,
+    on_conflict: Literal["skip", "raise"] = "skip",
     name_filter: Filter | FilterDict | None = None,
     part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[HologramSequence], bool] | None = None,
@@ -80,10 +83,16 @@ def search_holograms(
     """Return the holograms of every time-lapse under `root` that has a `Holograms/`.
 
     Finds each time-lapse folder holding a `Holograms/` and opens it; an empty folder is
-    skipped, and `predicate` is a final check on the built *`HologramSequence`*.
+    skipped, and `predicate` is a final check on the built *`HologramSequence`*. A
+    `Holograms/` holding both a `.raw` stack and `.tif` previews is ambiguous;
+    `on_conflict` decides whether such a time-lapse is dropped (so one malformed
+    acquisition does not abort the whole scan) or aborts the search.
 
     Args:
         root: The directory to scan.
+        on_conflict: What to do when a matched `Holograms/` holds both a `.raw` stack
+            and `.tif` previews. `"skip"` (default) drops that time-lapse and warns;
+            `"raise"` aborts the search.
         name_filter: Filter on each candidate time-lapse folder's own name.
         part_filter: Filter on each visited parent directory's relative path.
         predicate: A final check on the opened `HologramSequence`; None (default) keeps
@@ -94,26 +103,37 @@ def search_holograms(
         ordered: Sort the results by path. Defaults to True.
 
     Returns:
-        The opened hologram sequences.
+        The opened hologram sequences (excluding any skipped on a conflict).
 
     Raises:
-        ValueError: If any matched `Holograms/` holds both a `.raw` stack and `.tif`
-            previews.
+        ValueError: If a matched `Holograms/` holds both a `.raw` stack and `.tif`
+            previews and `on_conflict` is `"raise"`.
     """
-    opened = (
-        open_holograms(directory)
-        for directory in search_timelapse_subdirs(
-            root,
-            HOLOGRAMS,
-            name_filter=name_filter,
-            part_filter=part_filter,
-            exclude=exclude,
-            min_depth=min_depth,
-            max_depth=max_depth,
-            ordered=ordered,
-        )
-    )
-    present = [sequence for sequence in opened if sequence is not None]
+    sequences: list[HologramSequence] = []
+    for directory in search_timelapse_subdirs(
+        root,
+        HOLOGRAMS,
+        name_filter=name_filter,
+        part_filter=part_filter,
+        exclude=exclude,
+        min_depth=min_depth,
+        max_depth=max_depth,
+        ordered=ordered,
+    ):
+        try:
+            sequence = open_holograms(directory)
+        except ValueError:
+            if on_conflict == "raise":
+                raise
+            warnings.warn(
+                f"skipping {directory}: holograms hold both a .raw stack and .tif "
+                "previews (expected one)",
+                stacklevel=2,
+            )
+            continue
+        if sequence is not None:
+            sequences.append(sequence)
+
     if predicate is None:
-        return present
-    return [sequence for sequence in present if predicate(sequence)]
+        return sequences
+    return [sequence for sequence in sequences if predicate(sequence)]

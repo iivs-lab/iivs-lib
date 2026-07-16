@@ -90,3 +90,24 @@ def test_search_holograms_predicate(tmp_path):
     _raw(tmp_path / "b" / "Holograms", 3)
     found = search_holograms(tmp_path, predicate=lambda s: len(s) == 3)
     assert [len(s) for s in found] == [3]
+
+
+def _conflict(holo):
+    _raw(holo, 2)  # a .raw stack plus numbered .tif previews -> ambiguous
+    for i in range(2):
+        tifffile.imwrite(holo / f"{i:05d}_holo.tif", np.full((2, 3), i, np.uint8))
+
+
+def test_search_holograms_skips_conflict_and_warns(tmp_path):
+    _raw(tmp_path / "good" / "Holograms", 2)
+    _conflict(tmp_path / "bad" / "Holograms")
+    with pytest.warns(UserWarning, match="expected one"):
+        found = search_holograms(tmp_path)  # default on_conflict="skip"
+    assert [type(s).__name__ for s in found] == ["HologramRawFile"]  # only "good"
+
+
+def test_search_holograms_on_conflict_raise(tmp_path):
+    _raw(tmp_path / "good" / "Holograms", 2)
+    _conflict(tmp_path / "bad" / "Holograms")
+    with pytest.raises(ValueError, match="expected one"):
+        search_holograms(tmp_path, on_conflict="raise")
