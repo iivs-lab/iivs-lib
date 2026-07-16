@@ -11,8 +11,8 @@ __all__ = (
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from kaparoo.filesystem import dir_exists, search_dirs
 from kaparoo.filesystem.hierarchy import Directory
-from kaparoo.filesystem.search import search_dirs
 from kaparoo.utils import fold_optional
 
 from iivs.dhm.data.koala.constants import BIN, FLOAT, IMAGE, TXT
@@ -46,8 +46,7 @@ def open_folder[T: KoalaFrameFolder](path: StrPath, folder: type[T]) -> T | None
     Type Parameters:
         T: The opened folder type (e.g. `PhaseBinFolder`).
     """
-    path = Path(path)
-    if path.is_dir():
+    if dir_exists(path):
         try:
             return folder(path, validate=None)
         except FileNotFoundError:
@@ -90,7 +89,7 @@ def search_timelapse_subdirs(
         root,
         name_filter=name_filter,
         part_filter=part_filter,
-        predicate=lambda path: (path / subpath).is_dir(),
+        predicate=lambda path: dir_exists(path / subpath),
         exclude=exclude,
         min_depth=min_depth,
         max_depth=max_depth,
@@ -187,7 +186,8 @@ class ReconstructionGroup[
     The shared base for the Koala reconstruction groups (phase, intensity): a
     ``<Modality>/`` folder exposing each format present: `bin_folder` / `txt_folder`
     (the quantitative `Float/{Bin,Txt}` sources, which may coexist) and `tif_folder`
-    (the uint8 `Image` preview), plus the `.bin`-preferred `quantitative`, the shared
+    (the uint8 `Image` preview), with `present_folders` to iterate whichever of the
+    three exist, plus the `.bin`-preferred `quantitative`, the shared
     `num_frames` / `frame_shape`, the tolerant `is_consistent` cross-format check, and
     the non-vacuous `is_usable` (has quantitative data and is consistent). Each
     accessor is None when its source is absent. `validate` checks per-file content
@@ -247,6 +247,16 @@ class ReconstructionGroup[
         return self._tif_folder
 
     @property
+    def _all_folders(self) -> tuple[B | None, T | None, P | None]:
+        """The three format sources in `(bin, txt, tif)` order; each None when absent."""
+        return (self.bin_folder, self.txt_folder, self.tif_folder)
+
+    @property
+    def present_folders(self) -> tuple[B | T | P, ...]:
+        """The sources that are present, in `(bin, txt, tif)` order."""
+        return tuple(f for f in self._all_folders if f is not None)
+
+    @property
     def quantitative(self) -> B | T | None:
         """The quantitative source, `Float/Bin` preferred over `Float/Txt`, or None."""
         if self.bin_folder is not None:
@@ -288,8 +298,7 @@ class ReconstructionGroup[
         Vacuously True when nothing (or one source) is present; a correct acquisition's
         `bin` / `txt` / `tif` share one shape (and one count when fully reconstructed).
         """
-        sources = (self.bin_folder, self.txt_folder, self.tif_folder)
-        present = [f for f in sources if f is not None]
+        present = self.present_folders
         counts = {len(f) for f in present}
         shapes = {f.frame_shape for f in present}
         return len(counts) <= 1 and len(shapes) <= 1
@@ -325,6 +334,5 @@ class ReconstructionGroup[
             ValueError: If a file fails validation (a non-contiguous name, or a bad
                 header / payload at the deeper levels).
         """
-        for folder in (self.bin_folder, self.txt_folder, self.tif_folder):
-            if folder is not None:
-                folder.validate_if_supported(level=level)
+        for folder in self.present_folders:
+            folder.validate_if_supported(level=level)
