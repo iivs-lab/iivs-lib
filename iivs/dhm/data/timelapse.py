@@ -110,6 +110,12 @@ class KoalaTimelapse:
     def holograms(self) -> HologramSequence | None:
         """The holograms: the `holo.raw` stack or the numbered tif folder, or None.
 
+        Typed as a bare `HologramSequence`, so its per-item metadata is left abstract:
+        `get_meta` is `Unknown` until you narrow to the concrete source (a
+        `HologramRawFile`'s is a frame-index `int`; a tif folder's is a source `Path`).
+        The layout composes and reflects; committing to a metadata type is a consumer's
+        concern. The frames themselves are uint8 either way.
+
         Raises:
             ValueError: If the `Holograms` folder holds both a `.raw` stack and numbered
                 `.tif` previews (a real acquisition produces only one).
