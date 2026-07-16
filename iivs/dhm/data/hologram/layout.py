@@ -187,9 +187,6 @@ def search_multi_format_holograms(
         min_depth: Shallowest depth to include (>= 1).
         max_depth: Deepest depth to include, or None (default) for unlimited.
         ordered: Sort the results by path. Defaults to True.
-
-    Returns:
-        The conflicting `Holograms/` directories.
     """
     return [
         directory

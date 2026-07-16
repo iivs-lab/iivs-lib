@@ -170,9 +170,18 @@ def save_intensity(
     `pixel_size`), and `.npy` to the header-less `save_intensity_npy`. For `.npy` the
     `pixel_size` does not apply; passing it emits a warning and it is dropped.
 
+    Args:
+        path: The file to write. Its extension picks the format.
+        data: The intensity image to save (a 2D float32 array).
+        pixel_size: Physical size of one (square) pixel, in m. Required for `.bin` /
+            `.txt`; ignored (with a warning) for `.npy`.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
+        on_nonfinite: What to do about NaN / inf in `data`: `"ignore"`, `"warn"`
+            (default), or `"raise"`.
+
     Raises:
-        ValueError: If `path`'s extension is not bin, txt, or npy; or, for `.bin` /
-            `.txt`, if `pixel_size` is missing.
+        ValueError: If `path`'s extension is not `bin`, `txt`, or `npy`; or, for `.bin`
+            / `.txt`, if `pixel_size` is missing.
     """
     ext = file_extension(path)
     if ext in ("bin", "txt"):

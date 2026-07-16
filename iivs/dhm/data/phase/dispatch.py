@@ -209,9 +209,24 @@ def save_phase(
     + `refractive_delta`), and `.npy` to the header-less `save_phase_npy`. For `.npy`
     the metadata args do not apply; passing any emits a warning and they are dropped.
 
+    Args:
+        path: The file to write. Its extension picks the format.
+        data: The phase image to save (a 2D float32 array).
+        pixel_size: Physical size of one (square) pixel, in m. Required for `.bin` /
+            `.txt`; ignored (with a warning) for `.npy`.
+        height_scale: Height per rad, in m. Mutually exclusive with `wavelength` /
+            `refractive_delta`; one form is required for `.bin` / `.txt`.
+        wavelength: Illumination wavelength, in m (with `refractive_delta`).
+        refractive_delta: Refractive-index difference (with `wavelength`).
+        unit: The unit `data` is already in, recorded in the `.bin` / `.txt` header.
+            Defaults to `RADIANS`; ignored for `.npy`.
+        overwrite: Whether to replace `path` if it already exists. Defaults to False.
+        on_nonfinite: What to do about NaN / inf in `data`: `"ignore"`, `"warn"`
+            (default), or `"raise"`.
+
     Raises:
-        ValueError: If `path`'s extension is not bin, txt, or npy; for `.bin` / `.txt`,
-            if `pixel_size` is missing or neither/both scale forms are given.
+        ValueError: If `path`'s extension is not `bin`, `txt`, or `npy`; for `.bin` /
+            `.txt`, if `pixel_size` is missing or neither/both scale forms are given.
     """
     ext = file_extension(path)
     if ext in ("bin", "txt"):

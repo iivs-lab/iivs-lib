@@ -73,6 +73,9 @@ def search_phase_bin_folders(
     A time-lapse without a non-empty `Phase/Float/Bin` is skipped, and `predicate`
     checks the opened `PhaseBinFolder`. `name_filter` matches the time-lapse folder's
     own name.
+
+    The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
+    `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
     """
     return open_timelapse_subfolders(
         root,
@@ -103,6 +106,9 @@ def search_phase_txt_folders(
 
     The `.txt` twin of `search_phase_bin_folders`; `predicate` checks the opened
     `PhaseTxtFolder`.
+
+    The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
+    `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
     """
     return open_timelapse_subfolders(
         root,
@@ -133,6 +139,9 @@ def search_phase_tif_folders(
 
     The preview twin of `search_phase_bin_folders`; `predicate` checks the opened
     `PhaseTifFolder`.
+
+    The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
+    `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
     """
     return open_timelapse_subfolders(
         root,

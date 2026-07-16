@@ -342,9 +342,6 @@ def search_timelapses(
         max_depth: Deepest depth to include, or None (default) for unlimited.
         ordered: Sort the results by path. Defaults to True.
 
-    Returns:
-        The matching time-lapses.
-
     Raises:
         ValueError: If `require` holds a name outside the root-level markers / files.
         DirectoryNotFoundError: If `root` does not exist.

@@ -81,9 +81,6 @@ def search_timelapse_subdirs(
         min_depth: Shallowest depth to include (>= 1).
         max_depth: Deepest depth to include, or None for unlimited.
         ordered: Sort the results by path. Defaults to True.
-
-    Returns:
-        The matching `<time-lapse>/<subpath>` directories.
     """
     dirs = search_dirs(
         root,
