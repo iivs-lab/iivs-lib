@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from iivs.dhm.analysis.opd import OPDConverter, opd_to_phase, phase_to_opd
-from iivs.dhm.data.constants import DEFAULT_WAVELENGTH
+from iivs.dhm.constants import DEFAULT_WAVELENGTH
 
 
 def test_phase_to_opd_scales_by_wavelength_over_two_pi():

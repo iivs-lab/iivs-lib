@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from iivs.dhm.data.constants import DEFAULT_WAVELENGTH
+from iivs.dhm.constants import DEFAULT_WAVELENGTH
 
 if TYPE_CHECKING:
     from typing import Self

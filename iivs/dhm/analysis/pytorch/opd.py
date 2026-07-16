@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from torch import nn
 
 from iivs.dhm.analysis.opd import OPDConverter
-from iivs.dhm.data.constants import DEFAULT_WAVELENGTH
+from iivs.dhm.constants import DEFAULT_WAVELENGTH
 
 if TYPE_CHECKING:
     from typing import Self

@@ -9,7 +9,7 @@ from torch import nn, tensordot
 
 from iivs.dhm.analysis.drymass import DryMassCalculator
 from iivs.dhm.analysis.pytorch.opd import OpticalPathDifference
-from iivs.dhm.data.constants import (
+from iivs.dhm.constants import (
     DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     DEFAULT_WAVELENGTH,
 )

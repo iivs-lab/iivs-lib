@@ -48,7 +48,7 @@ caller's responsibility.
   — the one-shot forms.
 
 Defaults for `wavelength` and `alpha` come from
-[`iivs.dhm.data.constants`](../data/constants.py).
+[`iivs.dhm.constants`](../constants.py).
 
 ## Using with PyTorch (autograd)
 

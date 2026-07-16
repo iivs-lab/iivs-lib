@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.data.constants import (
+from iivs.dhm.constants import (
     DEFAULT_REFRACTIVE_DELTA,
     DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     DEFAULT_WAVELENGTH,

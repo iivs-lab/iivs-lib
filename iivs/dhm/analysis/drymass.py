@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from iivs.dhm.analysis.opd import OPDConverter
-from iivs.dhm.data.constants import (
+from iivs.dhm.constants import (
     DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     DEFAULT_WAVELENGTH,
 )

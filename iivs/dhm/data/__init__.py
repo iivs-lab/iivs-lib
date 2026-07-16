@@ -7,12 +7,11 @@ The imaging modalities are each their own subpackage: `phase` and `intensity`
 (`KoalaTimelapse`, wiring every modality over the standard Koala layout). Within a
 modality, each file format is a codec module exposing a loader, a saver, and lazy
 sequence types, and a `convert` helper re-encodes a sequence from one format to another.
-Blocks shared across modalities live in `koala`; `constants` holds the lab's default
-optical parameters.
+Blocks shared across modalities live in `koala`.
 
-What is re-exported here is the acquisition level: the whole-acquisition reader, the
-timing file, and the optical defaults. The modalities stay in their own subpackages, so
-reach for `iivs.dhm.data.phase` and its siblings by name.
+Nothing is re-exported here: reach for a module by name, as in
+``from iivs.dhm.data.timelapse import KoalaTimelapse``. Importing this package therefore
+costs nothing, and each modality is paid for only when asked for.
 
 The ``.bin``, ``.tif`` / ``.raw``, and ``timestamps.txt`` formats are `Lyncée Tec
 <https://www.lynceetec.com/>`_'s proprietary Koala formats. The ``.bin`` container
@@ -20,39 +19,3 @@ The ``.bin``, ``.tif`` / ``.raw``, and ``timestamps.txt`` formats are `Lyncée T
 implementation, `pyKoalaUtils <https://github.com/lynceetec/pyKoalaUtils>`_ (MIT); this
 package is an independent reimplementation and contains no code from it.
 """
-
-__all__ = (
-    "DEFAULT_REFRACTIVE_DELTA",
-    "DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT",
-    "DEFAULT_WAVELENGTH",
-    "DEFAULT_WAVELENGTH_NM",
-    "KOALA_TIMELAPSE_TREE",
-    "PIXEL_SIZE_10X",
-    "PIXEL_SIZE_10X_UM",
-    "PIXEL_SIZE_20X",
-    "PIXEL_SIZE_20X_UM",
-    "PIXEL_SIZE_40X",
-    "PIXEL_SIZE_40X_UM",
-    "KoalaTimelapse",
-    "TimestampsTxtFile",
-    "search_timelapses",
-)
-
-from iivs.dhm.data.constants import (
-    DEFAULT_REFRACTIVE_DELTA,
-    DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
-    DEFAULT_WAVELENGTH,
-    DEFAULT_WAVELENGTH_NM,
-    PIXEL_SIZE_10X,
-    PIXEL_SIZE_10X_UM,
-    PIXEL_SIZE_20X,
-    PIXEL_SIZE_20X_UM,
-    PIXEL_SIZE_40X,
-    PIXEL_SIZE_40X_UM,
-)
-from iivs.dhm.data.timelapse import (
-    KOALA_TIMELAPSE_TREE,
-    KoalaTimelapse,
-    search_timelapses,
-)
-from iivs.dhm.data.timestamp import TimestampsTxtFile

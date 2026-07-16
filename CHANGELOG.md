@@ -14,11 +14,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   so a caller assembling its own validator can compose the same parts the four
   `validate_*_array` front doors do. They stay behind the module path rather than joining
   the `iivs.common.data` hub, which keeps carrying only the composed validators.
-- `iivs.dhm.data` now re-exports the acquisition level, as every other package holding
-  its own modules already did: `KoalaTimelapse` / `search_timelapses` /
-  `KOALA_TIMELAPSE_TREE`, `TimestampsTxtFile`, and the `constants` optical defaults. The
-  modalities stay in their own subpackages, so `iivs.dhm.data.phase` and its siblings
-  are still reached by name.
 - `PhaseFileList` / `PhaseFileFolder` and `IntensityFileList` / `IntensityFileFolder`
   are exported from their packages. They are what `phase_list` / `phase_folder` /
   `convert_phase_folder` / `convert_phase_list` and their intensity twins have always
@@ -148,6 +143,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Breaking**: `iivs.dhm.data.constants` moves to `iivs.dhm.constants`. Its optical
+  defaults are DHM lab settings rather than data-reading settings, and `analysis` needs
+  them as much as `data` does (`DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT` is a dry-mass
+  parameter, used by nothing in `data`), so having them under `data` made `analysis`
+  depend on the reader package for four floats. `import iivs.dhm.analysis` no longer
+  reaches into `iivs.dhm.data`, and so no longer pulls the TIFF stack it never uses.
 - `iivs.common.data.mixin` is renamed `iivs.common.data.mixins`: the module is a flat
   pair of unrelated peers (`FrameShapedMixin`, `ValueRangeMixin`) rather than one
   concept, which is what the plural is for. `iivs.common.data` re-exports both as
