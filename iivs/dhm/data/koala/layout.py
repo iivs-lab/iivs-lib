@@ -114,10 +114,24 @@ def open_timelapse_subfolders[T: KoalaFrameFolder](
 ) -> list[T]:
     """Open each `<time-lapse>/<subpath>` folder under `root`.
 
-    Finds the time-lapses holding `subpath` (a relative path like
-    ``"Phase/Float/Bin"``), opens each (an empty one drops out as None), then keeps
-    those passing `predicate` (a check on the opened folder). `name_filter` matches the
-    time-lapse folder's own name.
+    Finds each time-lapse holding `subpath` and opens it with `folder`, tolerating an
+    empty one (it drops out rather than raising), then keeps those passing `predicate`.
+
+    Args:
+        root: The directory to scan.
+        subpath: The relative subfolder each time-lapse must hold (e.g. "Phase" or
+            "Phase/Float/Bin").
+        folder: The class to open each `subpath` with (e.g. `PhaseBinFolder`).
+        name_filter: Filter on each candidate time-lapse folder's own name.
+        part_filter: Filter on each visited parent directory's relative path.
+        predicate: A final check on each opened folder; None (default) keeps all.
+        exclude: Path(s) to prune from the walk.
+        min_depth: Shallowest depth to include (>= 1).
+        max_depth: Deepest depth to include, or None (default) for unlimited.
+        ordered: Sort the results by path. Defaults to True.
+
+    Returns:
+        The opened folders, one per matching time-lapse.
 
     Type Parameters:
         T: The opened folder type (e.g. `PhaseBinFolder`).
@@ -179,6 +193,13 @@ class ReconstructionGroup[
     accessor is None when its source is absent. `validate` checks per-file content
     across the present formats (distinct from the structural checks above). A subclass
     binds the concrete folder subtypes.
+
+    Args:
+        root: The modality folder (e.g. `Phase/`). Not required to exist: a missing one
+            makes every accessor None.
+        bin_cls: The class to open `Float/Bin` with.
+        txt_cls: The class to open `Float/Txt` with.
+        tif_cls: The class to open the `Image` preview with.
 
     Type Parameters:
         B: The `Float/Bin` folder type (e.g. `PhaseBinFolder`).
