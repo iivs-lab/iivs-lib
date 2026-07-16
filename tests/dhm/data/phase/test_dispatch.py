@@ -229,6 +229,18 @@ def test_phase_folder_dispatches_bin_txt(tmp_path, ext, cls):
     assert len(folder) == 2
 
 
+def test_the_hub_exports_what_the_dispatchers_declare(tmp_path):
+    # A caller who writes `folder = phase_folder(root)` must be able to name its type,
+    # so the types the public signatures declare are importable from the package hub.
+    from iivs.dhm.data.phase import PhaseFileFolder, PhaseFileList
+
+    root = tmp_path / "acq"
+    _make_folder(root, "bin")
+    assert isinstance(phase_folder(root), PhaseFileFolder)  # phase_folder's return type
+    files = sorted(root.glob("*.bin"))
+    assert isinstance(phase_list(files), PhaseFileList)  # phase_list's return type
+
+
 def test_phase_folder_dispatches_npy(tmp_path):
     root = tmp_path / "acq"
     _make_folder(root, "npy")

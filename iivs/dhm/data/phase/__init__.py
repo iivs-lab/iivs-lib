@@ -11,6 +11,8 @@ __all__ = (
     "PhaseBinHeader",
     "PhaseBinList",
     "PhaseBounds",
+    "PhaseFileFolder",
+    "PhaseFileList",
     "PhaseFloatSequence",
     "PhaseGroup",
     "PhaseImageSequence",
@@ -46,6 +48,8 @@ __all__ = (
 )
 
 from iivs.dhm.data.phase.base import (
+    PhaseFileFolder,
+    PhaseFileList,
     PhaseFloatSequence,
     PhaseImageSequence,
     PhaseSequence,

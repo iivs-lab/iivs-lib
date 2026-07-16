@@ -10,6 +10,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `iivs.dhm.data` now re-exports the acquisition level, as every other package holding
+  its own modules already did: `KoalaTimelapse` / `search_timelapses` /
+  `KOALA_TIMELAPSE_TREE`, `TimestampsTxtFile`, and the `constants` optical defaults. The
+  modalities stay in their own subpackages, so `iivs.dhm.data.phase` and its siblings
+  are still reached by name.
+- `PhaseFileList` / `PhaseFileFolder` and `IntensityFileList` / `IntensityFileFolder`
+  are exported from their packages. They are what `phase_list` / `phase_folder` /
+  `convert_phase_folder` / `convert_phase_list` and their intensity twins have always
+  declared as their return and parameter types, so annotating what those functions hand
+  back no longer needs a reach into `iivs.dhm.data.phase.base`.
 - `iivs.dhm.data.timelapse`: `KoalaTimelapse`, a top-level opener that composes a whole
   Lyncée Tec Koala time-lapse from per-modality groups over the standard layout,
   tolerating absent modalities. `phase` / `intensity` are a `PhaseGroup` /

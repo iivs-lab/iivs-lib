@@ -9,6 +9,8 @@ __all__ = (
     "IntensityBinFolder",
     "IntensityBinHeader",
     "IntensityBinList",
+    "IntensityFileFolder",
+    "IntensityFileList",
     "IntensityFloatSequence",
     "IntensityGroup",
     "IntensityImageSequence",
@@ -40,6 +42,8 @@ __all__ = (
 )
 
 from iivs.dhm.data.intensity.base import (
+    IntensityFileFolder,
+    IntensityFileList,
     IntensityFloatSequence,
     IntensityImageSequence,
     IntensitySequence,
