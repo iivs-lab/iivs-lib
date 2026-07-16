@@ -112,11 +112,27 @@ def test_convert_hologram_folder_rejects_empty(tmp_path, ext):
     assert not out.exists()  # atomic: no unreadable folder left behind
 
 
-def test_save_hologram_raw_streams_a_sequence(tmp_path):
+def test_save_hologram_raw_streams_a_sequence(tmp_path, monkeypatch):
     stack = _stack()
     src = _raw_source(tmp_path / "src.raw", stack)  # a HologramSequence, not an array
     out = tmp_path / "out.raw"
-    save_hologram_raw(out, src)  # streamed frame by frame, no full-stack copy
+
+    # Count the per-frame write. Stacking the source first would round-trip identically
+    # while holding a multi-GB acquisition whole, which is what "one at a time" rules
+    # out and what the bytes below cannot tell us.
+    widths = []
+    real = np.ascontiguousarray
+    monkeypatch.setattr(
+        np,
+        "ascontiguousarray",
+        lambda a, **kw: (widths.append(np.ndim(a)), real(a, **kw))[1],
+    )
+
+    save_hologram_raw(out, src)
+
+    assert widths == [2] * len(
+        src
+    )  # one call per frame, each a 2D frame, never a stack
     dst = HologramRawFile(out)
     np.testing.assert_array_equal(np.stack([dst[i] for i in range(len(dst))]), stack)
 

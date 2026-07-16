@@ -90,6 +90,14 @@ def test_frames_property_exposes_full_memmap(tmp_path):
     assert seq.frames.shape == (3, 2, 3)
     np.testing.assert_array_equal(seq.frames, frames)
 
+    # Both halves of "a lazy, read-only memmap", which the values alone cannot show: an
+    # eager `np.fromfile` would compare equal while loading a multi-GB file whole and
+    # handing the caller something it could silently corrupt.
+    assert isinstance(seq.frames, np.memmap)
+    assert not seq.frames.flags.writeable
+    with pytest.raises(ValueError, match="read-only"):
+        seq.frames[0, 0, 0] = 255
+
 
 def test_sequence_pickles_to_path_without_copying_frames(tmp_path):
     path = tmp_path / "holo.raw"
