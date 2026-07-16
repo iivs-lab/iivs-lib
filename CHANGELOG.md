@@ -47,7 +47,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   it to `hierarchy.validate` for a structural check). `search_holograms`'s `on_conflict`
   (default `"skip"`) drops a time-lapse whose `Holograms/` is ambiguous (holds both a
   `.raw` stack and `.tif` previews), warning, so one bad acquisition does not abort the
-  scan; `"raise"` aborts instead. The per-modality searches find each
+  scan; `"raise"` aborts instead. `search_ambiguous_holograms` is the auditing
+  counterpart, returning those ambiguous `Holograms/` folders. The per-modality searches
+  find each
   time-lapse's folder of one format (returning that concrete folder, e.g.
   `list[PhaseBinFolder]`, with `predicate` on it), sharing `search_timelapses`'s
   signature and delegating to the shared `iivs.dhm.data.koala` helpers `open_folder`

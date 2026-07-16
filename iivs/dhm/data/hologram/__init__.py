@@ -22,6 +22,7 @@ __all__ = (
     "save_hologram_npy",
     "save_hologram_raw",
     "save_hologram_tif",
+    "search_ambiguous_holograms",
     "search_holograms",
 )
 
@@ -34,6 +35,7 @@ from iivs.dhm.data.hologram.dispatch import (
 from iivs.dhm.data.hologram.layout import (
     HOLOGRAM_TREE,
     open_holograms,
+    search_ambiguous_holograms,
     search_holograms,
 )
 from iivs.dhm.data.hologram.npy import (

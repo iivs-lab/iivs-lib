@@ -8,6 +8,7 @@ from kaparoo.filesystem.hierarchy import Directory
 from iivs.dhm.data.hologram.layout import (
     HOLOGRAM_TREE,
     open_holograms,
+    search_ambiguous_holograms,
     search_holograms,
 )
 from iivs.dhm.data.hologram.raw import HologramRawFile, save_hologram_raw
@@ -111,3 +112,10 @@ def test_search_holograms_on_conflict_raise(tmp_path):
     _conflict(tmp_path / "bad" / "Holograms")
     with pytest.raises(ValueError, match="expected one"):
         search_holograms(tmp_path, on_conflict="raise")
+
+
+def test_search_ambiguous_holograms(tmp_path):
+    _raw(tmp_path / "raw_only" / "Holograms", 2)  # no conflict
+    _tif(tmp_path / "tif_only" / "Holograms", 3)  # no conflict
+    _conflict(tmp_path / "bad" / "Holograms")  # both raw and tif
+    assert search_ambiguous_holograms(tmp_path) == [tmp_path / "bad" / "Holograms"]

@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-__all__ = ("HOLOGRAM_TREE", "open_holograms", "search_holograms")
+__all__ = (
+    "HOLOGRAM_TREE",
+    "open_holograms",
+    "search_ambiguous_holograms",
+    "search_holograms",
+)
 
 import warnings
 from pathlib import Path
@@ -137,3 +142,50 @@ def search_holograms(
     if predicate is None:
         return sequences
     return [sequence for sequence in sequences if predicate(sequence)]
+
+
+def search_ambiguous_holograms(
+    root: StrPath,
+    *,
+    name_filter: Filter | FilterDict | None = None,
+    part_filter: Filter | FilterDict | None = None,
+    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
+    min_depth: int = 1,
+    max_depth: int | None = None,
+    ordered: bool = True,
+) -> list[Path]:
+    """Return each `Holograms/` under `root` that holds both a `.raw` stack and `.tif`.
+
+    The ambiguous case `open_holograms` raises on and `search_holograms(on_conflict=
+    "skip")` drops: such a folder cannot be opened as a single `HologramSequence` until
+    one of the two is removed. This is the auditing counterpart, returning the offending
+    `Holograms/` folders themselves (their parent is the time-lapse). `name_filter` /
+    `part_filter` match as in `search_holograms`.
+
+    Args:
+        root: The directory to scan.
+        name_filter: Filter on each candidate time-lapse folder's own name.
+        part_filter: Filter on each visited parent directory's relative path.
+        exclude: Path(s) to prune from the walk.
+        min_depth: Shallowest depth to include (>= 1).
+        max_depth: Deepest depth to include, or None (default) for unlimited.
+        ordered: Sort the results by path. Defaults to True.
+
+    Returns:
+        The conflicting `Holograms/` directories.
+    """
+    return [
+        directory
+        for directory in search_timelapse_subdirs(
+            root,
+            HOLOGRAMS,
+            name_filter=name_filter,
+            part_filter=part_filter,
+            exclude=exclude,
+            min_depth=min_depth,
+            max_depth=max_depth,
+            ordered=ordered,
+        )
+        if (directory / _HOLOGRAM_RAW).is_file()
+        and open_folder(directory, HologramTifFolder) is not None
+    ]
