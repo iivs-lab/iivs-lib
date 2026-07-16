@@ -10,6 +10,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `validate_ndim` / `validate_dtype` are declared public by `iivs.common.data.validation`,
+  so a caller assembling its own validator can compose the same parts the four
+  `validate_*_array` front doors do. They stay behind the module path rather than joining
+  the `iivs.common.data` hub, which keeps carrying only the composed validators.
 - `iivs.dhm.data` now re-exports the acquisition level, as every other package holding
   its own modules already did: `KoalaTimelapse` / `search_timelapses` /
   `KOALA_TIMELAPSE_TREE`, `TimestampsTxtFile`, and the `constants` optical defaults. The

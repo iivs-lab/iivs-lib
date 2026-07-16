@@ -2,8 +2,10 @@ from __future__ import annotations
 
 __all__ = (
     "OnNonFinite",
+    "validate_dtype",
     "validate_float32_array",
     "validate_float_array",
+    "validate_ndim",
     "validate_uint8_array",
     "validate_uint_array",
 )
