@@ -95,7 +95,7 @@ def search_timelapse_subdirs(
         max_depth=max_depth,
         ordered=ordered,
     )
-    return [Path(directory) / subpath for directory in dirs]
+    return [directory / subpath for directory in dirs]
 
 
 def open_timelapse_subfolders[T: KoalaFrameFolder](
