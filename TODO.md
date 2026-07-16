@@ -3,13 +3,6 @@
 Actionable work on the data layer and beyond, in rough priority order. Not
 formal milestones.
 
-## npy metadata — warn vs. silently ignore
-
-`.npy` is header-less, so `save_phase` / `save_phase_folder` today warn and
-drop any `pixel_size` / `unit` / scale passed for it. Decide: keep the warning
-(a signal that calibration won't persist) or drop it (smoother format-agnostic
-use), then apply the same choice to the `intensity` twins.
-
 ## `iivs.dhm.analysis` — split `MaskedReduction` out of dry mass
 
 Make `DryMass` / `DryMassCalculator` compute only the per-pixel mass-density
@@ -34,6 +27,8 @@ shared `MaskedReduction` (NumPy + Torch, label + one-hot).
 ## Release
 
 `CHANGELOG.md`'s `[Unreleased]` has accumulated substantial public-API changes
-since `0.1.0` (the suffix-dispatch factories, the `load_bin` / `load_txt`
-engine consolidation, `bounds_nm` replaced by `value_range`, the `imagecodecs`
-core dependency). Cut the next version once the data layer settles.
+since `0.1.0`: the suffix-dispatch factories, the `load_bin` / `load_txt` engine
+consolidation, `bounds_nm` replaced by `value_range`, the `imagecodecs` core
+dependency, and the whole `KoalaTimelapse` / `ReconstructionGroup` time-lapse
+layout (per-modality groups, the `search_*` finders, content `validate`, and the
+status flags). The data layer has settled; cut `0.2.0`.
