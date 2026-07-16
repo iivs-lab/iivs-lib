@@ -328,6 +328,28 @@ def test_to_image_default_bounds_use_value_range(tmp_path):
     assert folder.to_image().bounds == expected
 
 
+def test_to_image_reads_up_front_only_to_derive_bounds(tmp_path, monkeypatch):
+    folder = _two_frame_folder(tmp_path)
+    decoded = []
+    # Count the decode both paths go through: the up-front `value_range` scan and the
+    # view's render. Nothing public distinguishes "read every file" from "read none".
+    real = type(folder)._decode_in  # noqa: SLF001
+    monkeypatch.setattr(
+        type(folder),
+        "_decode_in",
+        lambda self, index, unit: (decoded.append(index), real(self, index, unit))[1],
+    )
+
+    view = folder.to_image(PhaseBounds(min_nm=200.0, max_nm=600.0))
+    assert decoded == []  # given bounds, the up-front pass is skipped...
+    _ = view[1]
+    assert decoded == [1]  # ...and the view renders on access, that frame alone
+
+    decoded.clear()
+    view = folder.to_image()
+    assert decoded == list(range(len(folder)))  # bounds=None reads every file, once
+
+
 def test_to_image_meta_is_source_path(tmp_path):
     folder = _two_frame_folder(tmp_path)
     preview = folder.to_image()

@@ -130,9 +130,8 @@ def test_save_hologram_raw_streams_a_sequence(tmp_path, monkeypatch):
 
     save_hologram_raw(out, src)
 
-    assert widths == [2] * len(
-        src
-    )  # one call per frame, each a 2D frame, never a stack
+    per_frame = [2] * len(src)  # one call per frame, each 2D; a stack would be one 3D
+    assert widths == per_frame
     dst = HologramRawFile(out)
     np.testing.assert_array_equal(np.stack([dst[i] for i in range(len(dst))]), stack)
 

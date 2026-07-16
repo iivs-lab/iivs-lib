@@ -350,6 +350,18 @@ def test_validate_parses_aux_files_only_at_data_level(tmp_path):
         timelapse.validate(level="data")  # at data the bad timestamps.txt is parsed
 
 
+def test_validate_parses_phbounds_only_at_data_level(tmp_path):
+    # The twin of the timestamps.txt case above: `validate` names both aux files, and
+    # phbounds.txt is the one nothing was reading.
+    _build(tmp_path, holograms="raw")
+    (tmp_path / "phbounds.txt").write_text("[rad]\n0 1\n")  # a wrong unit tag
+    timelapse = KoalaTimelapse(tmp_path)
+    timelapse.validate()
+    timelapse.validate(level="names")
+    with pytest.raises(ValueError, match=r"\[nm\]"):
+        timelapse.validate(level="data")
+
+
 def test_validate_raises_on_raw_and_tif_conflict(tmp_path):
     _build(tmp_path, holograms="raw")
     _u8_tif(tmp_path / "Holograms" / "00000_holo.tif", 0)  # add tif beside the .raw
