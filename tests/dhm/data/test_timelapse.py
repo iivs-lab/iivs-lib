@@ -120,6 +120,7 @@ def test_holograms_both_raw_and_tif_raises(tmp_path):
     # Status / count queries stay tolerant: they never raise on the raw+tif conflict,
     # leaving the holograms uncounted rather than propagating the ambiguity error.
     assert timelapse.has_holograms
+    assert timelapse.num_holograms is None  # ambiguous -> uncountable
     assert timelapse.num_frames == 2  # from phase / intensity, holograms uncountable
     assert timelapse.is_consistent
 
@@ -138,6 +139,14 @@ def test_num_frames_and_consistency(tmp_path):
     assert timelapse.has_quantitative_intensity
     assert timelapse.is_reconstructable  # holograms + timestamps, counts match
     assert timelapse.has_holograms
+
+
+def test_source_counts(tmp_path):
+    n = _build(tmp_path, holograms="raw")
+    timelapse = KoalaTimelapse(tmp_path)
+    assert timelapse.num_holograms == n
+    assert timelapse.num_timestamps == n
+    assert timelapse.num_frames == n
 
 
 def test_inconsistent_group_fails_timelapse_consistency(tmp_path):
@@ -217,6 +226,8 @@ def test_absent_modalities_are_none(tmp_path):
     assert timelapse.holograms is None
     assert timelapse.timestamps is None
     assert timelapse.phase_bounds is None
+    assert timelapse.num_holograms is None
+    assert timelapse.num_timestamps is None
     assert timelapse.num_frames is None
     assert timelapse.is_consistent
     assert not timelapse.has_quantitative_phase

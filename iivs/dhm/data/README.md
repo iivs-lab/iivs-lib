@@ -42,7 +42,9 @@ layout, tolerating absent parts. Holograms, phase, and intensity are **independe
 | `tl.phase_bounds` | the `phbounds.txt` `PhaseBounds`, or `None` |
 
 Status is exposed as flat properties: `num_frames` (the acquisition's frame count, from
-the first present source, or `None`), `is_consistent` (each modality internally
+the first present source, or `None`), the per-source `num_holograms` / `num_timestamps`
+(each `None` when absent; `num_holograms` is also `None` on a raw+tif conflict),
+`is_consistent` (each modality internally
 consistent and every present source — phase / intensity / holograms / timing — sharing
 one length), `is_reconstructable` (holograms **and** `timestamps.txt` present with
 matching frame counts — Koala's precondition for a reconstruction),

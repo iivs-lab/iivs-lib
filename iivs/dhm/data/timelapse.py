@@ -142,17 +142,22 @@ class KoalaTimelapse:
     # -- consistency --
 
     @cached_property
-    def _hologram_count(self) -> int | None:
+    def num_holograms(self) -> int | None:
         """The hologram frame count, or None when absent or ambiguous (raw+tif).
 
-        Tolerant view for the count / consistency queries: `holograms` raises on the
-        raw+tif conflict (an ambiguous `Holograms/`), which this treats as uncountable.
+        Tolerant: `holograms` raises on the raw+tif conflict (an ambiguous
+        `Holograms/`), which this reports as None (uncountable) rather than propagating.
         """
         try:
             holo = self.holograms
         except ValueError:
             return None
         return fold_optional(holo, len, None)
+
+    @property
+    def num_timestamps(self) -> int | None:
+        """The number of `timestamps.txt` timing rows, or None when it is absent."""
+        return fold_optional(self.timestamps, len, None)
 
     @cached_property
     def num_frames(self) -> int | None:
@@ -165,11 +170,11 @@ class KoalaTimelapse:
         for count in (
             self.phase.num_frames,
             self.intensity.num_frames,
-            self._hologram_count,
+            self.num_holograms,
         ):
             if count is not None:
                 return count
-        return fold_optional(self.timestamps, len, None)
+        return self.num_timestamps
 
     @property
     def is_consistent(self) -> bool:
@@ -188,8 +193,8 @@ class KoalaTimelapse:
             for c in (
                 self.phase.num_frames,
                 self.intensity.num_frames,
-                self._hologram_count,
-                fold_optional(self.timestamps, len, None),
+                self.num_holograms,
+                self.num_timestamps,
             )
             if c is not None
         }
@@ -204,9 +209,9 @@ class KoalaTimelapse:
         as absent (uncountable). Independent of whether a reconstruction output already
         exists (`has_quantitative_phase` / `has_quantitative_intensity`).
         """
-        count = self._hologram_count
-        timing = self.timestamps
-        return count is not None and timing is not None and count == len(timing)
+        holo = self.num_holograms
+        timing = self.num_timestamps
+        return holo is not None and timing is not None and holo == timing
 
     @property
     def has_quantitative_phase(self) -> bool:

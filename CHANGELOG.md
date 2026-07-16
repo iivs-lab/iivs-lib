@@ -24,7 +24,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   acquisition does); `timestamps` reads `timestamps.txt` (or None; synthesize a
   constant-rate fallback yourself with `TimestampsFixedFPS` when it is absent);
   `phase_bounds` reads `phbounds.txt`. Status is exposed as flat properties:
-  `num_frames`, `is_consistent`, `is_reconstructable` (holograms + `timestamps.txt`
+  `num_frames`, the per-source `num_holograms` / `num_timestamps`, `is_consistent`,
+  `is_reconstructable` (holograms + `timestamps.txt`
   with matching counts — Koala's reconstruction precondition), `has_quantitative_phase`
   / `has_quantitative_intensity` (a `Float/{Bin,Txt}` output is present), and
   `has_holograms`, and
