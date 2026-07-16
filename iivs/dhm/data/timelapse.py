@@ -146,11 +146,12 @@ class KoalaTimelapse:
 
     @property
     def num_frames(self) -> int | None:
-        """The acquisition's frame count, from the first present source, or None.
+        """The acquisition's frame count, from its most authoritative source, or None.
 
-        Taken from the first present data source (phase, intensity, holograms), else the
-        timing length. Phase, intensity, holograms, and timing share this count in a
-        coherent acquisition (`is_consistent`).
+        Taken from the holograms, else the timing, else phase, else intensity: what
+        Koala captured outranks what it later reconstructed, so a partial reconstruction
+        does not restate the acquisition's length. All four share this count in a
+        coherent acquisition (`is_consistent`); None when no source is present.
         """
         for count in self._source_counts:
             if count is not None:
@@ -178,17 +179,19 @@ class KoalaTimelapse:
 
     @property
     def _source_counts(self) -> tuple[int | None, int | None, int | None, int | None]:
-        """Each source's frame count in `(phase, intensity, holograms, timing)` order.
+        """Each source's frame count in `(holograms, timing, phase, intensity)` order.
 
-        Data sources lead and timing trails, so `num_frames` can take the first present
-        one; `is_consistent` checks they all agree. Each is None when its source is
-        absent (or, for the holograms, ambiguous).
+        Ordered by authority over the acquisition's length: what Koala captured
+        (`Holograms/`, then the `timestamps.txt` written beside it) outranks what it
+        later reconstructed. `num_frames` takes the first present one; `is_consistent`
+        checks they all agree. Each is None when its source is absent (or, for the
+        holograms, ambiguous).
         """
         return (
-            self.phase.num_frames,
-            self.intensity.num_frames,
             self.num_holograms,
             self.num_timestamps,
+            self.phase.num_frames,
+            self.intensity.num_frames,
         )
 
     # -- status --

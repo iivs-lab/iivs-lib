@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shutil
+
 import numpy as np
 import pytest
 import tifffile
@@ -48,6 +50,15 @@ def _write_holograms(root, kind, n):
     else:
         for i in range(n):
             _u8_tif(holo / f"{i:05d}_holo.tif", i)
+
+
+def _drop_frames(root, modality, indices):
+    """Delete each frame in `indices` from every format of `modality`."""
+    name = modality.lower()
+    for i in indices:
+        (root / modality / "Float" / "Bin" / f"{i:05d}_{name}.bin").unlink()
+        (root / modality / "Float" / "Txt" / f"{i:05d}_{name}.txt").unlink()
+        (root / modality / "Image" / f"{i:05d}_{name}.tif").unlink()
 
 
 def _build(root, *, holograms="raw", n=2, timestamps=True):
@@ -121,7 +132,7 @@ def test_holograms_both_raw_and_tif_raises(tmp_path):
     # leaving the holograms uncounted rather than propagating the ambiguity error.
     assert timelapse.has_holograms
     assert timelapse.num_holograms is None  # ambiguous -> uncountable
-    assert timelapse.num_frames == 2  # from phase / intensity, holograms uncountable
+    assert timelapse.num_frames == 2  # falls through to the timing, holograms uncounted
     assert timelapse.is_consistent
 
 
@@ -149,6 +160,28 @@ def test_source_counts(tmp_path):
     assert timelapse.num_frames == n
 
 
+def test_num_frames_follows_the_source_priority(tmp_path):
+    _build(tmp_path, holograms="raw", n=5)  # give each source a distinct count
+    _write_timestamps(tmp_path, 4)
+    _drop_frames(tmp_path, "Phase", (3, 4))
+    _drop_frames(tmp_path, "Intensity", (2, 3, 4))
+    timelapse = KoalaTimelapse(tmp_path)
+    assert (timelapse.num_holograms, timelapse.num_timestamps) == (5, 4)
+    assert (timelapse.phase.num_frames, timelapse.intensity.num_frames) == (3, 2)
+    assert timelapse.num_frames == 5  # the holograms outrank every other source
+    del timelapse  # `holo.raw` stays memory-mapped while a time-lapse holds it
+
+    # Peeling off the top source each time walks the rest of the priority order.
+    shutil.rmtree(tmp_path / "Holograms")
+    assert KoalaTimelapse(tmp_path).num_frames == 4  # then the timing beside them
+    (tmp_path / "timestamps.txt").unlink()
+    assert KoalaTimelapse(tmp_path).num_frames == 3  # only then the reconstructions
+    shutil.rmtree(tmp_path / "Phase")
+    assert KoalaTimelapse(tmp_path).num_frames == 2  # intensity is the last resort
+    shutil.rmtree(tmp_path / "Intensity")
+    assert KoalaTimelapse(tmp_path).num_frames is None
+
+
 def test_num_holograms_surfaces_a_corrupt_raw(tmp_path):
     _build(tmp_path, holograms="raw")
     raw = tmp_path / "Holograms" / "holo.raw"
@@ -171,7 +204,7 @@ def test_inconsistent_is_detected(tmp_path):
     _build(tmp_path, n=3)
     _write_timestamps(tmp_path, 2)  # one fewer timing row than the frames
     timelapse = KoalaTimelapse(tmp_path)
-    assert timelapse.num_frames == 3  # from the modality data, not the short timing
+    assert timelapse.num_frames == 3  # from the holograms, not the short timing
     assert len(timelapse.timestamps) == 2
     assert not timelapse.is_consistent
 
