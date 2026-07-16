@@ -117,12 +117,9 @@ def test_holograms_both_raw_and_tif_raises(tmp_path):
 
     with pytest.raises(ValueError, match="expected one"):
         _ = timelapse.holograms
-    report = timelapse.validate()  # the composed spec flags the same conflict
-    assert not report.ok
-    assert report.violations
 
     # Status / count queries stay tolerant: they never raise on the raw+tif conflict,
-    # leaving the holograms uncounted rather than propagating `validate`'s error.
+    # leaving the holograms uncounted rather than propagating the ambiguity error.
     assert timelapse.has_holograms
     assert timelapse.num_frames == 2  # from phase / intensity, holograms uncountable
     assert timelapse.is_consistent
@@ -235,26 +232,12 @@ def test_accessors_are_cached(tmp_path):
 
 
 # ============================== #
-#            validate            #
+#          layout spec           #
 # ============================== #
 
 
 def test_spec_is_a_directory():
     assert isinstance(KOALA_TIMELAPSE_TREE, Directory)
-
-
-def test_validate_ok_on_wellformed_timelapse(tmp_path):
-    _build(tmp_path, holograms="raw")
-    report = KoalaTimelapse(tmp_path).validate()
-    assert report.ok
-    assert report.matched
-    assert not report.violations
-
-
-def test_validate_is_lenient_on_empty_root(tmp_path):
-    report = KoalaTimelapse(tmp_path).validate()
-    assert report.ok
-    assert not report.missing
 
 
 # ============================== #

@@ -6,7 +6,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from kaparoo.filesystem.hierarchy import Directory, File, ValidationReport, validate
+from kaparoo.filesystem.hierarchy import Directory, File
 from kaparoo.filesystem.search import search_dirs
 from kaparoo.filters import Any
 from kaparoo.utils import fold_optional
@@ -56,7 +56,8 @@ KOALA_TIMELAPSE_TREE = Directory(
 )
 """The standard Lyncée Tec Koala time-lapse layout, composed from the per-modality
 subtrees (`PHASE_TREE`, `INTENSITY_TREE`, `HOLOGRAM_TREE`) plus the root
-`timestamps.txt` / `phbounds.txt`. `KoalaTimelapse.validate` checks a root against it.
+`timestamps.txt` / `phbounds.txt`. Pass it to `hierarchy.validate` to check a root's
+structure against it.
 """
 
 
@@ -146,7 +147,7 @@ class KoalaTimelapse:
         """The hologram frame count, or None when absent or ambiguous (raw+tif).
 
         Tolerant view for the count / consistency queries: `holograms` raises on the
-        raw+tif conflict (`validate`'s domain), which this treats as uncountable.
+        raw+tif conflict (an ambiguous `Holograms/`), which this treats as uncountable.
         """
         try:
             holo = self.holograms
@@ -173,7 +174,8 @@ class KoalaTimelapse:
         Each phase / intensity group is internally consistent, and every present source
         (phase, intensity, holograms, timing) shares one frame count. Shape is not
         compared across modalities (holograms are raw interferograms); a raw+tif
-        `Holograms/` conflict is `validate`'s concern, so it is left uncounted here.
+        `Holograms/` conflict makes the holograms ambiguous (the `holograms` accessor
+        raises), so it is left uncounted here.
         """
         if not (self.phase.is_consistent and self.intensity.is_consistent):
             return False
@@ -207,19 +209,6 @@ class KoalaTimelapse:
             return self.holograms is not None
         except ValueError:
             return True
-
-    def validate(self) -> ValidationReport:
-        """Check the root's structure against `KOALA_TIMELAPSE_TREE`.
-
-        Lenient about extras (OME metadata, logs, ...) and optional modalities, so the
-        report flags only a `Holograms` folder holding both raw and tif and, via
-        `matched`, records which parts of the layout are present. The report's
-        truthiness is its `ok`. This checks the layout only; use `is_consistent` for
-        frame-count / shape agreement.
-        """
-        return validate(
-            KOALA_TIMELAPSE_TREE, self._root, root_as_top=True, allow_extra=True
-        )
 
     def _frame_count(self) -> int | None:
         """The frame count for synthesizing timing, from phase / intensity / holograms.

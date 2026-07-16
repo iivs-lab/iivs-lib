@@ -33,8 +33,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   searches — `phase.PHASE_TREE` / `PhaseGroup` / `search_phase_{bin,txt,tif}_folders`,
   `intensity.INTENSITY_TREE` / `IntensityGroup` /
   `search_intensity_{bin,txt,tif}_folders`, `hologram.HOLOGRAM_TREE` /
-  `open_holograms` / `search_holograms` — which `KOALA_TIMELAPSE_TREE` composes and
-  `KoalaTimelapse.validate` checks a root against. The per-modality searches find each
+  `open_holograms` / `search_holograms` — which `KOALA_TIMELAPSE_TREE` composes (pass
+  it to `hierarchy.validate` for a structural check). The per-modality searches find each
   time-lapse's folder of one format (returning that concrete folder, e.g.
   `list[PhaseBinFolder]`, with `predicate` on it), sharing `search_timelapses`'s
   signature and delegating to the shared `iivs.dhm.data.koala` helpers `open_folder`
