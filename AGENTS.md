@@ -71,6 +71,25 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   (`constants.py`, `exceptions.py`, `utils.py`). The module name need
   not mirror a data file it handles (`timestamp.py` reads
   `timestamps.txt`).
+- `__all__` declares **that module's own** public API, and nothing more.
+  A package's `__init__.py` re-exporting a submodule's names is a
+  curation judgement, never an obligation: `numpy` declares
+  `linalg.solve` in `numpy.linalg.__all__` and offers it from there
+  alone. So "name X is in a submodule's `__all__` but not in its
+  package's" is not by itself a finding — do not open it as one. What
+  *is* a finding: a public signature naming a type no caller can reach.
+  Three placements, each deliberate, all present here:
+  - **package `__all__`** — the headline surface (`KoalaTimelapse`
+    would be, were `iivs.dhm.data` a hub; `PhaseGroup` is).
+  - **module `__all__` only** — supported, reached by module path
+    (`validate_ndim`, `resolve_height_scale`).
+  - **public name, undeclared** — reachable, no promise
+    (`PhaseImageView`: `to_image` returns the exported abstract
+    `PhaseImageSequence`, so the concrete view is an internal detail).
+  Note `__all__` gates only `from x import *`; an undeclared public name
+  imports fine either way. When a package deliberately omits something,
+  say why at the omission, as `iivs.dhm.analysis` does for its Torch
+  twins and `iivs.common.data` for the composable validators.
 - Fixtures live in `tests/conftest.py` when you need them — modern
   default, applies to `tests/` only. Use a root `conftest.py` only for
   `pytest_plugins` declarations, doctest fixtures shared with source
