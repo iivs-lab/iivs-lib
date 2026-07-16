@@ -232,6 +232,52 @@ def test_accessors_are_cached(tmp_path):
 
 
 # ============================== #
+#       content validation       #
+# ============================== #
+
+
+def test_validate_passes_on_wellformed(tmp_path):
+    _build(tmp_path, holograms="raw")
+    timelapse = KoalaTimelapse(tmp_path)
+    timelapse.validate()  # each folder to its own default depth
+    timelapse.validate(level="names")
+    timelapse.validate(level="data")  # also parses timestamps.txt / phbounds.txt
+
+
+def test_validate_raises_on_a_bad_modality_file(tmp_path):
+    _build(tmp_path, holograms="raw")
+    (
+        tmp_path / "Phase" / "Float" / "Bin" / "00000_phase.bin"
+    ).unlink()  # gap: 00001 only
+    with pytest.raises(ValueError, match="non-contiguous"):
+        KoalaTimelapse(tmp_path).validate()
+
+
+def test_validate_checks_a_tif_hologram_folder(tmp_path):
+    _build(tmp_path, holograms="tif")
+    (tmp_path / "Holograms" / "00000_holo.tif").unlink()  # gap: 00001 only
+    with pytest.raises(ValueError, match="non-contiguous"):
+        KoalaTimelapse(tmp_path).validate(level="names")
+
+
+def test_validate_parses_aux_files_only_at_data_level(tmp_path):
+    _build(tmp_path, holograms="raw")
+    (tmp_path / "timestamps.txt").write_text("garbage, not a timestamp row\n")
+    timelapse = KoalaTimelapse(tmp_path)
+    timelapse.validate()  # timestamps.txt not read at the default level
+    timelapse.validate(level="names")  # nor at names
+    with pytest.raises(ValueError, match="malformed"):
+        timelapse.validate(level="data")  # at data the bad timestamps.txt is parsed
+
+
+def test_validate_raises_on_raw_and_tif_conflict(tmp_path):
+    _build(tmp_path, holograms="raw")
+    _u8_tif(tmp_path / "Holograms" / "00000_holo.tif", 0)  # add tif beside the .raw
+    with pytest.raises(ValueError, match="expected one"):
+        KoalaTimelapse(tmp_path).validate()
+
+
+# ============================== #
 #          layout spec           #
 # ============================== #
 

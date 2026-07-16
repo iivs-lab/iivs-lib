@@ -45,11 +45,15 @@ Consistency is exposed as flat properties: `num_frames` (the acquisition's frame
 from the first present source, or `None`), `is_consistent` (each modality internally
 consistent and every present source — phase / intensity / holograms / timing — sharing
 one length), `has_reconstruction` (phase or intensity present, vs a holograms-only
-acquisition), and `has_holograms`. `KOALA_TIMELAPSE_TREE` is the declarative layout
-spec, **composing** each modality's own subtree (`phase.PHASE_TREE`,
+acquisition), and `has_holograms`. `tl.validate(*, level=None)` content-validates every
+present source (raising on the first bad file): it drives the numbered folders' deferred
+checks, opening the holograms also validates a `.raw` stack and surfaces a raw+tif
+conflict, and at `level="data"` the `timestamps.txt` / `phbounds.txt` files are parsed
+too. That is file *content*; for the directory *structure*, `KOALA_TIMELAPSE_TREE` is the
+declarative layout spec, **composing** each modality's own subtree (`phase.PHASE_TREE`,
 `intensity.INTENSITY_TREE`, `hologram.HOLOGRAM_TREE`) plus the root `timestamps.txt` /
 `phbounds.txt`; pass it to `hierarchy.validate(KOALA_TIMELAPSE_TREE, root)` for a
-structural report of a directory.
+structural report.
 
 `search_timelapses(root, *, require=None, name_filter=None, part_filter=None,
 predicate=None, exclude=None, min_depth=1, max_depth=None, ordered=True, frame_rate=None)`
@@ -68,6 +72,7 @@ tl = KoalaTimelapse("scan/2026-01-15_cardiomyocytes")
 phase_nm = tl.phase.quantitative      # a PhaseFloatSequence (bin preferred), or None
 holo0 = tl.holograms[0]               # first hologram frame
 assert tl.is_consistent               # phase / intensity / holograms / timing align
+tl.validate(level="data")             # raise if any present file fails to parse/decode
 
 # every time-lapse under scans/ that has phase, timing synthesized at 20 fps when absent
 for t in search_timelapses("scans/", require=["Phase"], frame_rate=20.0):

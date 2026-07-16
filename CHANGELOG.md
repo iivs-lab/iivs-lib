@@ -16,13 +16,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `IntensityGroup` (each exposing `bin_folder` / `txt_folder` — which may coexist — a
   `.bin`-preferred `quantitative`, the uint8 `tif_folder`, the shared `num_frames` /
   `frame_shape`, the `is_consistent` (tolerant) / `is_usable` (has quantitative data
-  and is consistent) cross-format checks, and a `validate` that checks per-file content
-  across the present formats); `holograms` is the `.raw`
+  and is consistent) cross-format checks, and a level-aware `validate` for per-file
+  content (a format that lacks the requested level, like `headers` on the preview, is
+  skipped, via the new `KoalaFrameFolder.validate_if_supported`)); `holograms` is the
+  `.raw`
   stack or numbered tif folder (raising if a folder holds both, which no real
   acquisition does); `timestamps` reads `timestamps.txt`, else synthesizes
   `TimestampsFixedFPS` from a `frame_rate` fallback (when the frame count is known), else None;
   `phase_bounds` reads `phbounds.txt`. Consistency is exposed as flat properties:
-  `num_frames`, `is_consistent`, `has_reconstruction`, and `has_holograms`.
+  `num_frames`, `is_consistent`, `has_reconstruction`, and `has_holograms`, and
+  `validate(*, level=None)` content-validates every present source (driving the
+  numbered folders' deferred checks; opening the holograms also validates a `.raw`
+  stack and surfaces a raw+tif conflict; at `level="data"` the `timestamps.txt` /
+  `phbounds.txt` files are parsed too).
   `search_timelapses(root, *, require=None, name_filter=None, part_filter=None,
   predicate=None, exclude=None, min_depth=1, max_depth=None, ordered=True, frame_rate=None)`
   delegates the walk to `kaparoo`'s `search_dirs` (no manual recursion) and returns the

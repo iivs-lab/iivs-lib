@@ -15,6 +15,7 @@ from iivs.common.data.timestamp import TimestampsFixedFPS
 from iivs.dhm.data.hologram.layout import HOLOGRAM_TREE, open_holograms
 from iivs.dhm.data.intensity.layout import INTENSITY_TREE, IntensityGroup
 from iivs.dhm.data.koala import HOLOGRAMS, INTENSITY, PHASE, PHBOUNDS, TIMESTAMPS
+from iivs.dhm.data.koala.frame import KoalaFrameFolder
 from iivs.dhm.data.phase.bounds import read_phbounds
 from iivs.dhm.data.phase.layout import PHASE_TREE, PhaseGroup
 from iivs.dhm.data.timestamp import TimestampsTxtFile
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
 
     from iivs.common.data.timestamp import TimestampSequence
     from iivs.dhm.data.hologram.base import HologramSequence
+    from iivs.dhm.data.koala.frame import ValidationLevel
     from iivs.dhm.data.phase.bounds import PhaseBounds
 
 
@@ -209,6 +211,37 @@ class KoalaTimelapse:
             return self.holograms is not None
         except ValueError:
             return True
+
+    def validate(self, *, level: ValidationLevel | None = None) -> None:
+        """Content-validate every present source; raise on the first bad file.
+
+        Drives the deferred content validation of the numbered folders (the phase /
+        intensity groups, and a tif hologram folder) to `level`, skipping any that do
+        not support it (so `"headers"` checks the `Float/{Bin,Txt}` sources only).
+        Opening the holograms also validates a `holo.raw` stack and surfaces a raw+tif
+        conflict. At `level="data"` the aux single-file sources (`timestamps.txt`,
+        `phbounds.txt`) are parsed too; at shallower levels they self-validate whenever
+        they are read.
+
+        `level=None` (default) lets each folder use its own depth; `"names"` /
+        `"headers"` / `"data"` apply to every source that supports them. This checks
+        file *content*: use `is_consistent` for frame-count / shape agreement, and
+        `hierarchy.validate(KOALA_TIMELAPSE_TREE, root)` for a structural report.
+
+        Raises:
+            ValueError: If a file fails validation, or the `Holograms/` folder holds
+                both a `.raw` stack and `.tif` previews.
+        """
+        self.phase.validate(level=level)
+        self.intensity.validate(level=level)
+
+        holo = self.holograms  # opening validates a raw stack; raw+tif conflict raises
+        if isinstance(holo, KoalaFrameFolder):
+            holo.validate_if_supported(level=level)  # a tif folder is lazy
+
+        if level == "data":
+            _ = self.timestamps  # opening parses / validates timestamps.txt
+            _ = self.phase_bounds  # opening parses / validates phbounds.txt
 
     def _frame_count(self) -> int | None:
         """The frame count for synthesizing timing, from phase / intensity / holograms.

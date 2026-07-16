@@ -19,7 +19,6 @@ from iivs.dhm.data.koala.constants import BIN, FLOAT, IMAGE, TXT
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
-    from typing import Literal
 
     from kaparoo.filesystem.exclude import ExcludeRule
     from kaparoo.filesystem.types import StrPath
@@ -27,7 +26,7 @@ if TYPE_CHECKING:
     from kaparoo.filters.types import FilterDict
 
     from iivs.dhm.data.koala.float import KoalaFloatFileFolder
-    from iivs.dhm.data.koala.frame import KoalaFrameFolder
+    from iivs.dhm.data.koala.frame import KoalaFrameFolder, ValidationLevel
     from iivs.dhm.data.koala.image import ImageTifFolder
 
 
@@ -282,16 +281,16 @@ class ReconstructionGroup[
         """
         return self.quantitative is not None and self.is_consistent
 
-    def validate(self, *, level: Literal["names", "data"] | None = None) -> None:
+    def validate(self, *, level: ValidationLevel | None = None) -> None:
         """Validate every present format's files to `level`.
 
-        Delegates to each present format folder's own `validate`, skipping the absent
-        ones (an empty group validates nothing). `level=None` (default) lets each folder
-        use its own default depth: the quantitative `bin` / `txt` check headers, the
-        `tif` preview checks names. `"names"` (contiguous naming) and `"data"` (full
-        decode) apply uniformly to every present format. `"headers"` is a
-        format-specific depth (the `tif` preview has no header), so it is not offered
-        here; call `bin_folder.validate(level="headers")` for that.
+        Delegates to each present format folder's `validate`, skipping the absent ones
+        (an empty group validates nothing) and any that do not support `level`. So
+        `"headers"` is a partial pass: the quantitative `bin` / `txt` are checked but
+        the `tif` preview (which has no header) is skipped entirely. `level=None`
+        (default) lets each folder use its own default depth (`bin` / `txt` check
+        headers, `tif` checks names); `"names"` (contiguous naming) and `"data"` (full
+        decode) apply to every present format.
 
         This checks file *content*, unlike the structural `is_consistent` / `is_usable`.
 
@@ -301,4 +300,4 @@ class ReconstructionGroup[
         """
         for folder in (self.bin_folder, self.txt_folder, self.tif_folder):
             if folder is not None:
-                folder.validate(level=level)
+                folder.validate_if_supported(level=level)

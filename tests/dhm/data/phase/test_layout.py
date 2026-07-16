@@ -165,6 +165,26 @@ def test_group_validate_checks_the_preview_too(tmp_path):
         group.validate()  # the tif preview is validated, not just bin/txt
 
 
+def test_group_validate_headers_skips_the_preview(tmp_path):
+    phase = tmp_path / "Phase"
+    _bin(phase / "Float" / "Bin", 3)
+    _img(phase / "Image", 2)
+    (phase / "Image" / "00000_phase.tif").unlink()  # gap: 00001 only -> non-contiguous
+    group = PhaseGroup(phase)
+    group.validate(level="headers")  # tif has no header level, so it is skipped
+    with pytest.raises(ValueError, match="non-contiguous"):
+        group.validate(level="names")  # at names the tif preview IS checked
+
+
+def test_group_validate_headers_checks_the_quantitative(tmp_path):
+    phase = tmp_path / "Phase"
+    _bin(phase / "Float" / "Bin", 3)
+    (phase / "Float" / "Bin" / "00001_phase.bin").unlink()  # gap: 00000, 00002
+    group = PhaseGroup(phase)
+    with pytest.raises(ValueError, match="non-contiguous"):
+        group.validate(level="headers")  # bin supports headers, so it is checked
+
+
 def test_group_validate_is_noop_when_absent(tmp_path):
     group = PhaseGroup(tmp_path / "Phase")  # nothing present
     group.validate()  # does not raise

@@ -172,6 +172,16 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         for index in range(len(self)):
             self.validate_file(index, level=level)
 
+    def validate_if_supported(self, *, level: ValidationLevel | None = None) -> None:
+        """Validate to `level`, or skip when this folder does not support it.
+
+        `None` always validates (to `DEFAULT_LEVEL`); a `ValidationLevel` outside this
+        folder's `LEVELS` (e.g. `"headers"` on a preview folder, which has none) is a
+        no-op, so a caller can request one depth across a mix of folder types.
+        """
+        if level is None or level in self.LEVELS:
+            self.validate(level=level)
+
     def validate_file(
         self,
         index: int,
