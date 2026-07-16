@@ -148,6 +148,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- `iivs.common.data.mixin` is renamed `iivs.common.data.mixins`: the module is a flat
+  pair of unrelated peers (`FrameShapedMixin`, `ValueRangeMixin`) rather than one
+  concept, which is what the plural is for. `iivs.common.data` re-exports both as
+  before, so only a direct import of the module path is affected.
 - **Breaking**: the first parameter of `save_phase_folder` / `convert_phase_folder` /
   `save_intensity_folder` / `convert_intensity_folder` is renamed `root` to `dest`.
   Everywhere else in the package `root` is the directory to *scan* (`phase_folder`,

@@ -14,7 +14,7 @@ __all__ = (
     "write_npy",
 )
 
-from iivs.common.data.mixin import FrameShapedMixin, ValueRangeMixin
+from iivs.common.data.mixins import FrameShapedMixin, ValueRangeMixin
 from iivs.common.data.npy import read_npy_shape, write_npy
 from iivs.common.data.sequence import ArrayFileList
 from iivs.common.data.timestamp import Timestamp, TimestampSequence, TimestampsFixedFPS

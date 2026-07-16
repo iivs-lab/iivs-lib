@@ -17,7 +17,7 @@ from kaparoo.filesystem.search import search_files
 from kaparoo.filters import Regex
 from kaparoo.utils import ensure_one_of, replace_if_none
 
-from iivs.common.data.mixin import FrameShapedMixin
+from iivs.common.data.mixins import FrameShapedMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
