@@ -31,6 +31,7 @@ from iivs.dhm.data.phase.txt import (
     save_phase_txt,
 )
 from iivs.dhm.data.phase.unit import PhaseUnit
+from tests.dhm.data.helpers import count_reads
 
 IMG = np.arange(6, dtype=np.float32).reshape(2, 3)
 
@@ -417,6 +418,16 @@ def test_convert_phase_is_atomic_on_failure(tmp_path, monkeypatch):
 # --- convert_phase_list ---
 
 
+def test_convert_phase_list_reads_each_source_once(tmp_path, monkeypatch):
+    src = _bin_list(tmp_path, [(1.0, 1e-6), (2.0, 3e-6)])
+    reads = count_reads(monkeypatch, PhaseBinList)
+
+    convert_phase_list(src, ext="txt")
+
+    # Each source is passed over once for image + header together, not twice.
+    assert (reads["decode"], reads["header"]) == (len(src), 0)
+
+
 def test_convert_phase_list_converts_each_file_in_place(tmp_path):
     src = _bin_list(tmp_path, [(1.0, 1e-6), (2.0, 3e-6)])  # f0.bin, f1.bin
     convert_phase_list(src, ext="txt")  # -> f0.txt, f1.txt (siblings, same names)
@@ -450,6 +461,17 @@ def test_phase_file_list_load_with_header(tmp_path):
     image, header = src.load_with_header(1)
     np.testing.assert_array_equal(image, src[1])
     assert header.pixel_size == pytest.approx(3e-6)
+
+
+def test_phase_file_list_load_with_header_reads_the_file_once(tmp_path, monkeypatch):
+    src = _bin_list(tmp_path, [(1.0, 1e-6), (2.0, 3e-6)])
+    reads = count_reads(monkeypatch, PhaseBinList)
+
+    _ = src.load_with_header(1)
+    assert (reads["decode"], reads["header"]) == (1, 0)  # one pass, header included
+
+    _ = src[1], src.get_header(1)  # the pair it exists to replace: two passes
+    assert (reads["decode"], reads["header"]) == (2, 1)
 
 
 # --- save_phase_folder (composer-compatible export) ---
