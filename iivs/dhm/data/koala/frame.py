@@ -142,6 +142,10 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         `validate=None` opens from discovery alone (no content validation); a
         `ValidationLevel` checks every file to that depth. A subclass sets its own
         default and may run validation itself after any extra setup.
+
+        Note None means "skip" only here, where it answers whether to validate on open.
+        Every `level=` parameter is past that question, so `validate(level=None)` runs at
+        `DEFAULT_LEVEL` rather than skipping.
         """
         super().__init__(root)
         if validate is not None:
@@ -168,7 +172,14 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         return self.get_file(index)
 
     def validate(self, *, level: ValidationLevel | None = None) -> None:
-        """Validate every file to `level` (defaults to `DEFAULT_LEVEL`)."""
+        """Validate every file to `level` (defaults to `DEFAULT_LEVEL`).
+
+        Note `level=None` *runs* validation at that default, the opposite of the
+        constructor's `validate=None`, which skips it: there, None answers "validate on
+        open at all?", while here the folder is being validated already and None only
+        picks the depth. There is no level meaning "check nothing" — to skip, do not
+        call this.
+        """
         for index in range(len(self)):
             self.validate_file(index, level=level)
 
