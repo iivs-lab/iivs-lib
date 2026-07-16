@@ -114,15 +114,14 @@ class KoalaTimelapse:
     def holograms(self) -> HologramSequence | None:
         """The holograms: the `holo.raw` stack or the numbered tif folder, or None.
 
-        Typed as a bare `HologramSequence`, so its per-item metadata is left abstract:
-        `get_meta` is `Unknown` until you narrow to the concrete source (a
-        `HologramRawFile`'s is a frame-index `int`; a tif folder's is a source `Path`).
-        The layout composes and reflects; committing to a metadata type is a consumer's
-        concern. The frames themselves are uint8 either way.
+        The per-item metadata type is left unspecified here: narrow to the concrete
+        source if you need it, since a `HologramRawFile` reports a frame-index `int`
+        from `get_meta` and a tif folder a source `Path`. Committing to one is a
+        consumer's concern, not this composing layer's; the frames are uint8 either way.
 
         Raises:
-            ValueError: If the `Holograms` folder holds both a `.raw` stack and numbered
-                `.tif` previews (a real acquisition produces only one).
+            AmbiguousHologramsError: If the `Holograms` folder holds both a `.raw` stack
+                and numbered `.tif` previews (a real acquisition produces only one).
         """
         return open_holograms(self._root / HOLOGRAMS)
 
@@ -247,24 +246,24 @@ class KoalaTimelapse:
     # -- validation --
 
     def validate(self, *, level: ValidationLevel | None = None) -> None:
-        """Content-validate every present source; raise on the first bad file.
+        """Content-validate every present source to `level`; raise on the first bad file.
 
-        Drives the deferred content validation of the numbered folders (the phase /
-        intensity groups, and a tif hologram folder) to `level`, skipping any that do
-        not support it (so `"headers"` checks the `Float/{Bin,Txt}` sources only).
-        Opening the holograms also validates a `holo.raw` stack and surfaces a raw+tif
-        conflict. At `level="data"` the aux single-file sources (`timestamps.txt`,
-        `phbounds.txt`) are parsed too; at shallower levels they self-validate whenever
-        they are read.
+        Checks each present modality (phase / intensity, and a tif hologram folder),
+        skipping any format that lacks `level` (so `"headers"` covers only the
+        `Float/{Bin,Txt}` sources). A raw+tif `Holograms/` conflict and a corrupt
+        `holo.raw` surface here too. At `level="data"` the aux `timestamps.txt` /
+        `phbounds.txt` are parsed as well; at shallower levels they are checked only when
+        otherwise read.
 
-        `level=None` (default) lets each folder use its own depth; `"names"` /
-        `"headers"` / `"data"` apply to every source that supports them. This checks
-        file *content*: use `is_consistent` for frame-count / shape agreement, and
+        `level=None` (default) checks each source to its own depth; `"names"` /
+        `"headers"` / `"data"` apply to every source that supports them. This is file
+        *content*: use `is_consistent` for frame-count / shape agreement, and
         `hierarchy.validate(KOALA_TIMELAPSE_TREE, root)` for a structural report.
 
         Raises:
-            ValueError: If a file fails validation, or the `Holograms/` folder holds
-                both a `.raw` stack and `.tif` previews.
+            AmbiguousHologramsError: If the `Holograms/` folder holds both a `.raw`
+                stack and `.tif` previews.
+            ValueError: If a file fails validation.
         """
         self.phase.validate(level=level)
         self.intensity.validate(level=level)

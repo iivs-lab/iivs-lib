@@ -32,8 +32,8 @@ READMEs.
   new format is a couple of codec methods, not a copied list+folder.
 - **Folder ⊂ list.** A `*Folder` subclasses its `*List` (mirroring kaparoo's
   `FileFolderSequence ⊂ FileListSequence`) and reuses its `load_file`;
-  `SequentialFileFolder` adds numbered discovery, the contiguity-checked
-  `validate`, and `FrameShapedMixin`.
+  `KoalaFrameFolder` adds numbered discovery, the contiguity-checked `validate`,
+  and `FrameShapedMixin`.
 - **Header is the value object; the codec is separate.** `KoalaBinHeader`
   (de)serializes itself (`to_dtype` / `from_dtype`); the `Float/Txt` text form is
   handled by the stateless `KoalaTxtHeaderCodec`, kept off the value object so it

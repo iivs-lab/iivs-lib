@@ -171,11 +171,10 @@ def search_ambiguous_holograms(
 ) -> list[Path]:
     """Return each `Holograms/` under `root` that holds both a `.raw` stack and `.tif`.
 
-    The ambiguous case `open_holograms` raises on and `search_holograms(on_conflict=
-    "skip")` drops: such a folder cannot be opened as a single `HologramSequence` until
-    one of the two is removed. This is the auditing counterpart, returning the offending
-    `Holograms/` folders themselves (their parent is the time-lapse). `name_filter` /
-    `part_filter` match as in `search_holograms`.
+    These folders cannot be opened as a single `HologramSequence` until one of the two
+    is removed, so `search_holograms(on_conflict="skip")` drops them and `open_holograms`
+    raises `AmbiguousHologramsError`. The auditing counterpart to those, it returns the
+    offending `Holograms/` folders themselves (their parent is the time-lapse).
 
     Args:
         root: The directory to scan.

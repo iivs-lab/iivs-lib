@@ -291,15 +291,14 @@ class ReconstructionGroup[
     def validate(self, *, level: ValidationLevel | None = None) -> None:
         """Validate every present format's files to `level`.
 
-        Delegates to each present format folder's `validate`, skipping the absent ones
-        (an empty group validates nothing) and any that do not support `level`. So
-        `"headers"` is a partial pass: the quantitative `bin` / `txt` are checked but
-        the `tif` preview (which has no header) is skipped entirely. `level=None`
-        (default) lets each folder use its own default depth (`bin` / `txt` check
-        headers, `tif` checks names); `"names"` (contiguous naming) and `"data"` (full
-        decode) apply to every present format.
+        Checks each present format (`bin` / `txt` / `tif`), skipping absent ones (an
+        empty group is a no-op) and any that lack `level`. So `"headers"` is a partial
+        pass: the quantitative `bin` / `txt` are checked and the header-less `tif`
+        preview is skipped. `level=None` (default) checks each format to its own depth
+        (`bin` / `txt` headers, `tif` names); `"names"` (contiguous naming) and `"data"`
+        (full decode) apply to every present format.
 
-        This checks file *content*, unlike the structural `is_consistent` / `is_usable`.
+        This is file *content*, unlike the structural `is_consistent` / `is_usable`.
 
         Raises:
             ValueError: If a file fails validation (a non-contiguous name, or a bad
