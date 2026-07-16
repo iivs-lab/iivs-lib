@@ -44,9 +44,9 @@ def read_npy_shape(path: StrPath, expected: int = 2) -> tuple[int, ...]:
 def write_npy(path: StrPath, data: NDArray[Any], *, overwrite: bool = False) -> None:
     """Atomically write `data` as an uncompressed `.npy` file.
 
-    Content is staged to a temp file in the destination's directory and moved into place
-    on success. `.npy` carries no header, so only the raw array is stored. Object arrays
-    are rejected (`allow_pickle=False`), so the file is always a clean numeric `.npy`.
+    A failed write leaves no partial file, and no existing one clobbered. `.npy` carries
+    no header, so only the raw array is stored, and an object array is rejected: the
+    file is always a clean numeric `.npy`.
 
     Raises:
         FileExistsError: If `path` exists and `overwrite` is False.

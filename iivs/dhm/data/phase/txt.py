@@ -301,7 +301,6 @@ class PhaseTxtFolder(PhaseFileFolder, PhaseTxtList):
 
     The text twin of `PhaseBinFolder`, and the auto-discovered, same-shape special case
     of `PhaseTxtList`: lists `{index:05d}_phase.txt`, sharing one acquisition `header`.
-    Construction and validation are inherited; this supplies only the `.txt` extension.
 
     Args:
         root: The folder to scan.

@@ -116,11 +116,10 @@ class ImageTifList(ArrayFileList[np.uint8]):
 
 
 class ImageTifFolder(ImageFileFolder, ImageTifList):
-    """A uint8 `.tif` folder: `ImageFileFolder` over the `.tif` codec.
+    """An ordered folder of numbered uint8 `.tif` images sharing one shape.
 
-    The auto-discovered, same-shape specialization of `ImageTifList`. Concrete folders
-    set `FILE_STEM` and add their image role, e.g. `PhaseTifFolder(ImageTifFolder,
-    PhaseTifList)`.
+    The auto-discovered, same-shape specialization of `ImageTifList`. A concrete folder
+    sets `FILE_STEM`.
 
     Args:
         root: The folder to scan.

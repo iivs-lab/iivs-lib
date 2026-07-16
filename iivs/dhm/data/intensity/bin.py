@@ -241,8 +241,7 @@ class IntensityBinFolder(IntensityFileFolder, IntensityBinList):
 
     The auto-discovered, same-shape special case of `IntensityBinList`: lists the direct
     children matching `{index:05d}_intensity.bin` (exactly five digits, case-sensitive),
-    sharing one acquisition `header`. Construction and validation are inherited; this
-    supplies only the `.bin` extension.
+    sharing one acquisition `header`.
 
     Args:
         root: The folder to scan. Must exist, be a directory, and contain at least one

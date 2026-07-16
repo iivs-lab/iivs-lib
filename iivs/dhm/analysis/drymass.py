@@ -38,8 +38,7 @@ class DryMassCalculator:
     background-corrected (≈ 0 outside the object); segmentation and background
     estimation stay the caller's responsibility.
 
-    The free `calc_drymass` / `calc_drymass_from_phase` are one-shot conveniences over
-    this class. For PyTorch, use `DryMass` from `iivs.dhm.analysis.pytorch`.
+    For PyTorch, use `DryMass` from `iivs.dhm.analysis.pytorch`.
 
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.

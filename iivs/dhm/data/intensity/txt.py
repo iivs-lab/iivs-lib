@@ -196,8 +196,7 @@ class IntensityTxtFolder(IntensityFileFolder, IntensityTxtList):
 
     The text twin of `IntensityBinFolder`, and the auto-discovered, same-shape special
     case of `IntensityTxtList`: lists `{index:05d}_intensity.txt`, sharing one
-    acquisition `header`. Construction and validation are inherited; this supplies only
-    the `.txt` extension.
+    acquisition `header`.
 
     Args:
         root: The folder to scan.

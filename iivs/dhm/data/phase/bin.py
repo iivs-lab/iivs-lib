@@ -332,8 +332,7 @@ class PhaseBinFolder(PhaseFileFolder, PhaseBinList):
 
     The auto-discovered, same-shape special case of `PhaseBinList`: lists the direct
     children matching `{index:05d}_phase.bin` (exactly five digits, case-sensitive), in
-    index order, sharing one acquisition `header` read from the first file. Construction
-    and validation are inherited; this supplies only the `.bin` extension.
+    index order, sharing one acquisition `header` read from the first file.
 
     Args:
         root: The folder to scan. Must exist, be a directory, and contain at least one

@@ -270,15 +270,14 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
     def value_range(
         self, index: int | None = None, unit: PhaseUnit | None = None
     ) -> tuple[float, float]:
-        """The phase `(min, max)`: over every frame or of frame `index`, in `unit`.
+        """Compute the phase `(min, max)`: over every frame or of frame `index`, in `unit`.
 
-        Widens the inherited `value_range` with a `unit`. With `unit=None` (default)
-        the range is over the values as loaded (`target_unit`); with a `PhaseUnit`
-        each frame is decoded to that unit via its own `height_scale` first (ignoring
-        `target_unit`), so the range is in a fixed unit regardless of how the sequence
-        loads. `to_image` uses `value_range(unit=NANOMETERS)` for its display bounds.
-        The global range is cached (per unit), like the inherited one. Non-finite
-        values are ignored, as in the inherited `value_range`.
+        With `unit=None` (default) the range is over the values as loaded
+        (`target_unit`); with a `PhaseUnit` each frame is decoded to that unit via its
+        own `height_scale` first (ignoring `target_unit`), so the range is in a fixed
+        unit regardless of how the sequence loads. `to_image` uses
+        `value_range(unit=NANOMETERS)` for its display bounds. Non-finite values are
+        ignored. A global range is cached per unit; a per-frame one is recomputed.
 
         Raises:
             ValueError: If the global range is requested on an empty sequence, the

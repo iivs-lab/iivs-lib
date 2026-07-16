@@ -191,7 +191,9 @@ class KoalaBinHeader(ABC):
 
     @classmethod
     def from_file(cls, path: StrPath) -> Self:
-        """Open `path` and read its header; a thin wrapper over `from_stream`.
+        """Open `path` and read its header.
+
+        Reads only the fixed-size header record, so the pixel block is never touched.
 
         Raises:
             FileNotFoundError: If `path` does not exist.
