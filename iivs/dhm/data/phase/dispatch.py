@@ -398,7 +398,7 @@ def phase_folder(
 
 @overload
 def save_phase_folder(
-    root: StrPath,
+    dest: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
     ext: Literal["bin", "txt"],
@@ -412,7 +412,7 @@ def save_phase_folder(
 
 @overload
 def save_phase_folder(
-    root: StrPath,
+    dest: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
     ext: Literal["bin", "txt"],
@@ -427,7 +427,7 @@ def save_phase_folder(
 
 @overload
 def save_phase_folder(
-    root: StrPath,
+    dest: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
     ext: Literal["npy"],
@@ -437,7 +437,7 @@ def save_phase_folder(
 
 
 def save_phase_folder(
-    root: StrPath,
+    dest: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
     ext: FloatFormat,
@@ -449,7 +449,7 @@ def save_phase_folder(
     stem: str = "phase",
     overwrite: bool = False,
 ) -> None:
-    """Write any phase image sequence to `root` as numbered `ext` files.
+    """Write any phase image sequence to `dest` as numbered `ext` files.
 
     The composer-friendly export: `images` is any iterable of float32 phase frames (a
     file sequence, a `kaparoo` composer such as `ConcatSequence` or a sliced or windowed
@@ -462,10 +462,10 @@ def save_phase_folder(
     this metadata off a file folder's header for you.
 
     Each frame becomes `{index:05d}_<stem>.<ext>`. The folder is built atomically, so a
-    failed run leaves any existing `root` untouched.
+    failed run leaves any existing `dest` untouched.
 
     Args:
-        root: Destination folder to create and fill.
+        dest: Destination folder to create and fill.
         images: The phase frames to write, in order (each a 2D float32 image).
         ext: Target format ("bin", "txt", or "npy").
         pixel_size: Physical size of one (square) pixel, in m. Required for "bin" /
@@ -478,13 +478,13 @@ def save_phase_folder(
         unit: The unit `images` are already in, recorded in the "bin" / "txt" header.
             Defaults to RADIANS; ignored for "npy".
         stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>``. Defaults to "phase".
-        overwrite: Whether to replace `root` if it already exists. Defaults to False.
+        overwrite: Whether to replace `dest` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `ext` is not "bin" / "txt" / "npy", (for "bin" / "txt")
             `pixel_size` is missing or neither/both scale forms are given, or `images`
             is empty.
-        FileExistsError: If `root` exists and `overwrite` is False.
+        FileExistsError: If `dest` exists and `overwrite` is False.
     """
     ensure_one_of(ext, FLOAT_FORMATS, name="ext")
 
@@ -508,7 +508,7 @@ def save_phase_folder(
             overwrite=overwrite,
         )
 
-    with StagedDirectory(root, overwrite=overwrite) as staged:
+    with StagedDirectory(dest, overwrite=overwrite) as staged:
         count = 0
         for index, image in enumerate(images):
             save(staged.workdir / koala_frame_name(index, stem=stem, ext=ext), image)
@@ -519,13 +519,13 @@ def save_phase_folder(
 
 
 def convert_phase_folder(
-    root: StrPath,
+    dest: StrPath,
     folder: PhaseFileFolder,
     *,
     ext: FloatFormat,
     overwrite: bool = False,
 ) -> None:
-    """Re-encode a phase `folder` into `root` in the `ext` format.
+    """Re-encode a phase `folder` into `dest` in the `ext` format.
 
     The file-folder convenience over `save_phase_folder`: each frame becomes one
     numbered file sharing the folder's single header. `bin` / `txt` preserve
@@ -534,29 +534,29 @@ def convert_phase_folder(
     For a composed or transformed sequence (e.g. a `kaparoo` `ConcatSequence`, or a
     `to_float` view), which has no folder header, use `save_phase_folder` directly with
     explicit metadata. The new folder is built atomically, so a failed run leaves any
-    existing `root` untouched.
+    existing `dest` untouched.
 
     Args:
-        root: Destination folder to create and fill with the re-encoded frames.
+        dest: Destination folder to create and fill with the re-encoded frames.
         folder: Source phase folder to read.
         ext: Target format ("bin", "txt", or "npy").
-        overwrite: Whether to replace `root` if it already exists. Defaults to False.
+        overwrite: Whether to replace `dest` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `ext` is not "bin", "txt", or "npy".
-        FileExistsError: If `root` exists and `overwrite` is False.
+        FileExistsError: If `dest` exists and `overwrite` is False.
     """
     if ext == "npy":
         msg = "`.npy` is header-less; dropping pixel_size / unit / height scale"
         warnings.warn(msg, stacklevel=2)
         save_phase_folder(
-            root, folder, ext="npy", stem=folder.FILE_STEM, overwrite=overwrite
+            dest, folder, ext="npy", stem=folder.FILE_STEM, overwrite=overwrite
         )
         return
 
     header = folder.header
     save_phase_folder(
-        root,
+        dest,
         folder,
         ext=ext,
         pixel_size=header.pixel_size,

@@ -291,7 +291,7 @@ def intensity_folder(
 
 @overload
 def save_intensity_folder(
-    root: StrPath,
+    dest: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
     ext: Literal["bin", "txt"],
@@ -303,7 +303,7 @@ def save_intensity_folder(
 
 @overload
 def save_intensity_folder(
-    root: StrPath,
+    dest: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
     ext: Literal["npy"],
@@ -313,7 +313,7 @@ def save_intensity_folder(
 
 
 def save_intensity_folder(
-    root: StrPath,
+    dest: StrPath,
     images: Iterable[NDArray[np.float32]],
     *,
     ext: FloatFormat,
@@ -321,7 +321,7 @@ def save_intensity_folder(
     stem: str = "intensity",
     overwrite: bool = False,
 ) -> None:
-    """Write any intensity image sequence to `root` as numbered `ext` files.
+    """Write any intensity image sequence to `dest` as numbered `ext` files.
 
     The composer-friendly export: `images` is any iterable of float32 intensity frames
     (a file sequence, a `kaparoo` composer such as `ConcatSequence` or a sliced or
@@ -333,21 +333,21 @@ def save_intensity_folder(
     folder's header for you.
 
     Each frame becomes `{index:05d}_<stem>.<ext>`. The folder is built atomically, so a
-    failed run leaves any existing `root` untouched.
+    failed run leaves any existing `dest` untouched.
 
     Args:
-        root: Destination folder to create and fill.
+        dest: Destination folder to create and fill.
         images: The intensity frames to write, in order (each a 2D float32 image).
         ext: Target format ("bin", "txt", or "npy").
         pixel_size: Physical size of one (square) pixel, in m. Required for "bin" /
             "txt"; ignored (with a warning) for "npy".
         stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>``. Defaults to "intensity".
-        overwrite: Whether to replace `root` if it already exists. Defaults to False.
+        overwrite: Whether to replace `dest` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `ext` is not "bin" / "txt" / "npy", (for "bin" / "txt")
             `pixel_size` is missing, or `images` is empty.
-        FileExistsError: If `root` exists and `overwrite` is False.
+        FileExistsError: If `dest` exists and `overwrite` is False.
     """
     ensure_one_of(ext, FLOAT_FORMATS, name="ext")
 
@@ -363,7 +363,7 @@ def save_intensity_folder(
         writer = save_intensity_bin if ext == "bin" else save_intensity_txt
         save = partial(writer, pixel_size=pixel_size, overwrite=overwrite)
 
-    with StagedDirectory(root, overwrite=overwrite) as staged:
+    with StagedDirectory(dest, overwrite=overwrite) as staged:
         count = 0
         for index, image in enumerate(images):
             save(staged.workdir / koala_frame_name(index, stem=stem, ext=ext), image)
@@ -374,13 +374,13 @@ def save_intensity_folder(
 
 
 def convert_intensity_folder(
-    root: StrPath,
+    dest: StrPath,
     folder: IntensityFileFolder,
     *,
     ext: FloatFormat,
     overwrite: bool = False,
 ) -> None:
-    """Re-encode an intensity `folder` into `root` in the `ext` format.
+    """Re-encode an intensity `folder` into `dest` in the `ext` format.
 
     The file-folder convenience over `save_intensity_folder`: each frame becomes one
     numbered file sharing the folder's single header. `bin` / `txt` preserve
@@ -388,28 +388,28 @@ def convert_intensity_folder(
     converting to `npy` drops it and warns. For a composed or transformed sequence
     (e.g. a `kaparoo` `ConcatSequence`), which has no folder header, use
     `save_intensity_folder` directly with explicit `pixel_size`. The new folder is built
-    atomically, so a failed run leaves any existing `root` untouched.
+    atomically, so a failed run leaves any existing `dest` untouched.
 
     Args:
-        root: Destination folder to create and fill with the re-encoded frames.
+        dest: Destination folder to create and fill with the re-encoded frames.
         folder: Source intensity folder to read.
         ext: Target format ("bin", "txt", or "npy").
-        overwrite: Whether to replace `root` if it already exists. Defaults to False.
+        overwrite: Whether to replace `dest` if it already exists. Defaults to False.
 
     Raises:
         ValueError: If `ext` is not "bin", "txt", or "npy".
-        FileExistsError: If `root` exists and `overwrite` is False.
+        FileExistsError: If `dest` exists and `overwrite` is False.
     """
     if ext == "npy":
         msg = "`.npy` is header-less; dropping pixel_size"
         warnings.warn(msg, stacklevel=2)
         save_intensity_folder(
-            root, folder, ext="npy", stem=folder.FILE_STEM, overwrite=overwrite
+            dest, folder, ext="npy", stem=folder.FILE_STEM, overwrite=overwrite
         )
         return
 
     save_intensity_folder(
-        root,
+        dest,
         folder,
         ext=ext,
         pixel_size=folder.header.pixel_size,

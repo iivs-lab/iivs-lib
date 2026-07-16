@@ -144,6 +144,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Breaking**: the first parameter of `save_phase_folder` / `convert_phase_folder` /
+  `save_intensity_folder` / `convert_intensity_folder` is renamed `root` to `dest`.
+  Everywhere else in the package `root` is the directory to *scan* (`phase_folder`,
+  `KoalaTimelapse`, `search_timelapses`, ...), so these four gave one word two opposite
+  meanings, and `convert_phase_folder(root, folder)` read as "(the folder's root, the
+  folder)" rather than "(destination, source)". `convert_hologram_sequence(dest,
+  sequence)` already named it correctly; these now match it. Only callers passing the
+  argument by keyword are affected.
 - `convert_phase_folder` / `convert_intensity_folder` now emit a warning when the
   target is the header-less `npy`: the source's `pixel_size` (and, for phase, the
   height scale and `unit`) cannot be stored and are dropped. Previously the drop
