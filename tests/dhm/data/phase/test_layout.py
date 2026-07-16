@@ -6,6 +6,7 @@ import tifffile
 from kaparoo.filesystem.hierarchy import Directory
 from kaparoo.filters import Literal
 
+from iivs.dhm.data.koala.layout import open_folder
 from iivs.dhm.data.phase.base import PhaseFloatSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, save_phase_bin
 from iivs.dhm.data.phase.layout import (
@@ -45,6 +46,18 @@ def _img(folder, n):
     folder.mkdir(parents=True)
     for i in range(n):
         tifffile.imwrite(folder / f"{i:05d}_phase.tif", np.full((2, 3), i, np.uint8))
+
+
+def _spy_on_open(monkeypatch):
+    """Record every path a group opens, returning the (live) list of them."""
+    real, opened = open_folder, []
+
+    def spy(path, folder):
+        opened.append(path)
+        return real(path, folder)
+
+    monkeypatch.setattr("iivs.dhm.data.koala.layout.open_folder", spy)
+    return opened
 
 
 def test_group_opens_every_format(tmp_path):
@@ -134,6 +147,37 @@ def test_group_absent_is_all_none(tmp_path):
     assert group.frame_shape is None
     assert group.is_consistent  # vacuously, nothing to disagree
     assert not group.is_usable  # but an absent group has no usable data
+
+
+def test_group_opens_each_format_lazily_and_once(tmp_path, monkeypatch):
+    phase = tmp_path / "Phase"
+    _bin(phase / "Float" / "Bin", 2)
+    _txt(phase / "Float" / "Txt", 2)
+    _img(phase / "Image", 2)
+    opened = _spy_on_open(monkeypatch)
+
+    group = PhaseGroup(phase)
+    assert opened == []  # constructing a group touches no disk
+
+    assert isinstance(group.bin_folder, PhaseBinFolder)
+    assert opened == [phase / "Float" / "Bin"]  # only the format actually reached
+
+    assert group.bin_folder is group.bin_folder  # cached, so no reopen
+    assert opened == [phase / "Float" / "Bin"]
+
+    assert isinstance(group.tif_folder, PhaseTifFolder)
+    assert opened == [phase / "Float" / "Bin", phase / "Image"]  # Txt still untouched
+
+
+def test_group_caches_an_absent_format_too(tmp_path, monkeypatch):
+    phase = tmp_path / "Phase"
+    _bin(phase / "Float" / "Bin", 2)  # Float/Txt is left absent
+    opened = _spy_on_open(monkeypatch)
+    group = PhaseGroup(phase)
+
+    assert group.txt_folder is None
+    assert group.txt_folder is None
+    assert opened == [phase / "Float" / "Txt"]  # probed once, not once per access
 
 
 def test_group_validate_passes_on_good_data(tmp_path):

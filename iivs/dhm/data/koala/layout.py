@@ -9,7 +9,7 @@ __all__ = (
 )
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from kaparoo.filesystem import dir_exists, search_dirs
 from kaparoo.filesystem.hierarchy import Directory
@@ -190,9 +190,11 @@ class ReconstructionGroup[
     three exist, plus the `.bin`-preferred `quantitative`, the shared
     `num_frames` / `frame_shape`, the tolerant `is_consistent` cross-format check, and
     the non-vacuous `is_usable` (has quantitative data and is consistent). Each
-    accessor is None when its source is absent. `validate` checks per-file content
-    across the present formats (distinct from the structural checks above). A subclass
-    binds the concrete folder subtypes.
+    accessor is None when its source is absent, and opens its folder on first access:
+    constructing a group touches no disk, and a corrupt source surfaces at the accessor
+    that reaches it rather than here. `validate` checks per-file content across the
+    present formats (distinct from the structural checks above). A subclass binds the
+    concrete folder subtypes.
 
     Args:
         root: The modality folder (e.g. `Phase/`). Not required to exist: a missing one
@@ -215,11 +217,10 @@ class ReconstructionGroup[
         tif_cls: type[P],
     ) -> None:
         self._root = Path(root)
-        # Opened eagerly (not `cached_property`): ty mis-types a generic `cached_property`
-        # return `B | None` as `None`, which then reads as unreachable downstream.
-        self._bin_folder = open_folder(self._root / FLOAT / BIN, bin_cls)
-        self._txt_folder = open_folder(self._root / FLOAT / TXT, txt_cls)
-        self._tif_folder = open_folder(self._root / IMAGE, tif_cls)
+        self._bin_cls = bin_cls
+        self._txt_cls = txt_cls
+        self._tif_cls = tif_cls
+        self._opened: dict[Path, KoalaFrameFolder | None] = {}
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({str(self._root)!r})"
@@ -231,20 +232,30 @@ class ReconstructionGroup[
 
     # -- sources --
 
+    def _open[F: KoalaFrameFolder](self, path: Path, folder: type[F]) -> F | None:
+        """Open `path` with `folder` on first call, cached thereafter (absence too).
+
+        Each path is reached by one accessor, hence always with the same `folder`, so a
+        cached entry matches the requested type.
+        """
+        if path not in self._opened:
+            self._opened[path] = open_folder(path, folder)
+        return cast("F | None", self._opened[path])
+
     @property
     def bin_folder(self) -> B | None:
         """The quantitative `Float/Bin` source, or None when it is absent."""
-        return self._bin_folder
+        return self._open(self._root / FLOAT / BIN, self._bin_cls)
 
     @property
     def txt_folder(self) -> T | None:
         """The quantitative `Float/Txt` source, or None when it is absent."""
-        return self._txt_folder
+        return self._open(self._root / FLOAT / TXT, self._txt_cls)
 
     @property
     def tif_folder(self) -> P | None:
         """The uint8 `Image` preview folder, or None when it is absent."""
-        return self._tif_folder
+        return self._open(self._root / IMAGE, self._tif_cls)
 
     @property
     def _all_folders(self) -> tuple[B | None, T | None, P | None]:
