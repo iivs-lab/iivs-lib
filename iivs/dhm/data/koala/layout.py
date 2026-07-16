@@ -206,6 +206,8 @@ class ReconstructionGroup[
         """The modality folder (e.g. `Phase/`)."""
         return self._root
 
+    # -- sources --
+
     @property
     def bin_folder(self) -> B | None:
         """The quantitative `Float/Bin` source, or None when it is absent."""
@@ -237,6 +239,8 @@ class ReconstructionGroup[
             return self.quantitative
         return self.tif_folder
 
+    # -- counts --
+
     @property
     def num_frames(self) -> int | None:
         """The frame count shared by the present sources, or None when empty.
@@ -254,6 +258,8 @@ class ReconstructionGroup[
             return ref.frame_shape
 
         return fold_optional(self._reference, get_shape, None)
+
+    # -- status --
 
     @property
     def is_consistent(self) -> bool:
@@ -280,6 +286,8 @@ class ReconstructionGroup[
         so a single-format export still counts.
         """
         return self.quantitative is not None and self.is_consistent
+
+    # -- validation --
 
     def validate(self, *, level: ValidationLevel | None = None) -> None:
         """Validate every present format's files to `level`.

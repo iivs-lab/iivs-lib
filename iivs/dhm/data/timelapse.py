@@ -94,7 +94,7 @@ class KoalaTimelapse:
         """The time-lapse root folder."""
         return self._root
 
-    # -- modalities --
+    # -- sources --
 
     @cached_property
     def phase(self) -> PhaseGroup:
@@ -139,9 +139,26 @@ class KoalaTimelapse:
         path = self._root / PHBOUNDS
         return read_phbounds(path) if path.is_file() else None
 
-    # -- consistency --
+    # -- counts --
 
-    @cached_property
+    @property
+    def num_frames(self) -> int | None:
+        """The acquisition's frame count, from the first present source, or None.
+
+        Taken from the first present data source (phase, intensity, holograms), else the
+        timing length. Phase, intensity, holograms, and timing share this count in a
+        coherent acquisition (`is_consistent`).
+        """
+        for count in (
+            self.phase.num_frames,
+            self.intensity.num_frames,
+            self.num_holograms,
+        ):
+            if count is not None:
+                return count
+        return self.num_timestamps
+
+    @property
     def num_holograms(self) -> int | None:
         """The hologram frame count, or None when absent or ambiguous (raw+tif).
 
@@ -159,22 +176,44 @@ class KoalaTimelapse:
         """The number of `timestamps.txt` timing rows, or None when it is absent."""
         return fold_optional(self.timestamps, len, None)
 
-    @cached_property
-    def num_frames(self) -> int | None:
-        """The acquisition's frame count, from the first present source, or None.
+    # -- status --
 
-        Taken from the first present data source (phase, intensity, holograms), else the
-        timing length. Phase, intensity, holograms, and timing share this count in a
-        coherent acquisition (`is_consistent`).
+    @property
+    def has_holograms(self) -> bool:
+        """Whether a `Holograms/` source is present (True even if raw and tif conflict)."""
+        try:
+            return self.holograms is not None
+        except ValueError:
+            return True
+
+    @property
+    def has_quantitative_phase(self) -> bool:
+        """Whether a quantitative phase reconstruction (`Float/{Bin,Txt}`) is present.
+
+        Distinct from the uint8 `Image` preview, which Koala also produces.
         """
-        for count in (
-            self.phase.num_frames,
-            self.intensity.num_frames,
-            self.num_holograms,
-        ):
-            if count is not None:
-                return count
-        return self.num_timestamps
+        return self.phase.quantitative is not None
+
+    @property
+    def has_quantitative_intensity(self) -> bool:
+        """Whether a quantitative intensity reconstruction (`Float/{Bin,Txt}`) is present.
+
+        Distinct from the uint8 `Image` preview, which Koala also produces.
+        """
+        return self.intensity.quantitative is not None
+
+    @property
+    def is_reconstructable(self) -> bool:
+        """Whether Koala could reconstruct this acquisition.
+
+        True when the holograms and `timestamps.txt` are both present and share a frame
+        count (Koala's precondition for a reconstruction). A raw+tif `Holograms/` counts
+        as absent (uncountable). Independent of whether a reconstruction output already
+        exists (`has_quantitative_phase` / `has_quantitative_intensity`).
+        """
+        holo = self.num_holograms
+        timing = self.num_timestamps
+        return holo is not None and timing is not None and holo == timing
 
     @property
     def is_consistent(self) -> bool:
@@ -200,42 +239,7 @@ class KoalaTimelapse:
         }
         return len(counts) <= 1
 
-    @property
-    def is_reconstructable(self) -> bool:
-        """Whether Koala could reconstruct this acquisition.
-
-        True when the holograms and `timestamps.txt` are both present and share a frame
-        count (Koala's precondition for a reconstruction). A raw+tif `Holograms/` counts
-        as absent (uncountable). Independent of whether a reconstruction output already
-        exists (`has_quantitative_phase` / `has_quantitative_intensity`).
-        """
-        holo = self.num_holograms
-        timing = self.num_timestamps
-        return holo is not None and timing is not None and holo == timing
-
-    @property
-    def has_quantitative_phase(self) -> bool:
-        """Whether a quantitative phase reconstruction (`Float/{Bin,Txt}`) is present.
-
-        Distinct from the uint8 `Image` preview, which Koala also produces.
-        """
-        return self.phase.quantitative is not None
-
-    @property
-    def has_quantitative_intensity(self) -> bool:
-        """Whether a quantitative intensity reconstruction (`Float/{Bin,Txt}`) is present.
-
-        Distinct from the uint8 `Image` preview, which Koala also produces.
-        """
-        return self.intensity.quantitative is not None
-
-    @property
-    def has_holograms(self) -> bool:
-        """Whether a `Holograms/` source is present (True even if raw and tif conflict)."""
-        try:
-            return self.holograms is not None
-        except ValueError:
-            return True
+    # -- validation --
 
     def validate(self, *, level: ValidationLevel | None = None) -> None:
         """Content-validate every present source; raise on the first bad file.
