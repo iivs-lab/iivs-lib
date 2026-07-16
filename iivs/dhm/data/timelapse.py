@@ -11,7 +11,6 @@ from kaparoo.filesystem.search import search_dirs
 from kaparoo.filters import Any
 from kaparoo.utils import fold_optional
 
-from iivs.common.data.timestamp import TimestampsFixedFPS
 from iivs.dhm.data.hologram.layout import HOLOGRAM_TREE, open_holograms
 from iivs.dhm.data.intensity.layout import INTENSITY_TREE, IntensityGroup
 from iivs.dhm.data.koala import HOLOGRAMS, INTENSITY, PHASE, PHBOUNDS, TIMESTAMPS
@@ -82,14 +81,10 @@ class KoalaTimelapse:
         root: The time-lapse root (the folder holding `Phase/`, `Holograms/`,
             `timestamps.txt`, ...). Not required to exist: a missing root simply makes
             every accessor empty / None.
-        frame_rate: A fallback frame rate (in fps). When `timestamps.txt` is absent,
-            timing is synthesized at this rate over the acquisition's frame count; None
-            (default) leaves `timestamps` None instead.
     """
 
-    def __init__(self, root: StrPath, *, frame_rate: float | None = None) -> None:
+    def __init__(self, root: StrPath) -> None:
         self._root = Path(root)
-        self._frame_rate = frame_rate
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({str(self._root)!r})"
@@ -123,19 +118,14 @@ class KoalaTimelapse:
 
     @cached_property
     def timestamps(self) -> TimestampSequence | None:
-        """The per-frame timing: `timestamps.txt`, else fixed-`frame_rate`, else None.
+        """The per-frame timing read from `timestamps.txt`, or None when it is absent.
 
-        Reads `timestamps.txt` when present; otherwise, with a `frame_rate` set and a
-        known frame count, synthesizes evenly spaced `TimestampsFixedFPS`; else None.
+        Reflects only what is on disk. To fall back to a constant rate when the file is
+        absent, synthesize it yourself: `TimestampsFixedFPS(frame_rate=r,
+        num_frames=tl.num_frames)`.
         """
         path = self._root / TIMESTAMPS
-        if path.is_file():
-            return TimestampsTxtFile(path)
-
-        count = self._frame_count()
-        if self._frame_rate is not None and count is not None:
-            return TimestampsFixedFPS(frame_rate=self._frame_rate, num_frames=count)
-        return None
+        return TimestampsTxtFile(path) if path.is_file() else None
 
     @cached_property
     def phase_bounds(self) -> PhaseBounds | None:
@@ -244,10 +234,11 @@ class KoalaTimelapse:
             _ = self.phase_bounds  # opening parses / validates phbounds.txt
 
     def _frame_count(self) -> int | None:
-        """The frame count for synthesizing timing, from phase / intensity / holograms.
+        """The frame count from the first present data source (phase / intensity /
+        holograms), or None.
 
-        Excludes `timestamps` so it can back the synthesized `TimestampsFixedFPS` without
-        a cycle; a raw+tif `Holograms/` is uncountable (`_hologram_count`), not fatal.
+        Backs `num_frames`, which falls back to the timing length; a raw+tif
+        `Holograms/` is uncountable (`_hologram_count`), not fatal.
         """
         for count in (
             self.phase.num_frames,
@@ -293,7 +284,6 @@ def search_timelapses(
     min_depth: int = 1,
     max_depth: int | None = None,
     ordered: bool = True,
-    frame_rate: float | None = None,
 ) -> list[KoalaTimelapse]:
     """Return a `KoalaTimelapse` for each Koala acquisition folder under `root`.
 
@@ -319,7 +309,6 @@ def search_timelapses(
         min_depth: Shallowest depth to include (>= 1, direct children are depth 1).
         max_depth: Deepest depth to include, or None (default) for unlimited.
         ordered: Sort the results by path. Defaults to True.
-        frame_rate: Passed to each `KoalaTimelapse` as its fallback frame rate.
 
     Returns:
         The matching time-lapses.
@@ -345,9 +334,7 @@ def search_timelapses(
         max_depth=max_depth,
         ordered=ordered,
     )
-    timelapses = (
-        KoalaTimelapse(directory, frame_rate=frame_rate) for directory in directories
-    )
+    timelapses = (KoalaTimelapse(directory) for directory in directories)
     if predicate is None:
         return list(timelapses)
     return [timelapse for timelapse in timelapses if predicate(timelapse)]

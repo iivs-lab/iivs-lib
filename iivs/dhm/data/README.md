@@ -29,7 +29,7 @@ for both.
 
 ## Opening a whole time-lapse (`KoalaTimelapse`)
 
-`KoalaTimelapse(root, *, frame_rate=None)` (in `iivs.dhm.data.timelapse`) **composes** one
+`KoalaTimelapse(root)` (in `iivs.dhm.data.timelapse`) **composes** one
 acquisition's per-modality groups into a single lazy object over the standard Koala
 layout, tolerating absent parts. Holograms, phase, and intensity are **independent**
 (any subset may be present); when several are, their frame counts must agree.
@@ -38,7 +38,7 @@ layout, tolerating absent parts. Holograms, phase, and intensity are **independe
 | --- | --- |
 | `tl.phase` / `tl.intensity` | a `PhaseGroup` / `IntensityGroup` (always present); each has `.bin_folder` / `.txt_folder` (the `Float/{Bin,Txt}` sources, which may coexist), `.quantitative` (`.bin`-preferred), `.tif_folder` (the uint8 `Image` preview) — each `None` when absent — plus the shared `.num_frames` / `.frame_shape` and the `.is_consistent` (tolerant) / `.is_usable` (has quantitative data and is consistent) cross-format checks, and `.validate(level=...)` for per-file content checks |
 | `tl.holograms` | the `Holograms/holo.raw` stack **or** numbered tif folder, or `None` (raises if a folder holds both) |
-| `tl.timestamps` | `timestamps.txt` if present, else `TimestampsFixedFPS` from `frame_rate` (when the frame count is known), else `None` |
+| `tl.timestamps` | `timestamps.txt` if present, else `None` (synthesize a constant-rate fallback yourself with `TimestampsFixedFPS`) |
 | `tl.phase_bounds` | the `phbounds.txt` `PhaseBounds`, or `None` |
 
 Consistency is exposed as flat properties: `num_frames` (the acquisition's frame count,
@@ -56,7 +56,7 @@ declarative layout spec, **composing** each modality's own subtree (`phase.PHASE
 structural report.
 
 `search_timelapses(root, *, require=None, name_filter=None, part_filter=None,
-predicate=None, exclude=None, min_depth=1, max_depth=None, ordered=True, frame_rate=None)`
+predicate=None, exclude=None, min_depth=1, max_depth=None, ordered=True)`
 returns the `KoalaTimelapse` list for the acquisition folders found under `root`. It
 delegates the walk to `kaparoo`'s `search_dirs` (no manual recursion), so it shares the
 same `name_filter` (on the time-lapse folder's own name), `part_filter`, `exclude`,
@@ -74,8 +74,8 @@ holo0 = tl.holograms[0]               # first hologram frame
 assert tl.is_consistent               # phase / intensity / holograms / timing align
 tl.validate(level="data")             # raise if any present file fails to parse/decode
 
-# every time-lapse under scans/ that has phase, timing synthesized at 20 fps when absent
-for t in search_timelapses("scans/", require=["Phase"], frame_rate=20.0):
+# every time-lapse under scans/ that has a Phase modality
+for t in search_timelapses("scans/", require=["Phase"]):
     print(t.root.name, t.num_frames)
 ```
 

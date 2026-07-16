@@ -7,7 +7,6 @@ from kaparoo.filesystem import DirectoryNotFoundError
 from kaparoo.filesystem.hierarchy import Directory
 from kaparoo.filters import Literal
 
-from iivs.common.data.timestamp import TimestampsFixedFPS
 from iivs.dhm.data.hologram.raw import HologramRawFile, save_hologram_raw
 from iivs.dhm.data.hologram.tif import HologramTifFolder
 from iivs.dhm.data.intensity.bin import save_intensity_bin
@@ -174,29 +173,16 @@ def test_holograms_only_has_no_reconstruction(tmp_path):
 # ============================== #
 
 
-def test_timestamps_fixed_fps_when_no_file(tmp_path):
-    n = _build(tmp_path, holograms="raw", timestamps=False)
-    ts = KoalaTimelapse(tmp_path, frame_rate=10.0).timestamps
-    assert isinstance(ts, TimestampsFixedFPS)
+def test_timestamps_read_from_file(tmp_path):
+    n = _build(tmp_path, timestamps=True)
+    ts = KoalaTimelapse(tmp_path).timestamps
+    assert isinstance(ts, TimestampsTxtFile)
     assert len(ts) == n
-    assert ts.mean_frame_rate == pytest.approx(10.0)
 
 
-def test_timestamps_file_wins_over_fps(tmp_path):
-    _build(tmp_path, timestamps=True)
-    assert isinstance(
-        KoalaTimelapse(tmp_path, frame_rate=10.0).timestamps, TimestampsTxtFile
-    )
-
-
-def test_timestamps_none_without_file_or_fps(tmp_path):
+def test_timestamps_none_without_file(tmp_path):
     _build(tmp_path, timestamps=False)
     assert KoalaTimelapse(tmp_path).timestamps is None
-
-
-def test_timestamps_fps_without_frames_is_none(tmp_path):
-    (tmp_path / "Phase").mkdir(parents=True)  # a marker dir, but no frame data
-    assert KoalaTimelapse(tmp_path, frame_rate=10.0).timestamps is None
 
 
 # ============================== #
@@ -353,13 +339,6 @@ def test_search_timelapses_empty_require_is_any_modality(tmp_path):
     (tmp_path / "plain").mkdir()  # no modality folder
     found = search_timelapses(tmp_path, require=[])  # empty => any-modality default
     assert [t.root.name for t in found] == ["full"]
-
-
-def test_search_timelapses_forwards_fps(tmp_path):
-    n = _build(tmp_path / "t", holograms="raw", timestamps=False)
-    (timelapse,) = search_timelapses(tmp_path, frame_rate=20.0)
-    assert isinstance(timelapse.timestamps, TimestampsFixedFPS)
-    assert len(timelapse.timestamps) == n
 
 
 def test_search_timelapses_missing_root_raises(tmp_path):
