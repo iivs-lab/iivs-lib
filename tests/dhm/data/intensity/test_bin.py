@@ -256,9 +256,15 @@ def test_load_rejects_pixel_count_mismatch(tmp_path):
 
 
 def test_save_warns_on_nonfinite(tmp_path):
+    # RuntimeWarning alone is numpy's catch-all (overflow, invalid cast, ...), so match
+    # the message: this must be the non-finite check, not any warning at all.
     data = np.array([[np.nan, 1.0], [2.0, 3.0]], dtype=np.float32)
-    with pytest.warns(RuntimeWarning):  # save validates input (on_nonfinite="warn")
-        save_intensity_bin(tmp_path / "intensity.bin", data, pixel_size=1.0)
+    path = tmp_path / "intensity.bin"
+    with pytest.warns(RuntimeWarning, match="not finite"):
+        save_intensity_bin(path, data, pixel_size=1.0)
+
+    # "warn" is not "reject": the file is written, NaN and all.
+    np.testing.assert_array_equal(load_intensity_bin(path), data)
 
 
 def test_load_on_nonfinite_policy(tmp_path):

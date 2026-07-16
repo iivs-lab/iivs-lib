@@ -347,9 +347,9 @@ def test_load_rejects_pixel_count_mismatch(tmp_path):
 def test_load_on_nonfinite_policy(tmp_path):
     data = np.array([[np.nan, 1.0], [2.0, 3.0]], dtype=np.float32)
     path = tmp_path / "phase.bin"
-    with pytest.warns(
-        RuntimeWarning
-    ):  # save_phase_bin validates input (on_nonfinite="warn")
+    # Match the message: bare RuntimeWarning is numpy's catch-all, so an unrelated
+    # regression would satisfy it just as well.
+    with pytest.warns(RuntimeWarning, match="not finite"):
         save_phase_bin(path, data, pixel_size=1.0, height_scale=1.0)
 
     load_phase_bin(path)  # default on_nonfinite="ignore": accepts silently
@@ -426,9 +426,9 @@ def test_init_validate_runs_validation(tmp_path):
 
 def test_init_validate_data_level_checks_pixels(tmp_path):
     nan = np.array([[np.nan, 1.0], [2.0, 3.0]], dtype=np.float32)
-    with pytest.warns(
-        RuntimeWarning
-    ):  # save_phase_bin validates input (on_nonfinite="warn")
+    # Match the message: bare RuntimeWarning is numpy's catch-all, so an unrelated
+    # regression would satisfy it just as well.
+    with pytest.warns(RuntimeWarning, match="not finite"):
         save_phase_bin(
             tmp_path / "00000_phase.bin", nan, pixel_size=1e-6, height_scale=2e-7
         )
@@ -497,9 +497,9 @@ def test_validate_rejects_header_mismatch(tmp_path):
 
 def test_validate_check_data_detects_non_finite(tmp_path):
     nan = np.array([[np.nan, 1.0], [2.0, 3.0]], dtype=np.float32)
-    with pytest.warns(
-        RuntimeWarning
-    ):  # save_phase_bin validates input (on_nonfinite="warn")
+    # Match the message: bare RuntimeWarning is numpy's catch-all, so an unrelated
+    # regression would satisfy it just as well.
+    with pytest.warns(RuntimeWarning, match="not finite"):
         save_phase_bin(
             tmp_path / "00000_phase.bin", nan, pixel_size=1e-6, height_scale=2e-7
         )

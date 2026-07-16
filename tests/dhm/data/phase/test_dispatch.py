@@ -297,7 +297,9 @@ def test_phase_folder_prefer_single_format(tmp_path):
 def test_phase_folder_prefer_priority_sequence(tmp_path):
     root = tmp_path / "acq"
     _mixed_folder(root)
-    # bin precedes txt in the priority order, so it wins.
+    # `prefer` is honoured in its own order, not the natural FLOAT_FORMATS one — which
+    # would give bin here, so the sequence has to contradict it to prove anything.
+    assert isinstance(phase_folder(root, prefer=("txt", "bin")), PhaseTxtFolder)
     assert isinstance(phase_folder(root, prefer=("bin", "txt")), PhaseBinFolder)
 
 

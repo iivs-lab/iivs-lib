@@ -261,6 +261,9 @@ def test_intensity_folder_prefer_resolves_conflict(tmp_path):
     root.mkdir()
     _save(root / "00000_intensity.bin", "bin")
     _save(root / "00000_intensity.txt", "txt")
+    # txt, against the natural bin-first order: ignoring `prefer` would give bin, so
+    # only this direction shows it is passed through at all.
+    assert isinstance(intensity_folder(root, prefer="txt"), IntensityTxtFolder)
     assert isinstance(intensity_folder(root, prefer="bin"), IntensityBinFolder)
 
 
