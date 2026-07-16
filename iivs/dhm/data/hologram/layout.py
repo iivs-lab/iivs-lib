@@ -2,10 +2,10 @@ from __future__ import annotations
 
 __all__ = (
     "HOLOGRAM_TREE",
-    "AmbiguousHologramsError",
+    "MultiFormatHologramsError",
     "open_holograms",
-    "search_ambiguous_holograms",
     "search_holograms",
+    "search_multi_format_holograms",
 )
 
 import warnings
@@ -50,13 +50,16 @@ Holds either the `holo.raw` stack or numbered `*.tif` previews, never both.
 """
 
 
-class AmbiguousHologramsError(ValueError):
+class MultiFormatHologramsError(ValueError):
     """A `Holograms/` folder holds both a `.raw` stack and numbered `.tif` previews.
 
-    A real Koala acquisition produces only one, so the two together are an unresolvable
-    layout ambiguity, distinct from a corrupt file. Subclasses `ValueError` (a broad
-    `except ValueError` still catches it); catch it specifically to tolerate or skip only
-    the ambiguity while letting genuine content errors surface.
+    A real Koala acquisition writes its holograms in one format, so the two together
+    leave no way to say which is the acquisition: unlike the reconstructions, whose
+    `Float/{Bin,Txt}` are two serializations of one source that `quantitative` picks
+    between, neither hologram format defers to the other. A layout fault, then, distinct
+    from a corrupt file. Subclasses `ValueError` (a broad `except ValueError` still
+    catches it); catch it specifically to tolerate or skip only this fault while letting
+    genuine content errors surface.
     """
 
 
@@ -67,7 +70,7 @@ def open_holograms(root: StrPath) -> HologramSequence | None:
     absent or empty folder as None.
 
     Raises:
-        AmbiguousHologramsError: If the folder holds both the `holo.raw` stack and
+        MultiFormatHologramsError: If the folder holds both the `holo.raw` stack and
             numbered `.tif` previews (a real acquisition produces only one).
         ValueError: If the `holo.raw` stack is present but corrupt (a bad header or a
             size that does not match it).
@@ -81,7 +84,7 @@ def open_holograms(root: StrPath) -> HologramSequence | None:
     tif_folder = open_folder(holo_dir, HologramTifFolder)
     if has_raw and tif_folder is not None:
         msg = "holograms hold both a .raw stack and .tif previews (expected one)"
-        raise AmbiguousHologramsError(msg)
+        raise MultiFormatHologramsError(msg)
 
     return HologramRawFile(raw) if has_raw else tif_folder
 
@@ -102,8 +105,8 @@ def search_holograms(
 
     Finds each time-lapse folder holding a `Holograms/` and opens it; an empty folder is
     skipped, and `predicate` is a final check on the built *`HologramSequence`*. A
-    `Holograms/` holding both a `.raw` stack and `.tif` previews is ambiguous;
-    `on_conflict` decides whether such a time-lapse is dropped (so one malformed
+    `Holograms/` holding both a `.raw` stack and `.tif` previews has no single format to
+    open; `on_conflict` decides whether such a time-lapse is dropped (so one malformed
     acquisition does not abort the whole scan) or aborts the search.
 
     Args:
@@ -124,7 +127,7 @@ def search_holograms(
         The opened hologram sequences (excluding any skipped on a conflict).
 
     Raises:
-        AmbiguousHologramsError: If a matched `Holograms/` holds both a `.raw` stack and
+        MultiFormatHologramsError: If a matched `Holograms/` holds both a `.raw` stack and
             `.tif` previews and `on_conflict` is `"raise"`.
         ValueError: If a matched `holo.raw` is corrupt (surfaced regardless of
             `on_conflict`: that is a content error, not the layout ambiguity).
@@ -142,7 +145,7 @@ def search_holograms(
     ):
         try:
             sequence = open_holograms(directory)
-        except AmbiguousHologramsError:
+        except MultiFormatHologramsError:
             if on_conflict == "raise":
                 raise
             warnings.warn(
@@ -159,7 +162,7 @@ def search_holograms(
     return [sequence for sequence in sequences if predicate(sequence)]
 
 
-def search_ambiguous_holograms(
+def search_multi_format_holograms(
     root: StrPath,
     *,
     name_filter: Filter | FilterDict | None = None,
@@ -173,7 +176,7 @@ def search_ambiguous_holograms(
 
     These folders cannot be opened as a single `HologramSequence` until one of the two
     is removed, so `search_holograms(on_conflict="skip")` drops them and `open_holograms`
-    raises `AmbiguousHologramsError`. The auditing counterpart to those, it returns the
+    raises `MultiFormatHologramsError`. The auditing counterpart to those, it returns the
     offending `Holograms/` folders themselves (their parent is the time-lapse).
 
     Args:

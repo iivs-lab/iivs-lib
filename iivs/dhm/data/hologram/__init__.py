@@ -7,7 +7,6 @@ lazy sequences, plus `convert_hologram_sequence` format conversion.
 __all__ = (
     "HOLOGRAM_FORMATS",
     "HOLOGRAM_TREE",
-    "AmbiguousHologramsError",
     "HologramFormat",
     "HologramNpyFolder",
     "HologramRawFile",
@@ -15,6 +14,7 @@ __all__ = (
     "HologramSequence",
     "HologramTifFolder",
     "HologramTifList",
+    "MultiFormatHologramsError",
     "convert_hologram_sequence",
     "load_hologram_npy",
     "load_hologram_tif",
@@ -23,8 +23,8 @@ __all__ = (
     "save_hologram_npy",
     "save_hologram_raw",
     "save_hologram_tif",
-    "search_ambiguous_holograms",
     "search_holograms",
+    "search_multi_format_holograms",
 )
 
 from iivs.dhm.data.hologram.base import HologramSequence
@@ -35,10 +35,10 @@ from iivs.dhm.data.hologram.dispatch import (
 )
 from iivs.dhm.data.hologram.layout import (
     HOLOGRAM_TREE,
-    AmbiguousHologramsError,
+    MultiFormatHologramsError,
     open_holograms,
-    search_ambiguous_holograms,
     search_holograms,
+    search_multi_format_holograms,
 )
 from iivs.dhm.data.hologram.npy import (
     HologramNpyFolder,

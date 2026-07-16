@@ -45,11 +45,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `search_intensity_{bin,txt,tif}_folders`, `hologram.HOLOGRAM_TREE` /
   `open_holograms` / `search_holograms` — which `KOALA_TIMELAPSE_TREE` composes (pass
   it to `hierarchy.validate` for a structural check). `search_holograms`'s `on_conflict`
-  (default `"skip"`) drops a time-lapse whose `Holograms/` is ambiguous (holds both a
-  `.raw` stack and `.tif` previews), warning, so one bad acquisition does not abort the
-  scan; `"raise"` aborts instead. `search_ambiguous_holograms` is the auditing
-  counterpart, returning those ambiguous `Holograms/` folders. The ambiguity raises a
-  distinct `AmbiguousHologramsError` (a `ValueError` subclass), so a genuinely corrupt
+  (default `"skip"`) drops a time-lapse whose `Holograms/` holds both a `.raw` stack and
+  `.tif` previews, warning, so one bad acquisition does not abort the scan; `"raise"`
+  aborts instead. `search_multi_format_holograms` is the auditing counterpart, returning
+  those two-format `Holograms/` folders. Holding both raises a distinct
+  `MultiFormatHologramsError` (a `ValueError` subclass), so a genuinely corrupt
   `holo.raw` is surfaced rather than mistaken for it (in the skip-search, and in the
   tolerant `num_holograms` / `has_holograms`). The per-modality searches
   find each

@@ -129,9 +129,9 @@ def test_holograms_both_raw_and_tif_raises(tmp_path):
         _ = timelapse.holograms
 
     # Status / count queries stay tolerant: they never raise on the raw+tif conflict,
-    # leaving the holograms uncounted rather than propagating the ambiguity error.
+    # leaving the holograms uncounted rather than propagating the layout error.
     assert timelapse.has_holograms
-    assert timelapse.num_holograms is None  # ambiguous -> uncountable
+    assert timelapse.num_holograms is None  # two formats -> no one count
     assert timelapse.num_frames == 2  # falls through to the timing, holograms uncounted
     assert timelapse.is_consistent
 
@@ -186,7 +186,7 @@ def test_num_holograms_surfaces_a_corrupt_raw(tmp_path):
     _build(tmp_path, holograms="raw")
     raw = tmp_path / "Holograms" / "holo.raw"
     raw.write_bytes(raw.read_bytes()[:-6])  # truncate -> byte count mismatch
-    # A corrupt raw is not the raw+tif ambiguity, so it surfaces (not silently None).
+    # A corrupt raw is not the raw+tif layout fault, so it surfaces (not silently None).
     with pytest.raises(ValueError, match="file size"):
         _ = KoalaTimelapse(tmp_path).num_holograms
 

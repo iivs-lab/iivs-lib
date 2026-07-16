@@ -85,12 +85,13 @@ raising if a folder holds both (a real acquisition yields only one). The folder'
 is the `HOLOGRAM_TREE` `hierarchy` spec, and `search_holograms(root, ...)` returns the
 hologram sequence of every time-lapse under `root` that has a `Holograms/` folder (via
 `kaparoo`'s `search_dirs`, with `predicate` a check on the `HologramSequence`). A
-`Holograms/` holding both a `.raw` stack and `.tif` previews is ambiguous;
-`on_conflict="skip"` (default) drops that time-lapse and warns so one malformed
-acquisition does not abort the scan, while `"raise"` aborts. `search_ambiguous_holograms(root, ...)`
-is the auditing counterpart, returning those ambiguous `Holograms/` folders to fix. The
-ambiguity is a distinct `AmbiguousHologramsError` (a `ValueError`), so a corrupt
-`holo.raw` surfaces instead of being mistaken for it. All three are what
+`Holograms/` holding both a `.raw` stack and `.tif` previews has no single format to
+open; `on_conflict="skip"` (default) drops that time-lapse and warns so one malformed
+acquisition does not abort the scan, while `"raise"` aborts.
+`search_multi_format_holograms(root, ...)` is the auditing counterpart, returning those
+two-format `Holograms/` folders to fix. It is a distinct `MultiFormatHologramsError` (a
+`ValueError`), so a corrupt `holo.raw` surfaces instead of being mistaken for it. All
+three are what
 [`iivs.dhm.data.timelapse`](../README.md#opening-a-whole-time-lapse-koalatimelapse)'s
 `KoalaTimelapse` composes for the holograms.
 

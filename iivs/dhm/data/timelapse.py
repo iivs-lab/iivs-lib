@@ -13,7 +13,7 @@ from kaparoo.utils import fold_optional
 
 from iivs.dhm.data.hologram.layout import (
     HOLOGRAM_TREE,
-    AmbiguousHologramsError,
+    MultiFormatHologramsError,
     open_holograms,
 )
 from iivs.dhm.data.intensity.layout import INTENSITY_TREE, IntensityGroup
@@ -120,7 +120,7 @@ class KoalaTimelapse:
         consumer's concern, not this composing layer's; the frames are uint8 either way.
 
         Raises:
-            AmbiguousHologramsError: If the `Holograms` folder holds both a `.raw` stack
+            MultiFormatHologramsError: If the `Holograms` folder holds both a `.raw` stack
                 and numbered `.tif` previews (a real acquisition produces only one).
         """
         return open_holograms(self._root / HOLOGRAMS)
@@ -160,15 +160,15 @@ class KoalaTimelapse:
 
     @property
     def num_holograms(self) -> int | None:
-        """The hologram frame count, or None when absent or ambiguous (raw+tif).
+        """The hologram frame count, or None when absent or split across formats.
 
-        Tolerant of the raw+tif ambiguity only: `holograms` raises
-        `AmbiguousHologramsError` on it, which this reports as None (uncountable). A
-        genuinely corrupt `holo.raw` is not swallowed; its error propagates.
+        Tolerant of the raw+tif layout fault only: `holograms` raises
+        `MultiFormatHologramsError` on it, which this reports as None (no one format to
+        count). A genuinely corrupt `holo.raw` is not swallowed; its error propagates.
         """
         try:
             holo = self.holograms
-        except AmbiguousHologramsError:
+        except MultiFormatHologramsError:
             return None
         return fold_optional(holo, len, None)
 
@@ -185,7 +185,7 @@ class KoalaTimelapse:
         (`Holograms/`, then the `timestamps.txt` written beside it) outranks what it
         later reconstructed. `num_frames` takes the first present one; `is_consistent`
         checks they all agree. Each is None when its source is absent (or, for the
-        holograms, ambiguous).
+        holograms, split across formats).
         """
         return (
             self.num_holograms,
@@ -201,7 +201,7 @@ class KoalaTimelapse:
         """Whether a `Holograms/` source is present (True even if raw and tif conflict)."""
         try:
             return self.holograms is not None
-        except AmbiguousHologramsError:
+        except MultiFormatHologramsError:
             return True
 
     @property
@@ -240,8 +240,8 @@ class KoalaTimelapse:
         Each phase / intensity group is internally consistent, and every present source
         (phase, intensity, holograms, timing) shares one frame count. Shape is not
         compared across modalities (holograms are raw interferograms); a raw+tif
-        `Holograms/` conflict makes the holograms ambiguous (the `holograms` accessor
-        raises), so it is left uncounted here.
+        `Holograms/` leaves no one format to count (the `holograms` accessor raises), so
+        the holograms sit out this check.
         """
         if not (self.phase.is_consistent and self.intensity.is_consistent):
             return False
@@ -266,7 +266,7 @@ class KoalaTimelapse:
         `hierarchy.validate(KOALA_TIMELAPSE_TREE, root)` for a structural report.
 
         Raises:
-            AmbiguousHologramsError: If the `Holograms/` folder holds both a `.raw`
+            MultiFormatHologramsError: If the `Holograms/` folder holds both a `.raw`
                 stack and `.tif` previews.
             ValueError: If a file fails validation.
         """

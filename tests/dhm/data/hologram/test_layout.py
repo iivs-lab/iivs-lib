@@ -8,8 +8,8 @@ from kaparoo.filesystem.hierarchy import Directory
 from iivs.dhm.data.hologram.layout import (
     HOLOGRAM_TREE,
     open_holograms,
-    search_ambiguous_holograms,
     search_holograms,
+    search_multi_format_holograms,
 )
 from iivs.dhm.data.hologram.raw import HologramRawFile, save_hologram_raw
 from iivs.dhm.data.hologram.tif import HologramTifFolder
@@ -94,7 +94,7 @@ def test_search_holograms_predicate(tmp_path):
 
 
 def _conflict(holo):
-    _raw(holo, 2)  # a .raw stack plus numbered .tif previews -> ambiguous
+    _raw(holo, 2)  # a .raw stack plus numbered .tif previews -> two formats at once
     for i in range(2):
         tifffile.imwrite(holo / f"{i:05d}_holo.tif", np.full((2, 3), i, np.uint8))
 
@@ -114,11 +114,11 @@ def test_search_holograms_on_conflict_raise(tmp_path):
         search_holograms(tmp_path, on_conflict="raise")
 
 
-def test_search_ambiguous_holograms(tmp_path):
+def test_search_multi_format_holograms(tmp_path):
     _raw(tmp_path / "raw_only" / "Holograms", 2)  # no conflict
     _tif(tmp_path / "tif_only" / "Holograms", 3)  # no conflict
     _conflict(tmp_path / "bad" / "Holograms")  # both raw and tif
-    assert search_ambiguous_holograms(tmp_path) == [tmp_path / "bad" / "Holograms"]
+    assert search_multi_format_holograms(tmp_path) == [tmp_path / "bad" / "Holograms"]
 
 
 def test_search_holograms_surfaces_a_corrupt_raw(tmp_path):
