@@ -119,3 +119,14 @@ def test_search_ambiguous_holograms(tmp_path):
     _tif(tmp_path / "tif_only" / "Holograms", 3)  # no conflict
     _conflict(tmp_path / "bad" / "Holograms")  # both raw and tif
     assert search_ambiguous_holograms(tmp_path) == [tmp_path / "bad" / "Holograms"]
+
+
+def test_search_holograms_surfaces_a_corrupt_raw(tmp_path):
+    holo = tmp_path / "bad" / "Holograms"
+    _raw(holo, 2)
+    raw = holo / "holo.raw"
+    raw.write_bytes(raw.read_bytes()[:-6])  # truncate -> size no longer matches header
+    # A corrupt raw is a content error, not the raw+tif ambiguity, so on_conflict="skip"
+    # does NOT swallow it.
+    with pytest.raises(ValueError, match="file size"):
+        search_holograms(tmp_path)

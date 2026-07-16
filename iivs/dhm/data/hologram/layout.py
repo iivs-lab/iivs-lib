@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = (
     "HOLOGRAM_TREE",
+    "AmbiguousHologramsError",
     "open_holograms",
     "search_ambiguous_holograms",
     "search_holograms",
@@ -49,6 +50,16 @@ Holds either the `holo.raw` stack or numbered `*.tif` previews, never both.
 """
 
 
+class AmbiguousHologramsError(ValueError):
+    """A `Holograms/` folder holds both a `.raw` stack and numbered `.tif` previews.
+
+    A real Koala acquisition produces only one, so the two together are an unresolvable
+    layout ambiguity, distinct from a corrupt file. Subclasses `ValueError` (a broad
+    `except ValueError` still catches it); catch it specifically to tolerate or skip only
+    the ambiguity while letting genuine content errors surface.
+    """
+
+
 def open_holograms(root: StrPath) -> HologramSequence | None:
     """Open a `Holograms/` folder as a single hologram sequence, or None when absent.
 
@@ -56,8 +67,10 @@ def open_holograms(root: StrPath) -> HologramSequence | None:
     absent or empty folder as None.
 
     Raises:
-        ValueError: If the folder holds both the `holo.raw` stack and numbered `.tif`
-            previews (a real acquisition produces only one).
+        AmbiguousHologramsError: If the folder holds both the `holo.raw` stack and
+            numbered `.tif` previews (a real acquisition produces only one).
+        ValueError: If the `holo.raw` stack is present but corrupt (a bad header or a
+            size that does not match it).
     """
     holo_dir = Path(root)
     if not holo_dir.is_dir():
@@ -68,7 +81,7 @@ def open_holograms(root: StrPath) -> HologramSequence | None:
     tif_folder = open_folder(holo_dir, HologramTifFolder)
     if has_raw and tif_folder is not None:
         msg = "holograms hold both a .raw stack and .tif previews (expected one)"
-        raise ValueError(msg)
+        raise AmbiguousHologramsError(msg)
 
     return HologramRawFile(raw) if has_raw else tif_folder
 
@@ -111,8 +124,10 @@ def search_holograms(
         The opened hologram sequences (excluding any skipped on a conflict).
 
     Raises:
-        ValueError: If a matched `Holograms/` holds both a `.raw` stack and `.tif`
-            previews and `on_conflict` is `"raise"`.
+        AmbiguousHologramsError: If a matched `Holograms/` holds both a `.raw` stack and
+            `.tif` previews and `on_conflict` is `"raise"`.
+        ValueError: If a matched `holo.raw` is corrupt (surfaced regardless of
+            `on_conflict`: that is a content error, not the layout ambiguity).
     """
     sequences: list[HologramSequence] = []
     for directory in search_timelapse_subdirs(
@@ -127,7 +142,7 @@ def search_holograms(
     ):
         try:
             sequence = open_holograms(directory)
-        except ValueError:
+        except AmbiguousHologramsError:
             if on_conflict == "raise":
                 raise
             warnings.warn(

@@ -38,8 +38,10 @@ if TYPE_CHECKING:
 def open_folder[T: KoalaFrameFolder](path: StrPath, folder: type[T]) -> T | None:
     """Open `path` with `folder` when it is a populated directory, else None.
 
-    Tolerant: an absent directory, or a present-but-empty numbered folder, yields None
-    rather than raising. Opened without content validation (`validate=None`).
+    Tolerant of a missing source: an absent directory or a present-but-empty numbered
+    folder yields None rather than raising. Opened without per-file content validation
+    (`validate=None`), but a folder that reads a shared header at construction still
+    surfaces a corrupt one; a real content error is raised, not hidden as None.
 
     Type Parameters:
         T: The opened folder type (e.g. `PhaseBinFolder`).
@@ -253,11 +255,8 @@ class ReconstructionGroup[
     @property
     def frame_shape(self) -> tuple[int, int] | None:
         """The (height, width) shared by the present sources, or None when empty."""
-
-        def get_shape(ref: KoalaFrameFolder) -> tuple[int, int]:
-            return ref.frame_shape
-
-        return fold_optional(self._reference, get_shape, None)
+        ref = self._reference
+        return ref.frame_shape if ref is not None else None
 
     # -- status --
 

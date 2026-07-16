@@ -149,6 +149,15 @@ def test_source_counts(tmp_path):
     assert timelapse.num_frames == n
 
 
+def test_num_holograms_surfaces_a_corrupt_raw(tmp_path):
+    _build(tmp_path, holograms="raw")
+    raw = tmp_path / "Holograms" / "holo.raw"
+    raw.write_bytes(raw.read_bytes()[:-6])  # truncate -> byte count mismatch
+    # A corrupt raw is not the raw+tif ambiguity, so it surfaces (not silently None).
+    with pytest.raises(ValueError, match="file size"):
+        _ = KoalaTimelapse(tmp_path).num_holograms
+
+
 def test_inconsistent_group_fails_timelapse_consistency(tmp_path):
     n = _build(tmp_path, n=3)
     # Drop one phase `.bin` frame so phase's bin (2) disagrees with its txt / tif (3).

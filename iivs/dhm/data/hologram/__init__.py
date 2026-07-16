@@ -7,6 +7,7 @@ lazy sequences, plus `convert_hologram_sequence` format conversion.
 __all__ = (
     "HOLOGRAM_FORMATS",
     "HOLOGRAM_TREE",
+    "AmbiguousHologramsError",
     "HologramFormat",
     "HologramNpyFolder",
     "HologramRawFile",
@@ -34,6 +35,7 @@ from iivs.dhm.data.hologram.dispatch import (
 )
 from iivs.dhm.data.hologram.layout import (
     HOLOGRAM_TREE,
+    AmbiguousHologramsError,
     open_holograms,
     search_ambiguous_holograms,
     search_holograms,

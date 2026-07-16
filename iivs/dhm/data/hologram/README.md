@@ -88,7 +88,9 @@ hologram sequence of every time-lapse under `root` that has a `Holograms/` folde
 `Holograms/` holding both a `.raw` stack and `.tif` previews is ambiguous;
 `on_conflict="skip"` (default) drops that time-lapse and warns so one malformed
 acquisition does not abort the scan, while `"raise"` aborts. `search_ambiguous_holograms(root, ...)`
-is the auditing counterpart, returning those ambiguous `Holograms/` folders to fix. All three are what
+is the auditing counterpart, returning those ambiguous `Holograms/` folders to fix. The
+ambiguity is a distinct `AmbiguousHologramsError` (a `ValueError`), so a corrupt
+`holo.raw` surfaces instead of being mistaken for it. All three are what
 [`iivs.dhm.data.timelapse`](../README.md#opening-a-whole-time-lapse-koalatimelapse)'s
 `KoalaTimelapse` composes for the holograms.
 

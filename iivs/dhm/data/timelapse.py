@@ -11,7 +11,11 @@ from kaparoo.filesystem.search import search_dirs
 from kaparoo.filters import Any
 from kaparoo.utils import fold_optional
 
-from iivs.dhm.data.hologram.layout import HOLOGRAM_TREE, open_holograms
+from iivs.dhm.data.hologram.layout import (
+    HOLOGRAM_TREE,
+    AmbiguousHologramsError,
+    open_holograms,
+)
 from iivs.dhm.data.intensity.layout import INTENSITY_TREE, IntensityGroup
 from iivs.dhm.data.koala import HOLOGRAMS, INTENSITY, PHASE, PHBOUNDS, TIMESTAMPS
 from iivs.dhm.data.koala.frame import KoalaFrameFolder
@@ -162,12 +166,13 @@ class KoalaTimelapse:
     def num_holograms(self) -> int | None:
         """The hologram frame count, or None when absent or ambiguous (raw+tif).
 
-        Tolerant: `holograms` raises on the raw+tif conflict (an ambiguous
-        `Holograms/`), which this reports as None (uncountable) rather than propagating.
+        Tolerant of the raw+tif ambiguity only: `holograms` raises
+        `AmbiguousHologramsError` on it, which this reports as None (uncountable). A
+        genuinely corrupt `holo.raw` is not swallowed; its error propagates.
         """
         try:
             holo = self.holograms
-        except ValueError:
+        except AmbiguousHologramsError:
             return None
         return fold_optional(holo, len, None)
 
@@ -183,7 +188,7 @@ class KoalaTimelapse:
         """Whether a `Holograms/` source is present (True even if raw and tif conflict)."""
         try:
             return self.holograms is not None
-        except ValueError:
+        except AmbiguousHologramsError:
             return True
 
     @property

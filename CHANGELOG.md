@@ -48,7 +48,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (default `"skip"`) drops a time-lapse whose `Holograms/` is ambiguous (holds both a
   `.raw` stack and `.tif` previews), warning, so one bad acquisition does not abort the
   scan; `"raise"` aborts instead. `search_ambiguous_holograms` is the auditing
-  counterpart, returning those ambiguous `Holograms/` folders. The per-modality searches
+  counterpart, returning those ambiguous `Holograms/` folders. The ambiguity raises a
+  distinct `AmbiguousHologramsError` (a `ValueError` subclass), so a genuinely corrupt
+  `holo.raw` is surfaced rather than mistaken for it (in the skip-search, and in the
+  tolerant `num_holograms` / `has_holograms`). The per-modality searches
   find each
   time-lapse's folder of one format (returning that concrete folder, e.g.
   `list[PhaseBinFolder]`, with `predicate` on it), sharing `search_timelapses`'s
