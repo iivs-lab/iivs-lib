@@ -152,14 +152,10 @@ class KoalaTimelapse:
         timing length. Phase, intensity, holograms, and timing share this count in a
         coherent acquisition (`is_consistent`).
         """
-        for count in (
-            self.phase.num_frames,
-            self.intensity.num_frames,
-            self.num_holograms,
-        ):
+        for count in self._source_counts:
             if count is not None:
                 return count
-        return self.num_timestamps
+        return None
 
     @property
     def num_holograms(self) -> int | None:
@@ -179,6 +175,21 @@ class KoalaTimelapse:
     def num_timestamps(self) -> int | None:
         """The number of `timestamps.txt` timing rows, or None when it is absent."""
         return fold_optional(self.timestamps, len, None)
+
+    @property
+    def _source_counts(self) -> tuple[int | None, int | None, int | None, int | None]:
+        """Each source's frame count in `(phase, intensity, holograms, timing)` order.
+
+        Data sources lead and timing trails, so `num_frames` can take the first present
+        one; `is_consistent` checks they all agree. Each is None when its source is
+        absent (or, for the holograms, ambiguous).
+        """
+        return (
+            self.phase.num_frames,
+            self.intensity.num_frames,
+            self.num_holograms,
+            self.num_timestamps,
+        )
 
     # -- status --
 
@@ -231,16 +242,7 @@ class KoalaTimelapse:
         """
         if not (self.phase.is_consistent and self.intensity.is_consistent):
             return False
-        counts = {
-            c
-            for c in (
-                self.phase.num_frames,
-                self.intensity.num_frames,
-                self.num_holograms,
-                self.num_timestamps,
-            )
-            if c is not None
-        }
+        counts = {c for c in self._source_counts if c is not None}
         return len(counts) <= 1
 
     # -- validation --
