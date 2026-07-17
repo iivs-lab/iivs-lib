@@ -16,13 +16,16 @@ from functools import partial
 from typing import TYPE_CHECKING, overload
 
 from kaparoo.filesystem import (
-    StagedDirectory,
     UnsupportedExtensionError,
     file_extension,
 )
 from kaparoo.utils import ensure_one_of, replace_if_none
 
-from iivs.dhm.data.koala import FLOAT_FORMATS, detect_koala_format, koala_frame_name
+from iivs.dhm.data.koala import (
+    FLOAT_FORMATS,
+    detect_koala_format,
+    save_koala_frames,
+)
 from iivs.dhm.data.phase.bin import (
     PhaseBinFolder,
     PhaseBinList,
@@ -523,14 +526,9 @@ def save_phase_folder(
             overwrite=overwrite,
         )
 
-    with StagedDirectory(dest, overwrite=overwrite) as staged:
-        count = 0
-        for index, image in enumerate(images):
-            save(staged.workdir / koala_frame_name(index, stem=stem, ext=ext), image)
-            count = index + 1
-        if count == 0:
-            msg = "cannot save an empty phase sequence"
-            raise ValueError(msg)
+    save_koala_frames(
+        dest, images, save, stem=stem, ext=ext, kind="phase", overwrite=overwrite
+    )
 
 
 def convert_phase_folder(

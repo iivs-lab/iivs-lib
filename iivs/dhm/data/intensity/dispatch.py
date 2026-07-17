@@ -16,7 +16,6 @@ from functools import partial
 from typing import TYPE_CHECKING, overload
 
 from kaparoo.filesystem import (
-    StagedDirectory,
     UnsupportedExtensionError,
     file_extension,
 )
@@ -41,7 +40,11 @@ from iivs.dhm.data.intensity.txt import (
     read_intensity_txt_header,
     save_intensity_txt,
 )
-from iivs.dhm.data.koala import FLOAT_FORMATS, detect_koala_format, koala_frame_name
+from iivs.dhm.data.koala import (
+    FLOAT_FORMATS,
+    detect_koala_format,
+    save_koala_frames,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -372,14 +375,9 @@ def save_intensity_folder(
         writer = save_intensity_bin if ext == "bin" else save_intensity_txt
         save = partial(writer, pixel_size=pixel_size, overwrite=overwrite)
 
-    with StagedDirectory(dest, overwrite=overwrite) as staged:
-        count = 0
-        for index, image in enumerate(images):
-            save(staged.workdir / koala_frame_name(index, stem=stem, ext=ext), image)
-            count = index + 1
-        if count == 0:
-            msg = "cannot save an empty intensity sequence"
-            raise ValueError(msg)
+    save_koala_frames(
+        dest, images, save, stem=stem, ext=ext, kind="intensity", overwrite=overwrite
+    )
 
 
 def convert_intensity_folder(

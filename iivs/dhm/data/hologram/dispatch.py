@@ -5,13 +5,12 @@ __all__ = ("HOLOGRAM_FORMATS", "HologramFormat", "convert_hologram_sequence")
 from functools import partial
 from typing import TYPE_CHECKING
 
-from kaparoo.filesystem import StagedDirectory
 from kaparoo.utils import ensure_one_of
 
 from iivs.dhm.data.hologram.npy import save_hologram_npy
 from iivs.dhm.data.hologram.raw import save_hologram_raw
 from iivs.dhm.data.hologram.tif import save_hologram_tif
-from iivs.dhm.data.koala import koala_frame_name
+from iivs.dhm.data.koala import save_koala_frames
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -71,11 +70,6 @@ def convert_hologram_sequence(
     save = partial(writer, overwrite=overwrite)
     stem = getattr(sequence, "FILE_STEM", "holo")
 
-    with StagedDirectory(dest, overwrite=overwrite) as staged:
-        count = 0
-        for index, image in enumerate(sequence):
-            save(staged.workdir / koala_frame_name(index, stem=stem, ext=ext), image)
-            count = index + 1
-        if count == 0:
-            msg = "cannot save an empty hologram sequence"
-            raise ValueError(msg)
+    save_koala_frames(
+        dest, sequence, save, stem=stem, ext=ext, kind="hologram", overwrite=overwrite
+    )

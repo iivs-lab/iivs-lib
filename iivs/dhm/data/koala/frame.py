@@ -5,6 +5,7 @@ __all__ = (
     "ValidationLevel",
     "detect_koala_format",
     "koala_frame_name",
+    "save_koala_frames",
 )
 
 from functools import cache
@@ -12,7 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
 from kaparoo.data.sequences import FileFolderSequence
-from kaparoo.filesystem import file_extension
+from kaparoo.filesystem import StagedDirectory, file_extension
 from kaparoo.filesystem.search import search_files
 from kaparoo.filters import Regex
 from kaparoo.utils import ensure_one_of, replace_if_none
@@ -20,7 +21,7 @@ from kaparoo.utils import ensure_one_of, replace_if_none
 from iivs.common.data.mixins import FrameShapedMixin
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Iterable, Sequence
     from typing import Literal
 
     from kaparoo.filesystem.types import StrPath
@@ -56,6 +57,47 @@ def koala_frame_name(index: int, *, stem: str, ext: str) -> str:
         msg = f"frame index must be in [0, 99999] (got {index})"
         raise ValueError(msg)
     return f"{index:05d}_{stem}.{ext}"
+
+
+def save_koala_frames[T](
+    dest: StrPath,
+    images: Iterable[T],
+    save: Callable[[Path, T], object],
+    *,
+    stem: str,
+    ext: str,
+    kind: str,
+    overwrite: bool = False,
+) -> None:
+    """Write `images` into `dest` as a numbered Koala frame folder.
+
+    Each frame is passed to `save` at its `{index:05d}_<stem>.<ext>` name. `images` is
+    consumed one frame at a time, so a large source is never held whole, and the folder
+    is built atomically: a failure part-way leaves any existing `dest` untouched rather
+    than a half-written folder no reader would accept. An empty `images` is rejected for
+    the same reason, which is why the count is checked inside the staged block.
+
+    Args:
+        dest: The folder to create and fill.
+        images: The frames to write, in order.
+        save: Writes one frame to one path.
+        stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>``.
+        ext: The file extension, without the dot.
+        kind: What the frames are, for the empty-sequence message (e.g. "phase").
+        overwrite: Whether to replace `dest` if it already exists. Defaults to False.
+
+    Raises:
+        ValueError: If `images` is empty.
+        FileExistsError: If `dest` exists and `overwrite` is False.
+    """
+    with StagedDirectory(dest, overwrite=overwrite) as staged:
+        count = 0
+        for index, image in enumerate(images):
+            save(staged.workdir / koala_frame_name(index, stem=stem, ext=ext), image)
+            count = index + 1
+        if count == 0:
+            msg = f"cannot save an empty {kind} sequence"
+            raise ValueError(msg)
 
 
 def detect_koala_format(
