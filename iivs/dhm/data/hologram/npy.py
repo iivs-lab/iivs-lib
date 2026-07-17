@@ -5,14 +5,12 @@ __all__ = ("HologramNpyFolder", "load_hologram_npy", "save_hologram_npy")
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, override
 
-import numpy as np
-from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
-
-from iivs.common.data import validate_uint8_array, write_npy
+from iivs.common.data import load_uint8_npy, save_uint8_npy
 from iivs.dhm.data.hologram.base import HologramSequence
 from iivs.dhm.data.koala import ImageFileFolder
 
 if TYPE_CHECKING:
+    import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
@@ -28,8 +26,7 @@ def load_hologram_npy(path: StrPath) -> NDArray[np.uint8]:
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the array is pickled or is not a 2D uint8 image.
     """
-    path = ensure_file_exists(path)
-    return validate_uint8_array(np.load(path, allow_pickle=False), allow_stack=False)
+    return load_uint8_npy(path)
 
 
 def save_hologram_npy(
@@ -51,9 +48,7 @@ def save_hologram_npy(
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    path = ensure_file_extension(path, "npy", add=True)
-    data = validate_uint8_array(data, allow_stack=False)
-    write_npy(path, data, overwrite=overwrite)
+    save_uint8_npy(path, data, overwrite=overwrite)
 
 
 class HologramNpyFolder(ImageFileFolder, HologramSequence[Path]):

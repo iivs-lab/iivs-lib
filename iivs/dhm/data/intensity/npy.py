@@ -4,14 +4,12 @@ __all__ = ("IntensityNpyFolder", "load_intensity_npy", "save_intensity_npy")
 
 from typing import TYPE_CHECKING, ClassVar, override
 
-import numpy as np
-from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
-
-from iivs.common.data import read_npy_shape, validate_float32_array, write_npy
+from iivs.common.data import load_float32_npy, read_npy_shape, save_float32_npy
 from iivs.dhm.data.intensity.base import IntensityFileFolder
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
 
 if TYPE_CHECKING:
+    import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
@@ -43,9 +41,7 @@ def load_intensity_npy(
         ValueError: If the array is pickled, not a single 2D float32 image, or holds
             non-finite values while `on_nonfinite` is "raise".
     """
-    path = ensure_file_exists(path)
-    data = np.load(path, allow_pickle=False)
-    return validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    return load_float32_npy(path, on_nonfinite=on_nonfinite)
 
 
 def save_intensity_npy(
@@ -76,9 +72,7 @@ def save_intensity_npy(
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    path = ensure_file_extension(path, "npy", add=True)
-    data = validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
-    write_npy(path, data, overwrite=overwrite)
+    save_float32_npy(path, data, overwrite=overwrite, on_nonfinite=on_nonfinite)
 
 
 class IntensityNpyFolder(IntensityFileFolder):

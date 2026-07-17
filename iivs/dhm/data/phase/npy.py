@@ -4,15 +4,13 @@ __all__ = ("PhaseNpyFolder", "load_phase_npy", "save_phase_npy")
 
 from typing import TYPE_CHECKING, ClassVar, override
 
-import numpy as np
-from kaparoo.filesystem import ensure_file_exists, ensure_file_extension
-
-from iivs.common.data import read_npy_shape, validate_float32_array, write_npy
+from iivs.common.data import load_float32_npy, read_npy_shape, save_float32_npy
 from iivs.dhm.data.phase.base import PhaseFileFolder
 from iivs.dhm.data.phase.bin import PhaseBinHeader
 from iivs.dhm.data.phase.unit import resolve_height_scale
 
 if TYPE_CHECKING:
+    import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
 
@@ -36,18 +34,16 @@ def load_phase_npy(
     Args:
         path: The `.npy` file to read.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
-            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
-            "raise" raises a ValueError.
+            data: `"ignore"` (default) accepts silently, `"warn"` emits a
+            RuntimeWarning, `"raise"` raises a ValueError.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the array is pickled, not a single 2D float32 image, or holds
-            non-finite values while `on_nonfinite` is "raise".
+            non-finite values while `on_nonfinite` is `"raise"`.
     """
-    path = ensure_file_exists(path)
-    data = np.load(path, allow_pickle=False)
-    return validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    return load_float32_npy(path, on_nonfinite=on_nonfinite)
 
 
 def save_phase_npy(
@@ -68,19 +64,17 @@ def save_phase_npy(
         data: The phase image to save, of shape (H, W).
         overwrite: Whether to replace `path` if it already exists. Defaults to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in `data`:
-            "ignore" accepts silently, "warn" (default) emits a RuntimeWarning, "raise"
-            rejects with a ValueError.
+            `"ignore"` accepts silently, `"warn"` (default) emits a RuntimeWarning,
+            `"raise"` rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.npy` extension, `data` is not a single 2D
             float32 image, or it holds non-finite values while `on_nonfinite` is
-            "raise".
+            `"raise"`.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
-    path = ensure_file_extension(path, "npy", add=True)
-    data = validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
-    write_npy(path, data, overwrite=overwrite)
+    save_float32_npy(path, data, overwrite=overwrite, on_nonfinite=on_nonfinite)
 
 
 class PhaseNpyFolder(PhaseFileFolder):

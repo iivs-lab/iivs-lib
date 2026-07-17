@@ -6,7 +6,11 @@ __all__ = (
     "TimestampSequence",
     "TimestampsFixedFPS",
     "ValueRangeMixin",
+    "load_float32_npy",
+    "load_uint8_npy",
     "read_npy_shape",
+    "save_float32_npy",
+    "save_uint8_npy",
     "validate_float32_array",
     "validate_float_array",
     "validate_uint8_array",
@@ -15,7 +19,14 @@ __all__ = (
 )
 
 from iivs.common.data.mixins import FrameShapedMixin, ValueRangeMixin
-from iivs.common.data.npy import read_npy_shape, write_npy
+from iivs.common.data.npy import (
+    load_float32_npy,
+    load_uint8_npy,
+    read_npy_shape,
+    save_float32_npy,
+    save_uint8_npy,
+    write_npy,
+)
 from iivs.common.data.sequence import ArrayFileList
 from iivs.common.data.timestamp import Timestamp, TimestampSequence, TimestampsFixedFPS
 

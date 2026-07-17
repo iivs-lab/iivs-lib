@@ -10,6 +10,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `iivs.common.data`: `load_float32_npy` / `save_float32_npy` and `load_uint8_npy` /
+  `save_uint8_npy`, the dtype-keyed `.npy` readers and writers the modality functions
+  now delegate to. `.npy` is header-less, so nothing about reading one is
+  modality-specific; `load_phase_npy` and its five siblings keep their names, signatures,
+  and docstrings.
 - `load_phase_tif` / `load_intensity_tif`, giving each modality a single-file reader for
   its uint8 `Image/*.tif` preview, as `load_hologram_tif` already did. Reading one
   preview no longer means reaching into `iivs.dhm.data.koala` for `load_uint8_tif`, so
