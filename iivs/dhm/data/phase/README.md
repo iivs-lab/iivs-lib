@@ -14,7 +14,7 @@ quantitative float32 phase reconstruction and its uint8 display preview.
 | `Float/Bin` (float32, with header) | `load_phase_bin` / `save_phase_bin` / `read_phase_bin_header` | `PhaseBinList` / `PhaseBinFolder` |
 | `Float/Txt` (float32, with header) | `load_phase_txt` / `save_phase_txt` / `read_phase_txt_header` | `PhaseTxtList` / `PhaseTxtFolder` |
 | `.npy` (float32, **header-less**) | `load_phase_npy` / `save_phase_npy` | `PhaseNpyFolder` |
-| `Image/*.tif` (**uint8 preview**, not quantitative) | — | `PhaseTifList` / `PhaseTifFolder` |
+| `Image/*.tif` (**uint8 preview**, not quantitative) | `load_phase_tif` | `PhaseTifList` / `PhaseTifFolder` |
 
 - A **`*List`** wraps an explicit, arbitrary list of files (any location, no
   naming rule); each file is read independently.

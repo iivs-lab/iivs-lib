@@ -18,7 +18,7 @@ record — its previews are normalized per frame.
 | `Float/Bin` (float32, with header) | `load_intensity_bin` / `save_intensity_bin` / `read_intensity_bin_header` | `IntensityBinList` / `IntensityBinFolder` |
 | `Float/Txt` (float32, with header) | `load_intensity_txt` / `save_intensity_txt` / `read_intensity_txt_header` | `IntensityTxtList` / `IntensityTxtFolder` |
 | `.npy` (float32, **header-less**) | `load_intensity_npy` / `save_intensity_npy` | `IntensityNpyFolder` |
-| `Image/*.tif` (**uint8 preview**) | — | `IntensityTifList` / `IntensityTifFolder` |
+| `Image/*.tif` (**uint8 preview**) | `load_intensity_tif` | `IntensityTifList` / `IntensityTifFolder` |
 
 - A **`*List`** wraps an explicit, arbitrary list of files; a **`*Folder`**
   auto-discovers `{index:05d}_intensity.<ext>` files under one root and shares a
@@ -92,14 +92,14 @@ listed here so you do not have to chase base classes.
 
 ## Conversion
 
-`convert_intensity_folder(root, folder, *, ext)` re-encodes a folder into a new
-numbered folder under `root`; `convert_intensity_list(sequence, *, ext)`
+`convert_intensity_folder(dest, folder, *, ext)` re-encodes a folder into a new
+numbered folder at `dest`; `convert_intensity_list(sequence, *, ext)`
 rewrites each list file in place with the new suffix. Targets: `"bin"` / `"txt"`
 / `"npy"` (all lossless float32).
 
 For a composed or transformed sequence (a `kaparoo` `ConcatSequence`, a sliced
 view, …) — which has no folder header — use
-`save_intensity_folder(root, images, *, ext, pixel_size=...)`, supplying
+`save_intensity_folder(dest, images, *, ext, pixel_size=...)`, supplying
 `pixel_size` explicitly; `convert_intensity_folder` is the file-folder
 convenience that reads it off the header for you.
 
