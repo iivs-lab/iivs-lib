@@ -97,11 +97,9 @@ class ImageFileFolder(KoalaFrameFolder[NDArray[np.uint8]], ArrayFileList[np.uint
 class ImageTifList(ArrayFileList[np.uint8]):
     """A uint8 `.tif` image sequence over an arbitrary list of files.
 
-    Supplies the `.tif` codec (`load_uint8_tif`) over `iivs.common.data`'s
-    `ArrayFileList`. A modality adds its role by also inheriting its
-    `<Modality>ImageSequence` (e.g. `PhaseTifList(ImageTifList,
-    PhaseImageSequence[Path])`). `ImageTifFolder` is the auto-discovered, same-shape
-    specialization.
+    Each file is decoded independently as uint8, with no naming or contiguity
+    constraint. A modality adds its own role by also inheriting its image sequence type.
+    `ImageTifFolder` is the auto-discovered, same-shape specialization.
 
     Args:
         files: The `.tif` files to expose, in the given order.

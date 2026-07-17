@@ -89,8 +89,8 @@ class KoalaTxtHeaderCodec[H: KoalaBinHeader](ABC):
     ) -> H:
         """Build the modality header from the shared geometry and any extra lines.
 
-        `lines` carries the full header (at least `HEADER_LINES` long); read any
-        modality-specific lines (e.g. phase's unit / height-conversion) here.
+        `lines` carries the full header (at least `HEADER_LINES` long); read any lines
+        beyond the shared geometry here.
         """
         raise NotImplementedError
 

@@ -43,7 +43,7 @@ class KoalaFloatFileList[H: KoalaBinHeader](
     header-less `.npy`). A concrete subclass supplies `FILE_EXT` and the `_read_header`
     / `_decode` codec, where `_decode` returns ``(image, header)``. `load_file` returns
     the decoded image after `_postprocess`, which a subclass overrides to transform it
-    (e.g. phase's unit conversion); the default is identity.
+    against its own header; the default is identity.
 
     Type Parameters:
         H: The header the codec produces (e.g. `PhaseBinHeader`).
@@ -61,9 +61,9 @@ class KoalaFloatFileList[H: KoalaBinHeader](
     def load_with_header(self, index: int) -> tuple[NDArray[np.float32], H]:
         """Decode the image at `index` and its header in a single read.
 
-        The image is post-processed exactly as `get_item` (e.g. phase's unit
-        conversion); the header is the file's own. The single-read twin of a `get_item`
-        + `get_header` pair, for callers (e.g. the converters) that need both.
+        The image is post-processed exactly as `get_item`; the header is the file's own.
+        Reads the file once where a `get_item` + `get_header` pair reads it twice, which
+        is what the converters want.
         """
         image, header = self._decode(self.get_file(index))
         return self._postprocess(image, header), header
@@ -77,12 +77,12 @@ class KoalaFloatFileList[H: KoalaBinHeader](
     def _postprocess(
         self,
         image: NDArray[np.float32],
-        header: H,  # noqa: ARG002  # the identity default ignores it; phase uses it
+        header: H,  # noqa: ARG002  # the default ignores it; an override needs it
     ) -> NDArray[np.float32]:
         """Transform a freshly decoded image (default: identity).
 
-        The hook `load_file` / `load_with_header` apply on top of `_decode`; phase
-        overrides it for per-file unit conversion, intensity keeps the identity default.
+        Override to convert an image against the header it was read with, when the
+        stored form is not the one callers should see; the default returns it unchanged.
         """
         return image
 
