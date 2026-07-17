@@ -193,6 +193,49 @@ def _to_storable_unit(
     return data, unit
 
 
+def _prepare_phase_write(
+    data: NDArray[np.float32],
+    *,
+    pixel_size: float,
+    height_scale: float | None,
+    wavelength: float | None,
+    refractive_delta: float | None,
+    unit: PhaseUnit,
+    on_nonfinite: OnNonFinite,
+) -> tuple[NDArray[np.float32], PhaseBinHeader]:
+    """Resolve and validate what a phase file needs, whatever encodes it.
+
+    Everything the `.bin` and `.txt` writers must agree on: the scale form is resolved,
+    the array checked as one image (a save takes a single frame, unlike the loaders), the
+    code-only NANOMETERS coerced to a storable METERS (so the values and the recorded
+    `unit` always match), and UNKNOWN warned about, since a file saved with it cannot be
+    interpreted physically later.
+
+    The header is a `PhaseBinHeader` for both: `.txt` serializes the same fields as text.
+
+    Raises:
+        ValueError: If neither or both scale forms are given, `data` is not a single 2D
+            float32 image, or it holds non-finite values while `on_nonfinite` is
+            `"raise"`.
+    """
+    height_scale = resolve_height_scale(height_scale, wavelength, refractive_delta)
+    data = validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
+    data, unit = _to_storable_unit(data, unit, height_scale)
+
+    if unit is PhaseUnit.UNKNOWN:
+        msg = "saving with unit=UNKNOWN; physical interpretation is undefined"
+        warnings.warn(msg, stacklevel=3)  # 3: the public saver is the caller's frame
+
+    header = PhaseBinHeader(
+        width=int(data.shape[1]),
+        height=int(data.shape[0]),
+        pixel_size=pixel_size,
+        height_scale=height_scale,
+        unit=unit,
+    )
+    return data, header
+
+
 @overload
 def save_phase_bin(
     path: StrPath,
@@ -266,22 +309,14 @@ def save_phase_bin(
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
     path = ensure_file_extension(path, "bin", add=True)
-    height_scale = resolve_height_scale(height_scale, wavelength, refractive_delta)
-
-    # save stores a single image (allow_stack=False), unlike the loaders.
-    data = validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
-    data, unit = _to_storable_unit(data, unit, height_scale)
-
-    if unit is PhaseUnit.UNKNOWN:
-        msg = "saving with unit=UNKNOWN; physical interpretation is undefined"
-        warnings.warn(msg, stacklevel=2)
-
-    header = PhaseBinHeader(
-        width=int(data.shape[1]),
-        height=int(data.shape[0]),
+    data, header = _prepare_phase_write(
+        data,
         pixel_size=pixel_size,
         height_scale=height_scale,
+        wavelength=wavelength,
+        refractive_delta=refractive_delta,
         unit=unit,
+        on_nonfinite=on_nonfinite,
     )
     write_bin(path, header, data, overwrite=overwrite)
 

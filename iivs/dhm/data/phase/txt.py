@@ -9,16 +9,14 @@ __all__ = (
 )
 
 import re
-import warnings
 from typing import TYPE_CHECKING, ClassVar, overload, override
 
 from kaparoo.filesystem import ensure_file_extension
 
-from iivs.common.data import validate_float32_array
 from iivs.dhm.data.koala import KoalaTxtHeaderCodec, load_txt, write_txt
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
-from iivs.dhm.data.phase.bin import PhaseBinHeader, _to_storable_unit
-from iivs.dhm.data.phase.unit import PhaseUnit, resolve_height_scale
+from iivs.dhm.data.phase.bin import PhaseBinHeader, _prepare_phase_write
+from iivs.dhm.data.phase.unit import PhaseUnit
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -243,20 +241,14 @@ def save_phase_txt(
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
     path = ensure_file_extension(path, "txt", add=True)
-    height_scale = resolve_height_scale(height_scale, wavelength, refractive_delta)
-    data = validate_float32_array(data, on_nonfinite=on_nonfinite, allow_stack=False)
-    data, unit = _to_storable_unit(data, unit, height_scale)
-
-    if unit is PhaseUnit.UNKNOWN:
-        msg = "saving with unit=UNKNOWN; physical interpretation is undefined"
-        warnings.warn(msg, stacklevel=2)
-
-    header = PhaseBinHeader(
-        width=int(data.shape[1]),
-        height=int(data.shape[0]),
+    data, header = _prepare_phase_write(
+        data,
         pixel_size=pixel_size,
         height_scale=height_scale,
+        wavelength=wavelength,
+        refractive_delta=refractive_delta,
         unit=unit,
+        on_nonfinite=on_nonfinite,
     )
     write_txt(path, PhaseTxtHeaderCodec, header, data, overwrite=overwrite)
 
