@@ -234,6 +234,12 @@ class ReconstructionGroup[
 
         Each path is reached by one accessor, hence always with the same `folder`, so a
         cached entry matches the requested type.
+
+        Not a `cached_property` per accessor, which is the obvious shape and does not
+        work: ty (0.0.51) resolves a `cached_property` returning the class type
+        parameter `B | None` to plain `None`, and a cast inside the body cannot fix
+        it, the mis-typing being at the descriptor's access site. A generic *method*
+        resolves `F := B` correctly, so the memoization lives here instead.
         """
         if path not in self._opened:
             self._opened[path] = open_folder(path, folder)

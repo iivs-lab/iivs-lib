@@ -37,6 +37,16 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
 
 ## Conventions
 
+- `phase` and `intensity` read as near-twins on purpose; do not fold them
+  into one generic modality. Most of the apparent bulk is `@overload`
+  stubs and docstrings, which no shared base absorbs, and only phase has
+  `target_unit` threading through it and the `height_scale` XOR
+  `wavelength` + `refractive_delta` forms. Everything genuinely shared is
+  already in `koala` (via inheritance for the sequences, via `header_cls`
+  / `codec` parameters for the file engines) or `common`. The six
+  `search_*_folders` are the same story: each body is a passthrough to
+  `open_timelapse_subfolders`, and that passthrough **is** the product —
+  a concrete name, a concretely-typed `predicate`, a concrete return.
 - Keep code fully typed — `ty` runs with `error-on-warning`.
 - Fix `ruff` findings rather than suppressing them, unless there is a
   clear, commented reason.
@@ -100,6 +110,18 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   own error names (e.g. `invalid-argument-type`), not mypy/pyright
   codes. Always include the specific code rather than bare
   `# ty: ignore` — bare suppressions can mask future regressions.
+- `ty` (0.0.51) resolves a `cached_property` whose return type names an
+  enclosing **class type parameter** (`B | None`) to plain `None`, which
+  then reads as unreachable downstream. A cast in the body does not help;
+  the mis-typing is at the descriptor's access site. A concrete union
+  resolves fine, as does a generic *method* — see
+  `ReconstructionGroup._open`. Re-check before working around it.
+- `E501` is disabled, so **`ruff` will not report a line over 88
+  columns**. Check with `awk 'length > 88' $(find iivs -name '*.py')`
+  when you touch prose.
+- Line wrapping hides text from `grep`: a phrase can sit across two
+  lines and match nothing. Sweep docstrings with the whitespace
+  flattened (`re.sub(r"\s+", " ", ...)`), not with a raw pattern.
 
 ## Python style
 
