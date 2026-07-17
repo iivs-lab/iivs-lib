@@ -5,11 +5,14 @@ __all__ = ("FrameShapedMixin", "ValueRangeMixin")
 import math
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 from kaparoo.data.sequences import DataSequence
 from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FrameShapedMixin(ABC):
@@ -52,14 +55,42 @@ class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
         where = f"of frame {index} " if index is not None else ""
         return f"value range {where}is undefined (all non-finite)"
 
-    @cached_property
-    def _global_value_range(self) -> tuple[float, float]:
+    @classmethod
+    def _range_of(cls, frame: NDArray[T], index: int | None) -> tuple[float, float]:
+        """Compute one frame's `(min, max)` over its finite values.
+
+        Args:
+            frame: The frame to range over.
+            index: Its position, for the error message; None when it stands alone.
+
+        Raises:
+            ValueError: If `frame` holds no finite value.
+        """
+        finite: NDArray[T] = frame[np.isfinite(frame)]
+        if finite.size == 0:
+            raise ValueError(cls._undefined_range_msg(index))
+        return float(finite.min()), float(finite.max())
+
+    def _range_over_all(self, get: Callable[[int], NDArray[T]]) -> tuple[float, float]:
+        """Compute the `(min, max)` across every frame `get` yields.
+
+        Non-finite values are ignored, so a frame holding none contributes nothing; when
+        no frame contributes at all, the bounds stay as initialized and inverted, which
+        is what makes `minimum > maximum` the all-non-finite test rather than a flag.
+
+        Args:
+            get: Yields the frame at an index. A subclass whose range is over something
+                other than `get_item` (a converted view, say) passes its own reader.
+
+        Raises:
+            ValueError: If the sequence is empty, or no frame holds a finite value.
+        """
         if len(self) == 0:
             raise ValueError(self._EMPTY_RANGE_MSG)
 
         minimum, maximum = math.inf, -math.inf
         for i in range(len(self)):
-            frame = self.get_item(i)
+            frame = get(i)
             finite: NDArray[T] = frame[np.isfinite(frame)]
             if finite.size:
                 minimum = min(minimum, float(finite.min()))
@@ -67,6 +98,10 @@ class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
         if minimum > maximum:
             raise ValueError(self._undefined_range_msg(None))
         return minimum, maximum
+
+    @cached_property
+    def _global_value_range(self) -> tuple[float, float]:
+        return self._range_over_all(self.get_item)
 
     def value_range(self, index: int | None = None) -> tuple[float, float]:
         """Compute the `(min, max)` over every frame (cached), or of frame `index`.
@@ -84,8 +119,4 @@ class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
         """
         if index is None:
             return self._global_value_range
-        frame = self.get_item(index)
-        finite: NDArray[T] = frame[np.isfinite(frame)]
-        if finite.size == 0:
-            raise ValueError(self._undefined_range_msg(index))
-        return float(finite.min()), float(finite.max())
+        return self._range_of(self.get_item(index), index)

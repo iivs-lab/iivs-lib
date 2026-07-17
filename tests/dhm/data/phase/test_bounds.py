@@ -228,6 +228,34 @@ def test_value_range_empty_sequence_raises():
         _ = PhaseBinList([]).value_range(unit=PhaseUnit.NANOMETERS)  # phase's unit path
 
 
+def _all_nan_frame(path):
+    save_phase_bin(
+        path,
+        np.array([[np.nan, np.nan]], dtype=np.float32),
+        pixel_size=1e-6,
+        height_scale=2e-7,
+        on_nonfinite="ignore",
+    )
+
+
+def test_value_range_all_non_finite_raises(tmp_path):
+    # The inverted-sentinel case: every frame contributes nothing, so `minimum` stays
+    # +inf above `maximum`'s -inf, and that comparison — not a flag — is what reports it.
+    # Both paths, and both the global and the per-frame form.
+    _all_nan_frame(tmp_path / "00000_phase.bin")
+    folder = PhaseBinFolder(tmp_path)
+
+    with pytest.raises(ValueError, match="all non-finite"):
+        _ = folder.value_range()  # the shared mixin
+    with pytest.raises(ValueError, match="all non-finite"):
+        _ = folder.value_range(unit=PhaseUnit.NANOMETERS)  # phase's unit path
+
+    with pytest.raises(ValueError, match=r"frame 0 .*all non-finite"):
+        _ = folder.value_range(0)
+    with pytest.raises(ValueError, match=r"frame 0 .*all non-finite"):
+        _ = folder.value_range(0, unit=PhaseUnit.NANOMETERS)
+
+
 def test_value_range_unit_ignores_non_finite(tmp_path):
     # NaN pixels are dropped from the unit-converted range too.
     save_phase_bin(

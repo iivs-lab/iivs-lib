@@ -8,7 +8,6 @@ __all__ = (
     "PhaseSequence",
 )
 
-import math
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, overload, override
@@ -287,11 +286,7 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         if unit is None:
             return super().value_range(index)
         if index is not None:
-            frame = self._decode_in(index, unit)
-            finite = frame[np.isfinite(frame)]
-            if finite.size == 0:
-                raise ValueError(self._undefined_range_msg(index))
-            return float(finite.min()), float(finite.max())
+            return self._range_of(self._decode_in(index, unit), index)
         return self._global_value_range_in(unit)
 
     @cached_property
@@ -299,22 +294,14 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         return {}
 
     def _global_value_range_in(self, unit: PhaseUnit) -> tuple[float, float]:
-        """Compute (and cache) the global `(min, max)` with each frame in `unit`."""
+        """Compute (and cache) the global `(min, max)` with each frame in `unit`.
+
+        The unit-keyed counterpart to the inherited `_global_value_range`, which caches
+        the one range over the values as loaded.
+        """
         cache = self._value_range_by_unit
         if unit not in cache:
-            if len(self) == 0:
-                raise ValueError(self._EMPTY_RANGE_MSG)
-
-            minimum, maximum = math.inf, -math.inf
-            for i in range(len(self)):
-                frame = self._decode_in(i, unit)
-                finite = frame[np.isfinite(frame)]
-                if finite.size:
-                    minimum = min(minimum, float(finite.min()))
-                    maximum = max(maximum, float(finite.max()))
-            if minimum > maximum:
-                raise ValueError(self._undefined_range_msg(None))
-            cache[unit] = (minimum, maximum)
+            cache[unit] = self._range_over_all(lambda i: self._decode_in(i, unit))
         return cache[unit]
 
     def to_image(self, bounds: PhaseBounds | None = None) -> PhaseImageSequence[Path]:
