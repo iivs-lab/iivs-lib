@@ -128,7 +128,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     a format or priority sequence picks the first present one).
   - `load_phase_npy(path)` — the previously missing standalone `.npy` loader
     (image only), filling out the `load_phase_{bin,txt,npy}` set.
-- `iivs.dhm.data.phase.save_phase_folder(root, images, *, ext, ...)` — write any
+- `iivs.dhm.data.phase.save_phase_folder(dest, images, *, ext, ...)` — write any
   phase image sequence to a numbered folder. Unlike `convert_phase_folder` (which
   reads `pixel_size` / `height_scale` / `unit` off a file folder's header), it
   takes that metadata explicitly, so it accepts header-less sources — `kaparoo`
@@ -140,7 +140,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `iivs.dhm.data.intensity`: the same suffix-dispatch entry points as `phase`
   (`load_intensity`, `read_intensity_header`, `save_intensity`, `intensity_list`,
   `intensity_folder`, the standalone `load_intensity_npy`), plus
-  `save_intensity_folder(root, images, *, ext, pixel_size=..., ...)` for writing
+  `save_intensity_folder(dest, images, *, ext, pixel_size=..., ...)` for writing
   any intensity image sequence (composer outputs, …) to a numbered folder.
   Intensity's only header field is `pixel_size`. `convert_intensity_folder` now
   delegates to `save_intensity_folder`, and `intensity_folder` takes the same
@@ -158,18 +158,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   parameter, used by nothing in `data`), so having them under `data` made `analysis`
   depend on the reader package for four floats. `import iivs.dhm.analysis` no longer
   reaches into `iivs.dhm.data`, and so no longer pulls the TIFF stack it never uses.
-- `iivs.common.data.mixin` is renamed `iivs.common.data.mixins`: the module is a flat
-  pair of unrelated peers (`FrameShapedMixin`, `ValueRangeMixin`) rather than one
-  concept, which is what the plural is for. `iivs.common.data` re-exports both as
-  before, so only a direct import of the module path is affected.
-- **Breaking**: the first parameter of `save_phase_folder` / `convert_phase_folder` /
-  `save_intensity_folder` / `convert_intensity_folder` is renamed `root` to `dest`.
-  Everywhere else in the package `root` is the directory to *scan* (`phase_folder`,
-  `KoalaTimelapse`, `search_timelapses`, ...), so these four gave one word two opposite
-  meanings, and `convert_phase_folder(root, folder)` read as "(the folder's root, the
-  folder)" rather than "(destination, source)". `convert_hologram_sequence(dest,
-  sequence)` already named it correctly; these now match it. Only callers passing the
-  argument by keyword are affected.
+- **Breaking**: `convert_phase_folder` / `convert_intensity_folder` rename their first
+  parameter `root` to `dest` (as do the new `save_phase_folder` /
+  `save_intensity_folder`). Everywhere else in the package `root` is the directory to
+  *scan* (`phase_folder`, `KoalaTimelapse`, `search_timelapses`, ...), so these gave one
+  word two opposite meanings, and `convert_phase_folder(root, folder)` read as "(the
+  folder's root, the folder)" rather than "(destination, source)".
+  `convert_hologram_sequence(dest, sequence)` already named it correctly; these now
+  match it. Only callers passing the argument by keyword are affected.
 - `convert_phase_folder` / `convert_intensity_folder` now emit a warning when the
   target is the header-less `npy`: the source's `pixel_size` (and, for phase, the
   height scale and `unit`) cannot be stored and are dropped. Previously the drop
