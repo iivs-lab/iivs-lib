@@ -17,17 +17,19 @@ if TYPE_CHECKING:
 def read_npy_shape(path: StrPath, expected: int = 2) -> tuple[int, ...]:
     """Read an `.npy` array's shape without loading its data.
 
-    Memory-maps the file to read just the shape from the `.npy` header, so a header-less
-    `.npy` folder can be validated by shape cheaply. Pickled object arrays are rejected
-    (`allow_pickle=False`).
+    Reads the shape alone, never the data, so a header-less `.npy` folder can be
+    validated by shape cheaply.
+
+    Pickle is disabled, so an object array written elsewhere is refused rather than
+    unpickled: inspecting an untrusted `.npy` cannot execute code.
 
     Args:
         path: The `.npy` file to inspect.
         expected: The required number of dimensions (positive). Defaults to 2.
 
     Raises:
-        ValueError: If `expected` is not positive, or the array does not have `expected`
-            dimensions.
+        ValueError: If `expected` is not positive, the array does not have `expected`
+            dimensions, or `path` holds an object array (pickle is disabled).
     """
     if expected < 1:
         msg = f"expected must be positive (got {expected})"
@@ -45,8 +47,10 @@ def write_npy(path: StrPath, data: NDArray[Any], *, overwrite: bool = False) -> 
     """Atomically write `data` as an uncompressed `.npy` file.
 
     A failed write leaves no partial file, and no existing one clobbered. `.npy` carries
-    no header, so only the raw array is stored, and an object array is rejected: the
-    file is always a clean numeric `.npy`.
+    no header, so only the raw array is stored.
+
+    Pickle is disabled, so an object array cannot be written at all: what lands on disk
+    is always plain numeric, loadable by any reader without unpickling.
 
     Raises:
         FileExistsError: If `path` exists and `overwrite` is False.
