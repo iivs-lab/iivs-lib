@@ -118,6 +118,11 @@ precomputes its conversion factor (with one-shot function conveniences):
   (`calc_from_opd` / `calc_from_phase` over a background-corrected, optionally
   masked map; scale `drymass_scale`); `calc_drymass` / `calc_drymass_from_phase`.
 
+The `wavelength` and `alpha` defaults come from
+[`iivs.dhm.constants`](./iivs/dhm/constants.py), the lab's microscope settings —
+shared by `analysis` and `data`, and belonging to neither. Override per experiment
+when the setup differs.
+
 #### Using with PyTorch (autograd)
 
 The `convert_*` / `calc_*` methods operate on NumPy arrays. Install the
@@ -140,6 +145,27 @@ with native ops yourself:
 opd = phase * conv.opd_scale                  # phase: Tensor -> OPD (nm), grad kept
 mass = opd[mask].sum() * calc.drymass_scale   # OPD -> dry mass (pg), grad kept
 ```
+
+### `iivs.common.data`
+
+Technique-agnostic data primitives — nothing here knows what a hologram is, so a
+future technique can build on them without importing `dhm`.
+
+- **`ArrayFileList[U]`** — the dtype-generic base every file-backed sequence
+  extends, with **`FrameShapedMixin`** marking the same-shape sources and
+  **`ValueRangeMixin`** adding a cached `value_range()` over all frames.
+- **`load_float32_npy`** / **`save_float32_npy`** and the **`uint8`** pair, plus
+  `read_npy_shape` / `write_npy` — header-less `.npy` I/O, keyed by dtype (which
+  is all that varies) rather than by modality. Pickle is disabled, so an object
+  array cannot be written and one written elsewhere is refused rather than
+  unpickled.
+- **`validate_float32_array`** / **`validate_uint8_array`** and their wider
+  `float` / `uint` forms — dtype + shape + non-finite checks, with
+  `on_nonfinite` (`"ignore"` / `"warn"` / `"raise"`) the policy every loader and
+  saver in the library threads through.
+- **`Timestamp`** / **`TimestampSequence`** / **`TimestampsFixedFPS`** — per-frame
+  timing, which any time-lapse acquisition has; the Koala `timestamps.txt` reader
+  implements this interface from `dhm`.
 
 ### `iivs.common.visualization`
 

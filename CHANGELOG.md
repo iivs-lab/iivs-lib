@@ -10,6 +10,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `iivs.dhm.data.koala.save_koala_frames(dest, images, save, *, stem, ext, kind,
+  overwrite=False)` — write a sequence into a numbered `{index:05d}_<stem>.<ext>` folder,
+  atomically and a frame at a time, which every modality's folder converter now shares
+  rather than repeating.
 - `iivs.common.data`: `load_float32_npy` / `save_float32_npy` and `load_uint8_npy` /
   `save_uint8_npy`, the dtype-keyed `.npy` readers and writers the modality functions
   now delegate to. `.npy` is header-less, so nothing about reading one is

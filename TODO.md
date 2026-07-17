@@ -32,3 +32,8 @@ consolidation, `bounds_nm` replaced by `value_range`, the `imagecodecs` core
 dependency, and the whole `KoalaTimelapse` / `ReconstructionGroup` time-lapse
 layout (per-modality groups, the `search_*` finders, content `validate`, and the
 status flags). The data layer has settled; cut `0.2.0`.
+
+Only two of those changes break a `0.1.0` caller, since `iivs.common` and the
+time-lapse layout are both new this cycle: `iivs.dhm.data.constants` moved to
+`iivs.dhm.constants`, and `convert_phase_folder` / `convert_intensity_folder`
+renamed their first parameter `root` to `dest` (keyword callers only).
