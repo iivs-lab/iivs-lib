@@ -152,9 +152,10 @@ def load_phase_bin(
         return_header: Whether to also return the parsed `PhaseBinHeader`. Defaults to
             False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
-            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
-            "raise" raises a ValueError (useful to reject corrupted files). Defaults to
-            "ignore", since a structurally valid file's contents are accepted by
+            data: `"ignore"` (default) accepts silently, `"warn"` emits a
+            RuntimeWarning, `"raise"` raises a ValueError (useful to reject a corrupt
+            file). Defaults to
+            `"ignore"`, since a structurally valid file's contents are accepted by
             default.
 
     Returns:
@@ -166,7 +167,7 @@ def load_phase_bin(
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the file is too small, declares an unsupported header size, has
             invalid header fields, holds the wrong number of pixels, or holds non-finite
-            values while `on_nonfinite` is "raise".
+            values while `on_nonfinite` is `"raise"`.
     """
     data, header = load_bin(path, PhaseBinHeader, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
@@ -206,12 +207,14 @@ def _prepare_phase_write(
     """Resolve and validate what a phase file needs, whatever encodes it.
 
     Everything the `.bin` and `.txt` writers must agree on: the scale form is resolved,
-    the array checked as one image (a save takes a single frame, unlike the loaders), the
-    code-only NANOMETERS coerced to a storable METERS (so the values and the recorded
+    the array checked as one image (a save takes a single frame, unlike the loaders),
+    the code-only `NANOMETERS` coerced to a storable `METERS` (so the values and the
+    recorded
     `unit` always match), and UNKNOWN warned about, since a file saved with it cannot be
     interpreted physically later.
 
-    The header is a `PhaseBinHeader` for both: `.txt` serializes the same fields as text.
+    The header is a `PhaseBinHeader` for both: `.txt` serializes the same fields as
+    text.
 
     Raises:
         ValueError: If neither or both scale forms are given, `data` is not a single 2D
@@ -298,13 +301,13 @@ def save_phase_bin(
             but emits a warning.
         overwrite: Whether to replace `path` if it already exists. Defaults to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in `data`:
-            "ignore" accepts silently, "warn" (default) emits a RuntimeWarning, "raise"
-            rejects with a ValueError.
+            `"ignore"` accepts silently, `"warn"` (default) emits a RuntimeWarning,
+            `"raise"` rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.bin` extension, neither or both scale forms
             are given, `data` is not a single 2D float32 image, or it holds non-finite
-            values while `on_nonfinite` is "raise".
+            values while `on_nonfinite` is `"raise"`.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -374,7 +377,7 @@ class PhaseBinFolder(PhaseFileFolder, PhaseBinList):
             matching file.
         target_unit: Unit to return loaded images in (None keeps the stored).
         validate: Run `validate` to this level at construction, or None to skip.
-            Defaults to "headers".
+            Defaults to `"headers"`.
 
     Raises:
         DirectoryNotFoundError: If `root` does not exist.

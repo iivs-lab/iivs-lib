@@ -144,8 +144,8 @@ def load_txt[H: KoalaBinHeader](
         path: The `.txt` file to read.
         codec: The `KoalaTxtHeaderCodec` subclass to parse the header with.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
-            data: "ignore" (default) accepts them silently, "warn" emits a
-            RuntimeWarning, "raise" raises a ValueError.
+            data: `"ignore"` (default) accepts them silently, `"warn"` emits a
+            RuntimeWarning, `"raise"` raises a ValueError.
 
     Returns:
         An ``(image, header)`` tuple: the float32 image of shape
@@ -156,7 +156,7 @@ def load_txt[H: KoalaBinHeader](
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If `path` is not `.txt`, the header or grid is malformed, the
             grid does not fill the header shape, or the data holds non-finite values
-            while `on_nonfinite` is "raise".
+            while `on_nonfinite` is `"raise"`.
     """
     path = ensure_file_exists(path, ext="txt")
     lines = path.read_text().splitlines()

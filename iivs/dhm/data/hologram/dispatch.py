@@ -48,16 +48,17 @@ def convert_hologram_sequence(
     back to the ``holo`` stem when it has no `FILE_STEM`.
 
     Args:
-        dest: Destination; the `.raw` file for "raw", else the folder to create and
+        dest: Destination; the `.raw` file for `"raw"`, else the folder to create and
             fill.
         sequence: Source hologram sequence to read (a `HologramRawFile`,
             `HologramTifFolder`, `HologramNpyFolder`, `HologramTifList`, or any uint8
             `DataSequence` such as a composed sequence).
-        ext: Target format; "raw", "tif", or "npy".
+        ext: Target format; `"raw"`, `"tif"`, or `"npy"`.
         overwrite: Whether to replace an existing destination. Defaults to False.
 
     Raises:
-        ValueError: If `ext` is not "raw", "tif", or "npy", or `sequence` is empty.
+        ValueError: If `ext` is not `"raw"`, `"tif"`, or `"npy"`, or `sequence` is
+            empty.
         FileExistsError: If a destination exists and `overwrite` is False.
     """
     ensure_one_of(ext, HOLOGRAM_FORMATS, name="ext")

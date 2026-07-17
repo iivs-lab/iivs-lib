@@ -96,7 +96,7 @@ class PhaseNpyFolder(PhaseFileFolder):
         refractive_delta: Refractive-index difference (with `wavelength`).
         target_unit: Unit to return loaded images in (None keeps `unit`).
         validate: Run `validate` to this level at construction, or None to skip.
-            Defaults to "headers".
+            Defaults to `"headers"`.
 
     Raises:
         ValueError: If neither or both height-scale forms are given, if `target_unit`

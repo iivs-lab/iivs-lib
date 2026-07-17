@@ -61,8 +61,8 @@ class HologramNpyFolder(ImageFileFolder, HologramSequence[Path]):
 
     Args:
         root: The folder to scan.
-        validate: Run `validate` to this level ("names" or "data") at construction, or
-            None to skip. Defaults to "names".
+        validate: Run `validate` to this level (`"names"` or `"data"`) at
+            construction, or None to skip. Defaults to `"names"`.
     """
 
     FILE_STEM: ClassVar[str] = "holo"

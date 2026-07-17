@@ -221,8 +221,8 @@ def load_bin[H: KoalaBinHeader](
         path: The `.bin` file to read.
         header_cls: The `KoalaBinHeader` subclass to parse the header as.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
-            data: "ignore" (default) accepts them silently, "warn" emits a
-            RuntimeWarning, "raise" raises a ValueError.
+            data: `"ignore"` (default) accepts them silently, `"warn"` emits a
+            RuntimeWarning, `"raise"` raises a ValueError.
 
     Returns:
         An ``(image, header)`` tuple: the float32 image of shape
@@ -232,7 +232,7 @@ def load_bin[H: KoalaBinHeader](
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the header is invalid, the pixel count is wrong, or the data
-            holds non-finite values while `on_nonfinite` is "raise".
+            holds non-finite values while `on_nonfinite` is `"raise"`.
     """
     path = ensure_file_exists(path)
     with path.open("rb") as f:

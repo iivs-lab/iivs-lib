@@ -132,8 +132,9 @@ def load_intensity_bin(
         return_header: Whether to also return the parsed `IntensityBinHeader`. Defaults
             to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
-            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
-            "raise" raises a ValueError (useful to reject corrupted files).
+            data: `"ignore"` (default) accepts silently, `"warn"` emits a
+            RuntimeWarning, `"raise"` raises a ValueError (useful to reject a corrupt
+            file).
 
     Returns:
         The intensity image as a 2D float32 array, or an (image, header)
@@ -144,7 +145,7 @@ def load_intensity_bin(
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the file is too small, declares an unsupported header size, has
             invalid header fields, holds the wrong number of pixels, or holds non-finite
-            values while `on_nonfinite` is "raise".
+            values while `on_nonfinite` is `"raise"`.
     """
     data, header = load_bin(path, IntensityBinHeader, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
@@ -176,13 +177,13 @@ def save_intensity_bin(
         pixel_size: Physical size of one (square) pixel, in m.
         overwrite: Whether to replace `path` if it already exists. Defaults to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in `data`:
-            "ignore" accepts silently, "warn" (default) emits a RuntimeWarning, "raise"
-            rejects with a ValueError.
+            `"ignore"` accepts silently, `"warn"` (default) emits a RuntimeWarning,
+            `"raise"` rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.bin` extension, `data` is not a single 2D
             float32 image, or it holds non-finite values while `on_nonfinite` is
-            "raise".
+            `"raise"`.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -247,7 +248,7 @@ class IntensityBinFolder(IntensityFileFolder, IntensityBinList):
         root: The folder to scan. Must exist, be a directory, and contain at least one
             matching file.
         validate: Run `validate` to this level at construction, or None to skip.
-            Defaults to "headers".
+            Defaults to `"headers"`.
 
     Raises:
         DirectoryNotFoundError: If `root` does not exist.

@@ -32,14 +32,14 @@ def load_intensity_npy(
     Args:
         path: The `.npy` file to read.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
-            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
-            "raise" raises a ValueError.
+            data: `"ignore"` (default) accepts silently, `"warn"` emits a
+            RuntimeWarning, `"raise"` raises a ValueError.
 
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the array is pickled, not a single 2D float32 image, or holds
-            non-finite values while `on_nonfinite` is "raise".
+            non-finite values while `on_nonfinite` is `"raise"`.
     """
     return load_float32_npy(path, on_nonfinite=on_nonfinite)
 
@@ -62,13 +62,13 @@ def save_intensity_npy(
         data: The intensity image to save, of shape (H, W).
         overwrite: Whether to replace `path` if it already exists. Defaults to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in `data`:
-            "ignore" accepts silently, "warn" (default) emits a RuntimeWarning, "raise"
-            rejects with a ValueError.
+            `"ignore"` accepts silently, `"warn"` (default) emits a RuntimeWarning,
+            `"raise"` rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.npy` extension, `data` is not a single 2D
             float32 image, or it holds non-finite values while `on_nonfinite` is
-            "raise".
+            `"raise"`.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
@@ -88,7 +88,7 @@ class IntensityNpyFolder(IntensityFileFolder):
         root: The folder to scan.
         pixel_size: Physical size of one (square) pixel, in m.
         validate: Run `validate` to this level at construction, or None to skip.
-            Defaults to "headers".
+            Defaults to `"headers"`.
 
     Raises:
         ValueError: If `validate` is set and the sequence fails validation.

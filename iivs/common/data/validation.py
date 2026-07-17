@@ -103,16 +103,16 @@ def validate_float_array[F: np.floating](
         dtype: The exact floating dtype `array` must carry. Defaults to float32.
         ndim: The number of core dimensions, excluding any stacked axes. Defaults to 2
             (an H x W image).
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf): "ignore"
-            accepts them silently, "warn" (default) accepts them but emits a
-            RuntimeWarning, "raise" raises a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf): `"ignore"`
+            accepts them silently, `"warn"` (default) accepts them but emits a
+            RuntimeWarning, `"raise"` raises a ValueError.
         allow_stack: Whether to accept extra axes beyond `ndim` (a stack). Defaults to
             True; set False to require exactly `ndim` axes.
 
     Raises:
         ValueError: If `dtype` is not a floating type; if `array`'s dtype is not
             `dtype`, has the wrong dimensionality, or holds non-finite values while
-            `on_nonfinite` is "raise".
+            `on_nonfinite` is `"raise"`.
     """
     array = validate_ndim(array, ndim=ndim, allow_stack=allow_stack)
     array = validate_dtype(array, dtype=dtype, kind=np.floating)
@@ -185,15 +185,15 @@ def validate_float32_array(
         array: The array or stack to validate.
         ndim: The number of core dimensions, excluding any stacked axes. Defaults to 2
             (an H x W image).
-        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf): "ignore"
-            accepts them silently, "warn" (default) accepts them but emits a
-            RuntimeWarning, "raise" raises a ValueError.
+        on_nonfinite: How to handle non-finite values (NaN, +inf, -inf): `"ignore"`
+            accepts them silently, `"warn"` (default) accepts them but emits a
+            RuntimeWarning, `"raise"` raises a ValueError.
         allow_stack: Whether to accept extra axes beyond `ndim` (a stack). Defaults to
             True; set False to require exactly `ndim` axes.
 
     Raises:
         ValueError: If `array` is not float32, has the wrong dimensionality, or holds
-            non-finite values while `on_nonfinite` is "raise".
+            non-finite values while `on_nonfinite` is `"raise"`.
     """
     return validate_float_array(
         array,

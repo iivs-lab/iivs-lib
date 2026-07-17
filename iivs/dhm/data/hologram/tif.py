@@ -87,8 +87,8 @@ class HologramTifFolder(ImageTifFolder, HologramTifList):
 
     Args:
         root: The folder to scan.
-        validate: Validation level at construction ("names" or "data"), or None to skip.
-            Defaults to "names".
+        validate: Validation level at construction (`"names"` or `"data"`), or None
+            to skip. Defaults to `"names"`.
     """
 
     FILE_STEM: ClassVar[str] = "holo"

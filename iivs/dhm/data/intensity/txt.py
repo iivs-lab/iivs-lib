@@ -108,7 +108,7 @@ def load_intensity_txt(
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the header is malformed, the grid does not match it, or it holds
-            non-finite values while `on_nonfinite` is "raise".
+            non-finite values while `on_nonfinite` is `"raise"`.
     """
     data, header = load_txt(path, IntensityTxtHeaderCodec, on_nonfinite=on_nonfinite)
     return (data, header) if return_header else data
@@ -139,13 +139,13 @@ def save_intensity_txt(
         pixel_size: Physical size of one (square) pixel, in m.
         overwrite: Whether to replace `path` if it already exists. Defaults to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in `data`:
-            "ignore" accepts silently, "warn" (default) emits a RuntimeWarning, "raise"
-            rejects with a ValueError.
+            `"ignore"` accepts silently, `"warn"` (default) emits a RuntimeWarning,
+            `"raise"` rejects with a ValueError.
 
     Raises:
         ValueError: If `path` has a non-`.txt` extension, `data` is not a single 2D
             float32 image, or it holds non-finite values while `on_nonfinite` is
-            "raise".
+            `"raise"`.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """

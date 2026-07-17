@@ -84,7 +84,7 @@ class ImageFileFolder(KoalaFrameFolder[NDArray[np.uint8]], ArrayFileList[np.uint
         """Decode `path` and require its shape to match the first file.
 
         `level` is fixed by the hook contract but unused: a header-less image folder
-        carries no header, so "data" is its only level past "names".
+        carries no header, so `"data"` is its only level past `"names"`.
         """
         image = self.load_file(path)
         expected = self.frame_shape

@@ -139,7 +139,7 @@ class KoalaFloatFileFolder[H: KoalaBinHeader](
 
     @override
     def _validate_content(self, path: Path, *, level: str) -> None:
-        """Check `path`'s header matches the reference; at "data", decode too."""
+        """Check `path`'s header matches the reference; at `"data"`, decode too."""
         if self._read_header(path) != self.header:
             msg = f"header of {path.name} differs from the first file"
             raise ValueError(msg)

@@ -112,8 +112,8 @@ def load_intensity(
         return_header: Whether to also return the parsed header (`None` for the
             header-less `.npy`). Defaults to False.
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
-            data: "ignore" (default) accepts silently, "warn" emits a RuntimeWarning,
-            "raise" rejects with a ValueError.
+            data: `"ignore"` (default) accepts silently, `"warn"` emits a
+            RuntimeWarning, `"raise"` rejects with a ValueError.
 
     Returns:
         The intensity image as a 2D float32 array, or an `(image, header)` tuple
@@ -350,14 +350,14 @@ def save_intensity_folder(
     Args:
         dest: Destination folder to create and fill.
         images: The intensity frames to write, in order (each a 2D float32 image).
-        ext: Target format ("bin", "txt", or "npy").
-        pixel_size: Physical size of one (square) pixel, in m. Required for "bin" /
-            "txt"; ignored (with a warning) for "npy".
+        ext: Target format (`"bin"`, `"txt"`, or `"npy"`).
+        pixel_size: Physical size of one (square) pixel, in m. Required for `"bin"` /
+            `"txt"`; ignored (with a warning) for `"npy"`.
         stem: The ``<stem>`` in ``{index:05d}_<stem>.<ext>``. Defaults to "intensity".
         overwrite: Whether to replace `dest` if it already exists. Defaults to False.
 
     Raises:
-        ValueError: If `ext` is not "bin" / "txt" / "npy", (for "bin" / "txt")
+        ValueError: If `ext` is not `"bin"` / `"txt"` / `"npy"`, (for `"bin"` / `"txt"`)
             `pixel_size` is missing, or `images` is empty.
         FileExistsError: If `dest` exists and `overwrite` is False.
     """
@@ -400,11 +400,11 @@ def convert_intensity_folder(
     Args:
         dest: Destination folder to create and fill with the re-encoded frames.
         folder: Source intensity folder to read.
-        ext: Target format ("bin", "txt", or "npy").
+        ext: Target format (`"bin"`, `"txt"`, or `"npy"`).
         overwrite: Whether to replace `dest` if it already exists. Defaults to False.
 
     Raises:
-        ValueError: If `ext` is not "bin", "txt", or "npy".
+        ValueError: If `ext` is not `"bin"`, `"txt"`, or `"npy"`.
         FileExistsError: If `dest` exists and `overwrite` is False.
     """
     if ext == "npy":
@@ -439,11 +439,11 @@ def convert_intensity_list(
 
     Args:
         sequence: Source intensity file list to re-encode in place.
-        ext: Target format ("bin", "txt", or "npy").
+        ext: Target format (`"bin"`, `"txt"`, or `"npy"`).
         overwrite: Whether to replace an existing target sibling. Defaults to False.
 
     Raises:
-        ValueError: If `ext` is not "bin", "txt", or "npy".
+        ValueError: If `ext` is not `"bin"`, `"txt"`, or `"npy"`.
         FileExistsError: If a target sibling exists and `overwrite` is False.
     """
     ensure_one_of(ext, FLOAT_FORMATS, name="ext")

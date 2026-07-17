@@ -164,9 +164,9 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
 
     Class attributes:
         FILE_STEM: The ``<stem>`` in ``{index:05d}_<stem>.<ext>`` (e.g. "phase").
-        FILE_EXT: The file extension without the dot (e.g. "bin").
-        LEVELS: The validation levels this folder accepts (a subset of "names" /
-            "headers" / "data").
+        FILE_EXT: The file extension without the dot (e.g. `"bin"`).
+        LEVELS: The validation levels this folder accepts (a subset of `"names"` /
+            `"headers"` / `"data"`).
         DEFAULT_LEVEL: The level `validate` / `validate_file` use when given none.
     """
 
@@ -184,7 +184,8 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         `ValidationLevel` checks every file to that depth. A subclass sets its own
         default and may run validation itself after any extra setup.
 
-        Note None means "skip" only here, where it answers whether to validate on open.
+        Note None means `"skip"` only here, where it answers whether to validate on
+        open.
         Every `level=` parameter is past that question, so `validate(level=None)` runs
         `DEFAULT_LEVEL` rather than skipping.
         """
