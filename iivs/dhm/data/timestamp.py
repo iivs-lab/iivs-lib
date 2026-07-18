@@ -77,7 +77,7 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
 
         elapsed_times_ms: list[float] = []
 
-        for lineno, line in enumerate(path.read_text().splitlines()):
+        for lineno, line in enumerate(path.read_text().splitlines(), start=1):
             stripped = line.strip()
             if not stripped:
                 continue
@@ -96,7 +96,7 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
             elapsed = float(matched["elapsed"])
             if elapsed_times_ms and elapsed < elapsed_times_ms[-1]:
                 prev = elapsed_times_ms[-1]
-                msg = f"elapsed time at line {lineno} >= {prev} (got {elapsed}): {path}"
+                msg = f"elapsed time at line {lineno} must be >= {prev}: {path}"
                 raise ValueError(msg)
 
             elapsed_times_ms.append(elapsed)
