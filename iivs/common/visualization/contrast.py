@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-def auto_rescale[T: np.number](
+def auto_rescale[T: np.integer | np.floating](
     array: NDArray[T],
     *,
     saturated: float = 0.35,
