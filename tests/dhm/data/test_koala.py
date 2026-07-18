@@ -19,6 +19,7 @@ from iivs.dhm.data.koala import (
     open_folder,
     search_timelapse_subdirs,
     write_bin,
+    write_txt,
 )
 from iivs.dhm.data.phase.base import PhaseSequence
 from iivs.dhm.data.phase.bin import PhaseBinFolder, PhaseBinList, save_phase_bin
@@ -167,6 +168,13 @@ def test_write_bin_rejects_pixel_shape_mismatch(tmp_path):
     pixels = np.zeros((2, 2), dtype=np.float32)
     with pytest.raises(ValueError, match=r"pixels shape must match header \(3, 4\)"):
         write_bin(tmp_path / "x.bin", header, pixels)
+
+
+def test_write_txt_rejects_data_shape_mismatch(tmp_path):
+    header = IntensityBinHeader(width=4, height=3, pixel_size=1e-6)  # shape (3, 4)
+    data = np.zeros((4, 3), dtype=np.float32)  # same size, transposed: would scramble
+    with pytest.raises(ValueError, match=r"data shape must match header \(3, 4\)"):
+        write_txt(tmp_path / "x.txt", IntensityTxtHeaderCodec, header, data)
 
 
 # ========================== #

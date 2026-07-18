@@ -196,9 +196,14 @@ def write_txt[H: KoalaBinHeader](
     `save_*_txt`.
 
     Raises:
+        ValueError: If `data`'s shape does not match `header.shape`.
         FileExistsError: If `path` exists and `overwrite` is False.
         FileNotFoundError: If the parent directory of `path` does not exist.
     """
+    if data.shape != header.shape:
+        msg = f"data shape must match header {header.shape} (got {data.shape})"
+        raise ValueError(msg)
+
     text = codec.to_lines(header)
     with StagedFile(path, binary=True, overwrite=overwrite) as staged:
         staged.write(text.encode("utf-8"))
