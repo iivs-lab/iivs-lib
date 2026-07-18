@@ -140,11 +140,12 @@ class DryMassCalculator:
                 raise ValueError(msg)
 
         if reduce:
-            opd = opd.astype(np.float64, copy=False)
             if use_mask:
+                # tensordot has no accumulation dtype, so upcast to sum in float64
+                opd = opd.astype(np.float64, copy=False)
                 result = np.tensordot(opd, mask, axes=([-2, -1], [-2, -1]))
             else:
-                result = np.sum(opd, axis=(-2, -1))
+                result = np.sum(opd, axis=(-2, -1), dtype=np.float64)
         elif use_mask:
             if mask.ndim == 3:  # (N, H, W): object axis before (H, W)
                 opd = opd[..., None, :, :]

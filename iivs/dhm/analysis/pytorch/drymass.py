@@ -5,7 +5,7 @@ __all__ = ("DryMass", "calc_drymass", "calc_drymass_from_phase")
 from typing import TYPE_CHECKING
 
 from kaparoo.utils.optional import factory_if_none
-from torch import nn, tensordot
+from torch import float64, nn, tensordot
 
 from iivs.dhm.analysis.drymass import DryMassCalculator
 from iivs.dhm.analysis.pytorch.opd import OpticalPathDifference
@@ -115,12 +115,13 @@ class DryMass(nn.Module):
         out_dtype = opd.dtype
 
         if reduce:
-            opd = opd.double()  # accumulate the sum in float64
             if use_mask:
+                # tensordot has no accumulation dtype, so upcast to sum in float64;
                 # contract (H, W) without building the (..., N, H, W) product
+                opd = opd.double()
                 result = tensordot(opd, mask.double(), dims=([-2, -1], [-2, -1]))
             else:
-                result = opd.sum(dim=(-2, -1))
+                result = opd.sum(dim=(-2, -1), dtype=float64)
         elif use_mask:
             if mask.ndim == 3:  # (N, H, W): object axis before (H, W)
                 opd = opd[..., None, :, :]
