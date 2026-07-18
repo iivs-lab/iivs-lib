@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 import tifffile
-from kaparoo.filesystem import ensure_file_extension
 
 from iivs.common.data import FrameShapedMixin, read_npy_shape
 from iivs.dhm.data.intensity.bin import IntensityBinHeader
@@ -104,18 +101,6 @@ def test_load_uint8_tif_rejects_non_uint8(tmp_path):
 # ========================== #
 #     file extensions        #
 # ========================== #
-
-
-def test_ensure_file_extension_ok():
-    # Case-insensitive; returns the path as a Path.
-    assert ensure_file_extension("dir/x.BIN", "bin") == Path("dir/x.BIN")
-
-
-def test_ensure_file_extension_rejects():
-    with pytest.raises(
-        ValueError, match=r"unsupported extension .* \(supported: 'bin'\)"
-    ):
-        ensure_file_extension("dir/x.txt", "bin")
 
 
 def test_file_list_rejects_wrong_extension(tmp_path):
@@ -249,26 +234,6 @@ def test_koala_frame_name_rejects_out_of_range_index(index):
     # silently undiscoverable, so an out-of-range index fails fast on write.
     with pytest.raises(ValueError, match=r"frame index must be in \[0, 99999\]"):
         koala_frame_name(index, stem="phase", ext="bin")
-
-
-def test_ensure_file_extension_add_appends_when_absent(tmp_path):
-    # add=True (kaparoo's, the former `with_file_extension`) appends a missing suffix.
-    assert (
-        ensure_file_extension(tmp_path / "00000_phase", "bin", add=True)
-        == tmp_path / "00000_phase.bin"
-    )
-
-
-def test_ensure_file_extension_add_keeps_matching(tmp_path):
-    path = tmp_path / "out.BIN"  # case-insensitive match
-    assert ensure_file_extension(path, "bin", add=True) == path
-
-
-def test_ensure_file_extension_add_rejects_mismatch(tmp_path):
-    with pytest.raises(
-        ValueError, match=r"unsupported extension .* \(supported: 'bin'\)"
-    ):
-        ensure_file_extension(tmp_path / "out.txt", "bin", add=True)
 
 
 def test_save_appends_extension_when_absent(tmp_path):
