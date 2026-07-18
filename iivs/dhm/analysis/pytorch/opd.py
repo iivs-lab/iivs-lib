@@ -42,7 +42,7 @@ class OpticalPathDifference(nn.Module):
 
     @classmethod
     def from_wavelength_nm(cls, wavelength_nm: float) -> Self:
-        """Build a converter from a wavelength given in nm."""
+        """Build an `OpticalPathDifference` from a wavelength given in nm."""
         return cls(wavelength=wavelength_nm * 1e-9)
 
     @property
