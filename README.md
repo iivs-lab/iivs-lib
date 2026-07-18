@@ -64,8 +64,9 @@ sequences, and the round trips between them).
 
 - **`hologram`** — uint8 holograms: `.tif` via `load_hologram_tif` /
   `save_hologram_tif` with `HologramTifFolder` / `HologramTifList`; a single
-  multi-frame `.raw` via `HologramRawFile` (a lazy `np.memmap`) and
-  `read_hologram_raw_header`; header-less `.npy` frames via `HologramNpyFolder`.
+  multi-frame `.raw` via `HologramRawFile` (a lazy `np.memmap`),
+  `read_hologram_raw_header` / `save_hologram_raw`; header-less `.npy` frames via
+  `HologramNpyFolder`.
 - **`phase`** — float32 `.bin` phase images: `load_phase_bin` /
   `save_phase_bin` / `read_phase_bin_header`, the typed `PhaseBinHeader` and
   `PhaseUnit`, and `convert_phase_unit`; folder/list sequences
@@ -94,6 +95,14 @@ the format by a path's extension — `load_phase` / `read_phase_header` /
 composed) image sequence to a numbered folder. `load_phase` / `load_intensity`
 take `return_header` (the header is `None` for the header-less `.npy`).
 
+A **`timelapse`** module opens a whole Koala acquisition from its root folder:
+`KoalaTimelapse` composes the per-modality `PhaseGroup` / `IntensityGroup` (each
+picking its `Float/{Bin,Txt}` format), the holograms, `timestamps.txt`, and
+`phbounds.txt` display bounds, with lazy access, frame-count consistency checks
+(`is_consistent`), and content `validate`. `search_timelapses` finds every
+acquisition under a root; `KOALA_TIMELAPSE_TREE` describes the layout for
+`hierarchy.validate`.
+
 Every sequence is a `kaparoo.data.sequences.DataSequence`, so it indexes,
 slices, and iterates lazily; same-shape sources also expose `frame_shape` by
 mixing in `iivs.common.data.FrameShapedMixin` (so a uniform source is its
@@ -101,10 +110,9 @@ mixing in `iivs.common.data.FrameShapedMixin` (so a uniform source is its
 phase and intensity the quantitative float32 sources are
 `<Modality>FloatSequence` and the uint8 `Image/*.tif` previews are
 `<Modality>ImageSequence`, both under the `<Modality>Sequence` base.
-Numbered-folder sequences share the `common.SequentialFileFolder`
-discovery/validation base, and validate their arrays via
-`common.validate_float32_array` / `validate_uint8_array`. These cross-modality
-building blocks live in `iivs.dhm.data.koala`.
+Numbered-folder sequences share the `KoalaFrameFolder` discovery/validation
+base in `iivs.dhm.data.koala`, and validate their arrays via `iivs.common.data`'s
+`validate_float32_array` / `validate_uint8_array`.
 
 ### `iivs.dhm.analysis`
 
