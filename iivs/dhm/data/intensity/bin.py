@@ -64,7 +64,7 @@ class IntensityBinHeader(KoalaBinHeader):
 
     @classmethod
     def from_dtype(cls, record: np.void) -> Self:
-        """Build a header from a `DTYPE` scalar (the hconv/unit bytes are ignored)."""
+        """Build a header from a `DTYPE` scalar (`hconv` / `unit` ignored)."""
         return cls(
             width=int(record["width"]),
             height=int(record["height"]),

@@ -142,7 +142,7 @@ def detect_koala_format(
         return present[0]
 
     if prefer is None:
-        msg = f"ambiguous: multiple {stem} formats in {root} ({present}); pass prefer"
+        msg = f"ambiguous: multiple {stem} formats ({present}); pass prefer: {root}"
         raise ValueError(msg)
 
     order = [prefer] if isinstance(prefer, str) else list(prefer)

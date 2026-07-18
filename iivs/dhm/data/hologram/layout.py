@@ -148,11 +148,8 @@ def search_holograms(
         except MultiFormatHologramsError:
             if on_conflict == "raise":
                 raise
-            warnings.warn(
-                f"skipping {directory}: holograms hold both a .raw stack and .tif "
-                "previews (expected one)",
-                stacklevel=2,
-            )
+            msg = f"both .raw and .tif holograms (expected one), skipping: {directory}"
+            warnings.warn(msg, stacklevel=2)
             continue
         if sequence is not None:
             sequences.append(sequence)
