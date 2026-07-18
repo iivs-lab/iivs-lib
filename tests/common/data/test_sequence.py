@@ -21,8 +21,9 @@ def test_array_file_list_indexes_and_meta_is_path(tmp_path):
     tifffile.imwrite(b, np.ones((2, 3), dtype=np.uint8))
     seq = _U8TifList([b, a])  # arbitrary order preserved
     assert len(seq) == 2
-    assert seq[0].shape == (2, 3)
-    assert [seq.get_meta(i) for i in range(2)] == [b, a]
+    assert [seq.get_meta(i) for i in range(2)] == [b, a]  # arbitrary order preserved
+    assert np.array_equal(seq[0], np.ones((2, 3), dtype=np.uint8))  # index 0 -> b
+    assert np.array_equal(seq[1], np.zeros((2, 3), dtype=np.uint8))  # index 1 -> a
 
 
 def test_array_file_list_rejects_wrong_extension(tmp_path):
