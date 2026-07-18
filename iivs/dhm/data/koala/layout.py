@@ -324,7 +324,7 @@ class ReconstructionGroup[
         The non-vacuous counterpart to `is_consistent`: True when a quantitative source
         (`bin` or `txt`) is present and every present format agrees in count and shape.
         Unlike `is_consistent` (vacuously True for an absent group), this is False for
-        empty or preview-only folder, so it marks a real reconstruction. The `tif`
+        empty or preview-only folders, so it marks a real reconstruction. The `tif`
         preview is optional, and `bin` / `txt` are the same data in two serializations,
         so a single-format export still counts.
         """

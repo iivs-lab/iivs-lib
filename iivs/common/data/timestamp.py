@@ -67,7 +67,7 @@ class TimestampSequence(DataSequence[Timestamp, int]):
     timestamps are obtained. Each item is a `Timestamp` and its metadata is the frame
     index.
 
-    Subclasses populate `self._timestamps` (the ordered frames) in their ``__init__``
+    Subclasses populate `self._timestamps` (the ordered frames) in their `__init__`
     and implement `mean_interval_ms`; the sequence protocol (`__len__`, `get_item`,
     `get_meta`) is served from it here.
     """
