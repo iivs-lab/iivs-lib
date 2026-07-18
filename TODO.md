@@ -45,7 +45,9 @@ dependency, and the whole `KoalaTimelapse` / `ReconstructionGroup` time-lapse
 layout (per-modality groups, the `search_*` finders, content `validate`, and the
 status flags). The data layer has settled; cut `0.2.0`.
 
-Only two of those changes break a `0.1.0` caller, since `iivs.common` and the
-time-lapse layout are both new this cycle: `iivs.dhm.data.constants` moved to
-`iivs.dhm.constants`, and `convert_phase_folder` / `convert_intensity_folder`
-renamed their first parameter `root` to `dest` (keyword callers only).
+This is a breaking release for a `0.1.0` caller: beyond `iivs.common` and the
+time-lapse layer being new additions, the cycle renamed or moved existing public
+API (the `iivs.dhm.data.common` → `iivs.dhm.data.koala` module, `bounds_nm` →
+`value_range`, the `iivs.dhm.data.constants` → `iivs.dhm.constants` move,
+`convert_*_folder`'s `root` → `dest`, and more; see the `[Unreleased]`
+**Changed** / **Removed** entries). Pre-1.0 SemVer permits the minor bump.

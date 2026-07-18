@@ -104,8 +104,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   from OME-TIFF / Micro-Manager metadata without importing `dhm`. The Koala
   `timestamps.txt` reader `TimestampsTxtFile` stays in `iivs.dhm.data.timestamp`.
 - `iivs.dhm.data.koala`: shared vocabulary for the repeated dispatch literals —
-  the `OnNonFinite` (`"ignore"`/`"warn"`/`"raise"`) and `ValidationLevel`
-  (`"names"`/`"headers"`/`"data"`) type aliases, the `FloatFormat` alias with its
+  the `ValidationLevel` (`"names"`/`"headers"`/`"data"`) type alias, the
+  `FloatFormat` alias with its
   `FLOAT_FORMATS` tuple, and `detect_koala_format(root, *, stem, formats,
   prefer)` — which discovers a numbered folder's format with `kaparoo`'s
   `search_files` + a `Regex` (no `Path.glob`) and resolves a multi-format

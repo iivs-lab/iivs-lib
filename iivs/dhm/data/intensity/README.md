@@ -80,6 +80,7 @@ listed here so you do not have to chase base classes.
 | --- | --- |
 | `seq.get_header(i)` | the header of file `i`, **without** decoding pixels |
 | `seq.load_with_header(i)` | `(image, header)` in a single read |
+| `seq.value_range(index=None)` | the `(min, max)` of the values — global (cached), or of frame `index`; non-finite values are ignored |
 
 **Lists** (`*List`) add `seq.get_file(i)` and `seq.files`.
 
