@@ -31,36 +31,10 @@ payoffs beyond label support:
 Sequence: ① shrink `DryMass` / `DryMassCalculator` to per-pixel; ② add the
 shared `MaskedReduction` (NumPy + Torch, label + one-hot).
 
-Whatever `MaskedReduction`'s sum ends up looking like, it must not repeat the
-bug below: it is the reduction, so the float64 accumulation becomes its problem.
-
-## `iivs.dhm.analysis` — sum in float64, do not copy into it
-
-`calc_from_opd` upcasts the whole stack before reducing, where `np.sum`'s
-`dtype=` would accumulate in float64 without materializing anything:
-
-```python
-        if reduce:
-            opd = opd.astype(np.float64, copy=False)   # copies the entire stack
-            if use_mask:
-                result = np.tensordot(opd, mask, axes=([-2, -1], [-2, -1]))
-            else:
-                result = np.sum(opd, axis=(-2, -1))    # dtype= was enough
-```
-
-The docstring promises the sum is "in float64", and `np.sum(..., dtype=np.float64)`
-delivers exactly that. Measured on a 94 MB float32 input: **56.8 ms and a 188 MB
-temporary** versus **13.5 ms and none**, agreeing to 1e-9 (float64 either way; only
-the accumulation order differs). On a 1000-frame 1MP time-lapse (3.2 GB) the copy is
-**6.5 GB** — an OOM, not a slowdown.
-
-Move the upcast inside the `use_mask` branch, where it is real (`np.tensordot`
-accumulates in the input dtype), and give the unmasked path `dtype=np.float64`.
-
-`pytorch/drymass.py`'s `opd.double()` is the same shape. There the win is not speed —
-CPU timings are identical and bit-for-bit equal — but the avoided 2x allocation, which
-is what bites on CUDA for a large batch. `out_dtype` is already captured, so the same
-restructure is safe.
+Whatever `MaskedReduction`'s sum ends up looking like, it must keep the
+float64-without-copy pattern `calc_from_opd` now uses (sum with `dtype=`, not a
+cast of the whole stack): it is the reduction, so the float64 accumulation is its
+job.
 
 ## Release
 
