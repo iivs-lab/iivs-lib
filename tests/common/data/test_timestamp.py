@@ -70,7 +70,7 @@ def test_fps_supports_negative_index_and_slice():
 
 def test_fps_out_of_range_raises():
     seq = TimestampsFixedFPS(frame_rate=20.0, num_frames=3)
-    with pytest.raises(IndexError):
+    with pytest.raises(IndexError, match="index out of range"):
         _ = seq[3]
 
 

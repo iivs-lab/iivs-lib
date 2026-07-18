@@ -394,7 +394,7 @@ def test_convert_phase_no_overwrite(tmp_path):
     src = _bin_folder(tmp_path / "src", [1.0])
     out = tmp_path / "out"
     convert_phase_folder(out, src, ext="txt")
-    with pytest.raises(FileExistsError):
+    with pytest.raises(FileExistsError, match="already exists"):
         convert_phase_folder(out, src, ext="txt")
     convert_phase_folder(out, src, ext="txt", overwrite=True)  # whole folder replaced
 

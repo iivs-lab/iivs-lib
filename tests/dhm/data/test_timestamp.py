@@ -94,7 +94,7 @@ def test_txt_rejects_decreasing_elapsed(tmp_path):
 
 
 def test_txt_missing_file_raises(tmp_path):
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileNotFoundError, match="no such file"):
         TimestampsTxtFile(tmp_path / "nope.txt")
 
 

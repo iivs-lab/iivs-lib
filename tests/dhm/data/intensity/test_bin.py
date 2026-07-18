@@ -223,7 +223,7 @@ def test_read_header_matches_load(tmp_path):
 
 
 def test_load_missing_file_raises(tmp_path):
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileNotFoundError, match="no such file"):
         load_intensity_bin(tmp_path / "nope.bin")
 
 

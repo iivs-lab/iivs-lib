@@ -56,7 +56,7 @@ def test_save_overwrite(tmp_path):
 
 
 def test_load_missing_file_raises(tmp_path):
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileNotFoundError, match="no such file"):
         load_hologram_tif(tmp_path / "nope.tif")
 
 
@@ -106,10 +106,18 @@ def test_init_validate_runs_validation(tmp_path):
         HologramTifFolder(tmp_path, validate="names")
 
 
-def test_validate_data_level_decodes_each(tmp_path):
+def test_validate_data_level_decodes_each(tmp_path, monkeypatch):
     for i in range(2):
         _write(tmp_path, i, i)
-    HologramTifFolder(tmp_path).validate(level="data")  # all decode: ok
+    folder = HologramTifFolder(tmp_path)
+    decoded: list = []
+    original = folder.load_file
+    monkeypatch.setattr(
+        folder, "load_file", lambda p, _o=original: (decoded.append(p), _o(p))[1]
+    )
+    folder.validate(level="data")  # data level must actually decode every frame
+    assert folder.get_file(0) in decoded
+    assert folder.get_file(1) in decoded
 
 
 def test_validate_data_level_rejects_shape_mismatch(tmp_path):

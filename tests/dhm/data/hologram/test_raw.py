@@ -153,5 +153,5 @@ def test_rejects_truncated_header(tmp_path):
 
 
 def test_missing_file_raises(tmp_path):
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileNotFoundError, match="no such file"):
         read_hologram_raw_header(tmp_path / "nope.raw")

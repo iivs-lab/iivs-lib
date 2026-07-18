@@ -63,7 +63,7 @@ def test_phbounds_file_format(tmp_path):
 def test_write_phbounds_no_overwrite(tmp_path):
     path = tmp_path / "phbounds.txt"
     write_phbounds(path, PhaseBounds(0.0, 1.0))
-    with pytest.raises(FileExistsError):
+    with pytest.raises(FileExistsError, match="already exists"):
         write_phbounds(path, PhaseBounds(0.0, 1.0))
     write_phbounds(path, PhaseBounds(0.0, 2.0), overwrite=True)
     assert read_phbounds(path).max_nm == pytest.approx(2.0)

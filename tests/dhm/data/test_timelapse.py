@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import tifffile
 from kaparoo.filesystem import DirectoryNotFoundError
-from kaparoo.filesystem.hierarchy import Directory
+from kaparoo.filesystem.hierarchy import Directory, File
 from kaparoo.filters import Literal
 
 from iivs.dhm.data.hologram.raw import HologramRawFile, save_hologram_raw
@@ -321,7 +321,10 @@ def test_validate_passes_on_wellformed(tmp_path):
     timelapse = KoalaTimelapse(tmp_path)
     timelapse.validate()  # each folder to its own default depth
     timelapse.validate(level="names")
+    assert "timestamps" not in timelapse.__dict__  # names: aux files untouched
     timelapse.validate(level="data")  # also parses timestamps.txt / phbounds.txt
+    assert "timestamps" in timelapse.__dict__  # data: aux files actually parsed
+    assert "phase_bounds" in timelapse.__dict__
 
 
 def test_validate_raises_on_a_bad_modality_file(tmp_path):
@@ -374,8 +377,11 @@ def test_validate_raises_on_raw_and_tif_conflict(tmp_path):
 # ============================== #
 
 
-def test_spec_is_a_directory():
-    assert isinstance(KOALA_TIMELAPSE_TREE, Directory)
+def test_spec_has_the_five_top_level_parts():
+    children = KOALA_TIMELAPSE_TREE.children
+    assert len(children) == 5
+    assert sum(isinstance(c, Directory) for c in children) == 3  # phase/intensity/holo
+    assert sum(isinstance(c, File) for c in children) == 2  # timestamps + phbounds
 
 
 # ============================== #
@@ -451,5 +457,5 @@ def test_search_timelapses_empty_require_is_any_modality(tmp_path):
 
 
 def test_search_timelapses_missing_root_raises(tmp_path):
-    with pytest.raises(DirectoryNotFoundError):
+    with pytest.raises(DirectoryNotFoundError, match="no such directory"):
         search_timelapses(tmp_path / "nope")
