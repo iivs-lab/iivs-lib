@@ -120,22 +120,21 @@ def test_calc_drymass_from_phase_matches_two_step():
 # --- DryMassCalculator ---
 
 
-def test_calculator_calc_from_opd_matches_free_function():
+def test_calculator_calc_from_opd():
+    # same 0.25 pg setup as the free-function anchor
     opd = np.full((10, 10), 50.0, dtype=np.float32)
     calc = DryMassCalculator(pixel_size=1e-7, alpha=2.0e-4)
-    assert calc.calc_from_opd(opd) == pytest.approx(
-        calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4)
-    )
+    assert calc.calc_from_opd(opd) == pytest.approx(0.25)
 
 
-def test_calculator_from_wavelength_matches_free_function():
+def test_calculator_from_wavelength_integrates_phase():
+    # 25 px, 1 rad -> OPD 666/(2pi) = 105.9957 nm each; drymass_scale 5e-5 pg/nm:
+    # 25 * 105.9957 * 5e-5 = 0.13249 pg.
     phase = np.full((5, 5), 1.0, dtype=np.float32)
     calc = DryMassCalculator.from_wavelength(
         pixel_size=1e-7, alpha=2.0e-4, wavelength=666e-9
     )
-    assert calc.calc_from_phase(phase) == pytest.approx(
-        calc_drymass_from_phase(phase, pixel_size=1e-7, alpha=2.0e-4, wavelength=666e-9)
-    )
+    assert calc.calc_from_phase(phase) == pytest.approx(0.13249, rel=1e-3)
 
 
 def test_calculator_accepts_injected_converter():

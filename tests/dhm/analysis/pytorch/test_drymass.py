@@ -14,10 +14,11 @@ from iivs.dhm.analysis.pytorch.drymass import (  # noqa: E402
 )
 
 
-def test_module_forward_matches_calc():
-    calc = DryMass(pixel_size=1e-6)
-    opd = torch.ones(3, 3)
-    assert torch.allclose(calc(opd), calc.calc_from_opd(opd))  # forward path
+def test_forward_integrates_opd_to_drymass():
+    # same 0.25 pg setup as the numpy anchor: 50 nm over 100 px at 0.1 um, alpha 2e-4.
+    calc = DryMass(pixel_size=1e-7, alpha=2.0e-4)
+    opd = torch.full((10, 10), 50.0)
+    assert calc(opd).item() == pytest.approx(0.25)
 
 
 def test_calc_drymass_matches_numpy():
@@ -104,7 +105,9 @@ def test_reduce_false_returns_map_and_keeps_grad():
     assert density.shape == (2, 2)  # per-pixel map, not summed
     assert density.requires_grad
     density.sum().backward()
-    assert phase.grad is not None
+    module = DryMass.from_wavelength(pixel_size=1e-6, wavelength=666e-9)
+    slope = module.opd_module.opd_scale * module.drymass_scale  # d(mass)/d(phase)
+    assert torch.allclose(phase.grad, torch.full_like(phase, slope))
 
 
 def test_from_phase_matches_numpy():
@@ -119,4 +122,6 @@ def test_from_phase_preserves_grad():
     mass = calc_drymass_from_phase(phase, pixel_size=1e-6, wavelength=666e-9)
     assert mass.requires_grad
     mass.backward()
-    assert phase.grad is not None
+    module = DryMass.from_wavelength(pixel_size=1e-6, wavelength=666e-9)
+    slope = module.opd_module.opd_scale * module.drymass_scale  # d(mass)/d(phase)
+    assert torch.allclose(phase.grad, torch.full_like(phase, slope))

@@ -27,12 +27,10 @@ def test_opd_round_trips_with_phase():
     np.testing.assert_allclose(opd_to_phase(phase_to_opd(phase)), phase, rtol=1e-5)
 
 
-def test_converter_matches_free_functions():
-    phase = np.array([[0.5, 1.5], [2.5, 3.5]], dtype=np.float32)
-    conv = OPDConverter(wavelength=666e-9)
-    np.testing.assert_array_equal(
-        conv.convert_to_opd(phase), phase_to_opd(phase, wavelength=666e-9)
-    )
+def test_phase_to_opd_at_pi_is_half_wavelength():
+    # OPD = phase * lambda/(2pi); at phase=pi that is lambda/2 = 333 nm for 666 nm.
+    opd = phase_to_opd(np.array([np.pi], dtype=np.float32), wavelength=666e-9)
+    assert opd[0] == pytest.approx(333.0, rel=1e-4)
 
 
 def test_converter_round_trips():

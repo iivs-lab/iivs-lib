@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
@@ -14,10 +16,10 @@ from iivs.dhm.analysis.pytorch.opd import (  # noqa: E402
 )
 
 
-def test_module_forward_matches_convert():
+def test_forward_converts_phase_to_opd():
+    # OPD = phase * lambda/(2pi); at phase=pi that is lambda/2 = 333 nm for 666 nm.
     conv = OpticalPathDifference(wavelength=666e-9)
-    phase = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
-    assert torch.allclose(conv(phase), conv.convert_to_opd(phase))  # forward path
+    assert conv(torch.tensor(math.pi)).item() == pytest.approx(333.0, rel=1e-4)
 
 
 def test_from_wavelength_nm():
@@ -47,4 +49,5 @@ def test_preserves_grad_and_device():
     assert opd.requires_grad
     assert opd.device == phase.device
     opd.sum().backward()
-    assert phase.grad is not None
+    scale = OpticalPathDifference().opd_scale  # d(opd)/d(phase) for the linear map
+    assert torch.allclose(phase.grad, torch.full_like(phase, scale))
