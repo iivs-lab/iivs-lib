@@ -181,6 +181,10 @@ convert_phase_folder("scan/Phase/Float/Txt", acq, ext="txt")
 # image sequence plus explicit metadata, so it works with kaparoo composers:
 from kaparoo.data.sequences import ConcatSequence
 from iivs.dhm.data.phase import save_phase_folder
-combined = ConcatSequence(PhaseBinFolder("run1/.../Bin"), PhaseBinFolder("run2/.../Bin"))
-save_phase_folder("merged/Bin", combined, ext="bin", pixel_size=2.84e-7, height_scale=2.1e-7)
+combined = ConcatSequence(
+    PhaseBinFolder("run1/.../Bin"), PhaseBinFolder("run2/.../Bin")
+)
+save_phase_folder(
+    "merged/Bin", combined, ext="bin", pixel_size=2.84e-7, height_scale=2.1e-7
+)
 ```

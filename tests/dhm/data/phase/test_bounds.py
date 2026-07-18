@@ -240,7 +240,7 @@ def _all_nan_frame(path):
 
 def test_value_range_all_non_finite_raises(tmp_path):
     # The inverted-sentinel case: every frame contributes nothing, so `minimum` stays
-    # +inf above `maximum`'s -inf, and that comparison — not a flag — is what reports it.
+    # +inf above `maximum`'s -inf, and that comparison, not a flag, is what reports it.
     # Both paths, and both the global and the per-frame form.
     _all_nan_frame(tmp_path / "00000_phase.bin")
     folder = PhaseBinFolder(tmp_path)
