@@ -8,6 +8,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-20
+
 ### Added
 
 - `iivs.dhm.data.koala.save_koala_frames(dest, images, save, *, stem, ext, kind,
