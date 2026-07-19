@@ -81,7 +81,7 @@ torch = [
 dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
-    "ruff>=0.15.18",
+    "ruff>=0.15.22",
     "ty>=0.0.51",
     # Self-referenced extra: test the `[torch]` `analysis.pytorch` runtime path
     # and keep its floor single-sourced.
@@ -167,7 +167,7 @@ exclude_lines = [
 directory = ".cache/coverage/htmlcov"
 
 [tool.ruff]
-required-version = ">=0.15.18"
+required-version = ">=0.15.22"
 cache-dir = "./.cache/ruff"
 extend-exclude = [
     ".cache",
