@@ -4,9 +4,9 @@ __all__ = ("DryMass", "calc_drymass", "calc_drymass_from_phase")
 
 from typing import TYPE_CHECKING
 
-from kaparoo.utils.optional import factory_if_none
-from torch import float64, nn, tensordot
+from torch import nn
 
+from iivs.common.data.pytorch.reduction import Sum, apply_mask
 from iivs.dhm.analysis.drymass import DryMassCalculator
 from iivs.dhm.analysis.pytorch.opd import OpticalPathDifference
 from iivs.dhm.constants import (
@@ -15,32 +15,27 @@ from iivs.dhm.constants import (
 )
 
 if TYPE_CHECKING:
-    from typing import Self
-
     from torch import Tensor
 
 
 class DryMass(nn.Module):
-    """Torch `nn.Module` for dry mass (pg) from OPD or phase.
+    """Torch `nn.Module` for the per-pixel dry-mass density (pg) from OPD.
 
-    The torch twin of `iivs.dhm.analysis.drymass.DryMassCalculator` (named for the
-    quantity, per the `nn.Module` convention). Binds the pixel size, specific refractive
-    increment, and an `OpticalPathDifference` (for the phase path) once; the per-pixel
-    `drymass_scale` (a plain float) is reused from the NumPy engine. `calc_from_opd`
-    sums the masked OPD over the last two axes (H, W) in ``float64`` (for precision) and
-    scales, returning a tensor in the input's dtype (never a Python `float`), so it
-    stays on the input's device, dtype, and autograd graph (a `float()` cast would sync
-    off-device and drop gradients). Inputs are batched (``(..., H, W)``); a ``(N, H,
-    W)`` mask adds a trailing channel axis (``(..., N)``); ``reduce=False`` returns the
-    per-pixel mass-density map instead of the sum. The OPD must already be
-    background-corrected.
+    A pure pointwise layer: `forward(opd) = opd * drymass_scale`, the dry-mass
+    density (pg per pixel) of a background-corrected OPD map (nm). It preserves
+    shape, dtype, device, and the autograd graph, so it drops cleanly into
+    `nn.Sequential`, forward hooks, `torch.jit.script`, and `torch.compile`.
+    Masking into regions and reducing to a total dry mass are a separate concern:
+    compose with the `iivs.common.data.pytorch` reductions, e.g.
+    `Sum(mask=cell)(DryMass(pixel_size=px)(opd))`, or use the `calc_drymass`
+    one-shot. The scale (`pixel_size**2 / alpha`, no wavelength) is reused from the
+    NumPy `DryMassCalculator`; for the phase path, precede it with an
+    `OpticalPathDifference`.
 
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        opd_module: The `OpticalPathDifference` used by `calc_from_phase` (a registered
-            submodule).
-        drymass_scale: pg of dry mass per nm of summed OPD (a plain float).
+        drymass_scale: pg of dry mass per nm of OPD, per pixel (a plain float).
     """
 
     def __init__(
@@ -48,111 +43,16 @@ class DryMass(nn.Module):
         *,
         pixel_size: float,
         alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
-        opd_module: OpticalPathDifference | None = None,
     ) -> None:
         super().__init__()
-
         calculator = DryMassCalculator(pixel_size=pixel_size, alpha=alpha)
         self.pixel_size = calculator.pixel_size
         self.alpha = calculator.alpha
         self.drymass_scale = calculator.drymass_scale
 
-        self.opd_module = factory_if_none(opd_module, OpticalPathDifference)
-
-    @classmethod
-    def from_wavelength(
-        cls,
-        *,
-        pixel_size: float,
-        wavelength: float = DEFAULT_WAVELENGTH,
-        alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
-    ) -> Self:
-        """Build a `DryMass` whose phase path uses `wavelength` (in m)."""
-        opd_module = OpticalPathDifference(wavelength=wavelength)
-        return cls(pixel_size=pixel_size, alpha=alpha, opd_module=opd_module)
-
-    def calc_from_opd(
-        self,
-        opd: Tensor,
-        *,
-        mask: Tensor | None = None,
-        reduce: bool = True,
-    ) -> Tensor:
-        """Integrate an OPD map (nm) into dry mass [pg] over the last two axes (H, W).
-
-        Args:
-            opd: OPD map(s), in nm, shape ``(..., H, W)``.
-            mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)`` for `N`
-                objects; multiplied in (broadcast), the 3-D form adding a trailing
-                channel axis.
-            reduce: If True (default), sum over (H, W) and return the dry mass, shape
-                ``(...)`` (or ``(..., N)`` with a ``(N, H, W)`` mask), as a tensor
-                (0-dim for a single image). If False, return the per-pixel mass-density
-                map (``opd * scale``, masked) without summing.
-
-        Raises:
-            ValueError: If `opd` is not at least 2-D ``(..., H, W)``; if `mask` is not
-                2-D ``(H, W)`` or 3-D ``(N, H, W)`` (a per-frame / higher-rank mask like
-                ``(T, N, H, W)`` is unsupported; loop over its leading axes); or if
-                `mask`'s ``(H, W)`` does not match `opd`'s.
-        """
-        if opd.ndim < 2:
-            msg = f"opd must be at least 2D (..., H, W) (got {opd.ndim}D)"
-            raise ValueError(msg)
-
-        use_mask = mask is not None
-
-        if use_mask:
-            if mask.ndim not in (2, 3):
-                msg = f"mask must be (H, W) or (N, H, W) (got {mask.ndim}D)"
-                raise ValueError(msg)
-            if mask.shape[-2:] != opd.shape[-2:]:
-                opd_hw = tuple(opd.shape[-2:])
-                mask_hw = tuple(mask.shape[-2:])
-                msg = f"opd and mask (H, W) must match (got {opd_hw} vs {mask_hw})"
-                raise ValueError(msg)
-
-        out_dtype = opd.dtype
-
-        if reduce:
-            if use_mask:
-                # tensordot has no accumulation dtype, so upcast to sum in float64;
-                # contract (H, W) without building the (..., N, H, W) product
-                opd = opd.double()
-                result = tensordot(opd, mask.double(), dims=([-2, -1], [-2, -1]))
-            else:
-                result = opd.sum(dim=(-2, -1), dtype=float64)
-        elif use_mask:
-            if mask.ndim == 3:  # (N, H, W): object axis before (H, W)
-                opd = opd[..., None, :, :]
-            result = opd * mask
-        else:
-            result = opd
-
-        # OPD (nm) -> dry mass (pg); cast the float64 accumulation back to the
-        # input dtype (keeps device + autograd; preserves f16 / f32 / f64).
-        return (result * self.drymass_scale).to(out_dtype)
-
-    def calc_from_phase(
-        self,
-        phase: Tensor,
-        *,
-        mask: Tensor | None = None,
-        reduce: bool = True,
-    ) -> Tensor:
-        """Integrate a phase map (rad) into dry mass [pg]."""
-        opd = self.opd_module(phase)
-        return self.calc_from_opd(opd, mask=mask, reduce=reduce)
-
-    def forward(
-        self,
-        opd: Tensor,
-        *,
-        mask: Tensor | None = None,
-        reduce: bool = True,
-    ) -> Tensor:
-        """Integrate an OPD map (nm) into dry mass [pg]; the `nn.Module` call form."""
-        return self.calc_from_opd(opd, mask=mask, reduce=reduce)
+    def forward(self, opd: Tensor) -> Tensor:
+        """Map an OPD map (nm) to its dry-mass density (pg per pixel): `opd * scale`."""
+        return opd * self.drymass_scale
 
 
 def calc_drymass(
@@ -165,19 +65,20 @@ def calc_drymass(
 ) -> Tensor:
     """Integrate an OPD map (nm) into dry mass [pg].
 
-    Keeps `opd`'s device and the autograd graph.
+    Composes `DryMass` (per-pixel density) with the `iivs.common.data.pytorch`
+    reductions, keeping `opd`'s device and autograd graph.
 
     Args:
         opd: OPD map(s), in nm, shape ``(..., H, W)``, already background-corrected.
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)``.
-        reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
-            mass-density map (False). See `DryMass.calc_from_opd`.
+        mask: Optional region mask (boolean or integer labels); see
+            `iivs.common.data.pytorch.region_stack`.
+        reduce: If True (default), sum each masked region to a dry mass; if False,
+            return the masked per-pixel density map.
     """
-    return DryMass(pixel_size=pixel_size, alpha=alpha).calc_from_opd(
-        opd, mask=mask, reduce=reduce
-    )
+    density = DryMass(pixel_size=pixel_size, alpha=alpha)(opd)
+    return Sum()(density, mask) if reduce else apply_mask(density, mask)
 
 
 def calc_drymass_from_phase(
@@ -191,8 +92,8 @@ def calc_drymass_from_phase(
 ) -> Tensor:
     """Integrate a phase map (rad) into dry mass [pg] at `wavelength`.
 
-    Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`; keeps
-    the input's device and the autograd graph.
+    Converts `phase` to OPD (via `OpticalPathDifference`), then integrates as
+    `calc_drymass`; keeps the input's device and autograd graph.
 
     Args:
         phase: Phase map(s), in rad, shape ``(..., H, W)``, already
@@ -200,10 +101,11 @@ def calc_drymass_from_phase(
         pixel_size: Physical size of one (square) pixel, in m.
         wavelength: Illumination wavelength, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)``.
-        reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
-            mass-density map (False).
+        mask: Optional region mask (boolean or integer labels).
+        reduce: Sum each masked region to a dry mass (True), or return the masked
+            per-pixel density map (False).
     """
-    return DryMass.from_wavelength(
-        pixel_size=pixel_size, alpha=alpha, wavelength=wavelength
-    ).calc_from_phase(phase, mask=mask, reduce=reduce)
+    opd = OpticalPathDifference(wavelength=wavelength)(phase)
+    return calc_drymass(
+        opd, pixel_size=pixel_size, alpha=alpha, mask=mask, reduce=reduce
+    )
