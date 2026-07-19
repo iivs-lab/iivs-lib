@@ -35,7 +35,7 @@ class DryMass(nn.Module):
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        drymass_scale: pg of dry mass per nm of OPD, per pixel (a plain float).
+        drymass_scale: pg of dry mass per nm of OPD, per pixel.
     """
 
     def __init__(
@@ -78,7 +78,8 @@ def calc_drymass(
             return the masked per-pixel density map.
     """
     density = DryMass(pixel_size=pixel_size, alpha=alpha)(opd)
-    return Sum()(density, mask) if reduce else apply_mask(density, mask)
+    # empty region -> 0 mass, matching the NumPy `DryMassCalculator`
+    return Sum(empty=0.0)(density, mask) if reduce else apply_mask(density, mask)
 
 
 def calc_drymass_from_phase(

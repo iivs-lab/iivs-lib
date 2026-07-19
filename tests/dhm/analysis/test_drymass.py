@@ -117,6 +117,15 @@ def test_calc_drymass_label_mask():
     assert out[1] == pytest.approx(whole / 4)  # 1 of 4 pixels
 
 
+def test_calc_drymass_empty_region_is_zero():
+    # a label gap (label 1 absent) -> empty region -> 0 pg (matches Sum(empty=0.0))
+    opd = np.full((2, 2), 50.0, np.float32)
+    labels = np.array([[0, 2], [2, 0]])  # label 1 missing
+    out = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels)
+    assert out[0] == 0.0  # empty region
+    assert out[1] > 0
+
+
 def test_calc_drymass_label_mask_density():
     # reduce=False + labels -> a per-region density stack (..., R, H, W)
     opd = np.full((2, 2), 50.0, np.float32)
@@ -179,8 +188,10 @@ def test_calculator_wavelength_shortcuts():
 
 
 def test_calculator_drymass_scale():
+    # 0.1 um pixel, alpha 2e-4 m^3/kg: px_area 1e-14 m^2; pg per summed-nm OPD =
+    # 1e-14 m^2 * (1e-9 m/nm) * (1e15 pg/kg) / 2e-4 = 5e-5 pg/nm (hand-derived).
     calc = DryMassCalculator(pixel_size=1e-7, alpha=2.0e-4)
-    assert calc.drymass_scale == pytest.approx(1e-7**2 * 1e6 / 2.0e-4)
+    assert calc.drymass_scale == pytest.approx(5e-5)
     # the scale times the summed OPD (nm) reproduces the dry mass
     opd = np.full((10, 10), 50.0, dtype=np.float32)
     assert calc.drymass_scale * float(opd.sum()) == pytest.approx(

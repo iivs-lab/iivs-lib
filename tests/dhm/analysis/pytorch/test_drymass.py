@@ -34,9 +34,10 @@ def test_forward_preserves_dtype_and_grad():
     for dt in (torch.float32, torch.float64):
         opd = torch.ones(4, 4, dtype=dt)
         assert DryMass(pixel_size=1e-7)(opd).dtype == dt
+    dm = DryMass(pixel_size=1e-7)
     x = torch.ones(4, 4, requires_grad=True)
-    DryMass(pixel_size=1e-7)(x).sum().backward()
-    assert x.grad is not None
+    dm(x).sum().backward()
+    assert torch.allclose(x.grad, torch.full_like(x, dm.drymass_scale))  # d/dx = scale
 
 
 def test_forward_is_traceable_and_composable():
@@ -92,6 +93,15 @@ def test_label_mask_matches_numpy():
     expected = np_calc_drymass(opd.numpy(), pixel_size=1e-6, mask=labels.numpy())
     assert got.shape == (2,)
     assert torch.allclose(got, torch.as_tensor(expected))
+
+
+def test_empty_region_is_zero_mass():
+    # a label gap (label 1 absent) -> empty region -> 0 pg, matching numpy
+    opd = torch.full((2, 2), 50.0)
+    labels = torch.tensor([[0, 2], [2, 0]])  # label 1 missing
+    out = calc_drymass(opd, pixel_size=1e-7, alpha=2e-4, mask=labels)
+    assert out[0].item() == 0.0
+    assert out[1].item() > 0
 
 
 def test_batched():

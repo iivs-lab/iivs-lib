@@ -54,7 +54,6 @@ class DryMassCalculator:
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT
     opd_converter: OPDConverter = field(default_factory=OPDConverter)
 
-    # pg of dry mass per nm of OPD summed over pixels:
     _scale: float = field(init=False, repr=False, compare=False)
     # the region summation engine; empty region -> 0 mass:
     _sum: Sum = field(init=False, repr=False, compare=False)
