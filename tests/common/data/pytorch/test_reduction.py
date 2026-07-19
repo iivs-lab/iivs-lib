@@ -119,6 +119,23 @@ class TestReductions:
         out = Sum()(V, labels)
         assert out.shape == (0,)  # R == 0, no crash on the empty region stack
 
+    def test_nonfinite_background_does_not_poison(self):
+        # out-of-region pixels are replaced by 0 (not multiplied), so a NaN/inf in
+        # the background does not poison a region's sum (numpy parity).
+        region = torch.zeros(3, 3, dtype=torch.bool)
+        region[1, 1] = region[2, 2] = True  # selects two 1.0s -> 2.0
+        for bad in (float("nan"), float("inf")):
+            v = torch.ones(3, 3)
+            v[0, 0] = bad  # outside the region
+            assert Sum()(v, region).item() == pytest.approx(2.0)
+
+    def test_float32_variance_over_large_offset(self):
+        # |x|**p is formed in float64, so a small spread on a large DC offset is
+        # not lost to float32 squaring; matches torch's float64 var on the data.
+        x = (1e4 + torch.tensor([[0.02, -0.02], [-0.02, 0.02]])).to(torch.float32)
+        oracle = x.double().var(correction=0).item()
+        assert Variance()(x).item() == pytest.approx(oracle, rel=1e-6)
+
 
 class TestEmptyPolicy:
     empty_masks = torch.tensor(
@@ -196,6 +213,16 @@ class TestApplyMask:
     def test_labels_keep_region_axis(self):
         out = apply_mask(V, torch.tensor([[0, 1], [2, 2]]))
         assert out.shape == (2, 2, 2)
+        assert torch.equal(out[0], torch.tensor([[0.0, 2.0], [0.0, 0.0]]))  # label 1
+        assert torch.equal(out[1], torch.tensor([[0.0, 0.0], [3.0, 4.0]]))  # label 2
+
+    def test_overlap_keeps_shared_pixels(self):
+        masks = torch.tensor(
+            [[[True, True], [False, False]], [[True, False], [False, False]]]
+        )
+        out = apply_mask(V, masks)
+        assert torch.equal(out[0], torch.tensor([[1.0, 2.0], [0.0, 0.0]]))
+        assert torch.equal(out[1], torch.tensor([[1.0, 0.0], [0.0, 0.0]]))  # (0,0) kept
 
     def test_sum_of_maps_matches_reduction(self):
         masks = torch.tensor(

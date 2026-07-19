@@ -79,7 +79,7 @@ def region_stack(
 
 
 def _single_region(mask: MaskLike | None) -> bool:
-    """Whether `mask` denotes one region (None or a boolean 2D image)."""
+    """Test whether `mask` denotes one region (None or a boolean 2D image)."""
     return mask is None or (mask.ndim == 2 and np.issubdtype(mask.dtype, np.bool_))
 
 
@@ -177,10 +177,11 @@ class MaskedReduction(ABC):
 class MomentReduction(MaskedReduction):
     """A `MaskedReduction` expressed through per-region power sums.
 
-    Sums each region in float64 without copying the map (the power sum
-    materializes `|x| ** p` once). Supplies the region pixel count, the signed sum
-    `sum(x)`, and the absolute power sum `sum(|x| ** p)`, from which `Sum`, `Mean`,
-    `Norm`, `Variance`, and `Std` compose. Still abstract in `_reduce`.
+    The signed sum `sum(x)` masked-sums each region in float64 without copying the
+    map; the absolute power sum `sum(|x| ** p)` forms `|x| ** p` in float64 first,
+    so `Variance` / `Std` stay accurate for a small spread over a large offset.
+    Also supplies the region pixel count. `Sum`, `Mean`, `Norm`, `Variance`, and
+    `Std` compose from these.
     """
 
     @staticmethod
@@ -200,7 +201,7 @@ class MomentReduction(MaskedReduction):
     def _abs_power_sum(
         values: NDArray[np.floating], regions: NDArray[np.bool_], p: float
     ) -> NDArray[np.float64]:
-        powered = np.abs(values) ** p
+        powered = np.abs(values, dtype=np.float64) ** p  # float64 before the power
         out = np.empty((*values.shape[:-2], len(regions)), dtype=np.float64)
         for r, region in enumerate(regions):
             out[..., r] = np.sum(powered, axis=(-2, -1), where=region, dtype=np.float64)

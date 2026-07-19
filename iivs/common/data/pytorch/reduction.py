@@ -77,7 +77,7 @@ def region_stack(
 
 
 def _single_region(mask: Tensor | None) -> bool:
-    """Whether `mask` denotes one region (None or a boolean 2D image)."""
+    """Test whether `mask` denotes one region (None or a boolean 2D image)."""
     return mask is None or (mask.ndim == 2 and mask.dtype == torch.bool)
 
 
@@ -102,11 +102,16 @@ def apply_mask(values: Tensor, mask: Tensor | None = None) -> Tensor:
 
 
 def _masked_sum(summand: Tensor, regions: Tensor) -> Tensor:
-    """Sum `summand` over each region in float64, stacked as `(..., R)`."""
+    """Sum `summand` over each region in float64, stacked as `(..., R)`.
+
+    Out-of-region pixels are replaced by 0 (not multiplied by the mask), so a
+    non-finite background value does not poison a region's sum.
+    """
     if len(regions) == 0:
         return summand.new_empty((*summand.shape[:-2], 0), dtype=torch.float64)
     sums = [
-        (summand * region).sum(dim=(-2, -1), dtype=torch.float64) for region in regions
+        torch.where(region, summand, 0.0).sum(dim=(-2, -1), dtype=torch.float64)
+        for region in regions
     ]
     return torch.stack(sums, dim=-1)
 
@@ -175,11 +180,12 @@ class MaskedReduction(nn.Module, ABC):
 class MomentReduction(MaskedReduction):
     """A `MaskedReduction` expressed through per-region power sums.
 
-    Multiply-and-sums each region in float64 so no `(..., R, H, W)` product is
-    materialized (the power sum forms `|x| ** p` once). Supplies the region pixel
-    count, the signed sum `sum(x)`, and the absolute power sum `sum(|x| ** p)`,
-    from which `Sum`, `Mean`, `Norm`, `Variance`, and `Std` compose. Still abstract
-    in `_reduce`.
+    The signed sum `sum(x)` masked-sums each region in float64 (out-of-region
+    pixels replaced by 0, so a non-finite background does not poison it); the
+    absolute power sum `sum(|x| ** p)` forms `|x| ** p` in float64 first, so
+    `Variance` / `Std` stay accurate for a small spread over a large offset. Also
+    supplies the region pixel count; `Sum`, `Mean`, `Norm`, `Variance`, and `Std`
+    compose from these.
     """
 
     @staticmethod
@@ -192,7 +198,7 @@ class MomentReduction(MaskedReduction):
 
     @staticmethod
     def _abs_power_sum(values: Tensor, regions: Tensor, p: float) -> Tensor:
-        return _masked_sum(values.abs() ** p, regions)
+        return _masked_sum(values.double().abs() ** p, regions)
 
 
 class Sum(MomentReduction):

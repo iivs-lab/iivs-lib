@@ -101,6 +101,15 @@ class TestSum:
         assert out.shape == (2,)
         assert out == pytest.approx([10.0, 20.0])
 
+    def test_nonfinite_background_does_not_poison(self):
+        # `where=` skips out-of-region pixels, so a NaN in the background does not
+        # poison a region's sum.
+        v = np.ones((3, 3), dtype=np.float32)
+        v[0, 0] = np.nan  # outside the region
+        region = np.zeros((3, 3), dtype=bool)
+        region[1, 1] = region[2, 2] = True
+        assert Sum()(v, region) == pytest.approx(2.0)
+
 
 class TestMean:
     def test_mean_whole_frame(self):
@@ -168,6 +177,13 @@ class TestVarianceAndStd:
             Variance(2)
         with pytest.raises(ValueError, match="ddof must be 0 or 1"):
             Std(-1)
+
+    def test_float32_variance_over_large_offset(self):
+        # |x|**p is formed in float64, so a small spread on a large DC offset is
+        # not lost to float32 squaring; matches numpy's float64 var on the data.
+        x = (1e4 + np.array([[0.02, -0.02], [-0.02, 0.02]])).astype(np.float32)
+        oracle = float(np.var(x.astype(np.float64)))
+        assert Variance()(x) == pytest.approx(oracle, rel=1e-6)
 
 
 class TestEmptyPolicy:
