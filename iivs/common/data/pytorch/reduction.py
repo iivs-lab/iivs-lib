@@ -127,8 +127,12 @@ class MaskedReduction(nn.Module, ABC):
     `(..., R)`. A mask bound at construction is the default; a mask passed to the
     call overrides it. A region with no pixels reduces to `empty` (NaN by default;
     pass `empty=0.0` for a benign fill). Accumulates in float64 and returns the
-    input's dtype, preserving its device and autograd graph. Subclasses implement
-    `_reduce`; `MomentReduction` supplies the per-region power sums.
+    input's dtype, preserving its device and autograd graph. Its region structure
+    is data-dependent, so it is an eager reduction head: backprop flows through it
+    (including mid-pipeline), but it is not `torch.fx` / `torch.jit.script`
+    traceable (`torch.compile` falls back to eager) the way a pointwise layer is.
+    Subclasses implement `_reduce`; `MomentReduction` supplies the per-region power
+    sums.
 
     Args:
         mask: Default mask (a registered buffer); the call's `mask` overrides it.
