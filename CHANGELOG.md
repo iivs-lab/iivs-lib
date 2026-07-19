@@ -27,6 +27,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   so a caller assembling its own validator can compose the same parts the four
   `validate_*_array` front doors do. They stay behind the module path rather than joining
   the `iivs.common.data` hub, which keeps carrying only the composed validators.
+- `iivs.common.data`: masked region reductions. `region_stack` normalizes any mask
+  (None, a boolean `(H, W)` / `(N, H, W)`, or an integer label image; regions may
+  overlap) to one `(R, H, W)` region stack, and `Sum` / `Mean` / `Norm` (p-norm,
+  default L2) / `Variance` / `Std` reduce a `(..., H, W)` map over those regions, all
+  composed from per-region power sums on the intermediate `MomentReduction` base. A
+  single-region mask (None or a boolean 2D image) gives `(...)`, a stack or label image
+  `(..., R)`. An empty region reduces to `empty` (NaN by default; pass `empty=0.0` for a
+  benign fill); a mask bound at construction is the default that a per-call mask
+  overrides. `apply_mask` is the pointwise companion, splitting a map into per-region
+  masked layers instead of collapsing each region to a scalar. The concrete reductions
+  and `MaskedReduction` are on the
+  `iivs.common.data` hub, while `MomentReduction`, `apply_mask`, and `region_stack` stay
+  behind the module path. `DryMassCalculator` now sums each masked region through a
+  `Sum` (so the masked dry-mass path no longer makes a full float64 copy of the OPD) and
+  accepts an integer label image as its `mask`, returning one dry mass per label.
+  Technique-agnostic, so a future technique can reuse them without importing `dhm`.
+- `iivs.common.data.pytorch`: the Torch twin of the masked reductions (install the
+  `iivs-lib[torch]` extra), mirroring the NumPy engine's semantics. `MaskedReduction`
+  is an `nn.Module` (a bound mask registers as a buffer, so `.to(device)` moves it);
+  `Sum` / `Mean` / `Norm` / `Variance` / `Std`, `region_stack`, and `apply_mask`
+  accumulate in float64 and return the input tensor's dtype, preserving its device and
+  autograd graph.
 - `PhaseFileList` / `PhaseFileFolder` and `IntensityFileList` / `IntensityFileFolder`
   are exported from their packages. They are what `phase_list` / `phase_folder` /
   `convert_phase_folder` / `convert_phase_list` and their intensity twins have always
@@ -511,15 +533,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `drymass.calc_drymass_from_phase` are one-shot conveniences over it.
     Segmentation and background estimation stay the caller's job.
   - `analysis.pytorch` (the `iivs-lib[torch]` extra) — torch-native twins that
-    take and return `torch.Tensor`s, preserving the input tensor's device,
-    dtype, and autograd graph (the dry-mass sum still accumulates in float64 for
-    precision, then casts back -- so f16 / bf16 (AMP) and f64 are kept, where the
-    NumPy twin forces float32). Mirrors the NumPy layout: an `nn.Module` per quantity, named
-    for the quantity per the `nn.Module` convention
-    (`pytorch.opd.OpticalPathDifference`, `pytorch.drymass.DryMass`, the latter
-    holding the former as a submodule) with one-shot free functions wrapping it
-    (`phase_to_opd` / `opd_to_phase`, `calc_drymass` / `calc_drymass_from_phase`).
-    The calibration scalars are reused from the NumPy engines, so only the
-    elementwise ops are torch-native; `calc_*` returns a tensor (never a Python
-    `float`). Importing the subpackage without PyTorch raises a pointer to the
-    `[torch]` extra.
+    take and return `torch.Tensor`s, preserving the input tensor's device, dtype,
+    and autograd graph. An `nn.Module` per quantity, named for the quantity per the
+    `nn.Module` convention. `pytorch.opd.OpticalPathDifference` is the phase <-> OPD
+    relation; `pytorch.drymass.DryMass` is a pure pointwise layer, `forward(opd) =
+    opd * drymass_scale` (the per-pixel dry-mass density, pg), so it drops cleanly
+    into `nn.Sequential`, hooks, `torch.compile`, and fx / export tracing. Masking
+    into regions and reducing to a total dry mass are a separate concern (the
+    `iivs.common.data.pytorch` reductions). One-shot free functions compose the
+    pieces: `phase_to_opd` / `opd_to_phase`, and `calc_drymass` /
+    `calc_drymass_from_phase` (which sum each masked region in float64 and return
+    the input dtype, keeping f16 / bf16 (AMP) / f64 where the NumPy twin forces
+    float32). The calibration scalars are reused from the NumPy engines. Importing
+    the subpackage without PyTorch raises a pointer to the `[torch]` extra.
