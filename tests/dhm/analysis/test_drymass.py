@@ -102,8 +102,32 @@ def test_rejects_bad_shapes():
         dmc.calc_from_opd(np.zeros(4, dtype=np.float32))
     with pytest.raises(ValueError, match="mask must be"):  # (T, N, H, W) mask
         dmc.calc_from_opd(opd, mask=np.ones((3, 2, 4, 4), dtype=bool))
-    with pytest.raises(ValueError, match="must match"):  # (H, W) mismatch
+    with pytest.raises(ValueError, match=r"\(H, W\) must be"):  # (H, W) mismatch
         dmc.calc_from_opd(opd, mask=np.ones((4, 5), dtype=bool))
+
+
+def test_calc_drymass_label_mask():
+    # an integer label image -> one dry mass per positive label (0 = background)
+    opd = np.full((2, 2), 50.0, np.float32)
+    labels = np.array([[1, 1], [2, 0]])  # label 1: 2 px, label 2: 1 px
+    out = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels)
+    assert out.shape == (2,)  # kept, unlike a 2D boolean mask
+    whole = float(calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4))
+    assert out[0] == pytest.approx(whole / 2)  # 2 of 4 pixels
+    assert out[1] == pytest.approx(whole / 4)  # 1 of 4 pixels
+
+
+def test_calc_drymass_label_mask_density():
+    # reduce=False + labels -> a per-region density stack (..., R, H, W)
+    opd = np.full((2, 2), 50.0, np.float32)
+    labels = np.array([[1, 1], [2, 0]])
+    density = calc_drymass(
+        opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels, reduce=False
+    )
+    assert density.shape == (2, 2, 2)
+    per_label = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels)
+    assert density[0].sum() == pytest.approx(float(per_label[0]))
+    assert density[1].sum() == pytest.approx(float(per_label[1]))
 
 
 def test_calc_drymass_from_phase_matches_two_step():

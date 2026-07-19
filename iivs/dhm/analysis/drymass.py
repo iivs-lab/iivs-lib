@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from iivs.common.data.reduction import Sum, apply_mask
 from iivs.dhm.analysis.opd import OPDConverter
 from iivs.dhm.constants import (
     DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
@@ -17,6 +18,8 @@ if TYPE_CHECKING:
     from typing import Self
 
     from numpy.typing import NDArray
+
+    from iivs.common.data.reduction import MaskLike
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,8 +36,8 @@ class DryMassCalculator:
 
     Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg, summed in
     float64 over the last two axes (H, W) and returned as float32. Inputs are batched
-    (``(..., H, W)``) and a ``(N, H, W)`` mask adds a trailing channel axis. See
-    `calc_from_opd` for the shape / `reduce` details. The OPD must already be
+    (``(..., H, W)``) and a multi-region mask adds a trailing region axis. See
+    `calc_from_opd` for the shape / `mask` / `reduce` details. The OPD must already be
     background-corrected (≈ 0 outside the object); segmentation and background
     estimation stay the caller's responsibility.
 
@@ -53,6 +56,8 @@ class DryMassCalculator:
 
     # pg of dry mass per nm of OPD summed over pixels:
     _scale: float = field(init=False, repr=False, compare=False)
+    # the region summation engine; empty region -> 0 mass:
+    _sum: Sum = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         """Validate inputs and precompute the per-pixel mass factor."""
@@ -66,6 +71,7 @@ class DryMassCalculator:
 
         # pg per summed-nm OPD: px_area(m^2) * (nm->m 1e-9) * (kg->pg 1e15) / alpha.
         object.__setattr__(self, "_scale", self.pixel_size**2 * 1e6 / self.alpha)
+        object.__setattr__(self, "_sum", Sum(empty=0.0))
 
     @classmethod
     def from_wavelength(
@@ -102,65 +108,49 @@ class DryMassCalculator:
         self,
         opd: NDArray[np.float32],
         *,
-        mask: NDArray[np.bool_] | None = None,
+        mask: MaskLike | None = None,
         reduce: bool = True,
     ) -> NDArray[np.float32]:
         """Integrate an OPD map (nm) into dry mass [pg] over the last two axes (H, W).
 
         Args:
             opd: OPD map(s), in nm, shape ``(..., H, W)``.
-            mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)`` for `N`
-                objects; multiplied in (broadcast), the 3-D form adding a trailing
-                channel axis.
-            reduce: If True (default), sum the per-pixel mass over (H, W) and return the
-                dry mass, shape ``(...)`` (or ``(..., N)`` with a ``(N, H, W)`` mask).
-                If False, return the per-pixel mass-density map (``opd * scale``,
-                masked) without summing, shape ``(..., H, W)`` (or ``(..., N, H, W)``).
+            mask: Optional mask selecting the region(s) to integrate: a boolean
+                ``(H, W)`` (one region) or ``(N, H, W)`` (`N` regions, which may
+                overlap), or an integer label image ``(H, W)`` (0 = background, one
+                region per positive label). A boolean ``(H, W)`` keeps the plain
+                shape; the multi-region forms add a trailing region axis.
+            reduce: If True (default), sum the per-pixel mass over each region and
+                return the dry mass, shape ``(...)`` (or ``(..., R)`` for a
+                multi-region mask). If False, return the per-pixel mass-density map
+                (``opd * scale``, masked) without summing, shape ``(..., H, W)`` (or
+                ``(..., R, H, W)``).
 
         Raises:
-            ValueError: If `opd` is not at least 2-D ``(..., H, W)``; if `mask` is not
-                2-D ``(H, W)`` or 3-D ``(N, H, W)`` (a per-frame / higher-rank mask like
-                ``(T, N, H, W)`` is unsupported; loop over its leading axes); or if
-                `mask`'s ``(H, W)`` does not match `opd`'s.
+            ValueError: If `opd` is not at least 2-D ``(..., H, W)``, or the mask is
+                malformed (see `region_stack`: a wrong ``(H, W)``, a boolean mask not
+                2-D or 3-D, a label mask not 2-D or holding a negative label, or a
+                non-boolean / non-integer dtype).
         """
         if opd.ndim < 2:
             msg = f"opd must be at least 2D (..., H, W) (got {opd.ndim}D)"
             raise ValueError(msg)
 
-        use_mask = mask is not None
+        # reduce to a dry mass per region, or keep the per-pixel density map; both
+        # normalize the mask, drop the region axis for a single region, and handle
+        # None (the whole frame) themselves
+        region_op = self._sum if reduce else apply_mask
+        result = region_op(opd, mask)
 
-        if use_mask:
-            if mask.ndim not in (2, 3):
-                msg = f"mask must be (H, W) or (N, H, W) (got {mask.ndim}D)"
-                raise ValueError(msg)
-            if mask.shape[-2:] != opd.shape[-2:]:
-                opd_hw = tuple(opd.shape[-2:])
-                mask_hw = tuple(mask.shape[-2:])
-                msg = f"opd and mask (H, W) must match (got {opd_hw} vs {mask_hw})"
-                raise ValueError(msg)
-
-        if reduce:
-            if use_mask:
-                # tensordot has no accumulation dtype, so upcast to sum in float64
-                opd = opd.astype(np.float64, copy=False)
-                result = np.tensordot(opd, mask, axes=([-2, -1], [-2, -1]))
-            else:
-                result = np.sum(opd, axis=(-2, -1), dtype=np.float64)
-        elif use_mask:
-            if mask.ndim == 3:  # (N, H, W): object axis before (H, W)
-                opd = opd[..., None, :, :]
-            result = opd * mask
-        else:
-            result = opd
-
-        # OPD (nm) -> dry mass (pg); accumulated in float64, returned as float32.
+        # OPD (nm) -> dry mass (pg); the summed path accumulates in float64, and
+        # every path returns float32.
         return (result * self._scale).astype(np.float32, copy=False)
 
     def calc_from_phase(
         self,
         phase: NDArray[np.float32],
         *,
-        mask: NDArray[np.bool_] | None = None,
+        mask: MaskLike | None = None,
         reduce: bool = True,
     ) -> NDArray[np.float32]:
         """Integrate a phase map (rad) into dry mass [pg]."""
@@ -173,7 +163,7 @@ def calc_drymass(
     *,
     pixel_size: float,
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
-    mask: NDArray[np.bool_] | None = None,
+    mask: MaskLike | None = None,
     reduce: bool = True,
 ) -> NDArray[np.float32]:
     """Integrate an OPD map (nm) into dry mass [pg].
@@ -183,12 +173,13 @@ def calc_drymass(
             already background-corrected.
         pixel_size: Physical size of one (square) pixel, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)``.
-        reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
+        mask: Optional region mask (boolean or integer labels); see
+            `DryMassCalculator.calc_from_opd`.
+        reduce: Sum over each region to a dry mass (True), or return the per-pixel
             mass-density map (False). See `DryMassCalculator.calc_from_opd`.
 
     Returns:
-        Dry mass in pg, shape ``(...)`` (or ``(..., N)``); or the unreduced
+        Dry mass in pg, shape ``(...)`` (or ``(..., R)``); or the unreduced
         density map when `reduce` is False.
     """
     return DryMassCalculator(pixel_size=pixel_size, alpha=alpha).calc_from_opd(
@@ -202,7 +193,7 @@ def calc_drymass_from_phase(
     pixel_size: float,
     wavelength: float = DEFAULT_WAVELENGTH,
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
-    mask: NDArray[np.bool_] | None = None,
+    mask: MaskLike | None = None,
     reduce: bool = True,
 ) -> NDArray[np.float32]:
     """Integrate a phase map (rad) into dry mass [pg] at `wavelength`.
@@ -215,12 +206,13 @@ def calc_drymass_from_phase(
         pixel_size: Physical size of one (square) pixel, in m.
         wavelength: Illumination wavelength, in m.
         alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional boolean mask, shape ``(H, W)`` or ``(N, H, W)``.
-        reduce: Sum over (H, W) to a dry mass (True), or return the per-pixel
+        mask: Optional region mask (boolean or integer labels); see
+            `DryMassCalculator.calc_from_opd`.
+        reduce: Sum over each region to a dry mass (True), or return the per-pixel
             mass-density map (False).
 
     Returns:
-        Dry mass in pg, shape ``(...)`` (or ``(..., N)``); or the unreduced
+        Dry mass in pg, shape ``(...)`` (or ``(..., R)``); or the unreduced
         density map when `reduce` is False.
     """
     return DryMassCalculator.from_wavelength(
