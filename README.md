@@ -123,8 +123,10 @@ precomputes its conversion factor (with one-shot function conveniences):
   nm). `OPDConverter` (`convert_to_opd` / `convert_to_phase`, scale
   `opd_scale`); `phase_to_opd` / `opd_to_phase`.
 - **`drymass`** — dry mass (pg) via the Barer relation. `DryMassCalculator`
-  (`calc_from_opd` / `calc_from_phase` over a background-corrected, optionally
-  masked map; scale `drymass_scale`); `calc_drymass` / `calc_drymass_from_phase`.
+  (`calc_from_opd` / `calc_from_phase` over a background-corrected map, optionally
+  masked by a boolean or integer-label region; scale `drymass_scale`) delegates
+  its masked sum to the `iivs.common.data` `Sum` reduction; `calc_drymass` /
+  `calc_drymass_from_phase` are the one-shots.
 
 The `wavelength` and `alpha` defaults come from
 [`iivs.dhm.constants`](./iivs/dhm/constants.py), the lab's microscope settings —
@@ -136,14 +138,17 @@ when the setup differs.
 The `convert_*` / `calc_*` methods operate on NumPy arrays. Install the
 `iivs-lib[torch]` extra for `iivs.dhm.analysis.pytorch` — tensor-in / tensor-out
 twins that keep the input tensor's device, dtype, and autograd graph (the
-calibration scalars are shared with the NumPy engines):
+calibration scalars are shared with the NumPy engines). The Torch
+`OpticalPathDifference` / `DryMass` are pure pointwise `nn.Module`s (so they fit
+`nn.Sequential` / `torch.compile`); masking and reduction are the separate
+`iivs.common.data.pytorch` reductions, which the `calc_*` one-shots compose:
 
 ```python
 from iivs.dhm.analysis.pytorch.opd import phase_to_opd
 from iivs.dhm.analysis.pytorch.drymass import calc_drymass_from_phase
 
-opd = phase_to_opd(phase, wavelength=666e-9)                    # Tensor (CPU/GPU), grad kept
-mass = calc_drymass_from_phase(phase, pixel_size=px, mask=cell) # 0-dim Tensor, grad kept
+opd = phase_to_opd(phase, wavelength=666e-9)   # Tensor (CPU/GPU), grad kept
+mass = calc_drymass_from_phase(phase, pixel_size=px, mask=cell)  # Tensor, grad kept
 ```
 
 Or, without the dependency, multiply by the cached scale factors (plain floats)
@@ -171,6 +176,11 @@ future technique can build on them without importing `dhm`.
   `float` / `uint` forms — dtype + shape + non-finite checks, with
   `on_nonfinite` (`"ignore"` / `"warn"` / `"raise"`) the policy every loader and
   saver in the library threads through.
+- **`Sum`** / **`Mean`** / **`Norm`** / **`Variance`** / **`Std`** — masked region
+  reductions: reduce a `(..., H, W)` map over the regions of a mask (a boolean
+  image or stack, or an integer label image; regions may overlap), with
+  `region_stack` / `apply_mask` the shared primitives. A Torch twin in
+  `iivs.common.data.pytorch` mirrors them as autograd-friendly `nn.Module`s.
 - **`Timestamp`** / **`TimestampSequence`** / **`TimestampsFixedFPS`** — per-frame
   timing, which any time-lapse acquisition has; the Koala `timestamps.txt` reader
   implements this interface from `dhm`.

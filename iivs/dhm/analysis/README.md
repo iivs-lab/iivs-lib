@@ -26,10 +26,13 @@ which additionally divides by the refractive-index difference).
 Dry mass `= (1 / alpha) * sum(OPD * pixel_area)` (the Barer relation), in **pg**,
 summed over the last two axes (H, W). Inputs are **batched** — `opd` / `phase`
 have shape `(..., H, W)`, giving one mass per image (`(...)`). The OPD must
-already be background-corrected (≈ 0 outside the object); a boolean `mask` of
-shape `(H, W)` or `(N, H, W)` (for `N` objects, giving a trailing axis
-`(..., N)`) restricts the sum — segmentation and background estimation stay the
-caller's responsibility.
+already be background-corrected (≈ 0 outside the object); a `mask` restricts the
+sum to region(s): a boolean `(H, W)` (one region) or `(N, H, W)` (`N` regions,
+which may overlap, giving a trailing `(..., R)` axis), or an integer label image
+`(H, W)` (0 = background, one region per positive label). An empty region (no
+pixels) integrates to 0 pg. Segmentation and background estimation stay the
+caller's responsibility; the masking + reduction is the `iivs.common.data`
+`Sum` reduction, which `DryMassCalculator` holds internally.
 
 - `DryMassCalculator(pixel_size, alpha=..., opd_converter=...)` — bind the pixel
   size (m), specific refractive increment (m³/kg), and an `OPDConverter` (for the
@@ -54,33 +57,40 @@ Defaults for `wavelength` and `alpha` come from
 
 The `convert_*` / `calc_*` methods run on NumPy arrays. Install the
 `iivs-lib[torch]` extra for the `pytorch` subpackage — tensor-in / tensor-out
-twins that keep the input tensor's device, dtype, and autograd graph (the
-dry-mass sum still accumulates in float64, so f16 / bf16 / f64 are all kept,
-where the NumPy engine returns float32). The physical calibration (the scale
-factors) is reused from the NumPy engines, so only the elementwise ops are
-torch-native. It mirrors the NumPy layout: an `nn.Module`
-per quantity (named for the quantity, per the `nn.Module` convention —
-`OpticalPathDifference` / `DryMass`, not the NumPy engines'
-`OPDConverter` / `DryMassCalculator`), with one-shot free functions wrapping it.
+twins that keep the input tensor's device, dtype, and autograd graph. The
+physical calibration (the scale factors) is reused from the NumPy engines, so
+only the elementwise ops are torch-native.
+
+Unlike the NumPy engines (which fold in the masked reduction), the Torch layers
+are **pure pointwise** `nn.Module`s — one op each, so they drop cleanly into
+`nn.Sequential`, hooks, `torch.compile`, and fx / export tracing:
+
+- `OpticalPathDifference(wavelength=...)` — `forward(phase) = phase * opd_scale`.
+- `DryMass(pixel_size=..., alpha=...)` — `forward(opd) = opd * drymass_scale`, the
+  per-pixel dry-mass density (pg). No `mask` / `reduce`.
+
+Masking into regions and reducing to a total are a **separate** step — the
+reductions in [`iivs.common.data.pytorch`](../../common/data) (`Sum`, `Mean`,
+`Norm`, ...). Compose them, or let the one-shot free functions do it:
 
 ```python
 from iivs.dhm.analysis.pytorch.opd import OpticalPathDifference, phase_to_opd
 from iivs.dhm.analysis.pytorch.drymass import DryMass, calc_drymass_from_phase
+from iivs.common.data.pytorch import Sum
 
-# nn.Module layers (compose in a model; the inner OpticalPathDifference is a submodule):
-to_opd = OpticalPathDifference(wavelength=666e-9)
-mass_head = DryMass.from_wavelength(pixel_size=px, wavelength=666e-9)
-opd = to_opd(phase)                          # forward == convert_to_opd
-mass = mass_head.calc_from_phase(phase, mask=cell)
+# Compose the pointwise layers with a reduction:
+density = DryMass(pixel_size=px)(OpticalPathDifference(666e-9)(phase))  # pg/pixel
+mass = Sum(mask=cell)(density)                                          # pg per region
 
-# Or one-shot functions:
-opd = phase_to_opd(phase, wavelength=666e-9)                    # Tensor (CPU/GPU), grad kept
-mass = calc_drymass_from_phase(phase, pixel_size=px, mask=cell) # 0-dim Tensor, grad kept
+# Or one-shot (composes the same pieces; an empty region -> 0 pg):
+opd = phase_to_opd(phase, wavelength=666e-9)                    # Tensor, grad kept
+mass = calc_drymass_from_phase(phase, pixel_size=px, mask=cell) # Tensor, grad kept
 ```
 
-`calc_*` returns a 0-dim tensor (never a Python `float`), so it stays on-device
-and differentiable. Without the dependency, you can instead multiply by the
-cached scale factors (plain floats) with native ops yourself:
+`calc_*` keeps the input's device, dtype, and autograd graph, accumulating each
+region's sum in float64 (so f16 / bf16 / f64 all survive, where the NumPy engine
+returns float32). Without the dependency, multiply by the cached scale factors
+(plain floats) yourself:
 
 ```python
 opd = phase * conv.opd_scale                  # phase: Tensor -> OPD (nm), grad kept
