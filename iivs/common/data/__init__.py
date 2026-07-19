@@ -1,11 +1,17 @@
 __all__ = (
     "ArrayFileList",
     "FrameShapedMixin",
+    "MaskedReduction",
+    "Mean",
+    "Norm",
     "OnNonFinite",
+    "Std",
+    "Sum",
     "Timestamp",
     "TimestampSequence",
     "TimestampsFixedFPS",
     "ValueRangeMixin",
+    "Variance",
     "load_float32_npy",
     "load_uint8_npy",
     "read_npy_shape",
@@ -26,6 +32,18 @@ from iivs.common.data.npy import (
     save_float32_npy,
     save_uint8_npy,
     write_npy,
+)
+
+# `reduction`'s intermediate base (`MomentReduction`) and mask normalizer
+# (`region_stack`) are public but stay behind their module path: the concrete
+# reductions are the front door, and the two parts are for assembling a new one.
+from iivs.common.data.reduction import (
+    MaskedReduction,
+    Mean,
+    Norm,
+    Std,
+    Sum,
+    Variance,
 )
 from iivs.common.data.sequence import ArrayFileList
 from iivs.common.data.timestamp import Timestamp, TimestampSequence, TimestampsFixedFPS
