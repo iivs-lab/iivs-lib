@@ -185,9 +185,8 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         default and may run validation itself after any extra setup.
 
         Note None means `"skip"` only here, where it answers whether to validate on
-        open.
-        Every `level=` parameter is past that question, so `validate(level=None)` runs
-        `DEFAULT_LEVEL` rather than skipping.
+        open. Every `level=` parameter is past that question, so `validate(level=None)`
+        runs at `DEFAULT_LEVEL` rather than skipping.
         """
         super().__init__(root)
         if validate is not None:
