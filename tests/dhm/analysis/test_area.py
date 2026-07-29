@@ -24,13 +24,20 @@ def test_boolean_mask_gives_a_plain_area():
     assert area == pytest.approx(0.03)
 
 
-def test_image_values_never_enter():
-    # The image only fixes the grid: any values give the same footprint.
+def test_image_values_and_dtype_never_enter():
+    # The image only fixes the grid: any values, of any dtype, give the same
+    # footprint (a uint8 preview serves as well as a float32 map).
     rng = np.random.default_rng(0)
     noisy = rng.standard_normal((2, 2)).astype(np.float32)
+    preview = rng.integers(0, 256, size=(2, 2), dtype=np.uint8)
     mask = np.array([[True, False], [True, False]])
+
+    expected = float(calc_projected_area(IMG, pixel_size=1e-7, mask=mask))
     assert calc_projected_area(noisy, pixel_size=1e-7, mask=mask) == pytest.approx(
-        float(calc_projected_area(IMG, pixel_size=1e-7, mask=mask))
+        expected
+    )
+    assert calc_projected_area(preview, pixel_size=1e-7, mask=mask) == pytest.approx(
+        expected
     )
 
 

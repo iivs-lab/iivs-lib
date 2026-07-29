@@ -65,7 +65,7 @@ class ProjectedAreaCalculator:
 
     def calc(
         self,
-        image: NDArray[np.float32],
+        image: NDArray[np.generic],
         *,
         mask: MaskLike | None = None,
         reduce: bool = True,
@@ -73,8 +73,9 @@ class ProjectedAreaCalculator:
         """Measure the projected area [um^2] over `image`'s last two axes (H, W).
 
         Args:
-            image: The map(s) fixing the pixel grid, shape ``(..., H, W)``. Its
-                values never enter the area; only the shape (and the mask) matter.
+            image: The map(s) fixing the pixel grid, shape ``(..., H, W)``, of any
+                dtype (a uint8 preview serves as well as a float32 map): the values
+                never enter the area, so only the shape (and the mask) matter.
             mask: Optional mask selecting the region(s) to measure: a boolean
                 ``(H, W)`` (one region) or ``(N, H, W)`` (`N` regions, which may
                 overlap), or an integer label image ``(H, W)`` (0 = background, one
@@ -106,7 +107,7 @@ class ProjectedAreaCalculator:
 
 
 def calc_projected_area(
-    image: NDArray[np.float32],
+    image: NDArray[np.generic],
     *,
     pixel_size: float,
     mask: MaskLike | None = None,
@@ -118,8 +119,8 @@ def calc_projected_area(
     size, reuse the calculator.
 
     Args:
-        image: The map(s) fixing the pixel grid, shape ``(..., H, W)``; its values
-            never enter the area.
+        image: The map(s) fixing the pixel grid, shape ``(..., H, W)``, of any
+            dtype; its values never enter the area.
         pixel_size: Physical size of one (square) pixel, in m.
         mask: Optional region mask (boolean or integer labels); see
             `ProjectedAreaCalculator.calc`.
