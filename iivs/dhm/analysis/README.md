@@ -129,8 +129,16 @@ are **pure pointwise** `nn.Module`s — one op each, so they drop cleanly into
 `nn.Sequential`, hooks, `torch.compile`, and fx / export tracing:
 
 - `OpticalPathDifference(wavelength=...)` — `forward(phase) = phase * opd_scale`.
+- `OpticalHeight(refractive_delta, wavelength=...)` — `forward(opd) = opd / delta`,
+  plus `convert_from_phase` for the rad → nm path.
+- `OpticalVolume(pixel_size=..., refractive_delta=...)` — `forward(opd) =
+  opd * volume_scale`, the per-pixel volume density (µm³). No `mask` / `reduce`.
 - `DryMass(pixel_size=..., alpha=...)` — `forward(opd) = opd * drymass_scale`, the
   per-pixel dry-mass density (pg). No `mask` / `reduce`.
+
+`calc_volume` / `calc_volume_from_phase` are the volume one-shots, and
+`calc_projected_area` is the mask-only area twin (no `nn.Module` — counting mask
+pixels is not a pointwise map).
 
 Masking into regions and reducing to a total are a **separate** step — the
 reductions in [`iivs.common.data.pytorch`](../../common/data) (`Sum`, `Mean`,
