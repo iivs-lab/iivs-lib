@@ -34,7 +34,10 @@ which additionally divides by the refractive-index difference).
 ## `height` — optical height
 
 `height = OPD / refractive_delta`, in **nm**: the physical thickness producing
-the measured path difference. The same height the data layer's
+the measured path difference. Transmission QPI literature usually calls this
+quantity the sample **thickness** (`phase = 2π·Δn·t/λ`); "height" here follows
+Koala's and this library's data-layer naming (the `.bin` header's
+`height_scale`, `PhaseUnit.METERS`). It is the same height the data layer's
 `PhaseUnit.NANOMETERS` represents, so `convert_from_phase` agrees numerically
 with `convert_phase_unit(..., target=NANOMETERS)` for a file whose stored
 `height_scale` was built from the same wavelength and delta.

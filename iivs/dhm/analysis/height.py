@@ -32,11 +32,14 @@ class OpticalHeightConverter:
         height = conv.convert_from_phase(phase)  # phase in rad -> height in nm
 
     ``height = OPD / refractive_delta``, both in nm: the physical thickness that
-    produces the measured path difference. This is the same height the data layer's
-    `PhaseUnit.NANOMETERS` represents, so `convert_from_phase` agrees numerically with
-    `convert_phase_unit(..., target=NANOMETERS)` when the file's stored `height_scale`
-    was built from the same wavelength and delta. For PyTorch, use `OpticalHeight`
-    from `iivs.dhm.analysis.pytorch`.
+    produces the measured path difference. Transmission QPI literature usually calls
+    this quantity the sample *thickness* (``phase = 2*pi * delta * t / wavelength``);
+    "height" here follows Koala's and this library's data-layer naming (the `.bin`
+    header's `height_scale`, `PhaseUnit.METERS`). It is the same height the data
+    layer's `PhaseUnit.NANOMETERS` represents, so `convert_from_phase` agrees
+    numerically with `convert_phase_unit(..., target=NANOMETERS)` when the file's
+    stored `height_scale` was built from the same wavelength and delta. For PyTorch,
+    use `OpticalHeight` from `iivs.dhm.analysis.pytorch`.
 
     Attributes:
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
