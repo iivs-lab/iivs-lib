@@ -16,6 +16,7 @@ try:
     from iivs.dhm.analysis.pytorch.height import (
         OpticalHeight,
         height_to_opd,
+        height_to_phase,
         opd_to_height,
         phase_to_height,
     )
@@ -48,6 +49,7 @@ __all__ = (
     "calc_volume",
     "calc_volume_from_phase",
     "height_to_opd",
+    "height_to_phase",
     "opd_to_height",
     "opd_to_phase",
     "phase_to_height",

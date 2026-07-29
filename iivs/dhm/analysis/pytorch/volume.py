@@ -112,9 +112,9 @@ def calc_volume_from_phase(
         reduce: Sum each masked region to a volume (True), or return the masked
             per-pixel density map (False).
     """
-    height = OpticalHeight(refractive_delta, wavelength=wavelength).convert_from_phase(
-        phase
-    )
+    height = OpticalHeight.from_args(
+        wavelength=wavelength, refractive_delta=refractive_delta
+    ).convert_to_height(phase)
     density = height * ((pixel_size * 1e6) ** 2 * 1e-3)  # nm of height -> um^3
 
     return Sum(empty=0.0)(density, mask) if reduce else apply_mask(density, mask)

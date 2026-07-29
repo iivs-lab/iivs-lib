@@ -25,8 +25,8 @@ These operate on plain NumPy arrays; they are not sequences. For PyTorch, see
 ## `opd` — optical path difference
 
 `OPD = phase * wavelength / (2 * pi)`, in **nm**, independent of any refractive
-index (and distinct from the physical height `PhaseUnit.METERS` represents,
-which additionally divides by the refractive-index difference).
+index (and distinct from the optical height, which additionally divides by the
+refractive-index difference).
 
 - `OPDConverter(wavelength=...)` — bind a wavelength (SI, m) once.
   - `from_wavelength_nm(nm)` — construct from a wavelength in nm.
@@ -38,24 +38,24 @@ which additionally divides by the refractive-index difference).
 
 ## `height` — optical height
 
-`height = OPD / refractive_delta`, in **nm**: the physical thickness producing
-the measured path difference. Transmission QPI literature usually calls this
-quantity the sample **thickness** (`phase = 2π·Δn·t/λ`); "height" here follows
-Koala's and this library's data-layer naming (the `.bin` header's
-`height_scale`, `PhaseUnit.METERS`). It is the same height the data layer's
-`PhaseUnit.NANOMETERS` represents, so `convert_from_phase` agrees numerically
-with `convert_phase_unit(..., target=NANOMETERS)` for a file whose stored
-`height_scale` was built from the same wavelength and delta.
+`height = phase · λ/(2π·Δn)`, in **nm**: the physical thickness producing the
+measured phase. Transmission QPI literature usually calls this quantity the
+sample **thickness** (`phase = 2π·Δn·t/λ`); "height" keeps this library's
+established name for it. Phase is the preferred representation: an OPD input
+enters through phase via the bound `OPDConverter`, whose wavelength then
+cancels (`height == OPD / Δn`).
 
 - `OpticalHeightConverter(refractive_delta=..., opd_converter=...)` — bind the
-  refractive-index difference (and, for the phase path, an `OPDConverter`) once.
+  refractive-index difference and an `OPDConverter` once.
   - `from_args(wavelength=..., refractive_delta=...)`.
-  - `convert_to_height(opd)` / `convert_to_opd(height)` — nm ↔ nm.
-  - `convert_from_phase(phase)` — rad → nm of height.
-  - `height_scale` — the cached nm-of-height-per-rad factor (the nm twin of the
-    `.bin` header's m-per-rad `height_scale`).
+  - `convert_to_height(phase)` / `convert_to_phase(height)` — rad ↔ nm.
+  - `convert_from_opd(opd)` / `convert_to_opd(height)` — the OPD entry / exit,
+    routed through phase.
+  - `height_scale` — the cached nm-of-height-per-rad factor
+    (`wavelength / (2π·Δn)` in nm).
   - `refractive_delta`, `wavelength` / `wavelength_nm`.
-- `opd_to_height` / `height_to_opd` / `phase_to_height` — the one-shot forms.
+- `phase_to_height` / `height_to_phase` / `opd_to_height` / `height_to_opd` —
+  the one-shot forms.
 
 ## `area` — projected area
 
@@ -153,8 +153,10 @@ are **pure pointwise** `nn.Module`s — one op each, so they drop cleanly into
 `nn.Sequential`, hooks, `torch.compile`, and fx / export tracing:
 
 - `OpticalPathDifference(wavelength=...)` — `forward(phase) = phase * opd_scale`.
-- `OpticalHeight(refractive_delta, wavelength=...)` — `forward(opd) = opd / delta`,
-  plus `convert_from_phase` for the rad → nm path.
+- `OpticalHeight(refractive_delta=..., opd_converter=...)` — `forward(phase) =
+  phase * height_scale`, owning an `OpticalPathDifference` submodule for the
+  `convert_from_opd` / `convert_to_opd` entry / exit (`from_args` builds it from
+  a wavelength).
 - `OpticalVolume(pixel_size=..., refractive_delta=...)` — `forward(opd) =
   opd * volume_scale`, the per-pixel volume density (µm³). No `mask` / `reduce`.
 - `DryMass(pixel_size=..., alpha=...)` — `forward(opd) = opd * drymass_scale`, the
