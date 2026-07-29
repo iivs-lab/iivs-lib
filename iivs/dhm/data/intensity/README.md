@@ -116,7 +116,10 @@ the `INTENSITY_TREE` `hierarchy` spec, and the format-specific searches
 `search_intensity_bin_folders(root, ...)` / `search_intensity_txt_folders` /
 `search_intensity_tif_folders` return that one folder (an `IntensityBinFolder` /
 `IntensityTxtFolder` / `IntensityTifFolder`) for every time-lapse under `root` that has
-it (via `kaparoo`'s `search_dirs`, with `predicate` a check on the opened folder). These
+it (via `kaparoo`'s `search_dirs`, with `predicate` a check on the opened folder). The
+format-agnostic `search_intensity_folders(root, prefer=("bin", "txt"))` returns each
+time-lapse's quantitative source in the first `prefer` format present (the
+`quantitative` preference by default; previews and `.npy` never participate). These
 are what
 [`iivs.dhm.data.timelapse`](../README.md#opening-a-whole-time-lapse-koalatimelapse)'s
 `KoalaTimelapse` composes for the intensity modality.

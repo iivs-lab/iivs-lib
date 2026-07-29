@@ -38,6 +38,7 @@ __all__ = (
     "save_intensity_npy",
     "save_intensity_txt",
     "search_intensity_bin_folders",
+    "search_intensity_folders",
     "search_intensity_tif_folders",
     "search_intensity_txt_folders",
 )
@@ -71,6 +72,7 @@ from iivs.dhm.data.intensity.layout import (
     INTENSITY_TREE,
     IntensityGroup,
     search_intensity_bin_folders,
+    search_intensity_folders,
     search_intensity_tif_folders,
     search_intensity_txt_folders,
 )

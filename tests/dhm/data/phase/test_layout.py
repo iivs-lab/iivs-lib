@@ -12,6 +12,7 @@ from iivs.dhm.data.phase.layout import (
     PHASE_TREE,
     PhaseGroup,
     search_phase_bin_folders,
+    search_phase_folders,
     search_phase_tif_folders,
     search_phase_txt_folders,
 )
@@ -288,3 +289,45 @@ def test_search_phase_bin_folders_skips_empty_or_missing(tmp_path):
 
     folders = search_phase_bin_folders(tmp_path)
     assert [_timelapse_name(f) for f in folders] == ["full"]
+
+
+def test_search_phase_folders_picks_the_present_format(tmp_path):
+    _phase_timelapse(tmp_path / "binonly", txts=False)
+    _phase_timelapse(tmp_path / "both")
+    _phase_timelapse(tmp_path / "preview", bins=False, txts=False)  # tif only
+    _phase_timelapse(tmp_path / "txtonly", bins=False)
+
+    folders = search_phase_folders(tmp_path)
+
+    # bin preferred where both exist; a preview-only time-lapse drops out
+    assert [type(f) for f in folders] == [
+        PhaseBinFolder,
+        PhaseBinFolder,
+        PhaseTxtFolder,
+    ]
+    assert [_timelapse_name(f) for f in folders] == ["binonly", "both", "txtonly"]
+
+
+def test_search_phase_folders_prefer_flips_or_restricts(tmp_path):
+    _phase_timelapse(tmp_path / "binonly", txts=False)
+    _phase_timelapse(tmp_path / "both")
+
+    txt_first = search_phase_folders(tmp_path, prefer=("txt", "bin"))
+    assert [type(f) for f in txt_first] == [PhaseBinFolder, PhaseTxtFolder]
+
+    txt_only = search_phase_folders(tmp_path, prefer="txt")
+    assert [type(f) for f in txt_only] == [PhaseTxtFolder]
+    assert [_timelapse_name(f) for f in txt_only] == ["both"]  # binonly drops out
+
+
+def test_search_phase_folders_predicate_and_bad_prefer(tmp_path):
+    _phase_timelapse(tmp_path / "large", n=3)
+    _phase_timelapse(tmp_path / "small", n=2)
+
+    by_predicate = search_phase_folders(tmp_path, predicate=lambda f: len(f) == 3)
+    assert [_timelapse_name(f) for f in by_predicate] == ["large"]
+
+    with pytest.raises(ValueError, match="prefer"):
+        search_phase_folders(tmp_path, prefer="npy")
+    with pytest.raises(ValueError, match="at least one"):
+        search_phase_folders(tmp_path, prefer=())

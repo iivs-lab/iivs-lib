@@ -43,6 +43,7 @@ __all__ = (
     "save_phase_npy",
     "save_phase_txt",
     "search_phase_bin_folders",
+    "search_phase_folders",
     "search_phase_tif_folders",
     "search_phase_txt_folders",
     "write_phbounds",
@@ -78,6 +79,7 @@ from iivs.dhm.data.phase.layout import (
     PHASE_TREE,
     PhaseGroup,
     search_phase_bin_folders,
+    search_phase_folders,
     search_phase_tif_folders,
     search_phase_txt_folders,
 )

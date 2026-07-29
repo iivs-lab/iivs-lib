@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import tifffile
 from kaparoo.filesystem.hierarchy import Directory
 from kaparoo.filters import Literal
@@ -11,6 +12,7 @@ from iivs.dhm.data.intensity.layout import (
     INTENSITY_TREE,
     IntensityGroup,
     search_intensity_bin_folders,
+    search_intensity_folders,
     search_intensity_tif_folders,
     search_intensity_txt_folders,
 )
@@ -142,3 +144,34 @@ def test_search_intensity_bin_folders_name_filter_and_predicate(tmp_path):
         tmp_path, predicate=lambda f: len(f) == 3
     )
     assert [len(f) for f in by_predicate] == [3]
+
+
+def test_search_intensity_folders_picks_the_present_format(tmp_path):
+    _intensity_timelapse(tmp_path / "binonly", txts=False)
+    _intensity_timelapse(tmp_path / "both")
+    _intensity_timelapse(tmp_path / "preview", bins=False, txts=False)  # tif only
+    _intensity_timelapse(tmp_path / "txtonly", bins=False)
+
+    folders = search_intensity_folders(tmp_path)
+
+    # bin preferred where both exist; a preview-only time-lapse drops out
+    assert [type(f) for f in folders] == [
+        IntensityBinFolder,
+        IntensityBinFolder,
+        IntensityTxtFolder,
+    ]
+    assert [_timelapse_name(f) for f in folders] == ["binonly", "both", "txtonly"]
+
+    txt_only = search_intensity_folders(tmp_path, prefer="txt")
+    assert [type(f) for f in txt_only] == [IntensityTxtFolder, IntensityTxtFolder]
+    assert [_timelapse_name(f) for f in txt_only] == ["both", "txtonly"]
+
+    by_predicate = search_intensity_folders(
+        tmp_path, predicate=lambda f: type(f) is IntensityTxtFolder
+    )
+    assert [_timelapse_name(f) for f in by_predicate] == ["txtonly"]
+
+    with pytest.raises(ValueError, match="prefer"):
+        search_intensity_folders(tmp_path, prefer="npy")
+    with pytest.raises(ValueError, match="at least one"):
+        search_intensity_folders(tmp_path, prefer=())

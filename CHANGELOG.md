@@ -10,6 +10,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `search_phase_folders` / `search_intensity_folders` — the format-agnostic members
+  of the `search_*_folders` families: each time-lapse under a root contributes its
+  quantitative `Float` source in the first `prefer` format present (default
+  `Float/Bin` over `Float/Txt`, the group `quantitative` preference), so a scan no
+  longer has to pick a format up front. Coexisting formats are decided by the
+  preference order rather than raised (unlike `phase_folder`, a bulk scan must not
+  abort on the common case); uint8 previews and `.npy` do not participate.
+
 - `PhaseFileList.with_unit(unit)` — return an independent sequence over the same
   files loading in `unit` (`None` keeps the stored unit), so a caller handed an
   already-open folder (e.g. from `search_timelapses` / `PhaseGroup.bin_folder`)
