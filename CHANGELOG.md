@@ -10,6 +10,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `load_phase_bin` / `load_phase_txt` / `load_phase` take `target_unit`: the loaded
+  image is converted via the file's own `height_scale` (None, the default, keeps the
+  stored unit), sparing the manual `convert_phase_unit` composition for a one-shot
+  read. The returned header stays the file's, unchanged. `load_phase` rejects
+  `target_unit` for `.npy` (header-less, so there is nothing to convert from; open
+  with `PhaseNpyFolder` instead), and `load_phase_npy` / `load_phase_tif` are
+  deliberately untouched.
+
 - `search_phase_folders` / `search_intensity_folders` — the format-agnostic members
   of the `search_*_folders` families: each time-lapse under a root contributes its
   quantitative `Float` source in the first `prefer` format present (default

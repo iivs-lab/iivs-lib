@@ -359,6 +359,44 @@ def test_load_on_nonfinite_policy(tmp_path):
         load_phase_bin(path, on_nonfinite="warn")
 
 
+def test_load_target_unit_converts_via_own_header(tmp_path):
+    path = tmp_path / "00000_phase.bin"
+    save_phase_bin(
+        path,
+        np.full((2, 3), 1.5, dtype=np.float32),  # stored in RADIANS
+        pixel_size=1e-6,
+        height_scale=2e-7,
+    )
+
+    # 1.5 rad * 2e-7 m/rad * 1e9 nm/m = 300 nm
+    nm = load_phase_bin(path, target_unit=PhaseUnit.NANOMETERS)
+    np.testing.assert_allclose(nm, np.full((2, 3), 300.0, dtype=np.float32), rtol=1e-6)
+
+    img, header = load_phase_bin(
+        path, return_header=True, target_unit=PhaseUnit.NANOMETERS
+    )
+    np.testing.assert_allclose(img, nm, rtol=1e-6)
+    assert header.unit is PhaseUnit.RADIANS  # the header stays as stored
+
+    stored = load_phase_bin(path)  # default keeps the stored unit
+    np.testing.assert_allclose(stored, np.full((2, 3), 1.5, dtype=np.float32))
+
+
+def test_load_target_unit_unreachable_from_stored(tmp_path):
+    path = tmp_path / "00000_phase.bin"
+    with pytest.warns(UserWarning, match="UNKNOWN"):
+        save_phase_bin(
+            path,
+            np.full((2, 3), 1.0, dtype=np.float32),
+            pixel_size=1e-6,
+            height_scale=2e-7,
+            unit=PhaseUnit.UNKNOWN,
+        )
+
+    with pytest.raises(ValueError, match="cannot convert"):
+        load_phase_bin(path, target_unit=PhaseUnit.RADIANS)
+
+
 # ========================== #
 #          Sequence          #
 # ========================== #

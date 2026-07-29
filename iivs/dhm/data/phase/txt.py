@@ -16,7 +16,7 @@ from kaparoo.filesystem import ensure_file_extension
 from iivs.dhm.data.koala import KoalaTxtHeaderCodec, load_txt, write_txt
 from iivs.dhm.data.phase.base import PhaseFileFolder, PhaseFileList
 from iivs.dhm.data.phase.bin import PhaseBinHeader, _prepare_phase_write
-from iivs.dhm.data.phase.unit import PhaseUnit
+from iivs.dhm.data.phase.unit import PhaseUnit, convert_phase_unit
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -117,6 +117,7 @@ def load_phase_txt(
     path: StrPath,
     *,
     return_header: Literal[False] = False,
+    target_unit: PhaseUnit | None = ...,
     on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32]: ...
 
@@ -126,6 +127,7 @@ def load_phase_txt(
     path: StrPath,
     *,
     return_header: Literal[True],
+    target_unit: PhaseUnit | None = ...,
     on_nonfinite: OnNonFinite = ...,
 ) -> tuple[NDArray[np.float32], PhaseBinHeader]: ...
 
@@ -135,6 +137,7 @@ def load_phase_txt(
     path: StrPath,
     *,
     return_header: bool,
+    target_unit: PhaseUnit | None = ...,
     on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]: ...
 
@@ -143,6 +146,7 @@ def load_phase_txt(
     path: StrPath,
     *,
     return_header: bool = False,
+    target_unit: PhaseUnit | None = None,
     on_nonfinite: OnNonFinite = "ignore",
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]:
     """Load a Koala `Float/Txt` phase image, and optionally its header.
@@ -153,6 +157,9 @@ def load_phase_txt(
     Args:
         path: The `.txt` file to read.
         return_header: Whether to also return the parsed header.
+        target_unit: Unit to return the image in, converted via the file's own
+            `height_scale`; None (default) keeps the stored unit. The returned header
+            is the file's, unchanged (its `unit` stays the stored one).
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
             data: `"ignore"` (default) accepts silently, `"warn"` emits a
             RuntimeWarning, `"raise"` raises a ValueError.
@@ -160,10 +167,18 @@ def load_phase_txt(
     Raises:
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
-        ValueError: If the header is malformed, the grid does not match it, or it holds
-            non-finite values while `on_nonfinite` is `"raise"`.
+        ValueError: If the header is malformed, the grid does not match it, it holds
+            non-finite values while `on_nonfinite` is `"raise"`, or `target_unit` is
+            not reachable from the stored unit.
     """
     data, header = load_txt(path, PhaseTxtHeaderCodec, on_nonfinite=on_nonfinite)
+    if target_unit is not None:
+        data = convert_phase_unit(
+            data,
+            source=header.unit,
+            target=target_unit,
+            height_scale=header.height_scale,
+        )
     return (data, header) if return_header else data
 
 

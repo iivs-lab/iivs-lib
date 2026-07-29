@@ -34,6 +34,21 @@ def _write(root, index, value, shape=(2, 3)):
 # --- single-file I/O ---
 
 
+def test_load_target_unit_converts_via_own_header(tmp_path):
+    path = tmp_path / "00000_phase.txt"
+    _write_phase_txt(path, np.full((2, 3), 1.5, dtype=np.float32))  # rad, 2e-7 m/rad
+
+    # 1.5 rad * 2e-7 m/rad * 1e9 nm/m = 300 nm
+    nm = load_phase_txt(path, target_unit=PhaseUnit.NANOMETERS)
+    np.testing.assert_allclose(nm, np.full((2, 3), 300.0, dtype=np.float32), rtol=1e-5)
+
+    img, header = load_phase_txt(
+        path, return_header=True, target_unit=PhaseUnit.NANOMETERS
+    )
+    np.testing.assert_allclose(img, nm, rtol=1e-5)
+    assert header.unit is PhaseUnit.RADIANS  # the header stays as stored
+
+
 def test_load_roundtrip(tmp_path):
     data = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32)
     path = tmp_path / "00000_phase.txt"

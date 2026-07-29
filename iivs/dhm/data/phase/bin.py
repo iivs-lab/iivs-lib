@@ -117,6 +117,7 @@ def load_phase_bin(
     path: StrPath,
     *,
     return_header: Literal[False] = False,
+    target_unit: PhaseUnit | None = ...,
     on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32]: ...
 
@@ -126,6 +127,7 @@ def load_phase_bin(
     path: StrPath,
     *,
     return_header: Literal[True],
+    target_unit: PhaseUnit | None = ...,
     on_nonfinite: OnNonFinite = ...,
 ) -> tuple[NDArray[np.float32], PhaseBinHeader]: ...
 
@@ -135,6 +137,7 @@ def load_phase_bin(
     path: StrPath,
     *,
     return_header: bool,
+    target_unit: PhaseUnit | None = ...,
     on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]: ...
 
@@ -143,6 +146,7 @@ def load_phase_bin(
     path: StrPath,
     *,
     return_header: bool = False,
+    target_unit: PhaseUnit | None = None,
     on_nonfinite: OnNonFinite = "ignore",
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader]:
     """Load a Lyncée Tec Koala float32 .bin phase image, and optionally its header.
@@ -151,6 +155,9 @@ def load_phase_bin(
         path: The .bin file to read.
         return_header: Whether to also return the parsed `PhaseBinHeader`. Defaults to
             False.
+        target_unit: Unit to return the image in, converted via the file's own
+            `height_scale`; None (default) keeps the stored unit. The returned header
+            is the file's, unchanged (its `unit` stays the stored one).
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
             data: `"ignore"` (default) accepts silently, `"warn"` emits a
             RuntimeWarning, `"raise"` raises a ValueError (useful to reject a corrupt
@@ -166,10 +173,18 @@ def load_phase_bin(
         FileNotFoundError: If `path` does not exist.
         NotAFileError: If `path` exists but is not a regular file.
         ValueError: If the file is too small, declares an unsupported header size, has
-            invalid header fields, holds the wrong number of pixels, or holds non-finite
-            values while `on_nonfinite` is `"raise"`.
+            invalid header fields, holds the wrong number of pixels, holds non-finite
+            values while `on_nonfinite` is `"raise"`, or `target_unit` is not reachable
+            from the stored unit.
     """
     data, header = load_bin(path, PhaseBinHeader, on_nonfinite=on_nonfinite)
+    if target_unit is not None:
+        data = convert_phase_unit(
+            data,
+            source=header.unit,
+            target=target_unit,
+            height_scale=header.height_scale,
+        )
     return (data, header) if return_header else data
 
 

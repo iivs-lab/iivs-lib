@@ -35,7 +35,7 @@ right symbol for you, over `.bin` / `.txt` / `.npy`:
 
 | Entry point | Picks |
 | --- | --- |
-| `load_phase(path, *, return_header=False)` | `load_phase_{bin,txt,npy}` — the image, or `(image, header)` when `return_header` (with `header` `None` for the header-less `.npy`) |
+| `load_phase(path, *, return_header=False, target_unit=None)` | `load_phase_{bin,txt,npy}` — the image, or `(image, header)` when `return_header` (with `header` `None` for the header-less `.npy`); `target_unit` converts via the file's own `height_scale` (rejected for `.npy`, which has none) |
 | `read_phase_header(path)` | `read_phase_{bin,txt}_header` (**`.npy` excluded** — header-less, **raises**; unlike `load_phase`'s optional `None`) |
 | `save_phase(path, data, ...)` | `save_phase_{bin,txt,npy}` (`.npy` ignores the header metadata, with a warning) |
 | `phase_list(files)` | `Phase{Bin,Txt}List` by the files' shared extension |

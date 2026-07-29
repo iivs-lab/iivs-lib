@@ -67,6 +67,7 @@ def load_phase(
     path: StrPath,
     *,
     return_header: Literal[False] = False,
+    target_unit: PhaseUnit | None = ...,
     on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32]: ...
 
@@ -76,6 +77,7 @@ def load_phase(
     path: StrPath,
     *,
     return_header: Literal[True],
+    target_unit: PhaseUnit | None = ...,
     on_nonfinite: OnNonFinite = ...,
 ) -> tuple[NDArray[np.float32], PhaseBinHeader | None]: ...
 
@@ -85,6 +87,7 @@ def load_phase(
     path: StrPath,
     *,
     return_header: bool,
+    target_unit: PhaseUnit | None = ...,
     on_nonfinite: OnNonFinite = ...,
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader | None]: ...
 
@@ -93,6 +96,7 @@ def load_phase(
     path: StrPath,
     *,
     return_header: bool = False,
+    target_unit: PhaseUnit | None = None,
     on_nonfinite: OnNonFinite = "ignore",
 ) -> NDArray[np.float32] | tuple[NDArray[np.float32], PhaseBinHeader | None]:
     """Load a float32 phase image, picking the reader by `path`'s extension.
@@ -108,6 +112,11 @@ def load_phase(
         path: The `.bin` / `.txt` / `.npy` file to read.
         return_header: Whether to also return the parsed header (`None` for the
             header-less `.npy`). Defaults to False.
+        target_unit: Unit to return the image in, converted via the file's own
+            `height_scale`; None (default) keeps the stored unit. Rejected for `.npy`:
+            with no header there is no stored unit or scale to convert from, and
+            silently returning unconverted values would be worse than the error (open
+            the folder with `PhaseNpyFolder`, which carries that metadata, instead).
         on_nonfinite: How to handle non-finite values (NaN, +inf, -inf) in the decoded
             data: `"ignore"` (default) accepts silently, `"warn"` emits a
             RuntimeWarning, `"raise"` rejects with a ValueError.
@@ -117,19 +126,28 @@ def load_phase(
         when `return_header` is True (with `header` `None` for `.npy`).
 
     Raises:
-        ValueError: If `path`'s extension is not bin, txt, or npy (plus the per-format
-            errors of the chosen reader).
+        ValueError: If `path`'s extension is not bin, txt, or npy, or `target_unit` is
+            set for a `.npy` (plus the per-format errors of the chosen reader).
     """
     ext = file_extension(path)
     if ext == "bin":
         return load_phase_bin(
-            path, return_header=return_header, on_nonfinite=on_nonfinite
+            path,
+            return_header=return_header,
+            target_unit=target_unit,
+            on_nonfinite=on_nonfinite,
         )
     if ext == "txt":
         return load_phase_txt(
-            path, return_header=return_header, on_nonfinite=on_nonfinite
+            path,
+            return_header=return_header,
+            target_unit=target_unit,
+            on_nonfinite=on_nonfinite,
         )
     if ext == "npy":
+        if target_unit is not None:
+            msg = "target_unit needs a header; .npy is header-less (use PhaseNpyFolder)"
+            raise ValueError(msg)
         data = load_phase_npy(path, on_nonfinite=on_nonfinite)
         return (data, None) if return_header else data
     raise UnsupportedExtensionError(ext, FLOAT_FORMATS, kind="phase")

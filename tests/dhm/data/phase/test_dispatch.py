@@ -111,6 +111,21 @@ def test_load_phase_return_header_is_none_for_npy(tmp_path):
     assert header is None
 
 
+@pytest.mark.parametrize("ext", ("bin", "txt"))
+def test_load_phase_target_unit_passes_through(tmp_path, ext):
+    path = tmp_path / f"x.{ext}"
+    _save(path, ext)  # stored in RADIANS with height_scale 2e-7 m/rad
+    nm = load_phase(path, target_unit=PhaseUnit.NANOMETERS)
+    np.testing.assert_allclose(nm, IMG * 200.0, rtol=1e-5)  # rad -> nm is *200
+
+
+def test_load_phase_target_unit_rejected_for_npy(tmp_path):
+    path = tmp_path / "x.npy"
+    _save(path, "npy")
+    with pytest.raises(ValueError, match="header-less"):
+        load_phase(path, target_unit=PhaseUnit.RADIANS)
+
+
 # --- read_phase_header ---
 
 
