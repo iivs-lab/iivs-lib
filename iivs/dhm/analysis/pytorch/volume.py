@@ -43,8 +43,10 @@ class OpticalVolume(nn.Module):
     ) -> None:
         super().__init__()
 
-        calculator = OpticalVolumeCalculator.from_wavelength(
-            pixel_size=pixel_size, refractive_delta=refractive_delta
+        calculator = OpticalVolumeCalculator.from_args(
+            pixel_size=pixel_size,
+            wavelength=DEFAULT_WAVELENGTH,
+            refractive_delta=refractive_delta,
         )
         self.pixel_size = calculator.pixel_size
         self.refractive_delta = calculator.refractive_delta

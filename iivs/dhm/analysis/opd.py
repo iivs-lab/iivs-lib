@@ -27,10 +27,10 @@ class OPDConverter:
         phase = conv.convert_to_phase(opd)
 
     ``OPD = phase * wavelength / (2 * pi)``, independent of refractive index (distinct
-    from the height `PhaseUnit.METERS` represents, which additionally divides by the
-    refractive-index difference). OPD is in **nm** (the QPI convention) while
-    `wavelength` is SI (m); the per-rad scale is cached as `opd_scale`. For PyTorch, use
-    `OpticalPathDifference` from `iivs.dhm.analysis.pytorch`.
+    from the optical height, which additionally divides by the refractive-index
+    difference; see `OpticalHeightConverter`). OPD is in **nm** (the QPI convention)
+    while `wavelength` is SI (m); the per-rad scale is cached as `opd_scale`.
+    For PyTorch, use `OpticalPathDifference` from `iivs.dhm.analysis.pytorch`.
 
     Attributes:
         wavelength: Illumination wavelength, in m.

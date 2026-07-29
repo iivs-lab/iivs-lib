@@ -8,8 +8,14 @@ from iivs.dhm.analysis.drymass import (
     calc_drymass,
     calc_drymass_from_phase,
 )
-from iivs.dhm.analysis.opd import OPDConverter, phase_to_opd
-from iivs.dhm.analysis.volume import calc_volume
+from iivs.dhm.analysis.opd import phase_to_opd
+from iivs.dhm.analysis.volume import OpticalVolumeCalculator, calc_volume
+from iivs.dhm.constants import (
+    DEFAULT_REFRACTIVE_DELTA,
+    DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
+    DEFAULT_WAVELENGTH,
+    PIXEL_SIZE_20X,
+)
 
 
 def test_calc_drymass_uniform_region():
@@ -97,7 +103,9 @@ def test_output_is_float32():
 
 
 def test_rejects_bad_shapes():
-    dmc = DryMassCalculator(pixel_size=1e-7)
+    dmc = DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
+    )
     opd = np.zeros((3, 4, 4), dtype=np.float32)
     with pytest.raises(ValueError, match="at least 2D"):  # opd needs (H, W)
         dmc.calc_from_opd(np.zeros(4, dtype=np.float32))
@@ -157,7 +165,9 @@ def test_calc_drymass_from_phase_matches_two_step():
 def test_calculator_calc_from_opd():
     # same 0.25 pg setup as the free-function anchor
     opd = np.full((10, 10), 50.0, dtype=np.float32)
-    calc = DryMassCalculator(pixel_size=1e-7, alpha=2.0e-4)
+    calc = DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
+    )
     assert calc.calc_from_opd(opd) == pytest.approx(0.25)
 
 
@@ -165,25 +175,29 @@ def test_calculator_from_wavelength_integrates_phase():
     # 25 px, 1 rad -> OPD 666/(2pi) = 105.9957 nm each; drymass_scale 5e-5 pg/nm:
     # 25 * 105.9957 * 5e-5 = 0.13249 pg.
     phase = np.full((5, 5), 1.0, dtype=np.float32)
-    calc = DryMassCalculator.from_wavelength(
-        pixel_size=1e-7, alpha=2.0e-4, wavelength=666e-9
+    calc = DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
     )
     assert calc.calc_from_phase(phase) == pytest.approx(0.13249, rel=1e-3)
 
 
-def test_calculator_accepts_injected_converter():
+def test_calculator_accepts_injected_volume_engine():
     phase = np.full((3, 3), 1.0, dtype=np.float32)
-    conv = OPDConverter.from_wavelength_nm(666)
-    calc = DryMassCalculator(pixel_size=1e-7, alpha=2.0e-4, opd_converter=conv)
-    assert calc.opd_converter is conv
-    expected = DryMassCalculator.from_wavelength(
-        pixel_size=1e-7, alpha=2.0e-4, wavelength=666e-9
+    volume = OpticalVolumeCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5
+    )
+    calc = DryMassCalculator(volume_converter=volume, alpha=2.0e-4)
+    assert calc.volume_converter is volume
+    expected = DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
     ).calc_from_phase(phase)
     assert calc.calc_from_phase(phase) == pytest.approx(expected)
 
 
 def test_calculator_wavelength_shortcuts():
-    calc = DryMassCalculator.from_wavelength(pixel_size=1e-7, wavelength=666e-9)
+    calc = DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
+    )
     assert calc.wavelength == pytest.approx(666e-9)
     assert calc.wavelength_nm == pytest.approx(666.0)
 
@@ -191,7 +205,9 @@ def test_calculator_wavelength_shortcuts():
 def test_calculator_drymass_scale():
     # 0.1 um pixel, alpha 2e-4 m^3/kg: px_area 1e-14 m^2; pg per summed-nm OPD =
     # 1e-14 m^2 * (1e-9 m/nm) * (1e15 pg/kg) / 2e-4 = 5e-5 pg/nm (hand-derived).
-    calc = DryMassCalculator(pixel_size=1e-7, alpha=2.0e-4)
+    calc = DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
+    )
     assert calc.drymass_scale == pytest.approx(5e-5)
     # the scale times the summed OPD (nm) reproduces the dry mass
     opd = np.full((10, 10), 50.0, dtype=np.float32)
@@ -203,7 +219,9 @@ def test_calculator_drymass_scale():
 def test_calculator_respects_mask():
     opd = np.full((2, 2), 50.0, dtype=np.float32)
     mask = np.array([[True, False], [False, False]])
-    calc = DryMassCalculator(pixel_size=1e-7, alpha=2.0e-4)
+    calc = DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
+    )
     assert calc.calc_from_opd(opd, mask=mask) == pytest.approx(
         calc.calc_from_opd(opd) / 4
     )
@@ -211,16 +229,52 @@ def test_calculator_respects_mask():
 
 def test_calculator_rejects_nonpositive_pixel_size():
     with pytest.raises(ValueError, match="pixel_size must be positive"):
-        DryMassCalculator(pixel_size=0.0)
+        DryMassCalculator.from_args(
+            pixel_size=0.0, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
+        )
 
 
 def test_calculator_rejects_nonpositive_alpha():
     with pytest.raises(ValueError, match="alpha must be positive"):
-        DryMassCalculator(pixel_size=1e-7, alpha=0.0)
+        DryMassCalculator.from_args(
+            pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=0.0
+        )
+
+
+def test_default_construction_uses_lab_constants():
+    # every engine in the chain falls back to the lab defaults (20X pixel size)
+    calc = DryMassCalculator()
+    assert calc.pixel_size == pytest.approx(PIXEL_SIZE_20X)
+    assert calc.wavelength == pytest.approx(DEFAULT_WAVELENGTH)
+    assert calc.refractive_delta == pytest.approx(DEFAULT_REFRACTIVE_DELTA)
+    expected = DryMassCalculator.from_args(
+        pixel_size=PIXEL_SIZE_20X,
+        wavelength=DEFAULT_WAVELENGTH,
+        refractive_delta=DEFAULT_REFRACTIVE_DELTA,
+        alpha=DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
+    )
+    assert calc.drymass_scale == pytest.approx(expected.drymass_scale)
+
+
+def test_calc_from_height_matches_calc_from_opd():
+    # height = opd / delta, so converting back must reproduce the OPD mass.
+    opd = np.full((4, 4), 50.0, dtype=np.float32)
+    calc = DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
+    )
+    height = (opd / np.float32(0.5)).astype(np.float32)
+    assert calc.calc_from_height(height) == pytest.approx(
+        calc.calc_from_opd(opd), rel=1e-6
+    )
+
+    with pytest.raises(ValueError, match="height must be at least 2D"):
+        calc.calc_from_height(np.zeros(4, dtype=np.float32))
 
 
 def test_calculator_pixel_size_um():
-    assert DryMassCalculator(pixel_size=1e-7).pixel_size_um == pytest.approx(0.1)
+    assert DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
+    ).pixel_size_um == pytest.approx(0.1)
 
 
 def test_calc_from_volume_closes_the_chain():
@@ -228,15 +282,23 @@ def test_calc_from_volume_closes_the_chain():
     # is 0.25 pg directly (the anchor above) and, at delta 0.5, 0.1 um^3 of volume;
     # mass = volume * delta / alpha * 1e-3 = 0.1 * 0.5 / 2e-4 * 1e-3 = 0.25 pg.
     opd = np.full((10, 10), 50.0, dtype=np.float32)
-    calc = DryMassCalculator(pixel_size=1e-7, alpha=2.0e-4)
+    calc = DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
+    )
     direct = calc.calc_from_opd(opd)
     volume = calc_volume(opd, pixel_size=1e-7, refractive_delta=0.5)
     via_volume = calc.calc_from_volume(volume, refractive_delta=0.5)
     assert via_volume == pytest.approx(direct, rel=1e-5)
     assert via_volume == pytest.approx(0.25, rel=1e-5)
 
+    # None (the default) falls back to the bound volume engine's delta (0.5 here)
+    assert calc.calc_from_volume(volume) == pytest.approx(via_volume)
+    assert calc.refractive_delta == pytest.approx(0.5)
+
 
 def test_calc_from_volume_rejects_nonpositive_delta():
-    calc = DryMassCalculator(pixel_size=1e-7)
+    calc = DryMassCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
+    )
     with pytest.raises(ValueError, match="refractive_delta must be positive"):
         calc.calc_from_volume(np.float32(0.1), refractive_delta=0.0)

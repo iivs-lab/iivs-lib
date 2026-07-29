@@ -37,7 +37,7 @@ class OpticalHeight(nn.Module):
     ) -> None:
         super().__init__()
 
-        converter = OpticalHeightConverter.from_wavelength(
+        converter = OpticalHeightConverter.from_args(
             wavelength=wavelength, refractive_delta=refractive_delta
         )
         self.refractive_delta = converter.refractive_delta

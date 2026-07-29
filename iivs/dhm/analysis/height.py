@@ -61,12 +61,7 @@ class OpticalHeightConverter:
         object.__setattr__(self, "_scale", scale)
 
     @classmethod
-    def from_wavelength(
-        cls,
-        *,
-        wavelength: float = DEFAULT_WAVELENGTH,
-        refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
-    ) -> Self:
+    def from_args(cls, *, wavelength: float, refractive_delta: float) -> Self:
         """Build a converter whose phase path uses `wavelength` (in m)."""
         opd_converter = OPDConverter(wavelength=wavelength)
         return cls(refractive_delta=refractive_delta, opd_converter=opd_converter)
@@ -163,7 +158,7 @@ def phase_to_height(
     Returns:
         Optical height as a float32 array of the same shape, in nm.
     """
-    converter = OpticalHeightConverter.from_wavelength(
+    converter = OpticalHeightConverter.from_args(
         wavelength=wavelength, refractive_delta=refractive_delta
     )
     return converter.convert_from_phase(phase)

@@ -14,6 +14,11 @@ phase (rad)
   × Δn/α          → dry mass (pg)        drymass
 ```
 
+Every engine is default-constructible from the lab constants in
+[`iivs.dhm.constants`](../constants.py) (including the 20X pixel size), receives
+its inner engines at construction, and offers a fully-explicit `from_args`
+builder taking plain parameters instead.
+
 These operate on plain NumPy arrays; they are not sequences. For PyTorch, see
 [Using with PyTorch](#using-with-pytorch-autograd).
 
@@ -44,7 +49,7 @@ with `convert_phase_unit(..., target=NANOMETERS)` for a file whose stored
 
 - `OpticalHeightConverter(refractive_delta=..., opd_converter=...)` — bind the
   refractive-index difference (and, for the phase path, an `OPDConverter`) once.
-  - `from_wavelength(wavelength=..., refractive_delta=...)`.
+  - `from_args(wavelength=..., refractive_delta=...)`.
   - `convert_to_height(opd)` / `convert_to_opd(height)` — nm ↔ nm.
   - `convert_from_phase(phase)` — rad → nm of height.
   - `height_scale` — the cached nm-of-height-per-rad factor (the nm twin of the
@@ -61,7 +66,8 @@ area * mean(height)`. The call shape matches the other engines (`image`, `mask`,
 pixel grid (and any leading batch axes), and each selected pixel contributes the
 constant `area_scale`.
 
-- `ProjectedAreaCalculator(pixel_size)` — bind the pixel size (m) once.
+- `ProjectedAreaCalculator(pixel_size=PIXEL_SIZE_20X)` — bind the pixel size (m)
+  once; `from_pixel_size_um(um)` is the µm builder twin.
   - `calc(image, *, mask=None, reduce=True)` — µm² of each region: `(...)` for a
     boolean `(H, W)` mask (or None, the whole frame), a trailing `(..., R)` axis
     for a `(N, H, W)` stack or a label image. `reduce=False` returns the
@@ -75,23 +81,23 @@ constant `area_scale`.
 ## `volume` — optical volume
 
 `volume = sum(height * pixel_area)`, in **µm³** (1 µm³ = 1 fL); equivalently
-`projected_area * mean(height)`. The calculator holds both sides of that
-relation — a `ProjectedAreaCalculator` (built from `pixel_size`) and an
+`projected_area * mean(height)`. The calculator receives both sides of that
+relation at construction — a `ProjectedAreaCalculator` and an
 `OpticalHeightConverter` — so `volume_scale` is their product
 (`area_scale * 1e-3 / refractive_delta`). Batching, `mask`, `reduce`, and the
 background-correction requirement all match `drymass` below; an empty region
 integrates to 0 µm³. Dry mass is the `refractive_delta / alpha` multiple of this
 volume (`DryMassCalculator.calc_from_volume`).
 
-- `OpticalVolumeCalculator(pixel_size, height_converter=...)` — bind the pixel
-  size (m) and an `OpticalHeightConverter` once.
-  - `from_wavelength(pixel_size=..., wavelength=..., refractive_delta=...)`.
+- `OpticalVolumeCalculator(area_calculator=..., height_converter=...)` — bind
+  the two engines once.
+  - `from_args(pixel_size=..., wavelength=..., refractive_delta=...)` — build
+    both engines from plain parameters.
   - `calc_from_opd(opd, *, mask=None, reduce=True)` /
     `calc_from_height(height, ...)` / `calc_from_phase(phase, ...)`.
   - `volume_scale` — the cached µm³-per-summed-nm-OPD factor.
-  - `area_calculator` / `height_converter` — the two bound engines.
   - `pixel_size` / `pixel_size_um`, `refractive_delta`, `wavelength` /
-    `wavelength_nm`.
+    `wavelength_nm` — re-surfaced from the bound engines.
 - `calc_volume(opd, *, pixel_size, refractive_delta=..., mask=None, reduce=True)` /
   `calc_volume_from_phase(phase, *, pixel_size, wavelength=..., refractive_delta=..., ...)`
   — the one-shot forms.
@@ -109,20 +115,24 @@ pixels) integrates to 0 pg. Segmentation and background estimation stay the
 caller's responsibility; the masking + reduction is the `iivs.common.data`
 `Sum` reduction, which `DryMassCalculator` holds internally.
 
-- `DryMassCalculator(pixel_size, alpha=..., opd_converter=...)` — bind the pixel
-  size (m), specific refractive increment (m³/kg), and an `OPDConverter` (for the
-  phase path) once.
-  - `from_wavelength(pixel_size=..., wavelength=...)` — build the inner converter
-    from a wavelength.
+- `DryMassCalculator(volume_converter, alpha=...)` — bind an
+  `OpticalVolumeCalculator` (which carries the pixel size, wavelength, and delta)
+  and the specific refractive increment (m³/kg) once; the last link of the
+  engine chain.
+  - `from_args(pixel_size=..., wavelength=..., refractive_delta=..., alpha=...)`
+    — build the whole engine chain from plain parameters (all explicit).
   - `calc_from_opd(opd, *, mask=None, reduce=True)` — dry mass from an OPD map
     (nm). `reduce=False` returns the per-pixel mass-density map (`opd * scale`,
     masked) instead of the sum.
   - `calc_from_phase(phase, *, mask=None, reduce=True)` — dry mass from a phase
     map (rad).
+  - `calc_from_height(height, *, mask=None, reduce=True)` — dry mass from an
+    optical height map (nm), converted back to OPD via the bound engine chain.
   - `calc_from_volume(volume, *, refractive_delta=...)` — the Barer bridge from an
     already-integrated optical volume (µm³): `mass = volume * delta / alpha`.
   - `drymass_scale` — the cached pg-per-summed-nm factor (a plain `float`).
-  - `wavelength` / `wavelength_nm`, `pixel_size` / `pixel_size_um`.
+  - `wavelength` / `wavelength_nm`, `pixel_size` / `pixel_size_um`,
+    `refractive_delta` — re-surfaced from the bound volume engine.
 - `calc_drymass(opd, *, pixel_size, alpha=..., mask=None, reduce=True)` /
   `calc_drymass_from_phase(phase, *, pixel_size, wavelength=..., alpha=..., mask=None, reduce=True)`
   — the one-shot forms.
@@ -190,6 +200,6 @@ from iivs.dhm.analysis import OPDConverter, DryMassCalculator
 conv = OPDConverter.from_wavelength_nm(666)
 opd_nm = conv.convert_to_opd(phase_rad)        # rad -> nm
 
-calc = DryMassCalculator(pixel_size=2.85e-7)   # alpha, wavelength default
+calc = DryMassCalculator()  # lab defaults: 20X pixel size, 666 nm, alpha 2e-4
 mass_pg = calc.calc_from_phase(phase_rad, mask=cell_mask)
 ```

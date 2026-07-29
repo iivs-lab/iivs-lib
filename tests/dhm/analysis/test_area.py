@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from iivs.dhm.analysis.area import ProjectedAreaCalculator, calc_projected_area
+from iivs.dhm.constants import PIXEL_SIZE_20X
 
 IMG = np.zeros((2, 2), dtype=np.float32)
 
@@ -101,6 +102,17 @@ def test_calculator_scale_properties():
     # the scale times the pixel count reproduces the area
     image = np.zeros((4, 4), dtype=np.float32)
     assert calculator.calc(image) == pytest.approx(16 * calculator.area_scale)
+
+
+def test_from_pixel_size_um():
+    um = ProjectedAreaCalculator.from_pixel_size_um(0.1)
+    si = ProjectedAreaCalculator(pixel_size=1e-7)
+    assert um.pixel_size == pytest.approx(si.pixel_size)
+    assert um.area_scale == pytest.approx(si.area_scale)
+
+
+def test_default_pixel_size_is_the_lab_20x():
+    assert ProjectedAreaCalculator().pixel_size == pytest.approx(PIXEL_SIZE_20X)
 
 
 def test_one_shot_matches_calculator():

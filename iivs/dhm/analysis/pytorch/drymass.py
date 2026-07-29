@@ -10,6 +10,7 @@ from iivs.common.data.pytorch.reduction import Sum, apply_mask
 from iivs.dhm.analysis.drymass import DryMassCalculator
 from iivs.dhm.analysis.pytorch.opd import OpticalPathDifference
 from iivs.dhm.constants import (
+    DEFAULT_REFRACTIVE_DELTA,
     DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     DEFAULT_WAVELENGTH,
 )
@@ -45,7 +46,13 @@ class DryMass(nn.Module):
         alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     ) -> None:
         super().__init__()
-        calculator = DryMassCalculator(pixel_size=pixel_size, alpha=alpha)
+        # wavelength / delta only build the engine chain; the scale is free of both
+        calculator = DryMassCalculator.from_args(
+            pixel_size=pixel_size,
+            wavelength=DEFAULT_WAVELENGTH,
+            refractive_delta=DEFAULT_REFRACTIVE_DELTA,
+            alpha=alpha,
+        )
         self.pixel_size = calculator.pixel_size
         self.alpha = calculator.alpha
         self.drymass_scale = calculator.drymass_scale

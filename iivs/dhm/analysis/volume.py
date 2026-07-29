@@ -10,7 +10,11 @@ import numpy as np
 from iivs.common.data.reduction import Sum, apply_mask
 from iivs.dhm.analysis.area import ProjectedAreaCalculator
 from iivs.dhm.analysis.height import OpticalHeightConverter
-from iivs.dhm.constants import DEFAULT_REFRACTIVE_DELTA, DEFAULT_WAVELENGTH
+from iivs.dhm.constants import (
+    DEFAULT_REFRACTIVE_DELTA,
+    DEFAULT_WAVELENGTH,
+    PIXEL_SIZE_20X,
+)
 
 if TYPE_CHECKING:
     from typing import Self
@@ -22,86 +26,75 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class OpticalVolumeCalculator:
-    """An OPD-to-optical-volume (um^3) integrator at a fixed pixel size and delta.
+    """An OPD-to-optical-volume (um^3) integrator over an area and a height engine.
 
-    Bind the pixel size and (via the height converter) the refractive-index
-    difference once; the per-pixel volume factor is precomputed::
+    Built from the two sides of the volume relation, bound at construction; the
+    per-pixel volume factors are precomputed::
 
-        ovc = OpticalVolumeCalculator(pixel_size=px)  # delta, wavelength default
+        ovc = OpticalVolumeCalculator.from_args(
+            pixel_size=px, wavelength=wl, refractive_delta=dn
+        )  # plain parameters; or bind prebuilt engines:
+        ovc = OpticalVolumeCalculator(area_calculator=..., height_converter=...)
         volume = ovc.calc_from_opd(opd, mask=cell)  # opd in nm
         volume = ovc.calc_from_phase(phase, mask=cell)  # phase in rad
 
     Optical volume is ``sum(height * pixel_area)`` with ``height = OPD /
     refractive_delta``, in um^3 (1 um^3 = 1 fL); equivalently ``projected_area *
-    mean(height)``. The calculator holds both sides of that relation: a
-    `ProjectedAreaCalculator` (the um^2 footprint factor, built from `pixel_size`)
-    and an `OpticalHeightConverter` (the OPD-to-height factor), so `volume_scale`
-    is their product ``area_scale * 1e-3 / refractive_delta``. Summation is
-    in float64 over the last two axes (H, W), returned as float32. Inputs are
-    batched (``(..., H, W)``) and a multi-region mask adds a trailing region axis;
-    see `calc_from_opd` for the shape / `mask` / `reduce` details. The map must
-    already be background-corrected (~ 0 outside the object). Dry mass is the
-    ``refractive_delta / alpha`` multiple of this volume
-    (`DryMassCalculator.calc_from_volume`).
+    mean(height)``. The bound `ProjectedAreaCalculator` supplies the um^2
+    footprint factor and the `OpticalHeightConverter` the OPD-to-height factor, so
+    `volume_scale` is their product ``area_scale * 1e-3 / refractive_delta``.
+    Summation is in float64 over the last two axes (H, W), returned as float32.
+    Inputs are batched (``(..., H, W)``) and a multi-region mask adds a trailing
+    region axis; see `calc_from_opd` for the shape / `mask` / `reduce` details.
+    The map must already be background-corrected (~ 0 outside the object). Dry
+    mass is the ``refractive_delta / alpha`` multiple of this volume
+    (`DryMassCalculator`, which binds a volume calculator the same way).
 
     For PyTorch, use `OpticalVolume` from `iivs.dhm.analysis.pytorch`.
 
     Attributes:
-        pixel_size: Physical size of one (square) pixel, in m.
-        height_converter: OPD-to-height converter used by the `opd` / `phase` paths.
-            Defaults to one at the default wavelength and delta; inject your own or
-            use `from_wavelength`.
+        area_calculator: The footprint engine (the `area` in ``area *
+            mean(height)``); carries the pixel size.
+        height_converter: OPD-to-height converter used by the `opd` / `phase`
+            paths; carries the refractive-index difference and wavelength.
     """
 
-    pixel_size: float
     height_converter: OpticalHeightConverter = field(
         default_factory=OpticalHeightConverter
     )
 
-    # the footprint engine (validates pixel_size and carries the um^2 factor):
-    _area: ProjectedAreaCalculator = field(init=False, repr=False, compare=False)
-    # um^3 per summed nm of OPD / of height:
-    _opd_scale: float = field(init=False, repr=False, compare=False)
-    _height_scale: float = field(init=False, repr=False, compare=False)
+    area_calculator: ProjectedAreaCalculator = field(
+        default_factory=ProjectedAreaCalculator
+    )
+
+    # um^3 of volume per summed nm of OPD:
+    _scale: float = field(init=False, repr=False, compare=False)
     # the region summation engine; empty region -> 0 volume:
     _sum: Sum = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        """Build the footprint engine and precompute the per-pixel volume factors."""
-        area = ProjectedAreaCalculator(pixel_size=self.pixel_size)
-        object.__setattr__(self, "_area", area)
-
-        # um^3 per summed nm of height: px_area(um^2) * (nm -> um 1e-3).
-        height_scale = area.area_scale * 1e-3
-        object.__setattr__(self, "_height_scale", height_scale)
-        object.__setattr__(
-            self, "_opd_scale", height_scale / self.height_converter.refractive_delta
-        )
+        """Precompute the per-pixel volume factor from the bound engines."""
+        # px_area(um^2) * (nm -> um 1e-3) / delta: the OPD form every calc path
+        # funnels into (height and phase convert to OPD first)
+        area_scale = self.area_calculator.area_scale  # um^2 per pixel
+        scale = area_scale * 1e-3 / self.height_converter.refractive_delta
+        object.__setattr__(self, "_scale", scale)
         object.__setattr__(self, "_sum", Sum(empty=0.0))
 
     @classmethod
-    def from_wavelength(
+    def from_args(
         cls,
         *,
         pixel_size: float,
-        wavelength: float = DEFAULT_WAVELENGTH,
-        refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
+        wavelength: float,
+        refractive_delta: float,
     ) -> Self:
-        """Build a calculator whose phase path uses `wavelength` (in m)."""
-        height_converter = OpticalHeightConverter.from_wavelength(
+        """Build a calculator from plain parameters, constructing both engines."""
+        height_converter = OpticalHeightConverter.from_args(
             wavelength=wavelength, refractive_delta=refractive_delta
         )
-        return cls(pixel_size=pixel_size, height_converter=height_converter)
-
-    @property
-    def area_calculator(self) -> ProjectedAreaCalculator:
-        """The bound footprint engine (the `area` in ``area * mean(height)``)."""
-        return self._area
-
-    @property
-    def pixel_size_um(self) -> float:
-        """The pixel size in um."""
-        return self._area.pixel_size_um
+        area_calculator = ProjectedAreaCalculator(pixel_size=pixel_size)
+        return cls(height_converter=height_converter, area_calculator=area_calculator)
 
     @property
     def refractive_delta(self) -> float:
@@ -127,7 +120,17 @@ class OpticalVolumeCalculator:
         `DryMassCalculator.drymass_scale`; volume's canonical unit here is um^3, so
         this needs no suffix.
         """
-        return self._opd_scale
+        return self._scale
+
+    @property
+    def pixel_size(self) -> float:
+        """The bound area calculator's pixel size, in m."""
+        return self.area_calculator.pixel_size
+
+    @property
+    def pixel_size_um(self) -> float:
+        """The bound area calculator's pixel size, in um."""
+        return self.area_calculator.pixel_size_um
 
     def calc_from_opd(
         self,
@@ -136,25 +139,6 @@ class OpticalVolumeCalculator:
         mask: MaskLike | None = None,
         reduce: bool = True,
     ) -> NDArray[np.float32]:
-        """Integrate an OPD map (nm) into volume [um^3] over the last two axes (H, W).
-
-        Args:
-            opd: OPD map(s), in nm, shape ``(..., H, W)``.
-            mask: Optional mask selecting the region(s) to integrate: a boolean
-                ``(H, W)`` (one region) or ``(N, H, W)`` (`N` regions, which may
-                overlap), or an integer label image ``(H, W)`` (0 = background, one
-                region per positive label). A boolean ``(H, W)`` keeps the plain
-                shape; the multi-region forms add a trailing region axis.
-            reduce: If True (default), sum the per-pixel volume over each region and
-                return the volume, shape ``(...)`` (or ``(..., R)`` for a
-                multi-region mask). If False, return the per-pixel volume-density
-                map (``opd * scale``, masked) without summing, shape ``(..., H, W)``
-                (or ``(..., R, H, W)``).
-
-        Raises:
-            ValueError: If `opd` is not at least 2-D ``(..., H, W)``, or the mask is
-                malformed (see `region_stack`).
-        """
         if opd.ndim < 2:
             msg = f"opd must be at least 2D (..., H, W) (got {opd.ndim}D)"
             raise ValueError(msg)
@@ -162,7 +146,7 @@ class OpticalVolumeCalculator:
         region_op = self._sum if reduce else apply_mask
         result = region_op(opd, mask)
 
-        return (result * self._opd_scale).astype(np.float32, copy=False)
+        return (result * self._scale).astype(np.float32, copy=False)
 
     def calc_from_height(
         self,
@@ -173,22 +157,21 @@ class OpticalVolumeCalculator:
     ) -> NDArray[np.float32]:
         """Integrate an optical height map (nm) into volume [um^3].
 
-        The direct ``sum(height * pixel_area)`` form of `calc_from_opd` (which
-        divides by `refractive_delta` first); shapes, `mask`, and `reduce` behave
-        identically.
+        Converts `height` back to OPD (``height * refractive_delta``, via the
+        bound height converter), then integrates as `calc_from_opd`; shapes,
+        `mask`, and `reduce` behave identically.
 
         Raises:
-            ValueError: If `height` is not at least 2-D ``(..., H, W)``, or the mask
-                is malformed (see `region_stack`).
+            ValueError: If `height` is not at least 2-D ``(..., H, W)``, or the
+                mask is malformed (see `region_stack`).
         """
         if height.ndim < 2:
             msg = f"height must be at least 2D (..., H, W) (got {height.ndim}D)"
             raise ValueError(msg)
 
-        region_op = self._sum if reduce else apply_mask
-        result = region_op(height, mask)
+        opd = self.height_converter.convert_to_opd(height)
 
-        return (result * self._height_scale).astype(np.float32, copy=False)
+        return self.calc_from_opd(opd, mask=mask, reduce=reduce)
 
     def calc_from_phase(
         self,
@@ -205,7 +188,7 @@ class OpticalVolumeCalculator:
 def calc_volume(
     opd: NDArray[np.float32],
     *,
-    pixel_size: float,
+    pixel_size: float = PIXEL_SIZE_20X,
     refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
     mask: MaskLike | None = None,
     reduce: bool = True,
@@ -226,17 +209,17 @@ def calc_volume(
         Optical volume in um^3, shape ``(...)`` (or ``(..., R)``); or the unreduced
         density map when `reduce` is False.
     """
-    converter = OpticalHeightConverter(refractive_delta=refractive_delta)
-    calculator = OpticalVolumeCalculator(
-        pixel_size=pixel_size, height_converter=converter
-    )
-    return calculator.calc_from_opd(opd, mask=mask, reduce=reduce)
+    return OpticalVolumeCalculator.from_args(
+        pixel_size=pixel_size,
+        wavelength=DEFAULT_WAVELENGTH,
+        refractive_delta=refractive_delta,
+    ).calc_from_opd(opd, mask=mask, reduce=reduce)
 
 
 def calc_volume_from_phase(
     phase: NDArray[np.float32],
     *,
-    pixel_size: float,
+    pixel_size: float = PIXEL_SIZE_20X,
     wavelength: float = DEFAULT_WAVELENGTH,
     refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
     mask: MaskLike | None = None,
@@ -262,6 +245,6 @@ def calc_volume_from_phase(
         Optical volume in um^3, shape ``(...)`` (or ``(..., R)``); or the unreduced
         density map when `reduce` is False.
     """
-    return OpticalVolumeCalculator.from_wavelength(
+    return OpticalVolumeCalculator.from_args(
         pixel_size=pixel_size, wavelength=wavelength, refractive_delta=refractive_delta
     ).calc_from_phase(phase, mask=mask, reduce=reduce)

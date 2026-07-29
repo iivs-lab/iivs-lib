@@ -64,7 +64,9 @@ def test_volume_is_area_times_mean_height():
     mask = np.zeros((4, 4), dtype=bool)
     mask[:2, :3] = True
 
-    calculator = OpticalVolumeCalculator(pixel_size=2e-7)
+    calculator = OpticalVolumeCalculator.from_args(
+        pixel_size=2e-7, wavelength=666e-9, refractive_delta=0.5
+    )
     volume = calculator.calc_from_height(height, mask=mask)
 
     area = calc_projected_area(height, pixel_size=2e-7, mask=mask)  # um^2
@@ -75,8 +77,8 @@ def test_volume_is_area_times_mean_height():
 def test_calc_from_height_matches_calc_from_opd():
     # height = opd / delta, so the two entry points must agree on the same map.
     opd = np.linspace(0.0, 80.0, 16, dtype=np.float32).reshape(4, 4)
-    calculator = OpticalVolumeCalculator.from_wavelength(
-        pixel_size=1e-7, refractive_delta=0.4
+    calculator = OpticalVolumeCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.4
     )
     height = calculator.height_converter.convert_to_height(opd)
     assert calculator.calc_from_height(height) == pytest.approx(
@@ -90,15 +92,17 @@ def test_calc_volume_from_phase_matches_two_step():
         phase, pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5
     )
     height = phase_to_height(phase, wavelength=666e-9, refractive_delta=0.5)
-    two_step = OpticalVolumeCalculator(pixel_size=1e-7).calc_from_height(height)
+    two_step = OpticalVolumeCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5
+    ).calc_from_height(height)
     assert direct == pytest.approx(two_step)
 
 
 def test_calculator_volume_scale():
     # 0.1 um pixel at delta 0.5: px_area 0.01 um^2 * (1e-3 um/nm) / 0.5
     # = 2e-5 um^3 per summed-nm OPD (hand-derived).
-    calculator = OpticalVolumeCalculator.from_wavelength(
-        pixel_size=1e-7, refractive_delta=0.5
+    calculator = OpticalVolumeCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5
     )
     assert calculator.volume_scale == pytest.approx(2e-5)
     # the scale times the summed OPD (nm) reproduces the volume
@@ -109,10 +113,13 @@ def test_calculator_volume_scale():
 
 
 def test_calculator_surfaces_bound_parameters():
-    converter = OpticalHeightConverter.from_wavelength(
+    converter = OpticalHeightConverter.from_args(
         wavelength=532e-9, refractive_delta=0.4
     )
-    calculator = OpticalVolumeCalculator(pixel_size=2e-7, height_converter=converter)
+    calculator = OpticalVolumeCalculator(
+        area_calculator=ProjectedAreaCalculator(pixel_size=2e-7),
+        height_converter=converter,
+    )
     assert calculator.height_converter is converter
     assert calculator.pixel_size_um == pytest.approx(0.2)
     assert calculator.refractive_delta == pytest.approx(0.4)
@@ -123,8 +130,8 @@ def test_calculator_surfaces_bound_parameters():
 def test_calculator_holds_both_sides_of_the_volume_relation():
     # volume = area * mean(height): the calculator composes a footprint engine
     # and a height converter, and its scale is their product.
-    calculator = OpticalVolumeCalculator.from_wavelength(
-        pixel_size=2e-7, refractive_delta=0.4
+    calculator = OpticalVolumeCalculator.from_args(
+        pixel_size=2e-7, wavelength=666e-9, refractive_delta=0.4
     )
     area = calculator.area_calculator
     assert isinstance(area, ProjectedAreaCalculator)
@@ -134,9 +141,13 @@ def test_calculator_holds_both_sides_of_the_volume_relation():
 
 def test_calculator_rejects_bad_inputs():
     with pytest.raises(ValueError, match="pixel_size must be positive"):
-        OpticalVolumeCalculator(pixel_size=0.0)
+        OpticalVolumeCalculator.from_args(
+            pixel_size=0.0, wavelength=666e-9, refractive_delta=0.5
+        )
 
-    calculator = OpticalVolumeCalculator(pixel_size=1e-7)
+    calculator = OpticalVolumeCalculator.from_args(
+        pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5
+    )
     with pytest.raises(ValueError, match="opd must be at least 2D"):
         calculator.calc_from_opd(np.zeros(4, dtype=np.float32))
     with pytest.raises(ValueError, match="height must be at least 2D"):

@@ -47,7 +47,7 @@ def test_phase_to_height_hand_derived():
 def test_height_scale_matches_the_data_layer():
     # The nm twin of the .bin header's height_scale (m/rad): the same factor
     # resolve_height_scale derives for the wavelength + delta form.
-    converter = OpticalHeightConverter.from_wavelength(
+    converter = OpticalHeightConverter.from_args(
         wavelength=666e-9, refractive_delta=0.5
     )
     expected_nm = resolve_height_scale(None, 666e-9, 0.5) * 1e9
@@ -61,7 +61,9 @@ def test_height_scale_matches_the_data_layer():
 
 
 def test_converter_surfaces_the_bound_wavelength():
-    converter = OpticalHeightConverter.from_wavelength(wavelength=532e-9)
+    converter = OpticalHeightConverter.from_args(
+        wavelength=532e-9, refractive_delta=0.5
+    )
     assert converter.wavelength == pytest.approx(532e-9)
     assert converter.wavelength_nm == pytest.approx(532.0)
 

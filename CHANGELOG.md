@@ -16,14 +16,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`ProjectedAreaCalculator`: `pixel_count * pixel_size^2`, um^2, of the masked
   footprint on an image's grid; the image's values never enter), and
   `volume` (`OpticalVolumeCalculator`: `sum(height * pixel_area)`,
-  um^3 = fL, equivalently `projected_area * mean(height)`, holding both sides of
-  that relation as bound engines: an `OpticalHeightConverter` and a
-  `ProjectedAreaCalculator`), each with its cached
-  scale, um/nm property twins, and one-shot free functions.
-  `DryMassCalculator.calc_from_volume` closes the chain
-  (`mass = volume * refractive_delta / alpha`). The `mask` / `reduce` semantics
-  match `DryMassCalculator`; the summation is the shared `iivs.common.data`
-  `Sum` reduction.
+  um^3 = fL, equivalently `projected_area * mean(height)`, receiving both sides
+  of that relation as engines at construction: a `ProjectedAreaCalculator` and
+  an `OpticalHeightConverter`), each with its cached
+  scale, um/nm property twins, a `from_args` builder taking plain parameters,
+  and one-shot free functions. `DryMassCalculator.calc_from_volume` closes the
+  chain (`mass = volume * refractive_delta / alpha`). The `mask` / `reduce`
+  semantics match `DryMassCalculator`; the summation is the shared
+  `iivs.common.data` `Sum` reduction.
+- `ProjectedAreaCalculator.from_pixel_size_um` — the um builder twin (cf.
+  `OPDConverter.from_wavelength_nm`).
 - Torch twins in `iivs.dhm.analysis.pytorch`: the pointwise `OpticalHeight` and
   `OpticalVolume` `nn.Module`s (sharing the NumPy engines' scale factors,
   autograd / device preserved), the `calc_volume` / `calc_volume_from_phase`
@@ -54,6 +56,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Folders reopen from their `root` with construction-time validation skipped
   (`PhaseNpyFolder` re-supplies its constructor metadata), an unreachable `unit`
   fails fast, and nothing is shared with or changed on the original sequence.
+
+### Changed
+
+- `DryMassCalculator` now binds an `OpticalVolumeCalculator` (`volume_converter`)
+  in place of a bare `pixel_size` and `opd_converter`, completing the engine
+  chain (dry mass over volume, volume over area and height, height over OPD);
+  `pixel_size` / `pixel_size_um`, `wavelength` / `wavelength_nm`, and the new
+  `refractive_delta` re-surface as properties, `calc_from_height` joins the map
+  paths, `calc_from_volume`'s `refractive_delta` now defaults to the bound
+  engine's, and `from_wavelength` is renamed `from_args`, the fully-explicit
+  plain-parameter builder every engine now carries. Every engine is also
+  default-constructible from the lab constants (`pixel_size` falls back to
+  `PIXEL_SIZE_20X`), which the one-shots inherit: `calc_drymass` /
+  `calc_drymass_from_phase` gain engine parameters (`wavelength` /
+  `refractive_delta`) and a lab-default `pixel_size`.
 
 ## [0.2.0] - 2026-07-20
 

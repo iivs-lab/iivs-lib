@@ -33,7 +33,7 @@ OPD / dry-mass twins with autograd (`uv add "iivs-lib[torch]"`).
 
 ```python
 from iivs.dhm.data.phase import PhaseBinFolder, PhaseUnit
-from iivs.dhm.analysis import DryMassCalculator
+from iivs.dhm.analysis import calc_drymass_from_phase
 
 # Lazily open a phase acquisition (a folder of numbered .bin frames).
 phase = PhaseBinFolder("scan/Phase/Float/Bin", target_unit=PhaseUnit.RADIANS)
@@ -41,8 +41,9 @@ phase.frame_shape          # (H, W), shared across frames
 img = phase[0]             # first frame as a float32 array (decoded on access)
 
 # Per-frame dry mass over a segmented cell:
-calc = DryMassCalculator(pixel_size=phase.header.pixel_size)
-mass_pg = calc.calc_from_phase(img, mask=cell_mask)
+mass_pg = calc_drymass_from_phase(
+    img, pixel_size=phase.header.pixel_size, mask=cell_mask
+)
 ```
 
 ## 🧩 Modules

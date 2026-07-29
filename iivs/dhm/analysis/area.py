@@ -8,8 +8,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from iivs.common.data.reduction import Sum, apply_mask
+from iivs.dhm.constants import PIXEL_SIZE_20X
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from numpy.typing import NDArray
 
     from iivs.common.data.reduction import MaskLike
@@ -33,10 +36,11 @@ class ProjectedAreaCalculator:
     constant `area_scale`.
 
     Attributes:
-        pixel_size: Physical size of one (square) pixel, in m.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective (`PIXEL_SIZE_20X`).
     """
 
-    pixel_size: float
+    pixel_size: float = PIXEL_SIZE_20X
     _scale: float = field(init=False, repr=False, compare=False)  # um^2 per pixel
     # the region summation engine; empty region -> 0 area:
     _sum: Sum = field(init=False, repr=False, compare=False)
@@ -48,6 +52,11 @@ class ProjectedAreaCalculator:
             raise ValueError(msg)
         object.__setattr__(self, "_scale", (self.pixel_size * 1e6) ** 2)
         object.__setattr__(self, "_sum", Sum(empty=0.0))
+
+    @classmethod
+    def from_pixel_size_um(cls, pixel_size_um: float) -> Self:
+        """Build a calculator from a pixel size given in um."""
+        return cls(pixel_size=pixel_size_um * 1e-6)
 
     @property
     def pixel_size_um(self) -> float:
@@ -109,7 +118,7 @@ class ProjectedAreaCalculator:
 def calc_projected_area(
     image: NDArray[np.generic],
     *,
-    pixel_size: float,
+    pixel_size: float = PIXEL_SIZE_20X,
     mask: MaskLike | None = None,
     reduce: bool = True,
 ) -> NDArray[np.float32]:
@@ -121,7 +130,8 @@ def calc_projected_area(
     Args:
         image: The map(s) fixing the pixel grid, shape ``(..., H, W)``, of any
             dtype; its values never enter the area.
-        pixel_size: Physical size of one (square) pixel, in m.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective.
         mask: Optional region mask (boolean or integer labels); see
             `ProjectedAreaCalculator.calc`.
         reduce: Count each region up into its area (True), or return the per-pixel
