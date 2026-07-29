@@ -75,7 +75,10 @@ constant `area_scale`.
 ## `volume` — optical volume
 
 `volume = sum(height * pixel_area)`, in **µm³** (1 µm³ = 1 fL); equivalently
-`projected_area * mean(height)`. Batching, `mask`, `reduce`, and the
+`projected_area * mean(height)`. The calculator holds both sides of that
+relation — a `ProjectedAreaCalculator` (built from `pixel_size`) and an
+`OpticalHeightConverter` — so `volume_scale` is their product
+(`area_scale * 1e-3 / refractive_delta`). Batching, `mask`, `reduce`, and the
 background-correction requirement all match `drymass` below; an empty region
 integrates to 0 µm³. Dry mass is the `refractive_delta / alpha` multiple of this
 volume (`DryMassCalculator.calc_from_volume`).
@@ -86,6 +89,7 @@ volume (`DryMassCalculator.calc_from_volume`).
   - `calc_from_opd(opd, *, mask=None, reduce=True)` /
     `calc_from_height(height, ...)` / `calc_from_phase(phase, ...)`.
   - `volume_scale` — the cached µm³-per-summed-nm-OPD factor.
+  - `area_calculator` / `height_converter` — the two bound engines.
   - `pixel_size` / `pixel_size_um`, `refractive_delta`, `wavelength` /
     `wavelength_nm`.
 - `calc_volume(opd, *, pixel_size, refractive_delta=..., mask=None, reduce=True)` /

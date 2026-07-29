@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from iivs.common.data.reduction import Sum, apply_mask
+from iivs.dhm.analysis.area import ProjectedAreaCalculator
 from iivs.dhm.analysis.height import OpticalHeightConverter
 from iivs.dhm.constants import DEFAULT_REFRACTIVE_DELTA, DEFAULT_WAVELENGTH
 
@@ -32,7 +33,10 @@ class OpticalVolumeCalculator:
 
     Optical volume is ``sum(height * pixel_area)`` with ``height = OPD /
     refractive_delta``, in um^3 (1 um^3 = 1 fL); equivalently ``projected_area *
-    mean(height)`` (`ProjectedAreaCalculator` measures that footprint). Summation is
+    mean(height)``. The calculator holds both sides of that relation: a
+    `ProjectedAreaCalculator` (the um^2 footprint factor, built from `pixel_size`)
+    and an `OpticalHeightConverter` (the OPD-to-height factor), so `volume_scale`
+    is their product ``area_scale * 1e-3 / refractive_delta``. Summation is
     in float64 over the last two axes (H, W), returned as float32. Inputs are
     batched (``(..., H, W)``) and a multi-region mask adds a trailing region axis;
     see `calc_from_opd` for the shape / `mask` / `reduce` details. The map must
@@ -54,6 +58,8 @@ class OpticalVolumeCalculator:
         default_factory=OpticalHeightConverter
     )
 
+    # the footprint engine (validates pixel_size and carries the um^2 factor):
+    _area: ProjectedAreaCalculator = field(init=False, repr=False, compare=False)
     # um^3 per summed nm of OPD / of height:
     _opd_scale: float = field(init=False, repr=False, compare=False)
     _height_scale: float = field(init=False, repr=False, compare=False)
@@ -61,13 +67,12 @@ class OpticalVolumeCalculator:
     _sum: Sum = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        """Validate inputs and precompute the per-pixel volume factors."""
-        if self.pixel_size <= 0:
-            msg = f"pixel_size must be positive (got {self.pixel_size})"
-            raise ValueError(msg)
+        """Build the footprint engine and precompute the per-pixel volume factors."""
+        area = ProjectedAreaCalculator(pixel_size=self.pixel_size)
+        object.__setattr__(self, "_area", area)
 
         # um^3 per summed nm of height: px_area(um^2) * (nm -> um 1e-3).
-        height_scale = (self.pixel_size * 1e6) ** 2 * 1e-3
+        height_scale = area.area_scale * 1e-3
         object.__setattr__(self, "_height_scale", height_scale)
         object.__setattr__(
             self, "_opd_scale", height_scale / self.height_converter.refractive_delta
@@ -89,9 +94,14 @@ class OpticalVolumeCalculator:
         return cls(pixel_size=pixel_size, height_converter=height_converter)
 
     @property
+    def area_calculator(self) -> ProjectedAreaCalculator:
+        """The bound footprint engine (the `area` in ``area * mean(height)``)."""
+        return self._area
+
+    @property
     def pixel_size_um(self) -> float:
         """The pixel size in um."""
-        return self.pixel_size * 1e6
+        return self._area.pixel_size_um
 
     @property
     def refractive_delta(self) -> float:

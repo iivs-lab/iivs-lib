@@ -16,7 +16,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`ProjectedAreaCalculator`: `pixel_count * pixel_size^2`, um^2, of the masked
   footprint on an image's grid; the image's values never enter), and
   `volume` (`OpticalVolumeCalculator`: `sum(height * pixel_area)`,
-  um^3 = fL, equivalently `projected_area * mean(height)`), each with its cached
+  um^3 = fL, equivalently `projected_area * mean(height)`, holding both sides of
+  that relation as bound engines: an `OpticalHeightConverter` and a
+  `ProjectedAreaCalculator`), each with its cached
   scale, um/nm property twins, and one-shot free functions.
   `DryMassCalculator.calc_from_volume` closes the chain
   (`mass = volume * refractive_delta / alpha`). The `mask` / `reduce` semantics

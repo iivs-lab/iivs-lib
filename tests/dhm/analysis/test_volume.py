@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.analysis.area import calc_projected_area
+from iivs.dhm.analysis.area import ProjectedAreaCalculator, calc_projected_area
 from iivs.dhm.analysis.height import OpticalHeightConverter, phase_to_height
 from iivs.dhm.analysis.volume import (
     OpticalVolumeCalculator,
@@ -118,6 +118,18 @@ def test_calculator_surfaces_bound_parameters():
     assert calculator.refractive_delta == pytest.approx(0.4)
     assert calculator.wavelength == pytest.approx(532e-9)
     assert calculator.wavelength_nm == pytest.approx(532.0)
+
+
+def test_calculator_holds_both_sides_of_the_volume_relation():
+    # volume = area * mean(height): the calculator composes a footprint engine
+    # and a height converter, and its scale is their product.
+    calculator = OpticalVolumeCalculator.from_wavelength(
+        pixel_size=2e-7, refractive_delta=0.4
+    )
+    area = calculator.area_calculator
+    assert isinstance(area, ProjectedAreaCalculator)
+    assert area.pixel_size == pytest.approx(calculator.pixel_size)
+    assert calculator.volume_scale == pytest.approx(area.area_scale * 1e-3 / 0.4)
 
 
 def test_calculator_rejects_bad_inputs():
