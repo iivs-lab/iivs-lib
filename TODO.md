@@ -3,20 +3,31 @@
 Actionable work on the data layer and beyond, in rough priority order. Not
 formal milestones.
 
-## Release
+## On hold: threaded `get_items` (batch reads)
 
-`CHANGELOG.md`'s `[Unreleased]` has accumulated substantial public-API changes
-since `0.1.0`: the suffix-dispatch factories, the `load_bin` / `load_txt` engine
-consolidation, `bounds_nm` replaced by `value_range`, the `imagecodecs` core
-dependency, the `iivs.common.data` masked reductions (NumPy + Torch, label +
-one-hot masks) with a now-pointwise Torch `DryMass`, and the whole
-`KoalaTimelapse` / `ReconstructionGroup` time-lapse layout (per-modality groups,
-the `search_*` finders, content `validate`, and the status flags). The data layer
-has settled; cut `0.2.0`.
+Deferred until real-storage numbers justify it (2026-07-29). The idea: overlap
+per-file reads when a caller fetches many frames at once (slicing, explicit
+`get_items`, a PyTorch `DataLoader` batch). `load_file` is stateless and the
+sequences are read-only after `__init__`, so a caller can already get the full
+benefit externally, with no library change:
 
-This is a breaking release for a `0.1.0` caller: beyond `iivs.common` and the
-time-lapse layer being new additions, the cycle renamed or moved existing public
-API (the `iivs.dhm.data.common` → `iivs.dhm.data.koala` module, `bounds_nm` →
-`value_range`, the `iivs.dhm.data.constants` → `iivs.dhm.constants` move,
-`convert_*_folder`'s `root` → `dest`, and more; see the `[Unreleased]`
-**Changed** / **Removed** entries). Pre-1.0 SemVer permits the minor bump.
+```python
+with ThreadPoolExecutor(max_workers=4) as ex:
+    frames = list(ex.map(folder.get_item, indices))  # order preserved
+```
+
+A warm-cache benchmark on a local disk (synthetic 800x800 float32 `.bin`, 200
+frames, 488 MB, `PhaseBinFolder`) showed only 1.2-1.35x over the sequential
+loop, saturating at 2-4 threads — the bottleneck there is GIL-held Python
+overhead and memory bandwidth, not IO latency. That does not clear the bar for
+the agreed design, whose cost is real: `num_workers: int = 0` threaded through
+every `__init__`-defining sequence class (plus the `@overload` stubs), a
+`get_items(*, num_workers: int | None = None)` override (`None` = instance
+default, `0` = force sequential), implemented in `iivs.common.data`'s
+`ArrayFileList` so List and Folder variants both benefit, and a
+`__getitems__` delegating method as the `DataLoader` batch-fetch hook.
+
+Revisit when a cold-cache run on the storage that actually hosts acquisitions
+(NAS / external HDD) shows ≥ 1.5-2x: threading's real payoff — hiding disk and
+network latency — is exactly what a warm page cache hides. Until then, use the
+external `ThreadPoolExecutor` pattern at call sites that need it.
