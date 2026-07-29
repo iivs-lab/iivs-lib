@@ -125,9 +125,9 @@ precomputes its conversion factor (with one-shot function conveniences):
 - **`height`** — optical height (`height = OPD / refractive_delta`, in nm; the
   same height `PhaseUnit.NANOMETERS` represents). `OpticalHeightConverter`
   (scale `height_scale`); `opd_to_height` / `height_to_opd` / `phase_to_height`.
-- **`area`** — projected area (`pixel_count * pixel_size^2`, in um^2), from the
-  mask alone. `ProjectedAreaCalculator` (scale `area_scale`);
-  `calc_projected_area`.
+- **`area`** — projected area (`pixel_count * pixel_size^2`, in um^2) of the
+  masked footprint on an image's grid; the image's values never enter.
+  `ProjectedAreaCalculator` (scale `area_scale`); `calc_projected_area`.
 - **`volume`** — optical volume (`sum(height * pixel_area)`, in um^3 = fL;
   equivalently `projected_area * mean(height)`). `OpticalVolumeCalculator`
   (`calc_from_opd` / `calc_from_height` / `calc_from_phase`, scale

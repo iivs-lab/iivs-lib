@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from iivs.common.data.reduction import region_stack
+from iivs.common.data.reduction import Sum, apply_mask
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -17,17 +17,20 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class ProjectedAreaCalculator:
-    """A mask-to-projected-area (um^2) calculator at a fixed pixel size.
+    """An image-and-mask projected-area (um^2) calculator at a fixed pixel size.
 
-    Bind the pixel size once, then measure region masks repeatedly::
+    Bind the pixel size once, then measure images repeatedly::
 
         pac = ProjectedAreaCalculator(pixel_size=px)
-        area = pac.calc(cell_mask)  # um^2
+        area = pac.calc(image, mask=cell)  # um^2 of the masked footprint
 
-    Projected area is ``pixel_count * pixel_size**2``: the footprint a segmented
-    region covers in the image plane. The one quantity here computed from the mask
-    alone; it enters the volume relation as ``volume = area * mean(height)``
-    (`OpticalVolumeCalculator`).
+    Projected area is ``pixel_count * pixel_size**2``: the footprint the selected
+    region(s) cover in the image plane. It enters the volume relation as ``volume =
+    area * mean(height)`` (`OpticalVolumeCalculator`). The call shape matches the
+    volume / dry-mass engines (`image`, `mask`, `reduce`), but unlike their
+    integrals the image's *values* never enter the area: `image` fixes the pixel
+    grid (and any leading batch axes), and each selected pixel contributes the
+    constant `area_scale`.
 
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m.
@@ -35,6 +38,8 @@ class ProjectedAreaCalculator:
 
     pixel_size: float
     _scale: float = field(init=False, repr=False, compare=False)  # um^2 per pixel
+    # the region summation engine; empty region -> 0 area:
+    _sum: Sum = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         """Validate the pixel size and cache the per-pixel area (um^2)."""
@@ -42,6 +47,7 @@ class ProjectedAreaCalculator:
             msg = f"pixel_size must be positive (got {self.pixel_size})"
             raise ValueError(msg)
         object.__setattr__(self, "_scale", (self.pixel_size * 1e6) ** 2)
+        object.__setattr__(self, "_sum", Sum(empty=0.0))
 
     @property
     def pixel_size_um(self) -> float:
@@ -57,47 +63,73 @@ class ProjectedAreaCalculator:
         """
         return self._scale
 
-    def calc(self, mask: MaskLike) -> NDArray[np.float32]:
-        """Measure the projected area [um^2] of each region of `mask`.
+    def calc(
+        self,
+        image: NDArray[np.float32],
+        *,
+        mask: MaskLike | None = None,
+        reduce: bool = True,
+    ) -> NDArray[np.float32]:
+        """Measure the projected area [um^2] over `image`'s last two axes (H, W).
 
         Args:
-            mask: The region(s) to measure: a boolean ``(H, W)`` (one region) or
-                ``(N, H, W)`` (`N` regions, which may overlap), or an integer label
-                image ``(H, W)`` (0 = background, one region per positive label). A
-                boolean ``(H, W)`` gives a plain scalar; the multi-region forms give
-                one area per region, shape ``(R,)``.
+            image: The map(s) fixing the pixel grid, shape ``(..., H, W)``. Its
+                values never enter the area; only the shape (and the mask) matter.
+            mask: Optional mask selecting the region(s) to measure: a boolean
+                ``(H, W)`` (one region) or ``(N, H, W)`` (`N` regions, which may
+                overlap), or an integer label image ``(H, W)`` (0 = background, one
+                region per positive label); None (default) measures the whole
+                frame. A boolean ``(H, W)`` (or None) keeps the plain shape; the
+                multi-region forms add a trailing region axis.
+            reduce: If True (default), count each region up into its area, shape
+                ``(...)`` (or ``(..., R)`` for a multi-region mask). If False,
+                return the per-pixel area-density map instead (`area_scale` inside
+                a region, 0 outside; summing back to the area), shape
+                ``(..., H, W)`` (or ``(..., R, H, W)``).
 
         Raises:
-            ValueError: If the mask is malformed (see `region_stack`: a boolean mask
-                not 2-D or 3-D, a label mask not 2-D or holding a negative label, or
-                a non-boolean / non-integer dtype).
+            ValueError: If `image` is not at least 2-D ``(..., H, W)``, or the mask
+                is malformed (see `region_stack`: a wrong ``(H, W)``, a boolean
+                mask not 2-D or 3-D, a label mask not 2-D or holding a negative
+                label, or a non-boolean / non-integer dtype).
         """
-        regions = region_stack(mask, mask.shape[-2:])
-        counts = regions.sum(axis=(-2, -1), dtype=np.int64)
+        if image.ndim < 2:
+            msg = f"image must be at least 2D (..., H, W) (got {image.ndim}D)"
+            raise ValueError(msg)
 
-        areas = (counts * self._scale).astype(np.float32, copy=False)
-        if mask.ndim == 2 and mask.dtype == np.bool_:
-            return areas.squeeze(0)  # single-region form drops the region axis
-        return areas
+        # each pixel contributes the constant per-pixel area, whatever its value
+        density = np.broadcast_to(np.float32(self._scale), image.shape)
+        region_op = self._sum if reduce else apply_mask
+        result = region_op(density, mask)
+
+        return result.astype(np.float32, copy=False)
 
 
 def calc_projected_area(
-    mask: MaskLike,
+    image: NDArray[np.float32],
     *,
     pixel_size: float,
+    mask: MaskLike | None = None,
+    reduce: bool = True,
 ) -> NDArray[np.float32]:
-    """Measure the projected area [um^2] of each region of `mask`.
+    """Measure the projected area [um^2] over `image`'s last two axes (H, W).
 
-    A one-shot `ProjectedAreaCalculator`; for repeated masks at one pixel size,
-    reuse the calculator.
+    A one-shot `ProjectedAreaCalculator`; for repeated measurements at one pixel
+    size, reuse the calculator.
 
     Args:
-        mask: Region mask (boolean or integer labels); see
-            `ProjectedAreaCalculator.calc`.
+        image: The map(s) fixing the pixel grid, shape ``(..., H, W)``; its values
+            never enter the area.
         pixel_size: Physical size of one (square) pixel, in m.
+        mask: Optional region mask (boolean or integer labels); see
+            `ProjectedAreaCalculator.calc`.
+        reduce: Count each region up into its area (True), or return the per-pixel
+            area-density map (False). See `ProjectedAreaCalculator.calc`.
 
     Returns:
-        The projected area in um^2: a scalar for a boolean ``(H, W)`` mask, else
-        one area per region, shape ``(R,)``.
+        The projected area in um^2, shape ``(...)`` (or ``(..., R)``); or the
+        unreduced density map when `reduce` is False.
     """
-    return ProjectedAreaCalculator(pixel_size=pixel_size).calc(mask)
+    return ProjectedAreaCalculator(pixel_size=pixel_size).calc(
+        image, mask=mask, reduce=reduce
+    )

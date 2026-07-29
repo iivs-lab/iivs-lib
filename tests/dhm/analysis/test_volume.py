@@ -67,7 +67,7 @@ def test_volume_is_area_times_mean_height():
     calculator = OpticalVolumeCalculator(pixel_size=2e-7)
     volume = calculator.calc_from_height(height, mask=mask)
 
-    area = calc_projected_area(mask, pixel_size=2e-7)  # um^2
+    area = calc_projected_area(height, pixel_size=2e-7, mask=mask)  # um^2
     mean_height_um = float(height[mask].mean()) * 1e-3  # nm -> um
     assert volume == pytest.approx(float(area) * mean_height_um, rel=1e-5)
 

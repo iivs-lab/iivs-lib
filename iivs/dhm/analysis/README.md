@@ -54,16 +54,23 @@ with `convert_phase_unit(..., target=NANOMETERS)` for a file whose stored
 
 ## `area` — projected area
 
-`area = pixel_count * pixel_size²`, in **µm²**: the footprint a segmented region
-covers in the image plane. The one quantity computed from the mask alone; it
-enters the volume relation as `volume = area * mean(height)`.
+`area = pixel_count * pixel_size²`, in **µm²**: the footprint the selected
+region(s) cover in the image plane; it enters the volume relation as `volume =
+area * mean(height)`. The call shape matches the other engines (`image`, `mask`,
+`reduce`), but the image's *values* never enter the area — the image fixes the
+pixel grid (and any leading batch axes), and each selected pixel contributes the
+constant `area_scale`.
 
 - `ProjectedAreaCalculator(pixel_size)` — bind the pixel size (m) once.
-  - `calc(mask)` — µm² of each region: a plain scalar for a boolean `(H, W)`
-    mask, one area per region (`(R,)`) for a `(N, H, W)` stack or a label image.
+  - `calc(image, *, mask=None, reduce=True)` — µm² of each region: `(...)` for a
+    boolean `(H, W)` mask (or None, the whole frame), a trailing `(..., R)` axis
+    for a `(N, H, W)` stack or a label image. `reduce=False` returns the
+    per-pixel area-density map instead (`area_scale` inside a region, 0 outside;
+    summing back to the area).
   - `area_scale` — the cached µm²-per-pixel factor.
   - `pixel_size` / `pixel_size_um`.
-- `calc_projected_area(mask, *, pixel_size)` — the one-shot form.
+- `calc_projected_area(image, *, pixel_size, mask=None, reduce=True)` — the
+  one-shot form.
 
 ## `volume` — optical volume
 
