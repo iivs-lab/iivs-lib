@@ -219,6 +219,10 @@ def test_calculator_rejects_nonpositive_alpha():
         DryMassCalculator(pixel_size=1e-7, alpha=0.0)
 
 
+def test_calculator_pixel_size_um():
+    assert DryMassCalculator(pixel_size=1e-7).pixel_size_um == pytest.approx(0.1)
+
+
 def test_calc_from_volume_closes_the_chain():
     # The same physics through both routes: 50 nm OPD over 100 px of 0.1 um pitch
     # is 0.25 pg directly (the anchor above) and, at delta 0.5, 0.1 um^3 of volume;

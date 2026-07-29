@@ -26,6 +26,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   autograd / device preserved), the `calc_volume` / `calc_volume_from_phase`
   one-shots, and the mask-only `calc_projected_area` (no module: counting mask
   pixels is not a pointwise map).
+- `DryMassCalculator.pixel_size_um` — the um twin of `pixel_size`, matching the
+  new engines' property surface.
 - `load_phase_bin` / `load_phase_txt` / `load_phase` take `target_unit`: the loaded
   image is converted via the file's own `height_scale` (None, the default, keeps the
   stored unit), sparing the manual `convert_phase_unit` composition for a one-shot

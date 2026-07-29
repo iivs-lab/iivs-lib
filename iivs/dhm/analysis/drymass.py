@@ -96,6 +96,11 @@ class DryMassCalculator:
         return self.opd_converter.wavelength_nm
 
     @property
+    def pixel_size_um(self) -> float:
+        """The pixel size in um."""
+        return self.pixel_size * 1e6
+
+    @property
     def drymass_scale(self) -> float:
         """pg of dry mass per nm of OPD summed over pixels.
 

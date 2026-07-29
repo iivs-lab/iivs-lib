@@ -108,7 +108,7 @@ caller's responsibility; the masking + reduction is the `iivs.common.data`
   - `calc_from_volume(volume, *, refractive_delta=...)` — the Barer bridge from an
     already-integrated optical volume (µm³): `mass = volume * delta / alpha`.
   - `drymass_scale` — the cached pg-per-summed-nm factor (a plain `float`).
-  - `wavelength` / `wavelength_nm`.
+  - `wavelength` / `wavelength_nm`, `pixel_size` / `pixel_size_um`.
 - `calc_drymass(opd, *, pixel_size, alpha=..., mask=None, reduce=True)` /
   `calc_drymass_from_phase(phase, *, pixel_size, wavelength=..., alpha=..., mask=None, reduce=True)`
   — the one-shot forms.
