@@ -45,6 +45,24 @@ def test_wavelength_form_derives_height_scale(tmp_path):
     assert f.header.height_scale == pytest.approx(666e-9 / (2 * np.pi * 0.5))
 
 
+def test_with_unit_reopens_with_the_same_metadata(tmp_path):
+    _write(tmp_path, 0, 1.5)
+    folder = PhaseNpyFolder(
+        tmp_path, pixel_size=2e-6, unit=PhaseUnit.RADIANS, height_scale=3e-7
+    )
+
+    sibling = folder.with_unit(PhaseUnit.NANOMETERS)
+
+    assert type(sibling) is PhaseNpyFolder
+    assert sibling.header == folder.header  # pixel_size / unit / height_scale kept
+    assert sibling.target_unit is PhaseUnit.NANOMETERS
+    # rad -> nm through the synthesized header: 3e-7 m/rad * 1e9 nm/m
+    np.testing.assert_allclose(
+        sibling[0], np.full((2, 3), 1.5 * 300.0, dtype=np.float32), rtol=1e-6
+    )
+    assert folder.target_unit is PhaseUnit.RADIANS
+
+
 def test_rejects_both_scale_forms(tmp_path):
     _write(tmp_path, 0)
     with pytest.raises(ValueError, match="height_scale, or wavelength"):

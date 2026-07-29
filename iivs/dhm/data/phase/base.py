@@ -22,7 +22,7 @@ from iivs.dhm.data.phase.bounds import PhaseBounds
 from iivs.dhm.data.phase.unit import PhaseUnit, convert_phase_unit, resolve_height_scale
 
 if TYPE_CHECKING:
-    from typing import Literal
+    from typing import Literal, Self
 
     from kaparoo.filesystem.types import StrPath, StrPaths
 
@@ -243,6 +243,14 @@ class PhaseFileList(KoalaFloatFileList["PhaseBinHeader"], PhaseFloatSequence[Pat
         """The unit images are converted to on load, or None to keep each file's."""
         return self._target_unit
 
+    def with_unit(self, unit: PhaseUnit | None) -> Self:
+        """Return an independent sequence over the same files, loading in `unit`.
+
+        A fresh instance of this type; nothing is shared with (or changed on) this
+        sequence. `None` keeps each file's stored unit.
+        """
+        return type(self)(self.files, target_unit=unit)
+
     @override
     def _postprocess(
         self, image: NDArray[np.float32], header: PhaseBinHeader
@@ -358,3 +366,16 @@ class PhaseFileFolder(KoalaFloatFileFolder["PhaseBinHeader"], PhaseFileList):
             target=self._target_unit,
             height_scale=self._header.height_scale,
         )
+
+    @override
+    def with_unit(self, unit: PhaseUnit | None) -> Self:
+        """Return an independent folder over the same `root`, loading in `unit`.
+
+        Reopens `root`, so discovery reflects its current contents; construction-time
+        validation is skipped (this folder already passed it, and the unit plays no
+        part in it). `None` resolves to the shared header's stored unit.
+
+        Raises:
+            ValueError: If `unit` is not reachable from the stored unit.
+        """
+        return type(self)(self.root, target_unit=unit, validate=None)

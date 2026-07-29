@@ -8,6 +8,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `PhaseFileList.with_unit(unit)` — return an independent sequence over the same
+  files loading in `unit` (`None` keeps the stored unit), so a caller handed an
+  already-open folder (e.g. from `search_timelapses` / `PhaseGroup.bin_folder`)
+  can choose the read unit after the fact; `target_unit` was constructor-only.
+  Folders reopen from their `root` with construction-time validation skipped
+  (`PhaseNpyFolder` re-supplies its constructor metadata), an unreachable `unit`
+  fails fast, and nothing is shared with or changed on the original sequence.
+
 ## [0.2.0] - 2026-07-20
 
 ### Added

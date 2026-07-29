@@ -10,6 +10,8 @@ from iivs.dhm.data.phase.bin import PhaseBinHeader
 from iivs.dhm.data.phase.unit import resolve_height_scale
 
 if TYPE_CHECKING:
+    from typing import Self
+
     import numpy as np
     from kaparoo.filesystem.types import StrPath
     from numpy.typing import NDArray
@@ -126,6 +128,27 @@ class PhaseNpyFolder(PhaseFileFolder):
             height_scale, wavelength, refractive_delta
         )
         super().__init__(root, target_unit=target_unit, validate=validate)
+
+    @override
+    def with_unit(self, unit: PhaseUnit | None) -> Self:
+        """Return an independent folder over the same `root`, loading in `unit`.
+
+        Reopens `root` with this folder's constructor metadata (`pixel_size`, `unit`,
+        and the already-resolved height scale); as in `PhaseFileFolder.with_unit`,
+        discovery reflects the folder's current contents and construction-time
+        validation is skipped. `None` resolves to the stored `unit`.
+
+        Raises:
+            ValueError: If `unit` is not reachable from the stored `unit`.
+        """
+        return type(self)(
+            self.root,
+            pixel_size=self._pixel_size,
+            unit=self._unit,
+            height_scale=self._height_scale,
+            target_unit=unit,
+            validate=None,
+        )
 
     def _header_for(self, height: int, width: int) -> PhaseBinHeader:
         """Synthesize the shared header from the constructor metadata + a shape."""
