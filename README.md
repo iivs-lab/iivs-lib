@@ -123,9 +123,10 @@ precomputes its conversion factor (with one-shot function conveniences):
 - **`opd`** — optical path difference (`OPD = phase * wavelength / (2*pi)`, in
   nm). `OPDConverter` (`convert_to_opd` / `convert_to_phase`, scale
   `opd_scale`); `phase_to_opd` / `opd_to_phase`.
-- **`height`** — optical height (`height = OPD / refractive_delta`, in nm; the
-  same height `PhaseUnit.NANOMETERS` represents). `OpticalHeightConverter`
-  (scale `height_scale`); `opd_to_height` / `height_to_opd` / `phase_to_height`.
+- **`height`** — optical height (`height = phase * wavelength / (2*pi *
+  refractive_delta)`, in nm; the sample thickness of the QPI literature).
+  `OpticalHeightConverter` (scale `height_scale`; OPD enters through phase);
+  `phase_to_height` / `height_to_phase` / `opd_to_height` / `height_to_opd`.
 - **`area`** — projected area (`pixel_count * pixel_size^2`, in um^2) of the
   masked footprint on an image's grid; the image's values never enter.
   `ProjectedAreaCalculator` (scale `area_scale`); `calc_projected_area`.

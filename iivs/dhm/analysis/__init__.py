@@ -17,6 +17,7 @@ __all__ = (
     "calc_volume",
     "calc_volume_from_phase",
     "height_to_opd",
+    "height_to_phase",
     "opd_to_height",
     "opd_to_phase",
     "phase_to_height",
@@ -32,6 +33,7 @@ from iivs.dhm.analysis.drymass import (
 from iivs.dhm.analysis.height import (
     OpticalHeightConverter,
     height_to_opd,
+    height_to_phase,
     opd_to_height,
     phase_to_height,
 )

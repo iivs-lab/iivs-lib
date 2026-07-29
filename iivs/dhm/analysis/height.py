@@ -3,6 +3,7 @@ from __future__ import annotations
 __all__ = (
     "OpticalHeightConverter",
     "height_to_opd",
+    "height_to_phase",
     "opd_to_height",
     "phase_to_height",
 )
@@ -23,28 +24,28 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class OpticalHeightConverter:
-    """An OPD <-> optical height converter bound to one refractive-index difference.
+    """A phase <-> optical height converter bound to one wavelength and delta.
 
-    Bind the refractive-index difference once, then convert repeatedly::
+    Bind the refractive-index difference (and, via the OPD converter, the
+    wavelength) once, then convert repeatedly::
 
         conv = OpticalHeightConverter()  # lab defaults
-        height = conv.convert_to_height(opd)  # opd in nm -> height in nm
-        height = conv.convert_from_phase(phase)  # phase in rad -> height in nm
+        height = conv.convert_to_height(phase)  # phase in rad -> height in nm
+        height = conv.convert_from_opd(opd)  # opd in nm -> height in nm
 
-    ``height = OPD / refractive_delta``, both in nm: the physical thickness that
-    produces the measured path difference. Transmission QPI literature usually calls
-    this quantity the sample *thickness* (``phase = 2*pi * delta * t / wavelength``);
-    "height" here follows Koala's and this library's data-layer naming (the `.bin`
-    header's `height_scale`, `PhaseUnit.METERS`). It is the same height the data
-    layer's `PhaseUnit.NANOMETERS` represents, so `convert_from_phase` agrees
-    numerically with `convert_phase_unit(..., target=NANOMETERS)` when the file's
-    stored `height_scale` was built from the same wavelength and delta. For PyTorch,
-    use `OpticalHeight` from `iivs.dhm.analysis.pytorch`.
+    ``height = phase * wavelength / (2 * pi * refractive_delta)``, in nm: the
+    physical thickness that produces the measured phase. Transmission QPI
+    literature usually calls this quantity the sample *thickness* (``phase =
+    2*pi * delta * t / wavelength``); "height" keeps this library's established
+    name for it. Phase is the preferred representation: an OPD input is first
+    mapped back to phase by the bound `opd_converter`, whose wavelength then
+    cancels out of the composition (``height == opd / refractive_delta``).
+    For PyTorch, use `OpticalHeight` from `iivs.dhm.analysis.pytorch`.
 
     Attributes:
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
-        opd_converter: Phase-to-OPD converter used by `convert_from_phase`. Defaults
-            to one at the default wavelength.
+        opd_converter: Phase <-> OPD converter backing the phase path's scale and
+            the `opd` entry / exit. Defaults to one at the default wavelength.
     """
 
     refractive_delta: float = DEFAULT_REFRACTIVE_DELTA
@@ -80,22 +81,37 @@ class OpticalHeightConverter:
     def height_scale(self) -> float:
         """nm of height per rad of phase (``wavelength / (2 * pi * delta)`` in nm).
 
-        The nm twin of the `.bin` header's `height_scale` (m per rad); the same
-        conversion the data layer applies for `PhaseUnit.NANOMETERS`.
+        Height's canonical unit here is nm, so this needs no suffix (cf.
+        `wavelength` vs `wavelength_nm`).
         """
         return self._scale
 
-    def convert_to_height(self, opd: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Convert `opd` (nm) to optical height (nm) at this delta."""
-        return (opd / self.refractive_delta).astype(np.float32, copy=False)
+    def convert_to_height(self, phase: NDArray[np.float32]) -> NDArray[np.float32]:
+        """Convert `phase` (rad) to optical height (nm) at this wavelength and delta."""
+        return (phase * self._scale).astype(np.float32, copy=False)
+
+    def convert_to_phase(self, height: NDArray[np.float32]) -> NDArray[np.float32]:
+        """Convert optical `height` (nm) to phase (rad) at this wavelength and delta."""
+        return (height / self._scale).astype(np.float32, copy=False)
+
+    def convert_from_opd(self, opd: NDArray[np.float32]) -> NDArray[np.float32]:
+        """Convert `opd` (nm) to optical height (nm), entering through phase.
+
+        The bound `opd_converter` first maps `opd` back to phase, then the
+        phase-to-height scale applies. Its wavelength cancels out of that
+        composition, so the result is ``opd / refractive_delta`` regardless of it.
+        """
+        phase = self.opd_converter.convert_to_phase(opd)
+        return self.convert_to_height(phase)
 
     def convert_to_opd(self, height: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Convert optical `height` (nm) to OPD (nm) at this delta."""
-        return (height * self.refractive_delta).astype(np.float32, copy=False)
+        """Convert optical `height` (nm) to OPD (nm), exiting through phase.
 
-    def convert_from_phase(self, phase: NDArray[np.float32]) -> NDArray[np.float32]:
-        """Convert `phase` (rad) to optical height (nm) via the bound wavelength."""
-        return (phase * self._scale).astype(np.float32, copy=False)
+        The inverse of `convert_from_opd`; the bound wavelength cancels the same
+        way, leaving ``height * refractive_delta``.
+        """
+        phase = self.convert_to_phase(height)
+        return self.opd_converter.convert_to_opd(phase)
 
 
 def opd_to_height(
@@ -115,7 +131,7 @@ def opd_to_height(
         Optical height as a float32 array of the same shape, in nm.
     """
     converter = OpticalHeightConverter(refractive_delta=refractive_delta)
-    return converter.convert_to_height(opd)
+    return converter.convert_from_opd(opd)
 
 
 def height_to_opd(
@@ -161,4 +177,30 @@ def phase_to_height(
     converter = OpticalHeightConverter.from_args(
         wavelength=wavelength, refractive_delta=refractive_delta
     )
-    return converter.convert_from_phase(phase)
+    return converter.convert_to_height(phase)
+
+
+def height_to_phase(
+    height: NDArray[np.float32],
+    *,
+    wavelength: float = DEFAULT_WAVELENGTH,
+    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
+) -> NDArray[np.float32]:
+    """Convert optical height (nm) to phase (rad); a one-shot converter.
+
+    The inverse of `phase_to_height`. Unlike the OPD one-shots, this conversion
+    genuinely depends on the wavelength. For repeated conversions at one
+    wavelength and delta, reuse an `OpticalHeightConverter`.
+
+    Args:
+        height: Optical height image or stack, in nm.
+        wavelength: Illumination wavelength, in m.
+        refractive_delta: Refractive-index difference ``n_object - n_medium``.
+
+    Returns:
+        Phase as a float32 array of the same shape, in rad.
+    """
+    converter = OpticalHeightConverter.from_args(
+        wavelength=wavelength, refractive_delta=refractive_delta
+    )
+    return converter.convert_to_phase(height)

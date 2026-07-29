@@ -181,7 +181,7 @@ class OpticalVolumeCalculator:
         reduce: bool = True,
     ) -> NDArray[np.float32]:
         """Integrate a phase map (rad) into volume [um^3]."""
-        height = self.height_converter.convert_from_phase(phase)
+        height = self.height_converter.convert_to_height(phase)
         return self.calc_from_height(height, mask=mask, reduce=reduce)
 
 

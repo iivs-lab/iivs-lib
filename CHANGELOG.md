@@ -11,8 +11,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - `iivs.dhm.analysis` gains the middle of the phase-quantity chain: `height`
-  (`OpticalHeightConverter`: `height = OPD / refractive_delta`, nm — the same
-  height `PhaseUnit.NANOMETERS` represents), `area`
+  (`OpticalHeightConverter`: `height = phase * wavelength / (2*pi *
+  refractive_delta)`, nm — the sample thickness of the QPI literature; an OPD
+  input enters through phase), `area`
   (`ProjectedAreaCalculator`: `pixel_count * pixel_size^2`, um^2, of the masked
   footprint on an image's grid; the image's values never enter), and
   `volume` (`OpticalVolumeCalculator`: `sum(height * pixel_area)`,

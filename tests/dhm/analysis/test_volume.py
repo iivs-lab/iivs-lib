@@ -80,7 +80,7 @@ def test_calc_from_height_matches_calc_from_opd():
     calculator = OpticalVolumeCalculator.from_args(
         pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.4
     )
-    height = calculator.height_converter.convert_to_height(opd)
+    height = calculator.height_converter.convert_from_opd(opd)
     assert calculator.calc_from_height(height) == pytest.approx(
         calculator.calc_from_opd(opd), rel=1e-5
     )

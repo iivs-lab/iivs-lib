@@ -6,6 +6,7 @@ import pytest
 from iivs.dhm.analysis.height import (
     OpticalHeightConverter,
     height_to_opd,
+    height_to_phase,
     opd_to_height,
     phase_to_height,
 )
@@ -14,11 +15,26 @@ from iivs.dhm.data.phase.unit import resolve_height_scale
 
 
 def test_opd_to_height_divides_by_delta():
-    # height = OPD / delta: 100 nm OPD at delta 0.5 is 200 nm of thickness.
+    # height = OPD / delta: 100 nm OPD at delta 0.5 is 200 nm of thickness
+    # (routed through phase internally, hence the small float tolerance).
     opd = np.full((2, 3), 100.0, dtype=np.float32)
     height = opd_to_height(opd, refractive_delta=0.5)
-    np.testing.assert_allclose(height, np.full((2, 3), 200.0, dtype=np.float32))
+    np.testing.assert_allclose(
+        height, np.full((2, 3), 200.0, dtype=np.float32), rtol=1e-6
+    )
     assert height.dtype == np.float32
+
+
+def test_opd_entry_is_wavelength_independent():
+    # The OPD -> phase -> height composition cancels the bound wavelength, so
+    # a converter at any wavelength gives opd / delta.
+    opd = np.full((2, 2), 100.0, dtype=np.float32)
+    at_532 = OpticalHeightConverter.from_args(wavelength=532e-9, refractive_delta=0.4)
+    np.testing.assert_allclose(
+        at_532.convert_from_opd(opd),
+        np.full((2, 2), 250.0, dtype=np.float32),  # 100 / 0.4, no 532 in sight
+        rtol=1e-6,
+    )
 
 
 def test_height_to_opd_is_the_inverse():
@@ -31,10 +47,26 @@ def test_height_to_opd_is_the_inverse():
 
     converter = OpticalHeightConverter(refractive_delta=0.4)
     np.testing.assert_allclose(
-        converter.convert_to_height(converter.convert_to_opd(height)),
+        converter.convert_from_opd(converter.convert_to_opd(height)),
         height,
         rtol=1e-6,
     )
+
+
+def test_phase_height_roundtrip():
+    phase = np.array([[0.5, 1.0], [2.0, -0.5]], dtype=np.float32)
+    converter = OpticalHeightConverter.from_args(
+        wavelength=666e-9, refractive_delta=0.5
+    )
+    back = converter.convert_to_phase(converter.convert_to_height(phase))
+    np.testing.assert_allclose(back, phase, rtol=1e-6)
+
+    one_shot = height_to_phase(
+        phase_to_height(phase, wavelength=666e-9, refractive_delta=0.5),
+        wavelength=666e-9,
+        refractive_delta=0.5,
+    )
+    np.testing.assert_allclose(one_shot, phase, rtol=1e-6)
 
 
 def test_phase_to_height_hand_derived():
@@ -44,9 +76,9 @@ def test_phase_to_height_hand_derived():
     np.testing.assert_allclose(height, np.full((2, 2), 211.99, np.float32), rtol=1e-4)
 
 
-def test_height_scale_matches_the_data_layer():
-    # The nm twin of the .bin header's height_scale (m/rad): the same factor
-    # resolve_height_scale derives for the wavelength + delta form.
+def test_height_scale_matches_resolve_height_scale():
+    # The same factor the shared phase-unit helper derives for the wavelength +
+    # delta form, so the analysis and stored-phase conversions stay aligned.
     converter = OpticalHeightConverter.from_args(
         wavelength=666e-9, refractive_delta=0.5
     )
@@ -54,7 +86,7 @@ def test_height_scale_matches_the_data_layer():
     assert converter.height_scale == pytest.approx(expected_nm)
     phase = np.full((2, 2), 2.0, dtype=np.float32)
     np.testing.assert_allclose(
-        converter.convert_from_phase(phase),
+        converter.convert_to_height(phase),
         phase * np.float32(expected_nm),
         rtol=1e-6,
     )
