@@ -122,11 +122,22 @@ precomputes its conversion factor (with one-shot function conveniences):
 - **`opd`** — optical path difference (`OPD = phase * wavelength / (2*pi)`, in
   nm). `OPDConverter` (`convert_to_opd` / `convert_to_phase`, scale
   `opd_scale`); `phase_to_opd` / `opd_to_phase`.
+- **`height`** — optical height (`height = OPD / refractive_delta`, in nm; the
+  same height `PhaseUnit.NANOMETERS` represents). `OpticalHeightConverter`
+  (scale `height_scale`); `opd_to_height` / `height_to_opd` / `phase_to_height`.
+- **`area`** — projected area (`pixel_count * pixel_size^2`, in um^2), from the
+  mask alone. `ProjectedAreaCalculator` (scale `area_scale`);
+  `calc_projected_area`.
+- **`volume`** — optical volume (`sum(height * pixel_area)`, in um^3 = fL;
+  equivalently `projected_area * mean(height)`). `OpticalVolumeCalculator`
+  (`calc_from_opd` / `calc_from_height` / `calc_from_phase`, scale
+  `volume_scale`); `calc_volume` / `calc_volume_from_phase`.
 - **`drymass`** — dry mass (pg) via the Barer relation. `DryMassCalculator`
   (`calc_from_opd` / `calc_from_phase` over a background-corrected map, optionally
   masked by a boolean or integer-label region; scale `drymass_scale`) delegates
   its masked sum to the `iivs.common.data` `Sum` reduction; `calc_drymass` /
-  `calc_drymass_from_phase` are the one-shots.
+  `calc_drymass_from_phase` are the one-shots, and `calc_from_volume` closes the
+  OPD -> height -> volume -> dry-mass chain (`mass = volume * delta / alpha`).
 
 The `wavelength` and `alpha` defaults come from
 [`iivs.dhm.constants`](./iivs/dhm/constants.py), the lab's microscope settings —

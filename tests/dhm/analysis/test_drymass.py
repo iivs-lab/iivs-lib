@@ -9,6 +9,7 @@ from iivs.dhm.analysis.drymass import (
     calc_drymass_from_phase,
 )
 from iivs.dhm.analysis.opd import OPDConverter, phase_to_opd
+from iivs.dhm.analysis.volume import calc_volume
 
 
 def test_calc_drymass_uniform_region():
@@ -216,3 +217,22 @@ def test_calculator_rejects_nonpositive_pixel_size():
 def test_calculator_rejects_nonpositive_alpha():
     with pytest.raises(ValueError, match="alpha must be positive"):
         DryMassCalculator(pixel_size=1e-7, alpha=0.0)
+
+
+def test_calc_from_volume_closes_the_chain():
+    # The same physics through both routes: 50 nm OPD over 100 px of 0.1 um pitch
+    # is 0.25 pg directly (the anchor above) and, at delta 0.5, 0.1 um^3 of volume;
+    # mass = volume * delta / alpha * 1e-3 = 0.1 * 0.5 / 2e-4 * 1e-3 = 0.25 pg.
+    opd = np.full((10, 10), 50.0, dtype=np.float32)
+    calc = DryMassCalculator(pixel_size=1e-7, alpha=2.0e-4)
+    direct = calc.calc_from_opd(opd)
+    volume = calc_volume(opd, pixel_size=1e-7, refractive_delta=0.5)
+    via_volume = calc.calc_from_volume(volume, refractive_delta=0.5)
+    assert via_volume == pytest.approx(direct, rel=1e-5)
+    assert via_volume == pytest.approx(0.25, rel=1e-5)
+
+
+def test_calc_from_volume_rejects_nonpositive_delta():
+    calc = DryMassCalculator(pixel_size=1e-7)
+    with pytest.raises(ValueError, match="refractive_delta must be positive"):
+        calc.calc_from_volume(np.float32(0.1), refractive_delta=0.0)

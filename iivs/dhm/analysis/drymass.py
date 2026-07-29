@@ -10,6 +10,7 @@ import numpy as np
 from iivs.common.data.reduction import Sum, apply_mask
 from iivs.dhm.analysis.opd import OPDConverter
 from iivs.dhm.constants import (
+    DEFAULT_REFRACTIVE_DELTA,
     DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     DEFAULT_WAVELENGTH,
 )
@@ -155,6 +156,37 @@ class DryMassCalculator:
         """Integrate a phase map (rad) into dry mass [pg]."""
         opd = self.opd_converter.convert_to_opd(phase)
         return self.calc_from_opd(opd, mask=mask, reduce=reduce)
+
+    def calc_from_volume(
+        self,
+        volume: NDArray[np.float32],
+        *,
+        refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
+    ) -> NDArray[np.float32]:
+        """Convert an already-integrated optical volume [um^3] into dry mass [pg].
+
+        ``mass = volume * refractive_delta / alpha`` (Barer), closing the OPD ->
+        height -> volume -> dry-mass chain: this is `calc_from_opd`'s result when
+        the volume came from the same map (`OpticalVolumeCalculator`). Unlike the
+        map paths there is nothing left to mask or reduce. `refractive_delta` is a
+        parameter rather than an attribute because it belongs to the volume side of
+        the bridge; this calculator's own scale never involves it.
+
+        Args:
+            volume: Optical volume(s), in um^3.
+            refractive_delta: The refractive-index difference the volume was
+                computed with.
+
+        Raises:
+            ValueError: If `refractive_delta` is not positive.
+        """
+        if refractive_delta <= 0:
+            msg = f"refractive_delta must be positive (got {refractive_delta})"
+            raise ValueError(msg)
+
+        scale = refractive_delta / self.alpha * 1e-3  # pg per um^3
+
+        return (volume * scale).astype(np.float32, copy=False)
 
 
 def calc_drymass(

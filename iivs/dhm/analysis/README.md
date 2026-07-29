@@ -4,6 +4,16 @@ Physical quantities derived from reconstructed phase. Each quantity has an
 **engine object** that binds its parameters once and precomputes a single scalar
 conversion factor, plus **one-shot free functions** for convenience.
 
+The quantities form a chain — each is the previous one rescaled or integrated:
+
+```
+phase (rad)
+  × λ/2π          → OPD (nm)             opd
+  ÷ Δn            → optical height (nm)  height
+  Σ × pixel_area  → volume (µm³ ≡ fL)    volume   (projected area × mean height)
+  × Δn/α          → dry mass (pg)        drymass
+```
+
 These operate on plain NumPy arrays; they are not sequences. For PyTorch, see
 [Using with PyTorch](#using-with-pytorch-autograd).
 
@@ -19,6 +29,57 @@ which additionally divides by the refractive-index difference).
   - `opd_scale` — the cached nm-of-OPD-per-rad factor (a plain `float`).
   - `wavelength` / `wavelength_nm`.
 - `phase_to_opd(phase, *, wavelength=...)` / `opd_to_phase(opd, *, wavelength=...)`
+  — the one-shot forms.
+
+## `height` — optical height
+
+`height = OPD / refractive_delta`, in **nm**: the physical thickness producing
+the measured path difference. The same height the data layer's
+`PhaseUnit.NANOMETERS` represents, so `convert_from_phase` agrees numerically
+with `convert_phase_unit(..., target=NANOMETERS)` for a file whose stored
+`height_scale` was built from the same wavelength and delta.
+
+- `OpticalHeightConverter(refractive_delta=..., opd_converter=...)` — bind the
+  refractive-index difference (and, for the phase path, an `OPDConverter`) once.
+  - `from_wavelength(wavelength=..., refractive_delta=...)`.
+  - `convert_to_height(opd)` / `convert_to_opd(height)` — nm ↔ nm.
+  - `convert_from_phase(phase)` — rad → nm of height.
+  - `height_scale` — the cached nm-of-height-per-rad factor (the nm twin of the
+    `.bin` header's m-per-rad `height_scale`).
+  - `refractive_delta`, `wavelength` / `wavelength_nm`.
+- `opd_to_height` / `height_to_opd` / `phase_to_height` — the one-shot forms.
+
+## `area` — projected area
+
+`area = pixel_count * pixel_size²`, in **µm²**: the footprint a segmented region
+covers in the image plane. The one quantity computed from the mask alone; it
+enters the volume relation as `volume = area * mean(height)`.
+
+- `ProjectedAreaCalculator(pixel_size)` — bind the pixel size (m) once.
+  - `calc(mask)` — µm² of each region: a plain scalar for a boolean `(H, W)`
+    mask, one area per region (`(R,)`) for a `(N, H, W)` stack or a label image.
+  - `area_scale` — the cached µm²-per-pixel factor.
+  - `pixel_size` / `pixel_size_um`.
+- `calc_projected_area(mask, *, pixel_size)` — the one-shot form.
+
+## `volume` — optical volume
+
+`volume = sum(height * pixel_area)`, in **µm³** (1 µm³ = 1 fL); equivalently
+`projected_area * mean(height)`. Batching, `mask`, `reduce`, and the
+background-correction requirement all match `drymass` below; an empty region
+integrates to 0 µm³. Dry mass is the `refractive_delta / alpha` multiple of this
+volume (`DryMassCalculator.calc_from_volume`).
+
+- `OpticalVolumeCalculator(pixel_size, height_converter=...)` — bind the pixel
+  size (m) and an `OpticalHeightConverter` once.
+  - `from_wavelength(pixel_size=..., wavelength=..., refractive_delta=...)`.
+  - `calc_from_opd(opd, *, mask=None, reduce=True)` /
+    `calc_from_height(height, ...)` / `calc_from_phase(phase, ...)`.
+  - `volume_scale` — the cached µm³-per-summed-nm-OPD factor.
+  - `pixel_size` / `pixel_size_um`, `refractive_delta`, `wavelength` /
+    `wavelength_nm`.
+- `calc_volume(opd, *, pixel_size, refractive_delta=..., mask=None, reduce=True)` /
+  `calc_volume_from_phase(phase, *, pixel_size, wavelength=..., refractive_delta=..., ...)`
   — the one-shot forms.
 
 ## `drymass` — dry mass
@@ -44,6 +105,8 @@ caller's responsibility; the masking + reduction is the `iivs.common.data`
     masked) instead of the sum.
   - `calc_from_phase(phase, *, mask=None, reduce=True)` — dry mass from a phase
     map (rad).
+  - `calc_from_volume(volume, *, refractive_delta=...)` — the Barer bridge from an
+    already-integrated optical volume (µm³): `mass = volume * delta / alpha`.
   - `drymass_scale` — the cached pg-per-summed-nm factor (a plain `float`).
   - `wavelength` / `wavelength_nm`.
 - `calc_drymass(opd, *, pixel_size, alpha=..., mask=None, reduce=True)` /

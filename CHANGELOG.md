@@ -10,6 +10,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `iivs.dhm.analysis` gains the middle of the phase-quantity chain: `height`
+  (`OpticalHeightConverter`: `height = OPD / refractive_delta`, nm — the same
+  height `PhaseUnit.NANOMETERS` represents), `area`
+  (`ProjectedAreaCalculator`: `pixel_count * pixel_size^2`, um^2, from the mask
+  alone), and `volume` (`OpticalVolumeCalculator`: `sum(height * pixel_area)`,
+  um^3 = fL, equivalently `projected_area * mean(height)`), each with its cached
+  scale, um/nm property twins, and one-shot free functions.
+  `DryMassCalculator.calc_from_volume` closes the chain
+  (`mass = volume * refractive_delta / alpha`). The `mask` / `reduce` semantics
+  match `DryMassCalculator`; the summation is the shared `iivs.common.data`
+  `Sum` reduction.
 - `load_phase_bin` / `load_phase_txt` / `load_phase` take `target_unit`: the loaded
   image is converted via the file's own `height_scale` (None, the default, keeps the
   stored unit), sparing the manual `convert_phase_unit` composition for a one-shot
