@@ -27,11 +27,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `iivs.common.data` `Sum` reduction.
 - `ProjectedAreaCalculator.from_pixel_size_um` — the um builder twin (cf.
   `OPDConverter.from_wavelength_nm`).
-- Torch twins in `iivs.dhm.analysis.pytorch`: the pointwise `OpticalHeight` and
-  `OpticalVolume` `nn.Module`s (sharing the NumPy engines' scale factors,
-  autograd / device preserved), the `calc_volume` / `calc_volume_from_phase`
-  one-shots, and the mask-only `calc_projected_area` (no module: counting mask
-  pixels is not a pointwise map).
+- Torch twins in `iivs.dhm.analysis.pytorch`: the `OpticalHeight`, `OpticalVolume`,
+  and `ProjectedArea` `nn.Module`s (sharing the NumPy engines' scale factors,
+  autograd / device preserved), plus the `calc_volume` / `calc_volume_from_phase` /
+  `calc_projected_area` one-shots. `ProjectedArea.forward(image)` is the constant
+  per-pixel area density over the grid, so — unlike the others — it carries no
+  gradient from the image; it is a module so `OpticalVolume` can own it as a
+  submodule (`volume = area * mean(height)`), and reduction to a total stays a
+  separate `iivs.common.data.pytorch` step.
 - `DryMassCalculator.pixel_size_um` — the um twin of `pixel_size`, matching the
   new engines' property surface.
 - `load_phase_bin` / `load_phase_txt` / `load_phase` take `target_unit`: the loaded

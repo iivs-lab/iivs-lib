@@ -7,7 +7,7 @@ torch-native.
 """
 
 try:
-    from iivs.dhm.analysis.pytorch.area import calc_projected_area
+    from iivs.dhm.analysis.pytorch.area import ProjectedArea, calc_projected_area
     from iivs.dhm.analysis.pytorch.drymass import (
         DryMass,
         calc_drymass,
@@ -43,6 +43,7 @@ __all__ = (
     "OpticalHeight",
     "OpticalPathDifference",
     "OpticalVolume",
+    "ProjectedArea",
     "calc_drymass",
     "calc_drymass_from_phase",
     "calc_projected_area",
