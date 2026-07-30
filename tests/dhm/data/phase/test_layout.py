@@ -261,6 +261,25 @@ def test_search_phase_bin_folders(tmp_path):
     assert [_timelapse_name(f) for f in folders] == ["tlA", "tlB"]
 
 
+def test_search_phase_folders_override_subpath(tmp_path):
+    # a re-encoded `.bin` source at a non-standard location, same format/reader
+    _bin(tmp_path / "tlA" / "FilteredPhase" / "Float" / "Bin", 2)
+
+    # the default `Phase/Float/Bin` is absent, so the default scan finds nothing
+    assert search_phase_bin_folders(tmp_path) == []
+    assert search_phase_folders(tmp_path) == []
+
+    # the format-specific wrapper reads it at the overridden subpath
+    at_subpath = search_phase_bin_folders(tmp_path, subpath="FilteredPhase/Float/Bin")
+    assert [type(f).__name__ for f in at_subpath] == ["PhaseBinFolder"]
+    assert len(at_subpath[0]) == 2
+
+    # the format-agnostic wrapper takes the modality subtree, resolving Float/Bin
+    agnostic = search_phase_folders(tmp_path, subpath="FilteredPhase")
+    assert [type(f).__name__ for f in agnostic] == ["PhaseBinFolder"]
+    assert len(agnostic[0]) == 2
+
+
 def test_search_phase_txt_and_tif_folders(tmp_path):
     _phase_timelapse(tmp_path / "tl")
     txts = search_phase_txt_folders(tmp_path)

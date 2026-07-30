@@ -65,6 +65,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   preference order rather than raised (unlike `phase_folder`, a bulk scan must not
   abort on the common case); uint8 previews and `.npy` do not participate.
 
+- The `search_*_folders` families take a `subpath` keyword defaulting to the
+  standard location (`Phase/Float/Bin` etc. for the format-specific members,
+  `Phase` / `Intensity` for the format-agnostic ones), with the folder class still
+  fixed. Overriding it points the same typed reader at a re-encoded source at a
+  non-standard location, e.g. a filtered `.bin` written to `FilteredPhase/Float/Bin`
+  instead of `Phase/Float/Bin`, still parsed as a `PhaseBinFolder`.
+
 - `PhaseFileList.with_unit(unit)` — return an independent sequence over the same
   files loading in `unit` (`None` keeps the stored unit), so a caller handed an
   already-open folder (e.g. from `search_timelapses` / `PhaseGroup.bin_folder`)

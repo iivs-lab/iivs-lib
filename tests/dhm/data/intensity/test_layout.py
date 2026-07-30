@@ -125,6 +125,24 @@ def test_search_intensity_bin_folders(tmp_path):
     assert [_timelapse_name(f) for f in folders] == ["tlA", "tlB"]
 
 
+def test_search_intensity_folders_override_subpath(tmp_path):
+    # a re-encoded `.bin` source at a non-standard location, same format/reader
+    _bin(tmp_path / "tlA" / "FilteredIntensity" / "Float" / "Bin", 2)
+
+    assert search_intensity_bin_folders(tmp_path) == []
+    assert search_intensity_folders(tmp_path) == []
+
+    at_subpath = search_intensity_bin_folders(
+        tmp_path, subpath="FilteredIntensity/Float/Bin"
+    )
+    assert [type(f).__name__ for f in at_subpath] == ["IntensityBinFolder"]
+    assert len(at_subpath[0]) == 2
+
+    agnostic = search_intensity_folders(tmp_path, subpath="FilteredIntensity")
+    assert [type(f).__name__ for f in agnostic] == ["IntensityBinFolder"]
+    assert len(agnostic[0]) == 2
+
+
 def test_search_intensity_txt_and_tif_folders(tmp_path):
     _intensity_timelapse(tmp_path / "tl")
     txts = search_intensity_txt_folders(tmp_path)

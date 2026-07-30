@@ -67,6 +67,7 @@ class PhaseGroup(ReconstructionGroup[PhaseBinFolder, PhaseTxtFolder, PhaseTifFol
 def search_phase_bin_folders(
     root: StrPath,
     *,
+    subpath: str = PHASE_FLOAT_BIN,
     name_filter: Filter | FilterDict | None = None,
     part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[PhaseBinFolder], bool] | None = None,
@@ -79,14 +80,16 @@ def search_phase_bin_folders(
 
     A time-lapse without a non-empty `Phase/Float/Bin` is skipped, and `predicate`
     checks the opened `PhaseBinFolder`. `name_filter` matches the time-lapse folder's
-    own name.
+    own name. `subpath` is the folder read within each time-lapse; override its
+    `Phase/Float/Bin` default to read a re-encoded `.bin` source at another location
+    (e.g. `FilteredPhase/Float/Bin`) with the same reader.
 
     The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
     `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
     """
     return open_timelapse_subfolders(
         root,
-        PHASE_FLOAT_BIN,
+        subpath,
         PhaseBinFolder,
         name_filter=name_filter,
         part_filter=part_filter,
@@ -101,6 +104,7 @@ def search_phase_bin_folders(
 def search_phase_txt_folders(
     root: StrPath,
     *,
+    subpath: str = PHASE_FLOAT_TXT,
     name_filter: Filter | FilterDict | None = None,
     part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[PhaseTxtFolder], bool] | None = None,
@@ -112,14 +116,15 @@ def search_phase_txt_folders(
     """Return the `Phase/Float/Txt` folder of each time-lapse under `root` that has one.
 
     The `.txt` twin of `search_phase_bin_folders`; `predicate` checks the opened
-    `PhaseTxtFolder`.
+    `PhaseTxtFolder`. `subpath` (default `Phase/Float/Txt`) overrides the folder read
+    within each time-lapse.
 
     The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
     `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
     """
     return open_timelapse_subfolders(
         root,
-        PHASE_FLOAT_TXT,
+        subpath,
         PhaseTxtFolder,
         name_filter=name_filter,
         part_filter=part_filter,
@@ -134,6 +139,7 @@ def search_phase_txt_folders(
 def search_phase_tif_folders(
     root: StrPath,
     *,
+    subpath: str = PHASE_IMAGE,
     name_filter: Filter | FilterDict | None = None,
     part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[PhaseTifFolder], bool] | None = None,
@@ -145,14 +151,15 @@ def search_phase_tif_folders(
     """Return the uint8 `Phase/Image` preview folder of every time-lapse that has one.
 
     The preview twin of `search_phase_bin_folders`; `predicate` checks the opened
-    `PhaseTifFolder`.
+    `PhaseTifFolder`. `subpath` (default `Phase/Image`) overrides the folder read
+    within each time-lapse.
 
     The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
     `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
     """
     return open_timelapse_subfolders(
         root,
-        PHASE_IMAGE,
+        subpath,
         PhaseTifFolder,
         name_filter=name_filter,
         part_filter=part_filter,
@@ -168,6 +175,7 @@ def search_phase_folders(
     root: StrPath,
     *,
     prefer: Literal["bin", "txt"] | Sequence[Literal["bin", "txt"]] = ("bin", "txt"),
+    subpath: str = PHASE,
     name_filter: Filter | FilterDict | None = None,
     part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[PhaseFileFolder], bool] | None = None,
@@ -188,8 +196,11 @@ def search_phase_folders(
     re-encoding target rather than part of the Koala layout.
 
     `predicate` checks each opened folder; `name_filter` matches the time-lapse
-    folder's own name. The walk itself (`part_filter`, `exclude`, `min_depth`,
-    `max_depth`, `ordered`) is `search_timelapse_subdirs`'s, passed through unchanged.
+    folder's own name. `subpath` is the modality subtree searched under each
+    time-lapse (default `Phase`); override it to scan a re-exported tree (e.g.
+    `FilteredPhase`), still resolving `Float/{Bin,Txt}` beneath it. The walk itself
+    (`part_filter`, `exclude`, `min_depth`, `max_depth`, `ordered`) is
+    `search_timelapse_subdirs`'s, passed through unchanged.
 
     Raises:
         ValueError: If `prefer` is empty or names a format other than bin or txt.
@@ -204,7 +215,7 @@ def search_phase_folders(
     folders: list[PhaseFileFolder] = []
     for phase_dir in search_timelapse_subdirs(
         root,
-        PHASE,
+        subpath,
         name_filter=name_filter,
         part_filter=part_filter,
         exclude=exclude,
