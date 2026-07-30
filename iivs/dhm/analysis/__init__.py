@@ -13,10 +13,10 @@ __all__ = (
     "ProjectedAreaCalculator",
     "calc_drymass",
     "calc_drymass_from_phase",
+    "calc_optical_volume",
+    "calc_optical_volume_from_height",
+    "calc_optical_volume_from_opd",
     "calc_projected_area",
-    "calc_volume",
-    "calc_volume_from_height",
-    "calc_volume_from_opd",
     "height_to_opd",
     "height_to_phase",
     "opd_to_height",
@@ -41,7 +41,7 @@ from iivs.dhm.analysis.height import (
 from iivs.dhm.analysis.opd import OPDConverter, opd_to_phase, phase_to_opd
 from iivs.dhm.analysis.volume import (
     OpticalVolumeCalculator,
-    calc_volume,
-    calc_volume_from_height,
-    calc_volume_from_opd,
+    calc_optical_volume,
+    calc_optical_volume_from_height,
+    calc_optical_volume_from_opd,
 )

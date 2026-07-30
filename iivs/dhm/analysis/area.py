@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from iivs.common.data.reduction import Sum, apply_mask
+from iivs.common.data.reduction import Sum
+from iivs.dhm.analysis.calculator import MaskedRegionCalculator
 from iivs.dhm.constants import PIXEL_SIZE_20X
 
 if TYPE_CHECKING:
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True, slots=True)
-class ProjectedAreaCalculator:
+class ProjectedAreaCalculator(MaskedRegionCalculator):
     """An image-and-mask projected-area (um^2) calculator at a fixed pixel size.
 
     Bind the pixel size once, then measure images repeatedly::
@@ -35,9 +36,11 @@ class ProjectedAreaCalculator:
     grid (and any leading batch axes), and each selected pixel contributes the
     constant `area_scale`.
 
+    For PyTorch, use `ProjectedArea` from `iivs.dhm.analysis.pytorch`.
+
     Attributes:
         pixel_size: Physical size of one (square) pixel, in m. Defaults to the
-            lab's 20X objective (`PIXEL_SIZE_20X`).
+            lab's 20X objective (`iivs.dhm.constants.PIXEL_SIZE_20X`).
     """
 
     pixel_size: float = PIXEL_SIZE_20X
@@ -103,13 +106,10 @@ class ProjectedAreaCalculator:
                 mask not 2-D or 3-D, a label mask not 2-D or holding a negative
                 label, or a non-boolean / non-integer dtype).
         """
-        if image.ndim < 2:
-            msg = f"image must be at least 2D (..., H, W) (got {image.ndim}D)"
-            raise ValueError(msg)
+        self._require_2d(image, "image")
 
         density = np.broadcast_to(np.float32(self._scale), image.shape)
-        region_op = self._sum if reduce else apply_mask
-        result = region_op(density, mask)
+        result = self._reduce(density, mask, reduce=reduce)
 
         return result.astype(np.float32, copy=False)
 

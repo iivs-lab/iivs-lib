@@ -2,9 +2,9 @@ from __future__ import annotations
 
 __all__ = (
     "OpticalVolumeCalculator",
-    "calc_volume",
-    "calc_volume_from_height",
-    "calc_volume_from_opd",
+    "calc_optical_volume",
+    "calc_optical_volume_from_height",
+    "calc_optical_volume_from_opd",
 )
 
 from dataclasses import dataclass, field
@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from iivs.common.data.reduction import Sum, apply_mask
+from iivs.common.data.reduction import Sum
 from iivs.dhm.analysis.area import ProjectedAreaCalculator
+from iivs.dhm.analysis.calculator import MaskedRegionCalculator
 from iivs.dhm.analysis.height import OpticalHeightConverter
 from iivs.dhm.constants import (
     DEFAULT_REFRACTIVE_DELTA,
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True, slots=True)
-class OpticalVolumeCalculator:
+class OpticalVolumeCalculator(MaskedRegionCalculator):
     """An OPD-to-optical-volume (um^3) integrator over an area and a height engine.
 
     Built from the two sides of the volume relation, bound at construction; the
@@ -40,7 +41,7 @@ class OpticalVolumeCalculator:
             pixel_size=px, wavelength=wl, refractive_delta=dn
         )  # plain parameters; or bind prebuilt engines:
         ovc = OpticalVolumeCalculator(area_calculator=..., height_converter=...)
-        volume = ovc.calc_from_phase(phase, mask=cell)  # phase in rad
+        volume = ovc.calc(phase, mask=cell)  # phase in rad
         volume = ovc.calc_from_opd(opd, mask=cell)  # opd in nm
 
     Optical volume is ``sum(height * pixel_area)`` with ``height = OPD /
@@ -52,8 +53,8 @@ class OpticalVolumeCalculator:
     is first converted back to phase (via the bound converters), which the volume
     scale then integrates. Summation is in float64 over the last two axes (H, W),
     returned as float32. Inputs are batched (``(..., H, W)``) and a multi-region
-    mask adds a trailing region axis; see `calc_from_phase` for the shape / `mask`
-    / `reduce` details.
+    mask adds a trailing region axis; see `calc` for the shape / `mask` /
+    `reduce` details.
     The map must already be background-corrected (~ 0 outside the object). Dry
     mass is the ``refractive_delta / alpha`` multiple of this volume
     (`DryMassCalculator`, which binds a volume calculator the same way).
@@ -137,7 +138,7 @@ class OpticalVolumeCalculator:
         """
         return self._scale
 
-    def calc_from_phase(
+    def calc(
         self,
         phase: NDArray[np.float32],
         *,
@@ -167,12 +168,9 @@ class OpticalVolumeCalculator:
             ValueError: If `phase` is not at least 2-D ``(..., H, W)``, or the mask
                 is malformed (see `region_stack`).
         """
-        if phase.ndim < 2:
-            msg = f"phase must be at least 2D (..., H, W) (got {phase.ndim}D)"
-            raise ValueError(msg)
+        self._require_2d(phase, "phase")
 
-        region_op = self._sum if reduce else apply_mask
-        result = region_op(phase, mask)
+        result = self._reduce(phase, mask, reduce=reduce)
 
         return (result * self._scale).astype(np.float32, copy=False)
 
@@ -186,21 +184,19 @@ class OpticalVolumeCalculator:
         """Integrate an OPD map (nm) into volume [um^3], entering through phase.
 
         Maps `opd` back to phase (via the bound `opd_converter`, whose wavelength
-        then cancels), then integrates as `calc_from_phase`; shapes, `mask`, and
+        then cancels), then integrates as `calc`; shapes, `mask`, and
         `reduce` behave identically.
 
         Raises:
             ValueError: If `opd` is not at least 2-D ``(..., H, W)``, or the mask
                 is malformed (see `region_stack`).
         """
-        if opd.ndim < 2:
-            msg = f"opd must be at least 2D (..., H, W) (got {opd.ndim}D)"
-            raise ValueError(msg)
+        self._require_2d(opd, "opd")
 
         opd_converter = self.height_converter.opd_converter
         phase = opd_converter.convert_to_phase(opd)
 
-        return self.calc_from_phase(phase, mask=mask, reduce=reduce)
+        return self.calc(phase, mask=mask, reduce=reduce)
 
     def calc_from_height(
         self,
@@ -212,23 +208,21 @@ class OpticalVolumeCalculator:
         """Integrate an optical height map (nm) into volume [um^3] through phase.
 
         Converts `height` back to phase (via the bound height converter), then
-        integrates as `calc_from_phase`; shapes, `mask`, and `reduce` behave
+        integrates as `calc`; shapes, `mask`, and `reduce` behave
         identically.
 
         Raises:
             ValueError: If `height` is not at least 2-D ``(..., H, W)``, or the
                 mask is malformed (see `region_stack`).
         """
-        if height.ndim < 2:
-            msg = f"height must be at least 2D (..., H, W) (got {height.ndim}D)"
-            raise ValueError(msg)
+        self._require_2d(height, "height")
 
         phase = self.height_converter.convert_to_phase(height)
 
-        return self.calc_from_phase(phase, mask=mask, reduce=reduce)
+        return self.calc(phase, mask=mask, reduce=reduce)
 
 
-def calc_volume(
+def calc_optical_volume(
     phase: NDArray[np.float32],
     *,
     pixel_size: float = PIXEL_SIZE_20X,
@@ -239,8 +233,8 @@ def calc_volume(
 ) -> NDArray[np.float32]:
     """Integrate a phase map (rad) into optical volume [um^3] at `wavelength`.
 
-    The canonical one-shot `OpticalVolumeCalculator`; `calc_volume_from_opd` and
-    `calc_volume_from_height` are the OPD / height entry points.
+    The canonical one-shot `OpticalVolumeCalculator`; `calc_optical_volume_from_opd` and
+    `calc_optical_volume_from_height` are the OPD / height entry points.
 
     Args:
         phase: Phase map(s), in rad, shape ``(..., H, W)``, already
@@ -249,7 +243,7 @@ def calc_volume(
         wavelength: Illumination wavelength, in m.
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
         mask: Optional region mask (boolean or integer labels); see
-            `OpticalVolumeCalculator.calc_from_phase`.
+            `OpticalVolumeCalculator.calc`.
         reduce: Sum over each region to a volume (True), or return the per-pixel
             volume-density map (False).
 
@@ -261,10 +255,10 @@ def calc_volume(
         pixel_size=pixel_size,
         wavelength=wavelength,
         refractive_delta=refractive_delta,
-    ).calc_from_phase(phase, mask=mask, reduce=reduce)
+    ).calc(phase, mask=mask, reduce=reduce)
 
 
-def calc_volume_from_opd(
+def calc_optical_volume_from_opd(
     opd: NDArray[np.float32],
     *,
     pixel_size: float = PIXEL_SIZE_20X,
@@ -281,10 +275,10 @@ def calc_volume_from_opd(
         pixel_size: Physical size of one (square) pixel, in m.
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
         mask: Optional region mask (boolean or integer labels); see
-            `OpticalVolumeCalculator.calc_from_phase`.
+            `OpticalVolumeCalculator.calc`.
         reduce: Sum over each region to a volume (True), or return the per-pixel
             volume-density map (False). See
-            `OpticalVolumeCalculator.calc_from_phase`.
+            `OpticalVolumeCalculator.calc`.
 
     Returns:
         Optical volume in um^3, shape ``(...)`` (or ``(..., R)``); or the unreduced
@@ -297,7 +291,7 @@ def calc_volume_from_opd(
     ).calc_from_opd(opd, mask=mask, reduce=reduce)
 
 
-def calc_volume_from_height(
+def calc_optical_volume_from_height(
     height: NDArray[np.float32],
     *,
     pixel_size: float = PIXEL_SIZE_20X,
@@ -315,10 +309,10 @@ def calc_volume_from_height(
         wavelength: Illumination wavelength, in m.
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
         mask: Optional region mask (boolean or integer labels); see
-            `OpticalVolumeCalculator.calc_from_phase`.
+            `OpticalVolumeCalculator.calc`.
         reduce: Sum over each region to a volume (True), or return the per-pixel
             volume-density map (False). See
-            `OpticalVolumeCalculator.calc_from_phase`.
+            `OpticalVolumeCalculator.calc`.
 
     Returns:
         Optical volume in um^3, shape ``(...)`` (or ``(..., R)``); or the unreduced

@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 from kaparoo.utils import replace_if_none
 
-from iivs.common.data.reduction import Sum, apply_mask
+from iivs.common.data.reduction import Sum
+from iivs.dhm.analysis.calculator import MaskedRegionCalculator
 from iivs.dhm.analysis.volume import OpticalVolumeCalculator
 from iivs.dhm.constants import (
     DEFAULT_REFRACTIVE_DELTA,
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True, slots=True)
-class DryMassCalculator:
+class DryMassCalculator(MaskedRegionCalculator):
     """An OPD-to-dry-mass (pg) integrator over a volume engine and an alpha.
 
     The last link of the OPD -> height -> volume -> dry-mass chain: bind an
@@ -162,15 +163,9 @@ class DryMassCalculator:
                 2-D or 3-D, a label mask not 2-D or holding a negative label, or a
                 non-boolean / non-integer dtype).
         """
-        if opd.ndim < 2:
-            msg = f"opd must be at least 2D (..., H, W) (got {opd.ndim}D)"
-            raise ValueError(msg)
+        self._require_2d(opd, "opd")
 
-        # reduce to a dry mass per region, or keep the per-pixel density map; both
-        # normalize the mask, drop the region axis for a single region, and handle
-        # None (the whole frame) themselves
-        region_op = self._sum if reduce else apply_mask
-        result = region_op(opd, mask)
+        result = self._reduce(opd, mask, reduce=reduce)
 
         # OPD (nm) -> dry mass (pg); the summed path accumulates in float64, and
         # every path returns float32.
@@ -204,9 +199,7 @@ class DryMassCalculator:
             ValueError: If `height` is not at least 2-D ``(..., H, W)``, or the
                 mask is malformed (see `region_stack`).
         """
-        if height.ndim < 2:
-            msg = f"height must be at least 2D (..., H, W) (got {height.ndim}D)"
-            raise ValueError(msg)
+        self._require_2d(height, "height")
 
         opd = self.volume_converter.height_converter.convert_to_opd(height)
 

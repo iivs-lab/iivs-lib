@@ -2,9 +2,9 @@ from __future__ import annotations
 
 __all__ = (
     "OpticalVolume",
-    "calc_volume",
-    "calc_volume_from_height",
-    "calc_volume_from_opd",
+    "calc_optical_volume",
+    "calc_optical_volume_from_height",
+    "calc_optical_volume_from_opd",
 )
 
 from typing import TYPE_CHECKING
@@ -39,7 +39,7 @@ class OpticalVolume(nn.Module):
     graph, dropping cleanly into `nn.Sequential`, forward hooks, `torch.jit.script`,
     and `torch.compile`. Masking into regions and reducing to a total volume are a
     separate concern: compose with the `iivs.common.data.pytorch` reductions, e.g.
-    `Sum(mask=cell)(OpticalVolume.from_args(...)(phase))`, or use the `calc_volume`
+    `Sum(mask=cell)(OpticalVolume.from_args(...)(phase))`, or use the `calc_optical_volume`
     one-shot.
 
     Attributes:
@@ -61,9 +61,10 @@ class OpticalVolume(nn.Module):
 
         self.area_calculator = area_calculator
         self.height_converter = height_converter
-        self.volume_scale = (
-            self.area_calculator.area_scale * self.height_converter.height_scale * 1e-3
-        )
+
+        area_scale = self.area_calculator.area_scale  # um^2 per pixel
+        height_scale = self.height_converter.height_scale * 1e-3  # nm -> um
+        self.volume_scale = area_scale * height_scale
 
     @classmethod
     def from_args(
@@ -101,6 +102,10 @@ class OpticalVolume(nn.Module):
         """The owned height submodule's wavelength, in nm."""
         return self.height_converter.wavelength_nm
 
+    def forward(self, phase: Tensor) -> Tensor:
+        """Map a phase map (rad) to its per-pixel volume density: `phase * scale`."""
+        return phase * self.volume_scale
+
     def convert_from_opd(self, opd: Tensor) -> Tensor:
         """Map an OPD map (nm) to its volume density (um^3 per pixel) through phase.
 
@@ -115,12 +120,8 @@ class OpticalVolume(nn.Module):
         phase = self.height_converter.convert_to_phase(height)
         return self.forward(phase)
 
-    def forward(self, phase: Tensor) -> Tensor:
-        """Map a phase map (rad) to its per-pixel volume density: `phase * scale`."""
-        return phase * self.volume_scale
 
-
-def calc_volume(
+def calc_optical_volume(
     phase: Tensor,
     *,
     pixel_size: float,
@@ -133,7 +134,7 @@ def calc_volume(
 
     The canonical one-shot, composing `OpticalVolume` (per-pixel density) with the
     `iivs.common.data.pytorch` reductions and keeping the input's device and
-    autograd graph. `calc_volume_from_opd` / `calc_volume_from_height` are the OPD /
+    autograd graph. `calc_optical_volume_from_opd` / `calc_optical_volume_from_height` are the OPD /
     height entry points.
 
     Args:
@@ -155,7 +156,7 @@ def calc_volume(
     return Sum(empty=0.0)(density, mask) if reduce else apply_mask(density, mask)
 
 
-def calc_volume_from_opd(
+def calc_optical_volume_from_opd(
     opd: Tensor,
     *,
     pixel_size: float,
@@ -187,7 +188,7 @@ def calc_volume_from_opd(
     return Sum(empty=0.0)(density, mask) if reduce else apply_mask(density, mask)
 
 
-def calc_volume_from_height(
+def calc_optical_volume_from_height(
     height: Tensor,
     *,
     pixel_size: float,

@@ -34,6 +34,7 @@ class OpticalPathDifference(nn.Module):
     """
 
     def __init__(self, wavelength: float = DEFAULT_WAVELENGTH) -> None:
+        """Bind the wavelength and cache the phase-to-OPD scale (reused from NumPy)."""
         super().__init__()
 
         converter = OPDConverter(wavelength=wavelength)

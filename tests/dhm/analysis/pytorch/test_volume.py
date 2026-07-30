@@ -3,9 +3,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from iivs.dhm.analysis.volume import calc_volume as np_calc_volume
-from iivs.dhm.analysis.volume import calc_volume_from_height as np_from_height
-from iivs.dhm.analysis.volume import calc_volume_from_opd as np_from_opd
+from iivs.dhm.analysis.volume import calc_optical_volume as np_calc_optical_volume
+from iivs.dhm.analysis.volume import calc_optical_volume_from_height as np_from_height
+from iivs.dhm.analysis.volume import calc_optical_volume_from_opd as np_from_opd
 
 torch = pytest.importorskip("torch")
 
@@ -13,9 +13,9 @@ from iivs.dhm.analysis.pytorch.area import ProjectedArea  # noqa: E402
 from iivs.dhm.analysis.pytorch.height import OpticalHeight  # noqa: E402
 from iivs.dhm.analysis.pytorch.volume import (  # noqa: E402
     OpticalVolume,
-    calc_volume,
-    calc_volume_from_height,
-    calc_volume_from_opd,
+    calc_optical_volume,
+    calc_optical_volume_from_height,
+    calc_optical_volume_from_opd,
 )
 
 
@@ -82,45 +82,49 @@ def test_convert_from_height_matches_phase_path():
     torch.testing.assert_close(module.convert_from_height(height), module(phase))
 
 
-def test_calc_volume_matches_numpy():
+def test_calc_optical_volume_matches_numpy():
     phase = torch.rand(3, 3, dtype=torch.float32)
-    got = calc_volume(phase, pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5)
-    expected = np_calc_volume(
+    got = calc_optical_volume(
+        phase, pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5
+    )
+    expected = np_calc_optical_volume(
         phase.numpy(), pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5
     )
     np.testing.assert_allclose(got.numpy(), expected, rtol=1e-5)
 
 
-def test_calc_volume_from_opd_matches_numpy():
+def test_calc_optical_volume_from_opd_matches_numpy():
     opd = torch.rand(4, 4, dtype=torch.float32) * 100
     mask = torch.zeros(4, 4, dtype=torch.bool)
     mask[:2, :3] = True
-    got = calc_volume_from_opd(opd, pixel_size=1e-7, refractive_delta=0.5, mask=mask)
+    got = calc_optical_volume_from_opd(
+        opd, pixel_size=1e-7, refractive_delta=0.5, mask=mask
+    )
     expected = np_from_opd(
         opd.numpy(), pixel_size=1e-7, refractive_delta=0.5, mask=mask.numpy()
     )
     np.testing.assert_allclose(got.numpy(), expected, rtol=1e-5)
 
 
-def test_calc_volume_from_height_matches_numpy():
+def test_calc_optical_volume_from_height_matches_numpy():
     height = torch.rand(3, 3, dtype=torch.float32) * 200
-    got = calc_volume_from_height(height, pixel_size=1e-7, refractive_delta=0.5)
+    got = calc_optical_volume_from_height(height, pixel_size=1e-7, refractive_delta=0.5)
     expected = np_from_height(height.numpy(), pixel_size=1e-7, refractive_delta=0.5)
     np.testing.assert_allclose(got.numpy(), expected, rtol=1e-5)
 
 
-def test_calc_volume_from_opd_reduce_false_returns_map():
+def test_calc_optical_volume_from_opd_reduce_false_returns_map():
     opd = torch.full((2, 2), 50.0)
-    density = calc_volume_from_opd(opd, pixel_size=1e-7, reduce=False)
+    density = calc_optical_volume_from_opd(opd, pixel_size=1e-7, reduce=False)
     assert density.shape == (2, 2)
     assert density.sum().item() == pytest.approx(
-        calc_volume_from_opd(opd, pixel_size=1e-7).item()
+        calc_optical_volume_from_opd(opd, pixel_size=1e-7).item()
     )
 
 
 def test_preserves_grad_and_device():
     phase = torch.ones(2, 2, requires_grad=True)
-    volume = calc_volume(phase, pixel_size=1e-7)
+    volume = calc_optical_volume(phase, pixel_size=1e-7)
     assert volume.requires_grad
     assert volume.device == phase.device
     volume.backward()
