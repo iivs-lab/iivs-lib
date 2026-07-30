@@ -33,7 +33,7 @@ OPD / dry-mass twins with autograd (`uv add "iivs-lib[torch]"`).
 
 ```python
 from iivs.dhm.data.phase import PhaseBinFolder, PhaseUnit
-from iivs.dhm.analysis import calc_drymass_from_phase
+from iivs.dhm.analysis import calc_drymass
 
 # Lazily open a phase acquisition (a folder of numbered .bin frames).
 phase = PhaseBinFolder("scan/Phase/Float/Bin", target_unit=PhaseUnit.RADIANS)
@@ -41,7 +41,7 @@ phase.frame_shape          # (H, W), shared across frames
 img = phase[0]             # first frame as a float32 array (decoded on access)
 
 # Per-frame dry mass over a segmented cell:
-mass_pg = calc_drymass_from_phase(
+mass_pg = calc_drymass(
     img, pixel_size=phase.header.pixel_size, mask=cell_mask
 )
 ```
@@ -136,11 +136,12 @@ precomputes its conversion factor (with one-shot function conveniences):
   phase; scale `volume_scale`, um^3 per rad); `calc_optical_volume` (phase) /
   `calc_optical_volume_from_opd` / `calc_optical_volume_from_height`.
 - **`drymass`** — dry mass (pg) via the Barer relation. `DryMassCalculator`
-  (`calc_from_opd` / `calc_from_phase` over a background-corrected map, optionally
-  masked by a boolean or integer-label region; scale `drymass_scale`) delegates
-  its masked sum to the `iivs.common.data` `Sum` reduction; `calc_drymass` /
-  `calc_drymass_from_phase` are the one-shots, and `calc_from_volume` closes the
-  OPD -> height -> volume -> dry-mass chain (`mass = volume * delta / alpha`).
+  (`calc` canonical, `calc_from_opd` / `calc_from_height` enter through phase, over
+  a background-corrected map, optionally masked by a boolean or integer-label
+  region; scale `drymass_scale`, pg per rad); `calc_drymass` (phase) /
+  `calc_drymass_from_opd` / `calc_drymass_from_height` are the one-shots, and
+  `calc_from_volume` closes the OPD -> height -> volume -> dry-mass chain
+  (`mass = volume * delta / alpha`).
 
 The `wavelength` and `alpha` defaults come from
 [`iivs.dhm.constants`](./iivs/dhm/constants.py), the lab's microscope settings —
@@ -159,10 +160,10 @@ calibration scalars are shared with the NumPy engines). The Torch
 
 ```python
 from iivs.dhm.analysis.pytorch.opd import phase_to_opd
-from iivs.dhm.analysis.pytorch.drymass import calc_drymass_from_phase
+from iivs.dhm.analysis.pytorch.drymass import calc_drymass
 
 opd = phase_to_opd(phase, wavelength=666e-9)   # Tensor (CPU/GPU), grad kept
-mass = calc_drymass_from_phase(phase, pixel_size=px, mask=cell)  # Tensor, grad kept
+mass = calc_drymass(phase, pixel_size=px, mask=cell)  # Tensor, grad kept
 ```
 
 Or, without the dependency, multiply by the cached scale factors (plain floats)

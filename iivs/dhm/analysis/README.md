@@ -124,20 +124,17 @@ caller's responsibility; the masking + reduction is the `iivs.common.data`
   engine chain.
   - `from_args(pixel_size=..., wavelength=..., refractive_delta=..., alpha=...)`
     — build the whole engine chain from plain parameters (all explicit).
-  - `calc_from_opd(opd, *, mask=None, reduce=True)` — dry mass from an OPD map
-    (nm). `reduce=False` returns the per-pixel mass-density map (`opd * scale`,
-    masked) instead of the sum.
-  - `calc_from_phase(phase, *, mask=None, reduce=True)` — dry mass from a phase
-    map (rad).
-  - `calc_from_height(height, *, mask=None, reduce=True)` — dry mass from an
-    optical height map (nm), converted back to OPD via the bound engine chain.
+  - `calc(phase, *, mask=None, reduce=True)` (canonical) — dry mass from a phase
+    map (rad). `reduce=False` returns the per-pixel mass-density map instead.
+  - `calc_from_opd(opd, ...)` / `calc_from_height(height, ...)` — the OPD / height
+    entry points, converted back to phase first.
   - `calc_from_volume(volume, *, refractive_delta=...)` — the Barer bridge from an
     already-integrated optical volume (µm³): `mass = volume * delta / alpha`.
-  - `drymass_scale` — the cached pg-per-summed-nm factor (a plain `float`).
+  - `drymass_scale` — the cached pg-per-summed-rad-phase factor (a plain `float`).
   - `wavelength` / `wavelength_nm`, `pixel_size` / `pixel_size_um`,
     `refractive_delta` — re-surfaced from the bound volume engine.
-- `calc_drymass(opd, *, pixel_size, alpha=..., mask=None, reduce=True)` /
-  `calc_drymass_from_phase(phase, *, pixel_size, wavelength=..., alpha=..., mask=None, reduce=True)`
+- `calc_drymass(phase, *, pixel_size, wavelength=..., refractive_delta=..., alpha=..., mask=None, reduce=True)`
+  (canonical) / `calc_drymass_from_opd(opd, ...)` / `calc_drymass_from_height(height, ...)`
   — the one-shot forms.
 
 Defaults for `wavelength` and `alpha` come from
@@ -165,11 +162,16 @@ are **pure pointwise** `nn.Module`s — one op each, so they drop cleanly into
   and an `OpticalHeight` submodule (`from_args(pixel_size=..., wavelength=...,
   refractive_delta=...)` builds both), and an OPD / height map enters through phase
   via `convert_from_opd` / `convert_from_height`. No `mask` / `reduce`.
-- `DryMass(pixel_size=..., alpha=...)` — `forward(opd) = opd * drymass_scale`, the
-  per-pixel dry-mass density (pg). No `mask` / `reduce`.
+- `DryMass(volume_converter=..., alpha=...)` — `forward(phase) =
+  phase * drymass_scale`, the per-pixel dry-mass density (pg); owns an
+  `OpticalVolume` submodule (`from_args(pixel_size=..., wavelength=...,
+  refractive_delta=..., alpha=...)` builds the chain), an OPD / height map entering
+  via `convert_from_opd` / `convert_from_height`. No `mask` / `reduce`.
 
-`calc_optical_volume` (phase) / `calc_optical_volume_from_opd` / `calc_optical_volume_from_height` are the
-volume one-shots.
+`calc_optical_volume` (phase) / `calc_optical_volume_from_opd` /
+`calc_optical_volume_from_height` and `calc_drymass` (phase) /
+`calc_drymass_from_opd` / `calc_drymass_from_height` are the one-shots; the shared
+`mask` / `reduce` dispatch is `iivs.common.data.pytorch.reduce_regions`.
 `ProjectedArea(pixel_size=...)` — `forward(image)` is the constant per-pixel area
 density (µm²) over the image's grid (its values never enter, so no gradient flows
 from the image); `calc_projected_area` is its mask / reduce one-shot.
@@ -179,17 +181,15 @@ reductions in [`iivs.common.data.pytorch`](../../common/data) (`Sum`, `Mean`,
 `Norm`, ...). Compose them, or let the one-shot free functions do it:
 
 ```python
-from iivs.dhm.analysis.pytorch.opd import OpticalPathDifference, phase_to_opd
-from iivs.dhm.analysis.pytorch.drymass import DryMass, calc_drymass_from_phase
+from iivs.dhm.analysis.pytorch.drymass import DryMass, calc_drymass
 from iivs.common.data.pytorch import Sum
 
-# Compose the pointwise layers with a reduction:
-density = DryMass(pixel_size=px)(OpticalPathDifference(666e-9)(phase))  # pg/pixel
-mass = Sum(mask=cell)(density)                                          # pg per region
+# Compose the pointwise layer with a reduction (DryMass takes phase directly):
+dm = DryMass.from_args(pixel_size=px, wavelength=666e-9, refractive_delta=dn, alpha=a)
+mass = Sum(mask=cell)(dm(phase))                               # pg per region
 
 # Or one-shot (composes the same pieces; an empty region -> 0 pg):
-opd = phase_to_opd(phase, wavelength=666e-9)                    # Tensor, grad kept
-mass = calc_drymass_from_phase(phase, pixel_size=px, mask=cell) # Tensor, grad kept
+mass = calc_drymass(phase, pixel_size=px, mask=cell)          # Tensor, grad kept
 ```
 
 `calc_*` keeps the input's device, dtype, and autograd graph, accumulating each
@@ -198,8 +198,8 @@ returns float32). Without the dependency, multiply by the cached scale factors
 (plain floats) yourself:
 
 ```python
-opd = phase * conv.opd_scale                  # phase: Tensor -> OPD (nm), grad kept
-mass = opd[mask].sum() * calc.drymass_scale   # OPD -> dry mass (pg), grad kept
+opd = phase * conv.opd_scale                    # phase: Tensor -> OPD (nm), grad kept
+mass = phase[mask].sum() * calc.drymass_scale   # phase -> dry mass (pg), grad kept
 ```
 
 ## Example
@@ -211,5 +211,5 @@ conv = OPDConverter.from_wavelength_nm(666)
 opd_nm = conv.convert_from_phase(phase_rad)    # rad -> nm
 
 calc = DryMassCalculator()  # lab defaults: 20X pixel size, 666 nm, alpha 2e-4
-mass_pg = calc.calc_from_phase(phase_rad, mask=cell_mask)
+mass_pg = calc.calc(phase_rad, mask=cell_mask)
 ```

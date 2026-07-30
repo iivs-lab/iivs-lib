@@ -23,24 +23,30 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   / `calc_from_height` convert back to phase and `volume_scale` is per rad of
   phase), each with its cached
   scale, um/nm property twins, a `from_args` builder taking plain parameters,
-  and one-shot free functions. `DryMassCalculator.calc_from_volume` closes the
-  chain (`mass = volume * refractive_delta / alpha`). The `mask` / `reduce`
-  semantics match `DryMassCalculator`; the summation is the shared
-  `iivs.common.data` `Sum` reduction.
+  and one-shot free functions. Every quantity is phase-canonical: the calculators'
+  primary method is `calc(phase)` (`calc_from_opd` / `calc_from_height` convert
+  back to phase first), and the one-shots lead with the phase form
+  (`calc_optical_volume` / `calc_drymass`, plus `_from_opd` / `_from_height`).
+  `OpticalVolumeCalculator` / `DryMassCalculator` (and `ProjectedAreaCalculator`)
+  share a `MaskedRegionCalculator` base for the `(..., H, W)` shape guard and the
+  `mask` / `reduce` dispatch over the shared `iivs.common.data` `Sum` reduction.
+  `DryMassCalculator.calc_from_volume` closes the chain
+  (`mass = volume * refractive_delta / alpha`).
 - `ProjectedAreaCalculator.from_pixel_size_um` — the um builder twin (cf.
   `OPDConverter.from_wavelength_nm`).
-- Torch twins in `iivs.dhm.analysis.pytorch`: the `OpticalHeight`, `OpticalVolume`,
-  and `ProjectedArea` `nn.Module`s (sharing the NumPy engines' scale factors,
-  autograd / device preserved), plus the `calc_optical_volume` (phase) /
-  `calc_optical_volume_from_opd` / `calc_optical_volume_from_height` / `calc_projected_area`
-  one-shots. `OpticalVolume` is phase-canonical
-  (`forward(phase) = phase * volume_scale`; an OPD / height map enters through
-  `convert_from_opd` / `convert_from_height`) and owns a `ProjectedArea` and an
-  `OpticalHeight` submodule, deriving `volume_scale` from their factors
-  (`volume = area * mean(height)`). `ProjectedArea.forward(image)` is the constant
-  per-pixel area density over the grid, so — unlike the others — it carries no
-  gradient from the image. Reduction to a total stays a separate
-  `iivs.common.data.pytorch` step.
+- Torch twins in `iivs.dhm.analysis.pytorch`: the `OpticalHeight`, `ProjectedArea`,
+  `OpticalVolume`, and `DryMass` `nn.Module`s (sharing the NumPy engines' scale
+  factors, autograd / device preserved), plus the `calc_optical_volume` /
+  `calc_drymass` (both phase-canonical, with `_from_opd` / `_from_height` twins)
+  and `calc_projected_area` one-shots. Each twin is phase-canonical
+  (`forward(phase) = phase * scale`; an OPD / height map enters through
+  `convert_from_opd` / `convert_from_height`) and owns its inner engines as
+  submodules, deriving its scale from them: `OpticalVolume` owns a `ProjectedArea`
+  and an `OpticalHeight`, and `DryMass` owns an `OpticalVolume`.
+  `ProjectedArea.forward(image)` is the constant per-pixel area density over the
+  grid, so — unlike the others — it carries no gradient from the image. Reduction
+  to a total stays a separate `iivs.common.data.pytorch` step (the new
+  `reduce_regions` dispatch over `Sum` / `apply_mask`).
 - `DryMassCalculator.pixel_size_um` — the um twin of `pixel_size`, matching the
   new engines' property surface.
 - `load_phase_bin` / `load_phase_txt` / `load_phase` take `target_unit`: the loaded
@@ -78,8 +84,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   engine's, and `from_wavelength` is renamed `from_args`, the fully-explicit
   plain-parameter builder every engine now carries. Every engine is also
   default-constructible from the lab constants (`pixel_size` falls back to
-  `PIXEL_SIZE_20X`), which the one-shots inherit: `calc_drymass` /
-  `calc_drymass_from_phase` gain engine parameters (`wavelength` /
+  `PIXEL_SIZE_20X`), which the one-shots inherit: `calc_drymass` and its
+  `_from_opd` / `_from_height` twins gain engine parameters (`wavelength` /
   `refractive_delta`) and a lab-default `pixel_size`.
 
 ## [0.2.0] - 2026-07-20
