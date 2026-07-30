@@ -17,6 +17,7 @@ from iivs.dhm.constants import (
     DEFAULT_REFRACTIVE_DELTA,
     DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     DEFAULT_WAVELENGTH,
+    PIXEL_SIZE_20X,
 )
 
 if TYPE_CHECKING:
@@ -128,7 +129,7 @@ class DryMass(nn.Module):
 def calc_drymass(
     phase: Tensor,
     *,
-    pixel_size: float,
+    pixel_size: float = PIXEL_SIZE_20X,
     wavelength: float = DEFAULT_WAVELENGTH,
     refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
@@ -145,7 +146,8 @@ def calc_drymass(
     Args:
         phase: Phase map(s), in rad, shape ``(..., H, W)``, already
             background-corrected.
-        pixel_size: Physical size of one (square) pixel, in m.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective.
         wavelength: Illumination wavelength, in m.
         refractive_delta: Refractive-index difference ``n_object - n_medium``;
             enters only the engine chain and cancels out of the mass.
@@ -167,7 +169,7 @@ def calc_drymass(
 def calc_drymass_from_opd(
     opd: Tensor,
     *,
-    pixel_size: float,
+    pixel_size: float = PIXEL_SIZE_20X,
     wavelength: float = DEFAULT_WAVELENGTH,
     refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
@@ -182,7 +184,8 @@ def calc_drymass_from_opd(
 
     Args:
         opd: OPD map(s), in nm, shape ``(..., H, W)``, already background-corrected.
-        pixel_size: Physical size of one (square) pixel, in m.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective.
         wavelength: Illumination wavelength, in m; the OPD mass never depends on it
             (it cancels), so the default serves.
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
@@ -203,7 +206,7 @@ def calc_drymass_from_opd(
 def calc_drymass_from_height(
     height: Tensor,
     *,
-    pixel_size: float,
+    pixel_size: float = PIXEL_SIZE_20X,
     wavelength: float = DEFAULT_WAVELENGTH,
     refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
     alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
@@ -218,7 +221,8 @@ def calc_drymass_from_height(
     Args:
         height: Optical height map(s), in nm, shape ``(..., H, W)``, already
             background-corrected.
-        pixel_size: Physical size of one (square) pixel, in m.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective.
         wavelength: Illumination wavelength, in m.
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
         alpha: Specific refractive increment, in m^3/kg.

@@ -14,7 +14,11 @@ from torch import nn
 from iivs.common.data.pytorch.reduction import reduce_regions
 from iivs.dhm.analysis.pytorch.area import ProjectedArea
 from iivs.dhm.analysis.pytorch.height import OpticalHeight
-from iivs.dhm.constants import DEFAULT_REFRACTIVE_DELTA, DEFAULT_WAVELENGTH
+from iivs.dhm.constants import (
+    DEFAULT_REFRACTIVE_DELTA,
+    DEFAULT_WAVELENGTH,
+    PIXEL_SIZE_20X,
+)
 
 if TYPE_CHECKING:
     from typing import Self
@@ -27,8 +31,8 @@ class OpticalVolume(nn.Module):
 
     The torch twin of `iivs.dhm.analysis.volume.OpticalVolumeCalculator`, mirroring
     its composition: the module owns a `ProjectedArea` submodule (`area_calculator`,
-    carrying the pixel size, which has no lab default here) and an `OpticalHeight`
-    submodule (`height_converter`), and binds the cached
+    carrying the pixel size) and an `OpticalHeight` submodule (`height_converter`),
+    and binds the cached
     `volume_scale` (``area_scale * height_scale * 1e-3``, um^3 of volume per rad of
     phase, a plain float derived from the two submodules' factors, so the physics is
     shared). Phase is the canonical input: `forward(phase) = phase * volume_scale`
@@ -123,7 +127,7 @@ class OpticalVolume(nn.Module):
 def calc_optical_volume(
     phase: Tensor,
     *,
-    pixel_size: float,
+    pixel_size: float = PIXEL_SIZE_20X,
     wavelength: float = DEFAULT_WAVELENGTH,
     refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
     mask: Tensor | None = None,
@@ -139,7 +143,8 @@ def calc_optical_volume(
     Args:
         phase: Phase map(s), in rad, shape ``(..., H, W)``, already
             background-corrected.
-        pixel_size: Physical size of one (square) pixel, in m.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective.
         wavelength: Illumination wavelength, in m.
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
         mask: Optional region mask (boolean or integer labels); see
@@ -157,7 +162,7 @@ def calc_optical_volume(
 def calc_optical_volume_from_height(
     height: Tensor,
     *,
-    pixel_size: float,
+    pixel_size: float = PIXEL_SIZE_20X,
     wavelength: float = DEFAULT_WAVELENGTH,
     refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
     mask: Tensor | None = None,
@@ -171,7 +176,8 @@ def calc_optical_volume_from_height(
     Args:
         height: Optical height map(s), in nm, shape ``(..., H, W)``, already
             background-corrected.
-        pixel_size: Physical size of one (square) pixel, in m.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective.
         wavelength: Illumination wavelength, in m.
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
         mask: Optional region mask (boolean or integer labels).
@@ -188,7 +194,7 @@ def calc_optical_volume_from_height(
 def calc_optical_volume_from_opd(
     opd: Tensor,
     *,
-    pixel_size: float,
+    pixel_size: float = PIXEL_SIZE_20X,
     wavelength: float = DEFAULT_WAVELENGTH,
     refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
     mask: Tensor | None = None,
@@ -202,7 +208,8 @@ def calc_optical_volume_from_opd(
 
     Args:
         opd: OPD map(s), in nm, shape ``(..., H, W)``, already background-corrected.
-        pixel_size: Physical size of one (square) pixel, in m.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective.
         wavelength: Illumination wavelength, in m; the OPD volume never depends on
             it (it cancels), so the default serves.
         refractive_delta: Refractive-index difference ``n_object - n_medium``.

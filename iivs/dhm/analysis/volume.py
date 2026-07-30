@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class OpticalVolumeCalculator(MaskedRegionCalculator):
-    """An OPD-to-optical-volume (um^3) integrator over an area and a height engine.
+    """A phase-to-optical-volume (um^3) integrator over an area and a height engine.
 
     Built from the two sides of the volume relation, bound at construction; the
     per-pixel volume factors are precomputed::

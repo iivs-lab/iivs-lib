@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class DryMassCalculator(MaskedRegionCalculator):
-    """An OPD-to-dry-mass (pg) integrator over a volume engine and an alpha.
+    """A phase-to-dry-mass (pg) integrator over a volume engine and an alpha.
 
     The last link of the OPD -> height -> volume -> dry-mass chain: bind an
     `OpticalVolumeCalculator` (which itself binds the area and height engines) and

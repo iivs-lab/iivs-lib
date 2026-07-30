@@ -9,6 +9,7 @@ from torch import nn
 
 from iivs.common.data.pytorch.reduction import reduce_regions
 from iivs.dhm.analysis.area import ProjectedAreaCalculator
+from iivs.dhm.constants import PIXEL_SIZE_20X
 
 if TYPE_CHECKING:
     from typing import Self
@@ -32,11 +33,12 @@ class ProjectedArea(nn.Module):
     from the NumPy `ProjectedAreaCalculator`.
 
     Attributes:
-        pixel_size: Physical size of one (square) pixel, in m.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective (`iivs.dhm.constants.PIXEL_SIZE_20X`).
         area_scale: um^2 of projected area per pixel.
     """
 
-    def __init__(self, *, pixel_size: float) -> None:
+    def __init__(self, *, pixel_size: float = PIXEL_SIZE_20X) -> None:
         """Bind the pixel size and cache the per-pixel area (reused from NumPy)."""
         super().__init__()
 
@@ -68,7 +70,7 @@ class ProjectedArea(nn.Module):
 def calc_projected_area(
     image: Tensor,
     *,
-    pixel_size: float,
+    pixel_size: float = PIXEL_SIZE_20X,
     mask: Tensor | None = None,
     reduce: bool = True,
 ) -> Tensor:
@@ -82,7 +84,8 @@ def calc_projected_area(
     Args:
         image: The map(s) fixing the pixel grid, shape ``(..., H, W)``, on any
             device; its values never enter the area.
-        pixel_size: Physical size of one (square) pixel, in m.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective.
         mask: Optional region mask (boolean or integer labels); None (default)
             measures the whole frame. See `iivs.common.data.pytorch.region_stack`.
         reduce: If True (default), count each region up into its area; if False,
