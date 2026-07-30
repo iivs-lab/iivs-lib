@@ -37,6 +37,7 @@ __all__ = (
     "read_phase_header",
     "read_phase_txt_header",
     "read_phbounds",
+    "resolve_phase_unit",
     "save_phase",
     "save_phase_bin",
     "save_phase_folder",
@@ -92,4 +93,8 @@ from iivs.dhm.data.phase.txt import (
     read_phase_txt_header,
     save_phase_txt,
 )
-from iivs.dhm.data.phase.unit import PhaseUnit, convert_phase_unit
+from iivs.dhm.data.phase.unit import (
+    PhaseUnit,
+    convert_phase_unit,
+    resolve_phase_unit,
+)

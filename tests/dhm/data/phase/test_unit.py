@@ -9,7 +9,41 @@ from iivs.dhm.data.phase.unit import (
     PhaseUnit,
     convert_phase_unit,
     resolve_height_scale,
+    resolve_phase_unit,
 )
+
+# --- resolve_phase_unit ---
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    (
+        ("radians", PhaseUnit.RADIANS),
+        ("RADIANS", PhaseUnit.RADIANS),
+        ("Meters", PhaseUnit.METERS),
+        ("nanometers", PhaseUnit.NANOMETERS),
+    ),
+)
+def test_resolve_phase_unit_is_case_insensitive(name, expected):
+    assert resolve_phase_unit(name) is expected
+
+
+def test_resolve_phase_unit_rejects_unknown_by_name():
+    # UNKNOWN is a real member, so the lookup succeeds and the guard must reject
+    # it: nothing converts to or from the absence of a unit.
+    with pytest.raises(ValueError, match="unsupported unit 'unknown'"):
+        resolve_phase_unit("unknown")
+
+
+def test_resolve_phase_unit_rejects_an_unrecognized_name():
+    with pytest.raises(ValueError, match="unsupported unit 'radiuns'") as excinfo:
+        resolve_phase_unit("radiuns")
+
+    # the message names the valid set, and never offers UNKNOWN as a choice
+    message = str(excinfo.value)
+    assert "expected radians, meters, nanometers" in message
+    assert "unknown" not in message.removeprefix("unsupported unit 'radiuns'")
+
 
 # --- resolve_height_scale ---
 

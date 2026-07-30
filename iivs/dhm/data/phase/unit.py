@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-__all__ = ("PhaseUnit", "convert_phase_unit", "resolve_height_scale")
+__all__ = (
+    "PhaseUnit",
+    "convert_phase_unit",
+    "resolve_height_scale",
+    "resolve_phase_unit",
+)
 
 import math
 from enum import IntEnum
@@ -24,6 +29,28 @@ class PhaseUnit(IntEnum):
     RADIANS = 1
     METERS = 2
     NANOMETERS = 3
+
+
+def resolve_phase_unit(name: str) -> PhaseUnit:
+    """Resolve a unit `name` to its `PhaseUnit`, case-insensitively.
+
+    The text entry point for a unit that arrives as a string (a config field, a CLI
+    flag). `UNKNOWN` is rejected along with unrecognized names: it marks the absence
+    of a unit, so nothing converts to or from it.
+
+    Raises:
+        ValueError: If `name` is not one of radians, meters, or nanometers (case
+            aside).
+    """
+    unit = PhaseUnit.__members__.get(name.upper())
+    if unit is None or unit is PhaseUnit.UNKNOWN:
+        expected = ", ".join(
+            m.name.lower() for m in PhaseUnit if m is not PhaseUnit.UNKNOWN
+        )
+        msg = f"unsupported unit {name!r}: expected {expected}"
+        raise ValueError(msg)
+
+    return unit
 
 
 _NM_PER_M = 1e9

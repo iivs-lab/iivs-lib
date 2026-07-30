@@ -8,6 +8,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `resolve_phase_unit(name)` — resolve a unit name to its `PhaseUnit`,
+  case-insensitively, for a unit that arrives as text (a config field, a CLI
+  flag). `UNKNOWN` is rejected along with unrecognized names, so a bad value
+  fails where it is read rather than later inside a conversion, and the message
+  names the units that are accepted.
+
 ## [0.3.0] - 2026-07-31
 
 ### Added
