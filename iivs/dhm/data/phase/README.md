@@ -58,7 +58,10 @@ one — modeled on `kaparoo.filesystem.hierarchy.Exclusive(on_conflict="priority
   NANOMETERS` the fixed `1e9`.
 - A float list/folder applies a **`target_unit`** on load: pass it to the
   constructor to get every frame back in one unit (`None` keeps each file's
-  stored unit).
+  stored unit). `seq.with_unit(unit)` returns an independent sequence over the
+  same files loading in a different unit, for a folder handed to you already open
+  (e.g. from `search_timelapses` or `PhaseGroup.bin_folder`); the original is
+  untouched and an unreachable unit fails fast.
 
 ## The sequence interface
 

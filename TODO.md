@@ -3,29 +3,20 @@
 Actionable work on the data layer and beyond, in rough priority order. Not
 formal milestones.
 
-## In progress: the `analysis` package needs a deeper pass
+## Candidate: overridable `subpath` on the `search_*_folders` wrappers
 
-The engine-injection redesign (volume owns area + height, dry mass owns
-volume) landed fast and module-by-module review is finding real work; `opd`
-and `height` are done (2026-07-30, including the phase-preferred height axis
-and the torch `OpticalHeight` owning its OPD submodule), with `area`,
-`volume`, and `drymass` still to review. Known items so far:
-
-- The torch `OpticalVolume` and `DryMass` still copy scalar factors out of the
-  NumPy engines instead of owning their engine submodules the way
-  `OpticalHeight` now does; bring them to the same composition once their
-  reviews reach them.
-- The one-shot and `from_args` surfaces expose chain-building parameters that
-  cancel out of the result (`wavelength` / `refractive_delta` on the dry-mass
-  paths); each is documented, but the surface deserves one deliberate pass
-  rather than per-module accretion.
-- `pixel_size` defaulting to `PIXEL_SIZE_20X` everywhere is a convenience /
-  safety trade-off: a caller who forgets it silently gets 20X-scaled numbers.
-  Revisit whether the engines should keep that default once the review is
-  through.
-- Docs and tests grew with the churn; after the last module review, sweep for
-  leftover wording, duplicated anchors, and the analysis-docs rule (no
-  data-layer vocabulary: no Koala, file formats, or phase-unit types).
+The six format-specific wrappers (`search_phase_bin_folders` and its siblings)
+fix both the subpath (`PHASE_FLOAT_BIN` etc.) and the folder class. Exposing the
+subpath as a keyword argument that defaults to that constant, with the folder
+class still fixed, would let a caller point the same typed reader at a
+non-standard location: e.g. a filtered `.bin` re-exported to
+`FilteredPhase/Float/Bin` instead of `Phase/Float/Bin`, still parsed as a
+`PhaseBinFolder`. It is backward-compatible (the default is unchanged) and cheap
+(six signatures plus docstrings). `open_timelapse_subfolders(root, subpath,
+folder, ...)` already takes an explicit subpath, so this is convenience over that
+call while keeping the wrapper's typed return. The format-agnostic
+`search_phase_folders` / `search_intensity_folders` multiplex formats and stay as
+they are.
 
 ## On hold: threaded `get_items` (batch reads)
 
@@ -55,3 +46,16 @@ Revisit when a cold-cache run on the storage that actually hosts acquisitions
 (NAS / external HDD) shows ≥ 1.5-2x: threading's real payoff — hiding disk and
 network latency — is exactly what a warm page cache hides. Until then, use the
 external `ThreadPoolExecutor` pattern at call sites that need it.
+
+## Done
+
+- The `analysis` package deeper pass (2026-07-31): every quantity is now
+  phase-canonical (calculators funnel through `calc(phase)`; the one-shots lead
+  with the phase form, `calc_optical_volume` / `calc_drymass`, plus `_from_opd` /
+  `_from_height` twins). The torch twins own their inner engines as submodules
+  (`OpticalVolume` owns area + height, `DryMass` owns volume) and derive their
+  scales from them. The calculators share a `MaskedRegionCalculator` base
+  (`_require_2d` shape guard plus the `_reduce` mask/reduce dispatch); the torch
+  one-shots share `iivs.common.data.pytorch.reduce_regions`; converter forwards
+  are `convert_from_phase`; and `pixel_size` defaults to `PIXEL_SIZE_20X` on both
+  the NumPy and torch surfaces.
