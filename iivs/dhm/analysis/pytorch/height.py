@@ -10,6 +10,7 @@ __all__ = (
 
 from typing import TYPE_CHECKING
 
+from kaparoo.utils.optional import unwrap_or_factory
 from torch import nn
 
 from iivs.dhm.analysis.height import OpticalHeightConverter
@@ -51,15 +52,15 @@ class OpticalHeight(nn.Module):
         """Bind the delta and the phase <-> OPD submodule (lab default when None)."""
         super().__init__()
 
-        if opd_converter is None:
-            opd_converter = OpticalPathDifference()
+        self.opd_converter = unwrap_or_factory(opd_converter, OpticalPathDifference)
+
         engine = OpticalHeightConverter(
             refractive_delta=refractive_delta,
-            opd_converter=OPDConverter(wavelength=opd_converter.wavelength),
+            opd_converter=OPDConverter(wavelength=self.opd_converter.wavelength),
         )
+
         self.refractive_delta = engine.refractive_delta
         self.height_scale = engine.height_scale
-        self.opd_converter = opd_converter
 
     @classmethod
     def from_args(cls, *, wavelength: float, refractive_delta: float) -> Self:
