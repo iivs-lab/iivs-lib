@@ -28,7 +28,8 @@ try:
     from iivs.dhm.analysis.pytorch.volume import (
         OpticalVolume,
         calc_volume,
-        calc_volume_from_phase,
+        calc_volume_from_height,
+        calc_volume_from_opd,
     )
 except ModuleNotFoundError as exc:  # pragma: no cover
     if exc.name != "torch":
@@ -48,7 +49,8 @@ __all__ = (
     "calc_drymass_from_phase",
     "calc_projected_area",
     "calc_volume",
-    "calc_volume_from_phase",
+    "calc_volume_from_height",
+    "calc_volume_from_opd",
     "height_to_opd",
     "height_to_phase",
     "opd_to_height",

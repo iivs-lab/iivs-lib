@@ -78,7 +78,11 @@ class OpticalHeight(nn.Module):
         """The owned OPD submodule's wavelength, in nm."""
         return self.opd_converter.wavelength_nm
 
-    def convert_to_height(self, phase: Tensor) -> Tensor:
+    def forward(self, phase: Tensor) -> Tensor:
+        """Convert `phase` (rad) to optical height (nm); the `nn.Module` call form."""
+        return self.convert_from_phase(phase)
+
+    def convert_from_phase(self, phase: Tensor) -> Tensor:
         """Convert `phase` (rad) to optical height (nm)."""
         return phase * self.height_scale
 
@@ -92,15 +96,56 @@ class OpticalHeight(nn.Module):
         The owned `opd_converter` first maps `opd` back to phase; its wavelength
         cancels, leaving ``opd / refractive_delta``.
         """
-        return self.convert_to_height(self.opd_converter.convert_to_phase(opd))
+        return self.convert_from_phase(self.opd_converter.convert_to_phase(opd))
 
     def convert_to_opd(self, height: Tensor) -> Tensor:
         """Convert optical `height` (nm) to OPD (nm), exiting through phase."""
-        return self.opd_converter.convert_to_opd(self.convert_to_phase(height))
+        return self.opd_converter.convert_from_phase(self.convert_to_phase(height))
 
-    def forward(self, phase: Tensor) -> Tensor:
-        """Convert `phase` (rad) to optical height (nm); the `nn.Module` call form."""
-        return self.convert_to_height(phase)
+
+def phase_to_height(
+    phase: Tensor,
+    *,
+    wavelength: float = DEFAULT_WAVELENGTH,
+    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
+) -> Tensor:
+    """Convert phase (rad) to optical height (nm); a one-shot `OpticalHeight`.
+
+    Preserves the input tensor's dtype, device, and autograd graph. For repeated
+    use, build an `OpticalHeight` (or read its `height_scale`) once.
+
+    Args:
+        phase: Phase image (or batch), in rad.
+        wavelength: Illumination wavelength, in m.
+        refractive_delta: Refractive-index difference ``n_object - n_medium``.
+    """
+    module = OpticalHeight.from_args(
+        wavelength=wavelength, refractive_delta=refractive_delta
+    )
+    return module.convert_from_phase(phase)
+
+
+def height_to_phase(
+    height: Tensor,
+    *,
+    wavelength: float = DEFAULT_WAVELENGTH,
+    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
+) -> Tensor:
+    """Convert optical height (nm) to phase (rad); a one-shot `OpticalHeight`.
+
+    The inverse of `phase_to_height`; unlike the OPD one-shots, this conversion
+    genuinely depends on the wavelength. Preserves the input tensor's dtype,
+    device, and autograd graph.
+
+    Args:
+        height: Optical height image (or batch), in nm.
+        wavelength: Illumination wavelength, in m.
+        refractive_delta: Refractive-index difference ``n_object - n_medium``.
+    """
+    module = OpticalHeight.from_args(
+        wavelength=wavelength, refractive_delta=refractive_delta
+    )
+    return module.convert_to_phase(height)
 
 
 def opd_to_height(
@@ -130,48 +175,3 @@ def height_to_opd(
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
     """
     return OpticalHeight(refractive_delta=refractive_delta).convert_to_opd(height)
-
-
-def phase_to_height(
-    phase: Tensor,
-    *,
-    wavelength: float = DEFAULT_WAVELENGTH,
-    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
-) -> Tensor:
-    """Convert phase (rad) to optical height (nm); a one-shot `OpticalHeight`.
-
-    Preserves the input tensor's dtype, device, and autograd graph. For repeated
-    use, build an `OpticalHeight` (or read its `height_scale`) once.
-
-    Args:
-        phase: Phase image (or batch), in rad.
-        wavelength: Illumination wavelength, in m.
-        refractive_delta: Refractive-index difference ``n_object - n_medium``.
-    """
-    module = OpticalHeight.from_args(
-        wavelength=wavelength, refractive_delta=refractive_delta
-    )
-    return module.convert_to_height(phase)
-
-
-def height_to_phase(
-    height: Tensor,
-    *,
-    wavelength: float = DEFAULT_WAVELENGTH,
-    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
-) -> Tensor:
-    """Convert optical height (nm) to phase (rad); a one-shot `OpticalHeight`.
-
-    The inverse of `phase_to_height`; unlike the OPD one-shots, this conversion
-    genuinely depends on the wavelength. Preserves the input tensor's dtype,
-    device, and autograd graph.
-
-    Args:
-        height: Optical height image (or batch), in nm.
-        wavelength: Illumination wavelength, in m.
-        refractive_delta: Refractive-index difference ``n_object - n_medium``.
-    """
-    module = OpticalHeight.from_args(
-        wavelength=wavelength, refractive_delta=refractive_delta
-    )
-    return module.convert_to_phase(height)

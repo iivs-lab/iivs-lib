@@ -37,7 +37,7 @@ def test_converter_round_trips():
     conv = OPDConverter(wavelength=666e-9)
     phase = np.array([[0.1, 1.0], [2.0, 3.0]], dtype=np.float32)
     np.testing.assert_allclose(
-        conv.convert_to_phase(conv.convert_to_opd(phase)), phase, rtol=1e-5
+        conv.convert_to_phase(conv.convert_from_phase(phase)), phase, rtol=1e-5
     )
 
 
@@ -61,9 +61,9 @@ def test_converter_wavelength_nm_property():
 def test_converter_opd_scale_property():
     conv = OPDConverter(wavelength=666e-9)
     assert conv.opd_scale == pytest.approx(666e-9 / (2 * np.pi) * 1e9)  # nm/rad
-    # convert_to_opd is exactly phase * opd_scale (OPD already in nm)
+    # convert_from_phase is exactly phase * opd_scale (OPD already in nm)
     phase = np.array([[1.0, 2.0]], dtype=np.float32)
-    np.testing.assert_allclose(phase * conv.opd_scale, conv.convert_to_opd(phase))
+    np.testing.assert_allclose(phase * conv.opd_scale, conv.convert_from_phase(phase))
 
 
 def test_converter_from_wavelength_nm_rejects_nonpositive():

@@ -42,7 +42,6 @@ class ProjectedAreaCalculator:
 
     pixel_size: float = PIXEL_SIZE_20X
     _scale: float = field(init=False, repr=False, compare=False)  # um^2 per pixel
-    # the region summation engine; empty region -> 0 area:
     _sum: Sum = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
@@ -50,7 +49,8 @@ class ProjectedAreaCalculator:
         if self.pixel_size <= 0:
             msg = f"pixel_size must be positive (got {self.pixel_size})"
             raise ValueError(msg)
-        object.__setattr__(self, "_scale", (self.pixel_size * 1e6) ** 2)
+        scale = self.pixel_size**2 * 1e12  # m^2 -> um^2
+        object.__setattr__(self, "_scale", scale)
         object.__setattr__(self, "_sum", Sum(empty=0.0))
 
     @classmethod
@@ -107,7 +107,6 @@ class ProjectedAreaCalculator:
             msg = f"image must be at least 2D (..., H, W) (got {image.ndim}D)"
             raise ValueError(msg)
 
-        # each pixel contributes the constant per-pixel area, whatever its value
         density = np.broadcast_to(np.float32(self._scale), image.shape)
         region_op = self._sum if reduce else apply_mask
         result = region_op(density, mask)
@@ -141,6 +140,5 @@ def calc_projected_area(
         The projected area in um^2, shape ``(...)`` (or ``(..., R)``); or the
         unreduced density map when `reduce` is False.
     """
-    return ProjectedAreaCalculator(pixel_size=pixel_size).calc(
-        image, mask=mask, reduce=reduce
-    )
+    calculator = ProjectedAreaCalculator(pixel_size=pixel_size)
+    return calculator.calc(image, mask=mask, reduce=reduce)

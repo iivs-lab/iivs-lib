@@ -75,10 +75,11 @@ class DryMassCalculator:
             msg = f"alpha must be positive (got {self.alpha})"
             raise ValueError(msg)
 
-        # pg per summed-nm OPD, via the volume engine: volume_scale (um^3/nm)
-        # * delta / alpha * 1e-3 (pg/um^3); the delta cancels volume_scale's.
-        volume = self.volume_converter
-        scale = volume.volume_scale * volume.refractive_delta / self.alpha * 1e-3
+        # pg per summed-nm OPD: the pixel footprint (um^2, from the bound volume
+        # engine's area calculator) over alpha (Barer's law); delta- and
+        # wavelength-free. 1e-6 folds nm->m (1e-9), um^2->m^2 (1e-12), kg->pg (1e15).
+        area_scale = self.volume_converter.area_calculator.area_scale  # um^2/px
+        scale = area_scale / self.alpha * 1e-6
         object.__setattr__(self, "_scale", scale)
         object.__setattr__(self, "_sum", Sum(empty=0.0))
 
@@ -184,7 +185,7 @@ class DryMassCalculator:
     ) -> NDArray[np.float32]:
         """Integrate a phase map (rad) into dry mass [pg]."""
         opd_converter = self.volume_converter.height_converter.opd_converter
-        opd = opd_converter.convert_to_opd(phase)
+        opd = opd_converter.convert_from_phase(phase)
         return self.calc_from_opd(opd, mask=mask, reduce=reduce)
 
     def calc_from_height(

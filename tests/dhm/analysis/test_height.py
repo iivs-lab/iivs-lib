@@ -58,7 +58,7 @@ def test_phase_height_roundtrip():
     converter = OpticalHeightConverter.from_args(
         wavelength=666e-9, refractive_delta=0.5
     )
-    back = converter.convert_to_phase(converter.convert_to_height(phase))
+    back = converter.convert_to_phase(converter.convert_from_phase(phase))
     np.testing.assert_allclose(back, phase, rtol=1e-6)
 
     one_shot = height_to_phase(
@@ -86,7 +86,7 @@ def test_height_scale_matches_resolve_height_scale():
     assert converter.height_scale == pytest.approx(expected_nm)
     phase = np.full((2, 2), 2.0, dtype=np.float32)
     np.testing.assert_allclose(
-        converter.convert_to_height(phase),
+        converter.convert_from_phase(phase),
         phase * np.float32(expected_nm),
         rtol=1e-6,
     )

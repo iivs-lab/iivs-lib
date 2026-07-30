@@ -30,7 +30,7 @@ class OpticalHeightConverter:
     wavelength) once, then convert repeatedly::
 
         conv = OpticalHeightConverter()  # lab defaults
-        height = conv.convert_to_height(phase)  # phase in rad -> height in nm
+        height = conv.convert_from_phase(phase)  # phase in rad -> height in nm
         height = conv.convert_from_opd(opd)  # opd in nm -> height in nm
 
     ``height = phase * wavelength / (2 * pi * refractive_delta)``, in nm: the
@@ -86,7 +86,7 @@ class OpticalHeightConverter:
         """
         return self._scale
 
-    def convert_to_height(self, phase: NDArray[np.float32]) -> NDArray[np.float32]:
+    def convert_from_phase(self, phase: NDArray[np.float32]) -> NDArray[np.float32]:
         """Convert `phase` (rad) to optical height (nm) at this wavelength and delta."""
         return (phase * self._scale).astype(np.float32, copy=False)
 
@@ -102,7 +102,7 @@ class OpticalHeightConverter:
         composition, so the result is ``opd / refractive_delta`` regardless of it.
         """
         phase = self.opd_converter.convert_to_phase(opd)
-        return self.convert_to_height(phase)
+        return self.convert_from_phase(phase)
 
     def convert_to_opd(self, height: NDArray[np.float32]) -> NDArray[np.float32]:
         """Convert optical `height` (nm) to OPD (nm), exiting through phase.
@@ -111,7 +111,58 @@ class OpticalHeightConverter:
         way, leaving ``height * refractive_delta``.
         """
         phase = self.convert_to_phase(height)
-        return self.opd_converter.convert_to_opd(phase)
+        return self.opd_converter.convert_from_phase(phase)
+
+
+def phase_to_height(
+    phase: NDArray[np.float32],
+    *,
+    wavelength: float = DEFAULT_WAVELENGTH,
+    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
+) -> NDArray[np.float32]:
+    """Convert phase (rad) to optical height (nm); a one-shot converter.
+
+    For repeated conversions at one wavelength and delta, reuse an
+    `OpticalHeightConverter`.
+
+    Args:
+        phase: Phase image or stack, in rad.
+        wavelength: Illumination wavelength, in m.
+        refractive_delta: Refractive-index difference ``n_object - n_medium``.
+
+    Returns:
+        Optical height as a float32 array of the same shape, in nm.
+    """
+    converter = OpticalHeightConverter.from_args(
+        wavelength=wavelength, refractive_delta=refractive_delta
+    )
+    return converter.convert_from_phase(phase)
+
+
+def height_to_phase(
+    height: NDArray[np.float32],
+    *,
+    wavelength: float = DEFAULT_WAVELENGTH,
+    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
+) -> NDArray[np.float32]:
+    """Convert optical height (nm) to phase (rad); a one-shot converter.
+
+    The inverse of `phase_to_height`. Unlike the OPD one-shots, this conversion
+    genuinely depends on the wavelength. For repeated conversions at one
+    wavelength and delta, reuse an `OpticalHeightConverter`.
+
+    Args:
+        height: Optical height image or stack, in nm.
+        wavelength: Illumination wavelength, in m.
+        refractive_delta: Refractive-index difference ``n_object - n_medium``.
+
+    Returns:
+        Phase as a float32 array of the same shape, in rad.
+    """
+    converter = OpticalHeightConverter.from_args(
+        wavelength=wavelength, refractive_delta=refractive_delta
+    )
+    return converter.convert_to_phase(height)
 
 
 def opd_to_height(
@@ -153,54 +204,3 @@ def height_to_opd(
     """
     converter = OpticalHeightConverter(refractive_delta=refractive_delta)
     return converter.convert_to_opd(height)
-
-
-def phase_to_height(
-    phase: NDArray[np.float32],
-    *,
-    wavelength: float = DEFAULT_WAVELENGTH,
-    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
-) -> NDArray[np.float32]:
-    """Convert phase (rad) to optical height (nm); a one-shot converter.
-
-    For repeated conversions at one wavelength and delta, reuse an
-    `OpticalHeightConverter`.
-
-    Args:
-        phase: Phase image or stack, in rad.
-        wavelength: Illumination wavelength, in m.
-        refractive_delta: Refractive-index difference ``n_object - n_medium``.
-
-    Returns:
-        Optical height as a float32 array of the same shape, in nm.
-    """
-    converter = OpticalHeightConverter.from_args(
-        wavelength=wavelength, refractive_delta=refractive_delta
-    )
-    return converter.convert_to_height(phase)
-
-
-def height_to_phase(
-    height: NDArray[np.float32],
-    *,
-    wavelength: float = DEFAULT_WAVELENGTH,
-    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
-) -> NDArray[np.float32]:
-    """Convert optical height (nm) to phase (rad); a one-shot converter.
-
-    The inverse of `phase_to_height`. Unlike the OPD one-shots, this conversion
-    genuinely depends on the wavelength. For repeated conversions at one
-    wavelength and delta, reuse an `OpticalHeightConverter`.
-
-    Args:
-        height: Optical height image or stack, in nm.
-        wavelength: Illumination wavelength, in m.
-        refractive_delta: Refractive-index difference ``n_object - n_medium``.
-
-    Returns:
-        Phase as a float32 array of the same shape, in rad.
-    """
-    converter = OpticalHeightConverter.from_args(
-        wavelength=wavelength, refractive_delta=refractive_delta
-    )
-    return converter.convert_to_phase(height)

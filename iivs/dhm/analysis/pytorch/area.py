@@ -98,5 +98,4 @@ def calc_projected_area(
         raise ValueError(msg)
 
     density = ProjectedArea(pixel_size=pixel_size)(image)
-    # empty region -> 0 area, matching the NumPy `ProjectedAreaCalculator`
     return Sum(empty=0.0)(density, mask) if reduce else apply_mask(density, mask)

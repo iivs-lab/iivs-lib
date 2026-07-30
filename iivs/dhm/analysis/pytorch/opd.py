@@ -50,17 +50,17 @@ class OpticalPathDifference(nn.Module):
         """The wavelength in nm."""
         return self.wavelength * 1e9
 
-    def convert_to_opd(self, phase: Tensor) -> Tensor:
+    def forward(self, phase: Tensor) -> Tensor:
+        """Convert `phase` (rad) to OPD (nm); the `nn.Module` call form."""
+        return self.convert_from_phase(phase)
+
+    def convert_from_phase(self, phase: Tensor) -> Tensor:
         """Convert `phase` (rad) to OPD (nm)."""
         return phase * self.opd_scale
 
     def convert_to_phase(self, opd: Tensor) -> Tensor:
         """Convert `opd` (nm) to phase (rad)."""
         return opd / self.opd_scale
-
-    def forward(self, phase: Tensor) -> Tensor:
-        """Convert `phase` (rad) to OPD (nm); the `nn.Module` call form."""
-        return self.convert_to_opd(phase)
 
 
 def phase_to_opd(phase: Tensor, *, wavelength: float = DEFAULT_WAVELENGTH) -> Tensor:
@@ -73,7 +73,7 @@ def phase_to_opd(phase: Tensor, *, wavelength: float = DEFAULT_WAVELENGTH) -> Te
         phase: Phase image (or batch), in rad.
         wavelength: Illumination wavelength, in m.
     """
-    return OpticalPathDifference(wavelength=wavelength).convert_to_opd(phase)
+    return OpticalPathDifference(wavelength=wavelength).convert_from_phase(phase)
 
 
 def opd_to_phase(opd: Tensor, *, wavelength: float = DEFAULT_WAVELENGTH) -> Tensor:

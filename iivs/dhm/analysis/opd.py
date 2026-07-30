@@ -23,7 +23,7 @@ class OPDConverter:
     Bind the wavelength once, then convert repeatedly in either direction::
 
         conv = OPDConverter.from_wavelength_nm(666)  # or OPDConverter(666e-9)
-        opd = conv.convert_to_opd(phase)
+        opd = conv.convert_from_phase(phase)
         phase = conv.convert_to_phase(opd)
 
     ``OPD = phase * wavelength / (2 * pi)``, independent of refractive index (distinct
@@ -65,7 +65,7 @@ class OPDConverter:
         """
         return self._scale
 
-    def convert_to_opd(self, phase: NDArray[np.float32]) -> NDArray[np.float32]:
+    def convert_from_phase(self, phase: NDArray[np.float32]) -> NDArray[np.float32]:
         """Convert `phase` (rad) to OPD (nm) at this wavelength."""
         return (phase * self._scale).astype(np.float32, copy=False)
 
@@ -88,7 +88,7 @@ def phase_to_opd(
     Returns:
         OPD as a float32 array of the same shape, in nm.
     """
-    return OPDConverter(wavelength=wavelength).convert_to_opd(phase)
+    return OPDConverter(wavelength=wavelength).convert_from_phase(phase)
 
 
 def opd_to_phase(

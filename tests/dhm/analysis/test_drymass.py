@@ -9,7 +9,7 @@ from iivs.dhm.analysis.drymass import (
     calc_drymass_from_phase,
 )
 from iivs.dhm.analysis.opd import phase_to_opd
-from iivs.dhm.analysis.volume import OpticalVolumeCalculator, calc_volume
+from iivs.dhm.analysis.volume import OpticalVolumeCalculator, calc_volume_from_opd
 from iivs.dhm.constants import (
     DEFAULT_REFRACTIVE_DELTA,
     DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
@@ -286,7 +286,7 @@ def test_calc_from_volume_closes_the_chain():
         pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
     )
     direct = calc.calc_from_opd(opd)
-    volume = calc_volume(opd, pixel_size=1e-7, refractive_delta=0.5)
+    volume = calc_volume_from_opd(opd, pixel_size=1e-7, refractive_delta=0.5)
     via_volume = calc.calc_from_volume(volume, refractive_delta=0.5)
     assert via_volume == pytest.approx(direct, rel=1e-5)
     assert via_volume == pytest.approx(0.25, rel=1e-5)
