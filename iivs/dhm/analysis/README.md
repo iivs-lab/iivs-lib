@@ -95,14 +95,14 @@ below; an empty region integrates to 0 µm³. Dry mass is the
   the two engines once.
   - `from_args(pixel_size=..., wavelength=..., refractive_delta=...)` — build
     both engines from plain parameters.
-  - `calc_from_phase(phase, *, mask=None, reduce=True)` (canonical) /
+  - `calc(phase, *, mask=None, reduce=True)` (canonical) /
     `calc_from_opd(opd, ...)` / `calc_from_height(height, ...)` — the latter two
     convert back to phase first.
   - `volume_scale` — the cached µm³-per-summed-rad-phase factor.
   - `pixel_size` / `pixel_size_um`, `refractive_delta`, `wavelength` /
     `wavelength_nm` — re-surfaced from the bound engines.
-- `calc_volume(phase, *, pixel_size, wavelength=..., refractive_delta=..., mask=None, reduce=True)`
-  (canonical) / `calc_volume_from_opd(opd, ...)` / `calc_volume_from_height(height, ...)`
+- `calc_optical_volume(phase, *, pixel_size, wavelength=..., refractive_delta=..., mask=None, reduce=True)`
+  (canonical) / `calc_optical_volume_from_opd(opd, ...)` / `calc_optical_volume_from_height(height, ...)`
   — the one-shot forms.
 
 ## `drymass` — dry mass
@@ -168,7 +168,7 @@ are **pure pointwise** `nn.Module`s — one op each, so they drop cleanly into
 - `DryMass(pixel_size=..., alpha=...)` — `forward(opd) = opd * drymass_scale`, the
   per-pixel dry-mass density (pg). No `mask` / `reduce`.
 
-`calc_volume` (phase) / `calc_volume_from_opd` / `calc_volume_from_height` are the
+`calc_optical_volume` (phase) / `calc_optical_volume_from_opd` / `calc_optical_volume_from_height` are the
 volume one-shots.
 `ProjectedArea(pixel_size=...)` — `forward(image)` is the constant per-pixel area
 density (µm²) over the image's grid (its values never enter, so no gradient flows

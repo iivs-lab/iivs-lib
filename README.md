@@ -132,9 +132,9 @@ precomputes its conversion factor (with one-shot function conveniences):
   `ProjectedAreaCalculator` (scale `area_scale`); `calc_projected_area`.
 - **`volume`** — optical volume (`sum(height * pixel_area)`, in um^3 = fL;
   equivalently `projected_area * mean(height)`). `OpticalVolumeCalculator`
-  (`calc_from_phase` canonical, `calc_from_opd` / `calc_from_height` enter through
-  phase; scale `volume_scale`, um^3 per rad); `calc_volume` (phase) /
-  `calc_volume_from_opd` / `calc_volume_from_height`.
+  (`calc` canonical, `calc_from_opd` / `calc_from_height` enter through
+  phase; scale `volume_scale`, um^3 per rad); `calc_optical_volume` (phase) /
+  `calc_optical_volume_from_opd` / `calc_optical_volume_from_height`.
 - **`drymass`** — dry mass (pg) via the Barer relation. `DryMassCalculator`
   (`calc_from_opd` / `calc_from_phase` over a background-corrected map, optionally
   masked by a boolean or integer-label region; scale `drymass_scale`) delegates

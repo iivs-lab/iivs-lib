@@ -31,8 +31,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `OPDConverter.from_wavelength_nm`).
 - Torch twins in `iivs.dhm.analysis.pytorch`: the `OpticalHeight`, `OpticalVolume`,
   and `ProjectedArea` `nn.Module`s (sharing the NumPy engines' scale factors,
-  autograd / device preserved), plus the `calc_volume` (phase) /
-  `calc_volume_from_opd` / `calc_volume_from_height` / `calc_projected_area`
+  autograd / device preserved), plus the `calc_optical_volume` (phase) /
+  `calc_optical_volume_from_opd` / `calc_optical_volume_from_height` / `calc_projected_area`
   one-shots. `OpticalVolume` is phase-canonical
   (`forward(phase) = phase * volume_scale`; an OPD / height map enters through
   `convert_from_opd` / `convert_from_height`) and owns a `ProjectedArea` and an
