@@ -11,7 +11,8 @@ try:
     from iivs.dhm.analysis.pytorch.drymass import (
         DryMass,
         calc_drymass,
-        calc_drymass_from_phase,
+        calc_drymass_from_height,
+        calc_drymass_from_opd,
     )
     from iivs.dhm.analysis.pytorch.height import (
         OpticalHeight,
@@ -46,7 +47,8 @@ __all__ = (
     "OpticalVolume",
     "ProjectedArea",
     "calc_drymass",
-    "calc_drymass_from_phase",
+    "calc_drymass_from_height",
+    "calc_drymass_from_opd",
     "calc_optical_volume",
     "calc_optical_volume_from_height",
     "calc_optical_volume_from_opd",

@@ -9,6 +9,7 @@ __all__ = (
     "Sum",
     "Variance",
     "apply_mask",
+    "reduce_regions",
     "region_stack",
 )
 
@@ -272,3 +273,13 @@ class Std(Variance):
     @override
     def _reduce(self, values: Tensor, regions: Tensor) -> Tensor:
         return super()._reduce(values, regions).sqrt()
+
+
+def reduce_regions(values: Tensor, mask: Tensor | None, *, reduce: bool) -> Tensor:
+    """Sum `values` over each `mask` region, or mask them when not `reduce`.
+
+    `reduce` True sums each region (empty region -> 0); False returns the
+    per-region masked map. The one-call `mask` / `reduce` dispatch over `Sum` and
+    `apply_mask`, preserving the input tensor's device and autograd graph.
+    """
+    return Sum(empty=0.0)(values, mask) if reduce else apply_mask(values, mask)

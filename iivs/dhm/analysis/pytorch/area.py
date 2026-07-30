@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import torch
 from torch import nn
 
-from iivs.common.data.pytorch.reduction import Sum, apply_mask
+from iivs.common.data.pytorch.reduction import reduce_regions
 from iivs.dhm.analysis.area import ProjectedAreaCalculator
 
 if TYPE_CHECKING:
@@ -98,4 +98,4 @@ def calc_projected_area(
         raise ValueError(msg)
 
     density = ProjectedArea(pixel_size=pixel_size)(image)
-    return Sum(empty=0.0)(density, mask) if reduce else apply_mask(density, mask)
+    return reduce_regions(density, mask, reduce=reduce)

@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-__all__ = ("DryMassCalculator", "calc_drymass", "calc_drymass_from_phase")
+__all__ = (
+    "DryMassCalculator",
+    "calc_drymass",
+    "calc_drymass_from_height",
+    "calc_drymass_from_opd",
+)
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -40,18 +45,17 @@ class DryMassCalculator(MaskedRegionCalculator):
         dmc = DryMassCalculator.from_args(
             pixel_size=px, wavelength=wl, refractive_delta=dn, alpha=a
         )  # or fully explicit plain parameters
+        mass = dmc.calc(phase, mask=cell)  # phase in rad
         mass = dmc.calc_from_opd(opd, mask=cell)  # opd in nm
-        mass = dmc.calc_from_phase(phase, mask=cell)  # phase in rad
 
     Dry mass is ``(1 / alpha) * sum(OPD * pixel_area)`` (Barer), in pg, summed in
     float64 over the last two axes (H, W) and returned as float32; equivalently
     ``volume * refractive_delta / alpha`` over the bound engine's volume, which is
     how `drymass_scale` is derived (the delta cancels, so the mass never depends
     on it). Inputs are batched (``(..., H, W)``) and a multi-region mask adds a
-    trailing region axis. See `calc_from_opd` for the shape / `mask` / `reduce`
-    details. The OPD must already be background-corrected (≈ 0 outside the
-    object); segmentation and background estimation stay the caller's
-    responsibility.
+    trailing region axis. See `calc` for the shape / `mask` / `reduce` details.
+    The map must already be background-corrected (≈ 0 outside the object);
+    segmentation and background estimation stay the caller's responsibility.
 
     For PyTorch, use `DryMass` from `iivs.dhm.analysis.pytorch`.
 
@@ -76,11 +80,11 @@ class DryMassCalculator(MaskedRegionCalculator):
             msg = f"alpha must be positive (got {self.alpha})"
             raise ValueError(msg)
 
-        # pg per summed-nm OPD: the pixel footprint (um^2, from the bound volume
-        # engine's area calculator) over alpha (Barer's law); delta- and
-        # wavelength-free. 1e-6 folds nm->m (1e-9), um^2->m^2 (1e-12), kg->pg (1e15).
-        area_scale = self.volume_converter.area_calculator.area_scale  # um^2/px
-        scale = area_scale / self.alpha * 1e-6
+        # pg per summed-rad phase, via the volume engine: mass = volume *
+        # delta / alpha (Barer). The delta cancels volume_scale's own, so an OPD
+        # map's mass is delta-free; the phase scale carries the wavelength.
+        volume = self.volume_converter
+        scale = volume.volume_scale * volume.refractive_delta / self.alpha * 1e-3
         object.__setattr__(self, "_scale", scale)
         object.__setattr__(self, "_sum", Sum(empty=0.0))
 
@@ -128,24 +132,29 @@ class DryMassCalculator(MaskedRegionCalculator):
 
     @property
     def drymass_scale(self) -> float:
-        """pg of dry mass per nm of OPD summed over pixels.
+        """pg of dry mass per rad of phase summed over pixels.
 
-        The cached ``pixel_area / alpha`` factor: ``mass == drymass_scale *
-        sum(opd_nm)``. The OPD analogue is `OPDConverter.opd_scale`.
+        The cached ``volume_scale * refractive_delta / alpha * 1e-3`` factor:
+        ``mass == drymass_scale * sum(phase)``. Dry mass's canonical unit here is
+        pg, so this needs no suffix.
         """
         return self._scale
 
-    def calc_from_opd(
+    def calc(
         self,
-        opd: NDArray[np.float32],
+        phase: NDArray[np.float32],
         *,
         mask: MaskLike | None = None,
         reduce: bool = True,
     ) -> NDArray[np.float32]:
-        """Integrate an OPD map (nm) into dry mass [pg] over the last two axes (H, W).
+        """Integrate a phase map (rad) into dry mass [pg] over the last two axes.
+
+        The canonical entry point; `calc_from_opd` and `calc_from_height` convert
+        their input back to phase and funnel through here.
 
         Args:
-            opd: OPD map(s), in nm, shape ``(..., H, W)``.
+            phase: Phase map(s), in rad, shape ``(..., H, W)``, already
+                background-corrected.
             mask: Optional mask selecting the region(s) to integrate: a boolean
                 ``(H, W)`` (one region) or ``(N, H, W)`` (`N` regions, which may
                 overlap), or an integer label image ``(H, W)`` (0 = background, one
@@ -154,34 +163,43 @@ class DryMassCalculator(MaskedRegionCalculator):
             reduce: If True (default), sum the per-pixel mass over each region and
                 return the dry mass, shape ``(...)`` (or ``(..., R)`` for a
                 multi-region mask). If False, return the per-pixel mass-density map
-                (``opd * scale``, masked) without summing, shape ``(..., H, W)`` (or
-                ``(..., R, H, W)``).
+                (``phase * scale``, masked) without summing, shape ``(..., H, W)``
+                (or ``(..., R, H, W)``).
 
         Raises:
-            ValueError: If `opd` is not at least 2-D ``(..., H, W)``, or the mask is
-                malformed (see `region_stack`: a wrong ``(H, W)``, a boolean mask not
-                2-D or 3-D, a label mask not 2-D or holding a negative label, or a
-                non-boolean / non-integer dtype).
+            ValueError: If `phase` is not at least 2-D ``(..., H, W)``, or the mask
+                is malformed (see `region_stack`).
         """
-        self._require_2d(opd, "opd")
+        self._require_2d(phase, "phase")
 
-        result = self._reduce(opd, mask, reduce=reduce)
+        result = self._reduce(phase, mask, reduce=reduce)
 
-        # OPD (nm) -> dry mass (pg); the summed path accumulates in float64, and
-        # every path returns float32.
+        # phase (rad) -> dry mass (pg); the summed path accumulates in float64,
+        # and every path returns float32.
         return (result * self._scale).astype(np.float32, copy=False)
 
-    def calc_from_phase(
+    def calc_from_opd(
         self,
-        phase: NDArray[np.float32],
+        opd: NDArray[np.float32],
         *,
         mask: MaskLike | None = None,
         reduce: bool = True,
     ) -> NDArray[np.float32]:
-        """Integrate a phase map (rad) into dry mass [pg]."""
+        """Integrate an OPD map (nm) into dry mass [pg], entering through phase.
+
+        Maps `opd` back to phase (via the bound `opd_converter`), then integrates
+        as `calc`; shapes, `mask`, and `reduce` behave identically.
+
+        Raises:
+            ValueError: If `opd` is not at least 2-D ``(..., H, W)``, or the mask
+                is malformed (see `region_stack`).
+        """
+        self._require_2d(opd, "opd")
+
         opd_converter = self.volume_converter.height_converter.opd_converter
-        opd = opd_converter.convert_from_phase(phase)
-        return self.calc_from_opd(opd, mask=mask, reduce=reduce)
+        phase = opd_converter.convert_to_phase(opd)
+
+        return self.calc(phase, mask=mask, reduce=reduce)
 
     def calc_from_height(
         self,
@@ -190,10 +208,10 @@ class DryMassCalculator(MaskedRegionCalculator):
         mask: MaskLike | None = None,
         reduce: bool = True,
     ) -> NDArray[np.float32]:
-        """Integrate an optical height map (nm) into dry mass [pg].
+        """Integrate an optical height map (nm) into dry mass [pg] through phase.
 
-        Converts `height` back to OPD (``height * refractive_delta``, via the
-        bound height converter), then integrates as `calc_from_opd`.
+        Converts `height` back to phase (via the bound height converter), then
+        integrates as `calc`; shapes, `mask`, and `reduce` behave identically.
 
         Raises:
             ValueError: If `height` is not at least 2-D ``(..., H, W)``, or the
@@ -201,9 +219,9 @@ class DryMassCalculator(MaskedRegionCalculator):
         """
         self._require_2d(height, "height")
 
-        opd = self.volume_converter.height_converter.convert_to_opd(height)
+        phase = self.volume_converter.height_converter.convert_to_phase(height)
 
-        return self.calc_from_opd(opd, mask=mask, reduce=reduce)
+        return self.calc(phase, mask=mask, reduce=reduce)
 
     def calc_from_volume(
         self,
@@ -239,57 +257,19 @@ class DryMassCalculator(MaskedRegionCalculator):
 
 
 def calc_drymass(
-    opd: NDArray[np.float32],
-    *,
-    wavelength: float = DEFAULT_WAVELENGTH,
-    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
-    pixel_size: float = PIXEL_SIZE_20X,
-    alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
-    mask: MaskLike | None = None,
-    reduce: bool = True,
-) -> NDArray[np.float32]:
-    """Integrate an OPD map (nm) into dry mass [pg].
-
-    Args:
-        opd: OPD map(s), in nm (e.g. from `phase_to_opd`), shape ``(..., H, W)``,
-            already background-corrected.
-        wavelength: Illumination wavelength, in m. Enters only the engine chain;
-            the mass of an OPD map never depends on it.
-        refractive_delta: Refractive-index difference ``n_object - n_medium``.
-            Enters only the engine chain; it cancels out of the mass.
-        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
-            lab's 20X objective.
-        alpha: Specific refractive increment, in m^3/kg.
-        mask: Optional region mask (boolean or integer labels); see
-            `DryMassCalculator.calc_from_opd`.
-        reduce: Sum over each region to a dry mass (True), or return the per-pixel
-            mass-density map (False). See `DryMassCalculator.calc_from_opd`.
-
-    Returns:
-        Dry mass in pg, shape ``(...)`` (or ``(..., R)``); or the unreduced
-        density map when `reduce` is False.
-    """
-    return DryMassCalculator.from_args(
-        pixel_size=pixel_size,
-        alpha=alpha,
-        refractive_delta=refractive_delta,
-        wavelength=wavelength,
-    ).calc_from_opd(opd, mask=mask, reduce=reduce)
-
-
-def calc_drymass_from_phase(
     phase: NDArray[np.float32],
     *,
     pixel_size: float = PIXEL_SIZE_20X,
     wavelength: float = DEFAULT_WAVELENGTH,
-    alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
+    alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
     mask: MaskLike | None = None,
     reduce: bool = True,
 ) -> NDArray[np.float32]:
     """Integrate a phase map (rad) into dry mass [pg] at `wavelength`.
 
-    Converts `phase` to OPD at `wavelength`, then integrates as `calc_drymass`.
+    The canonical one-shot `DryMassCalculator`; `calc_drymass_from_opd` and
+    `calc_drymass_from_height` are the OPD / height entry points.
 
     Args:
         phase: Phase map(s), in rad, shape ``(..., H, W)``, already
@@ -297,11 +277,11 @@ def calc_drymass_from_phase(
         pixel_size: Physical size of one (square) pixel, in m. Defaults to the
             lab's 20X objective.
         wavelength: Illumination wavelength, in m.
-        alpha: Specific refractive increment, in m^3/kg.
         refractive_delta: Refractive-index difference ``n_object - n_medium``.
             Enters only the engine chain; it cancels out of the mass.
+        alpha: Specific refractive increment, in m^3/kg.
         mask: Optional region mask (boolean or integer labels); see
-            `DryMassCalculator.calc_from_opd`.
+            `DryMassCalculator.calc`.
         reduce: Sum over each region to a dry mass (True), or return the per-pixel
             mass-density map (False).
 
@@ -311,7 +291,84 @@ def calc_drymass_from_phase(
     """
     return DryMassCalculator.from_args(
         pixel_size=pixel_size,
-        alpha=alpha,
         wavelength=wavelength,
         refractive_delta=refractive_delta,
-    ).calc_from_phase(phase, mask=mask, reduce=reduce)
+        alpha=alpha,
+    ).calc(phase, mask=mask, reduce=reduce)
+
+
+def calc_drymass_from_opd(
+    opd: NDArray[np.float32],
+    *,
+    pixel_size: float = PIXEL_SIZE_20X,
+    wavelength: float = DEFAULT_WAVELENGTH,
+    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
+    alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
+    mask: MaskLike | None = None,
+    reduce: bool = True,
+) -> NDArray[np.float32]:
+    """Integrate an OPD map (nm) into dry mass [pg].
+
+    Args:
+        opd: OPD map(s), in nm (e.g. from `phase_to_opd`), shape ``(..., H, W)``,
+            already background-corrected.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective.
+        wavelength: Illumination wavelength, in m. Enters only the engine chain;
+            the mass of an OPD map never depends on it.
+        refractive_delta: Refractive-index difference ``n_object - n_medium``.
+            Enters only the engine chain; it cancels out of the mass.
+        alpha: Specific refractive increment, in m^3/kg.
+        mask: Optional region mask (boolean or integer labels); see
+            `DryMassCalculator.calc`.
+        reduce: Sum over each region to a dry mass (True), or return the per-pixel
+            mass-density map (False).
+
+    Returns:
+        Dry mass in pg, shape ``(...)`` (or ``(..., R)``); or the unreduced
+        density map when `reduce` is False.
+    """
+    return DryMassCalculator.from_args(
+        pixel_size=pixel_size,
+        wavelength=wavelength,
+        refractive_delta=refractive_delta,
+        alpha=alpha,
+    ).calc_from_opd(opd, mask=mask, reduce=reduce)
+
+
+def calc_drymass_from_height(
+    height: NDArray[np.float32],
+    *,
+    pixel_size: float = PIXEL_SIZE_20X,
+    wavelength: float = DEFAULT_WAVELENGTH,
+    refractive_delta: float = DEFAULT_REFRACTIVE_DELTA,
+    alpha: float = DEFAULT_SPECIFIC_REFRACTIVE_INCREMENT,
+    mask: MaskLike | None = None,
+    reduce: bool = True,
+) -> NDArray[np.float32]:
+    """Integrate an optical height map (nm) into dry mass [pg].
+
+    Args:
+        height: Optical height map(s), in nm, shape ``(..., H, W)``, already
+            background-corrected.
+        pixel_size: Physical size of one (square) pixel, in m. Defaults to the
+            lab's 20X objective.
+        wavelength: Illumination wavelength, in m.
+        refractive_delta: Refractive-index difference ``n_object - n_medium``.
+            Enters only the engine chain; it cancels out of the mass.
+        alpha: Specific refractive increment, in m^3/kg.
+        mask: Optional region mask (boolean or integer labels); see
+            `DryMassCalculator.calc`.
+        reduce: Sum over each region to a dry mass (True), or return the per-pixel
+            mass-density map (False).
+
+    Returns:
+        Dry mass in pg, shape ``(...)`` (or ``(..., R)``); or the unreduced
+        density map when `reduce` is False.
+    """
+    return DryMassCalculator.from_args(
+        pixel_size=pixel_size,
+        wavelength=wavelength,
+        refractive_delta=refractive_delta,
+        alpha=alpha,
+    ).calc_from_height(height, mask=mask, reduce=reduce)

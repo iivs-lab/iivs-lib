@@ -6,7 +6,8 @@ import pytest
 from iivs.dhm.analysis.drymass import (
     DryMassCalculator,
     calc_drymass,
-    calc_drymass_from_phase,
+    calc_drymass_from_height,
+    calc_drymass_from_opd,
 )
 from iivs.dhm.analysis.opd import phase_to_opd
 from iivs.dhm.analysis.volume import (
@@ -25,21 +26,23 @@ def test_calc_drymass_uniform_region():
     # 50 nm OPD over 100 px of 0.1 um pitch; alpha 2e-4 m^3/kg = 0.2 um^3/pg:
     # per px = 0.05 um * (0.1 um)^2 / 0.2 um^3/pg = 2.5e-3 pg; x100 = 0.25 pg.
     opd = np.full((10, 10), 50.0, dtype=np.float32)  # nm
-    assert calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4) == pytest.approx(0.25)
+    assert calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4) == pytest.approx(
+        0.25
+    )
 
 
 def test_calc_drymass_respects_mask():
     opd = np.full((2, 2), 50.0, dtype=np.float32)  # 4 equal pixels, nm
     mask = np.array([[True, False], [False, False]])  # select 1
-    whole = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4)
-    one = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=mask)
+    whole = calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4)
+    one = calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4, mask=mask)
     assert one == pytest.approx(whole / 4)
 
 
 def test_calc_drymass_scales_with_alpha():
     opd = np.full((4, 4), 30.0, dtype=np.float32)  # nm
-    m1 = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4)
-    m2 = calc_drymass(opd, pixel_size=1e-7, alpha=4.0e-4)
+    m1 = calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4)
+    m2 = calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=4.0e-4)
     assert m2 == pytest.approx(m1 / 2)  # mass is inversely proportional to alpha
 
 
@@ -48,9 +51,9 @@ def test_calc_drymass_batched():
     opd = np.stack(
         [np.full((2, 2), 10.0, np.float32), np.full((2, 2), 20.0, np.float32)]
     )
-    out = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4)
+    out = calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4)
     assert out.shape == (2,)
-    single = calc_drymass(opd[0], pixel_size=1e-7, alpha=2.0e-4)
+    single = calc_drymass_from_opd(opd[0], pixel_size=1e-7, alpha=2.0e-4)
     assert out[0] == pytest.approx(float(single))
     assert out[1] == pytest.approx(2 * float(single))
 
@@ -64,19 +67,19 @@ def test_calc_drymass_channel_mask():
             [[True, True], [False, False]],  # 2 pixels
         ]
     )  # (N=2, H=2, W=2)
-    out = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=masks)
+    out = calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4, mask=masks)
     assert out.shape == (2,)
-    whole = float(calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4))
+    whole = float(calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4))
     assert out[0] == pytest.approx(whole / 4)
     assert out[1] == pytest.approx(whole / 2)
 
 
 def test_calc_drymass_reduce_false_returns_map():
     opd = np.full((2, 2), 50.0, np.float32)
-    density = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, reduce=False)
+    density = calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4, reduce=False)
     assert density.shape == (2, 2)  # the per-pixel map, not summed
     assert density.sum() == pytest.approx(
-        float(calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4))
+        float(calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4))
     )
 
 
@@ -84,10 +87,12 @@ def test_calc_drymass_reduce_false_with_mask():
     # reduce=False + mask: per-pixel density with the mask applied (0 elsewhere).
     opd = np.full((2, 2), 50.0, np.float32)
     mask = np.array([[True, False], [False, False]])
-    density = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=mask, reduce=False)
+    density = calc_drymass_from_opd(
+        opd, pixel_size=1e-7, alpha=2.0e-4, mask=mask, reduce=False
+    )
     assert density.shape == (2, 2)
     assert density[0, 0] == pytest.approx(
-        float(calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=mask))
+        float(calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4, mask=mask))
     )
     assert density.sum() == pytest.approx(density[0, 0])  # only the masked pixel
 
@@ -97,12 +102,16 @@ def test_output_is_float32():
     opd = np.full((4, 4), 50.0, dtype=np.float32)
     mask2d = np.ones((4, 4), dtype=bool)
     mask3d = np.ones((3, 4, 4), dtype=bool)
-    assert calc_drymass(opd, pixel_size=1e-7).dtype == np.float32  # sum, no mask
-    assert calc_drymass(opd, pixel_size=1e-7, mask=mask2d).dtype == np.float32
     assert (
-        calc_drymass(opd, pixel_size=1e-7, mask=mask3d).dtype == np.float32
+        calc_drymass_from_opd(opd, pixel_size=1e-7).dtype == np.float32
+    )  # sum, no mask
+    assert calc_drymass_from_opd(opd, pixel_size=1e-7, mask=mask2d).dtype == np.float32
+    assert (
+        calc_drymass_from_opd(opd, pixel_size=1e-7, mask=mask3d).dtype == np.float32
     )  # (N,...)
-    assert calc_drymass(opd, pixel_size=1e-7, reduce=False).dtype == np.float32  # map
+    assert (
+        calc_drymass_from_opd(opd, pixel_size=1e-7, reduce=False).dtype == np.float32
+    )  # map
 
 
 def test_rejects_bad_shapes():
@@ -122,9 +131,9 @@ def test_calc_drymass_label_mask():
     # an integer label image -> one dry mass per positive label (0 = background)
     opd = np.full((2, 2), 50.0, np.float32)
     labels = np.array([[1, 1], [2, 0]])  # label 1: 2 px, label 2: 1 px
-    out = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels)
+    out = calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels)
     assert out.shape == (2,)  # kept, unlike a 2D boolean mask
-    whole = float(calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4))
+    whole = float(calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4))
     assert out[0] == pytest.approx(whole / 2)  # 2 of 4 pixels
     assert out[1] == pytest.approx(whole / 4)  # 1 of 4 pixels
 
@@ -133,7 +142,7 @@ def test_calc_drymass_empty_region_is_zero():
     # a label gap (label 1 absent) -> empty region -> 0 pg (matches Sum(empty=0.0))
     opd = np.full((2, 2), 50.0, np.float32)
     labels = np.array([[0, 2], [2, 0]])  # label 1 missing
-    out = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels)
+    out = calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels)
     assert out[0] == 0.0  # empty region
     assert out[1] > 0
 
@@ -142,24 +151,32 @@ def test_calc_drymass_label_mask_density():
     # reduce=False + labels -> a per-region density stack (..., R, H, W)
     opd = np.full((2, 2), 50.0, np.float32)
     labels = np.array([[1, 1], [2, 0]])
-    density = calc_drymass(
+    density = calc_drymass_from_opd(
         opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels, reduce=False
     )
     assert density.shape == (2, 2, 2)
-    per_label = calc_drymass(opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels)
+    per_label = calc_drymass_from_opd(opd, pixel_size=1e-7, alpha=2.0e-4, mask=labels)
     assert density[0].sum() == pytest.approx(float(per_label[0]))
     assert density[1].sum() == pytest.approx(float(per_label[1]))
 
 
 def test_calc_drymass_from_phase_matches_two_step():
     phase = np.full((5, 5), 1.0, dtype=np.float32)
-    direct = calc_drymass_from_phase(
-        phase, pixel_size=1e-7, wavelength=666e-9, alpha=2.0e-4
-    )
-    two_step = calc_drymass(
+    direct = calc_drymass(phase, pixel_size=1e-7, wavelength=666e-9, alpha=2.0e-4)
+    two_step = calc_drymass_from_opd(
         phase_to_opd(phase, wavelength=666e-9), pixel_size=1e-7, alpha=2.0e-4
     )
     assert direct == pytest.approx(two_step)
+
+
+def test_calc_drymass_from_height_matches_from_opd():
+    # opd = height * delta, so the two entry points agree on the matching maps.
+    height = np.full((4, 4), 100.0, dtype=np.float32)  # nm
+    from_height = calc_drymass_from_height(
+        height, pixel_size=1e-7, refractive_delta=0.5, alpha=2.0e-4
+    )
+    from_opd = calc_drymass_from_opd(height * 0.5, pixel_size=1e-7, alpha=2.0e-4)
+    assert from_height == pytest.approx(from_opd)
 
 
 # --- DryMassCalculator ---
@@ -181,7 +198,7 @@ def test_calculator_from_wavelength_integrates_phase():
     calc = DryMassCalculator.from_args(
         pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
     )
-    assert calc.calc_from_phase(phase) == pytest.approx(0.13249, rel=1e-3)
+    assert calc.calc(phase) == pytest.approx(0.13249, rel=1e-3)
 
 
 def test_calculator_accepts_injected_volume_engine():
@@ -193,8 +210,8 @@ def test_calculator_accepts_injected_volume_engine():
     assert calc.volume_converter is volume
     expected = DryMassCalculator.from_args(
         pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
-    ).calc_from_phase(phase)
-    assert calc.calc_from_phase(phase) == pytest.approx(expected)
+    ).calc(phase)
+    assert calc.calc(phase) == pytest.approx(expected)
 
 
 def test_calculator_wavelength_shortcuts():
@@ -206,17 +223,16 @@ def test_calculator_wavelength_shortcuts():
 
 
 def test_calculator_drymass_scale():
-    # 0.1 um pixel, alpha 2e-4 m^3/kg: px_area 1e-14 m^2; pg per summed-nm OPD =
-    # 1e-14 m^2 * (1e-9 m/nm) * (1e15 pg/kg) / 2e-4 = 5e-5 pg/nm (hand-derived).
+    # drymass_scale is per rad of phase now: area_scale (0.01 um^2) * opd_scale
+    # (666/2pi nm/rad) * 1e-6 / alpha (2e-4) pg per summed-rad phase (hand-derived).
     calc = DryMassCalculator.from_args(
         pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5, alpha=2.0e-4
     )
-    assert calc.drymass_scale == pytest.approx(5e-5)
-    # the scale times the summed OPD (nm) reproduces the dry mass
-    opd = np.full((10, 10), 50.0, dtype=np.float32)
-    assert calc.drymass_scale * float(opd.sum()) == pytest.approx(
-        calc.calc_from_opd(opd)
-    )
+    opd_scale = 666.0 / (2 * np.pi)  # nm of OPD per rad
+    assert calc.drymass_scale == pytest.approx(0.01 * opd_scale * 1e-6 / 2.0e-4)
+    # the scale times the summed phase (rad) reproduces the dry mass
+    phase = np.full((10, 10), 0.5, dtype=np.float32)
+    assert calc.drymass_scale * float(phase.sum()) == pytest.approx(calc.calc(phase))
 
 
 def test_calculator_respects_mask():
