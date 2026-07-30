@@ -19,7 +19,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `volume` (`OpticalVolumeCalculator`: `sum(height * pixel_area)`,
   um^3 = fL, equivalently `projected_area * mean(height)`, receiving both sides
   of that relation as engines at construction: a `ProjectedAreaCalculator` and
-  an `OpticalHeightConverter`), each with its cached
+  an `OpticalHeightConverter`; phase is the canonical input, so `calc_from_opd`
+  / `calc_from_height` convert back to phase and `volume_scale` is per rad of
+  phase), each with its cached
   scale, um/nm property twins, a `from_args` builder taking plain parameters,
   and one-shot free functions. `DryMassCalculator.calc_from_volume` closes the
   chain (`mass = volume * refractive_delta / alpha`). The `mask` / `reduce`
@@ -29,12 +31,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `OPDConverter.from_wavelength_nm`).
 - Torch twins in `iivs.dhm.analysis.pytorch`: the `OpticalHeight`, `OpticalVolume`,
   and `ProjectedArea` `nn.Module`s (sharing the NumPy engines' scale factors,
-  autograd / device preserved), plus the `calc_volume` / `calc_volume_from_phase` /
-  `calc_projected_area` one-shots. `ProjectedArea.forward(image)` is the constant
+  autograd / device preserved), plus the `calc_volume` (phase) /
+  `calc_volume_from_opd` / `calc_volume_from_height` / `calc_projected_area`
+  one-shots. `OpticalVolume` is phase-canonical
+  (`forward(phase) = phase * volume_scale`; an OPD / height map enters through
+  `convert_from_opd` / `convert_from_height`) and owns a `ProjectedArea` and an
+  `OpticalHeight` submodule, deriving `volume_scale` from their factors
+  (`volume = area * mean(height)`). `ProjectedArea.forward(image)` is the constant
   per-pixel area density over the grid, so — unlike the others — it carries no
-  gradient from the image; it is a module so `OpticalVolume` can own it as a
-  submodule (`volume = area * mean(height)`), and reduction to a total stays a
-  separate `iivs.common.data.pytorch` step.
+  gradient from the image. Reduction to a total stays a separate
+  `iivs.common.data.pytorch` step.
 - `DryMassCalculator.pixel_size_um` — the um twin of `pixel_size`, matching the
   new engines' property surface.
 - `load_phase_bin` / `load_phase_txt` / `load_phase` take `target_unit`: the loaded

@@ -121,7 +121,7 @@ Physical quantities derived from phase, each via an engine object that
 precomputes its conversion factor (with one-shot function conveniences):
 
 - **`opd`** — optical path difference (`OPD = phase * wavelength / (2*pi)`, in
-  nm). `OPDConverter` (`convert_to_opd` / `convert_to_phase`, scale
+  nm). `OPDConverter` (`convert_from_phase` / `convert_to_phase`, scale
   `opd_scale`); `phase_to_opd` / `opd_to_phase`.
 - **`height`** — optical height (`height = phase * wavelength / (2*pi *
   refractive_delta)`, in nm; the sample thickness of the QPI literature).
@@ -132,8 +132,9 @@ precomputes its conversion factor (with one-shot function conveniences):
   `ProjectedAreaCalculator` (scale `area_scale`); `calc_projected_area`.
 - **`volume`** — optical volume (`sum(height * pixel_area)`, in um^3 = fL;
   equivalently `projected_area * mean(height)`). `OpticalVolumeCalculator`
-  (`calc_from_opd` / `calc_from_height` / `calc_from_phase`, scale
-  `volume_scale`); `calc_volume` / `calc_volume_from_phase`.
+  (`calc_from_phase` canonical, `calc_from_opd` / `calc_from_height` enter through
+  phase; scale `volume_scale`, um^3 per rad); `calc_volume` (phase) /
+  `calc_volume_from_opd` / `calc_volume_from_height`.
 - **`drymass`** — dry mass (pg) via the Barer relation. `DryMassCalculator`
   (`calc_from_opd` / `calc_from_phase` over a background-corrected map, optionally
   masked by a boolean or integer-label region; scale `drymass_scale`) delegates

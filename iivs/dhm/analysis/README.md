@@ -30,7 +30,7 @@ refractive-index difference).
 
 - `OPDConverter(wavelength=...)` — bind a wavelength (SI, m) once.
   - `from_wavelength_nm(nm)` — construct from a wavelength in nm.
-  - `convert_to_opd(phase)` / `convert_to_phase(opd)` — rad ↔ nm.
+  - `convert_from_phase(phase)` / `convert_to_phase(opd)` — rad ↔ nm.
   - `opd_scale` — the cached nm-of-OPD-per-rad factor (a plain `float`).
   - `wavelength` / `wavelength_nm`.
 - `phase_to_opd(phase, *, wavelength=...)` / `opd_to_phase(opd, *, wavelength=...)`
@@ -48,7 +48,7 @@ cancels (`height == OPD / Δn`).
 - `OpticalHeightConverter(refractive_delta=..., opd_converter=...)` — bind the
   refractive-index difference and an `OPDConverter` once.
   - `from_args(wavelength=..., refractive_delta=...)`.
-  - `convert_to_height(phase)` / `convert_to_phase(height)` — rad ↔ nm.
+  - `convert_from_phase(phase)` / `convert_to_phase(height)` — rad ↔ nm.
   - `convert_from_opd(opd)` / `convert_to_opd(height)` — the OPD entry / exit,
     routed through phase.
   - `height_scale` — the cached nm-of-height-per-rad factor
@@ -84,22 +84,25 @@ constant `area_scale`.
 `projected_area * mean(height)`. The calculator receives both sides of that
 relation at construction — a `ProjectedAreaCalculator` and an
 `OpticalHeightConverter` — so `volume_scale` is their product
-(`area_scale * 1e-3 / refractive_delta`). Batching, `mask`, `reduce`, and the
-background-correction requirement all match `drymass` below; an empty region
-integrates to 0 µm³. Dry mass is the `refractive_delta / alpha` multiple of this
-volume (`DryMassCalculator.calc_from_volume`).
+(`area_scale * height_scale * 1e-3`, µm³ per rad of phase). Phase is the
+canonical input: an OPD or height map converts back to phase first. Batching,
+`mask`, `reduce`, and the background-correction requirement all match `drymass`
+below; an empty region integrates to 0 µm³. Dry mass is the
+`refractive_delta / alpha` multiple of this volume
+(`DryMassCalculator.calc_from_volume`).
 
 - `OpticalVolumeCalculator(area_calculator=..., height_converter=...)` — bind
   the two engines once.
   - `from_args(pixel_size=..., wavelength=..., refractive_delta=...)` — build
     both engines from plain parameters.
-  - `calc_from_opd(opd, *, mask=None, reduce=True)` /
-    `calc_from_height(height, ...)` / `calc_from_phase(phase, ...)`.
-  - `volume_scale` — the cached µm³-per-summed-nm-OPD factor.
+  - `calc_from_phase(phase, *, mask=None, reduce=True)` (canonical) /
+    `calc_from_opd(opd, ...)` / `calc_from_height(height, ...)` — the latter two
+    convert back to phase first.
+  - `volume_scale` — the cached µm³-per-summed-rad-phase factor.
   - `pixel_size` / `pixel_size_um`, `refractive_delta`, `wavelength` /
     `wavelength_nm` — re-surfaced from the bound engines.
-- `calc_volume(opd, *, pixel_size, refractive_delta=..., mask=None, reduce=True)` /
-  `calc_volume_from_phase(phase, *, pixel_size, wavelength=..., refractive_delta=..., ...)`
+- `calc_volume(phase, *, pixel_size, wavelength=..., refractive_delta=..., mask=None, reduce=True)`
+  (canonical) / `calc_volume_from_opd(opd, ...)` / `calc_volume_from_height(height, ...)`
   — the one-shot forms.
 
 ## `drymass` — dry mass
@@ -157,14 +160,19 @@ are **pure pointwise** `nn.Module`s — one op each, so they drop cleanly into
   phase * height_scale`, owning an `OpticalPathDifference` submodule for the
   `convert_from_opd` / `convert_to_opd` entry / exit (`from_args` builds it from
   a wavelength).
-- `OpticalVolume(pixel_size=..., refractive_delta=...)` — `forward(opd) =
-  opd * volume_scale`, the per-pixel volume density (µm³). No `mask` / `reduce`.
+- `OpticalVolume(area_calculator=..., height_converter=...)` — `forward(phase) =
+  phase * volume_scale`, the per-pixel volume density (µm³); owns a `ProjectedArea`
+  and an `OpticalHeight` submodule (`from_args(pixel_size=..., wavelength=...,
+  refractive_delta=...)` builds both), and an OPD / height map enters through phase
+  via `convert_from_opd` / `convert_from_height`. No `mask` / `reduce`.
 - `DryMass(pixel_size=..., alpha=...)` — `forward(opd) = opd * drymass_scale`, the
   per-pixel dry-mass density (pg). No `mask` / `reduce`.
 
-`calc_volume` / `calc_volume_from_phase` are the volume one-shots, and
-`calc_projected_area` is the mask-only area twin (no `nn.Module` — counting mask
-pixels is not a pointwise map).
+`calc_volume` (phase) / `calc_volume_from_opd` / `calc_volume_from_height` are the
+volume one-shots.
+`ProjectedArea(pixel_size=...)` — `forward(image)` is the constant per-pixel area
+density (µm²) over the image's grid (its values never enter, so no gradient flows
+from the image); `calc_projected_area` is its mask / reduce one-shot.
 
 Masking into regions and reducing to a total are a **separate** step — the
 reductions in [`iivs.common.data.pytorch`](../../common/data) (`Sum`, `Mean`,
@@ -200,7 +208,7 @@ mass = opd[mask].sum() * calc.drymass_scale   # OPD -> dry mass (pg), grad kept
 from iivs.dhm.analysis import OPDConverter, DryMassCalculator
 
 conv = OPDConverter.from_wavelength_nm(666)
-opd_nm = conv.convert_to_opd(phase_rad)        # rad -> nm
+opd_nm = conv.convert_from_phase(phase_rad)    # rad -> nm
 
 calc = DryMassCalculator()  # lab defaults: 20X pixel size, 666 nm, alpha 2e-4
 mass_pg = calc.calc_from_phase(phase_rad, mask=cell_mask)
