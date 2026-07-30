@@ -8,6 +8,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-31
+
 ### Added
 
 - `iivs.dhm.analysis` gains the middle of the phase-quantity chain: `height`
@@ -30,8 +32,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `OpticalVolumeCalculator` / `DryMassCalculator` (and `ProjectedAreaCalculator`)
   share a `MaskedRegionCalculator` base for the `(..., H, W)` shape guard and the
   `mask` / `reduce` dispatch over the shared `iivs.common.data` `Sum` reduction.
-  `DryMassCalculator.calc_from_volume` closes the chain
-  (`mass = volume * refractive_delta / alpha`).
 - `ProjectedAreaCalculator.from_pixel_size_um` — the um builder twin (cf.
   `OPDConverter.from_wavelength_nm`).
 - Torch twins in `iivs.dhm.analysis.pytorch`: the `OpticalHeight`, `ProjectedArea`,
@@ -39,8 +39,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   factors, autograd / device preserved), plus the `calc_optical_volume` /
   `calc_drymass` (both phase-canonical, with `_from_opd` / `_from_height` twins)
   and `calc_projected_area` one-shots. Each twin is phase-canonical
-  (`forward(phase) = phase * scale`; an OPD / height map enters through
-  `convert_from_opd` / `convert_from_height`) and owns its inner engines as
+  (`forward(phase) = phase * scale`; an OPD / height map enters through the
+  `_from_opd` / `_from_height` methods) and owns its inner engines as
   submodules, deriving its scale from them: `OpticalVolume` owns a `ProjectedArea`
   and an `OpticalHeight`, and `DryMass` owns an `OpticalVolume`.
   `ProjectedArea.forward(image)` is the constant per-pixel area density over the
@@ -87,13 +87,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   chain (dry mass over volume, volume over area and height, height over OPD);
   `pixel_size` / `pixel_size_um`, `wavelength` / `wavelength_nm`, and the new
   `refractive_delta` re-surface as properties, `calc_from_height` joins the map
-  paths, `calc_from_volume`'s `refractive_delta` now defaults to the bound
-  engine's, and `from_wavelength` is renamed `from_args`, the fully-explicit
+  paths, and `from_wavelength` is renamed `from_args`, the fully-explicit
   plain-parameter builder every engine now carries. Every engine is also
   default-constructible from the lab constants (`pixel_size` falls back to
-  `PIXEL_SIZE_20X`), which the one-shots inherit: `calc_drymass` and its
-  `_from_opd` / `_from_height` twins gain engine parameters (`wavelength` /
+  `PIXEL_SIZE_20X`), which the one-shots inherit. `DryMassCalculator` is also
+  phase-canonical now: the primary method is `calc(phase)` (`calc_from_opd` /
+  `calc_from_height` convert back to phase first), `drymass_scale` is pg per rad of
+  phase (was per nm of OPD), and the one-shot `calc_drymass` takes phase, with
+  `calc_drymass_from_opd` / `calc_drymass_from_height` replacing the old
+  `calc_drymass_from_phase`; all gain the engine parameters (`wavelength` /
   `refractive_delta`) and a lab-default `pixel_size`.
+- `OPDConverter.convert_to_opd` and its torch twin `OpticalPathDifference` rename
+  the phase-to-OPD method to `convert_from_phase`, aligning the OPD converter with
+  the new phase-canonical analysis engines (which name every forward from phase).
+  The `convert_to_phase` inverse (OPD to phase) is unchanged.
 
 ## [0.2.0] - 2026-07-20
 
