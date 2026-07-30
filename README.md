@@ -139,9 +139,7 @@ precomputes its conversion factor (with one-shot function conveniences):
   (`calc` canonical, `calc_from_opd` / `calc_from_height` enter through phase, over
   a background-corrected map, optionally masked by a boolean or integer-label
   region; scale `drymass_scale`, pg per rad); `calc_drymass` (phase) /
-  `calc_drymass_from_opd` / `calc_drymass_from_height` are the one-shots, and
-  `calc_from_volume` closes the OPD -> height -> volume -> dry-mass chain
-  (`mass = volume * delta / alpha`).
+  `calc_drymass_from_opd` / `calc_drymass_from_height` are the one-shots.
 
 The `wavelength` and `alpha` defaults come from
 [`iivs.dhm.constants`](./iivs/dhm/constants.py), the lab's microscope settings —

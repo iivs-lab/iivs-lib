@@ -37,8 +37,8 @@ class OpticalVolume(nn.Module):
     phase, a plain float derived from the two submodules' factors, so the physics is
     shared). Phase is the canonical input: `forward(phase) = phase * volume_scale`
     is the per-pixel volume density (um^3) of a background-corrected phase map (rad);
-    an OPD or height map enters through phase via `convert_from_opd` /
-    `convert_from_height`. The `convert_*` / `forward` methods are pure scalar
+    an OPD or height map enters through phase via `calc_from_opd` /
+    `calc_from_height`. The `calc_*` / `forward` methods are pure scalar
     multiplies, so they preserve the input tensor's dtype, device, and autograd
     graph, dropping cleanly into `nn.Sequential`, forward hooks, `torch.jit.script`,
     and `torch.compile`. Masking into regions and reducing to a total volume are a
@@ -109,12 +109,12 @@ class OpticalVolume(nn.Module):
         """Map a phase map (rad) to its per-pixel volume density: `phase * scale`."""
         return phase * self.volume_scale
 
-    def convert_from_height(self, height: Tensor) -> Tensor:
+    def calc_from_height(self, height: Tensor) -> Tensor:
         """Map an optical height (nm) to its volume density (um^3), through phase."""
         phase = self.height_converter.convert_to_phase(height)
         return self.forward(phase)
 
-    def convert_from_opd(self, opd: Tensor) -> Tensor:
+    def calc_from_opd(self, opd: Tensor) -> Tensor:
         """Map an OPD map (nm) to its volume density (um^3 per pixel) through phase.
 
         The owned height submodule's `opd_converter` first maps `opd` back to phase
@@ -170,7 +170,7 @@ def calc_optical_volume_from_height(
 ) -> Tensor:
     """Integrate an optical height map (nm) into optical volume [um^3] through phase.
 
-    Composes `OpticalVolume.convert_from_height` with the `iivs.common.data.pytorch`
+    Composes `OpticalVolume.calc_from_height` with the `iivs.common.data.pytorch`
     reductions, keeping the input's device and autograd graph.
 
     Args:
@@ -187,7 +187,7 @@ def calc_optical_volume_from_height(
     module = OpticalVolume.from_args(
         pixel_size=pixel_size, wavelength=wavelength, refractive_delta=refractive_delta
     )
-    density = module.convert_from_height(height)
+    density = module.calc_from_height(height)
     return reduce_regions(density, mask, reduce=reduce)
 
 
@@ -202,7 +202,7 @@ def calc_optical_volume_from_opd(
 ) -> Tensor:
     """Integrate an OPD map (nm) into optical volume [um^3], entering through phase.
 
-    Composes `OpticalVolume.convert_from_opd` (the wavelength cancels) with the
+    Composes `OpticalVolume.calc_from_opd` (the wavelength cancels) with the
     `iivs.common.data.pytorch` reductions, keeping `opd`'s device and autograd
     graph.
 
@@ -220,5 +220,5 @@ def calc_optical_volume_from_opd(
     module = OpticalVolume.from_args(
         pixel_size=pixel_size, wavelength=wavelength, refractive_delta=refractive_delta
     )
-    density = module.convert_from_opd(opd)
+    density = module.calc_from_opd(opd)
     return reduce_regions(density, mask, reduce=reduce)

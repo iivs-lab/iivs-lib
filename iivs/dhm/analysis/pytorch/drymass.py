@@ -37,8 +37,8 @@ class DryMass(nn.Module):
     float derived from the volume engine so the physics is shared). Phase is the
     canonical input: `forward(phase) = phase * drymass_scale` is the per-pixel
     dry-mass density (pg) of a background-corrected phase map (rad); an OPD or
-    height map enters through phase via `convert_from_opd` / `convert_from_height`.
-    The `convert_*` / `forward` methods are pure scalar multiplies, so they preserve
+    height map enters through phase via `calc_from_opd` / `calc_from_height`.
+    The `calc_*` / `forward` methods are pure scalar multiplies, so they preserve
     the input tensor's dtype, device, and autograd graph. Masking into regions and
     reducing to a total dry mass are a separate concern: compose with the
     `iivs.common.data.pytorch` reductions, or use the `calc_drymass` one-shot.
@@ -111,7 +111,7 @@ class DryMass(nn.Module):
         """Map a phase map (rad) to its per-pixel dry-mass density: `phase * scale`."""
         return phase * self.drymass_scale
 
-    def convert_from_opd(self, opd: Tensor) -> Tensor:
+    def calc_from_opd(self, opd: Tensor) -> Tensor:
         """Map an OPD map (nm) to its dry-mass density (pg per pixel) through phase.
 
         The owned volume engine's `opd_converter` first maps `opd` back to phase
@@ -120,7 +120,7 @@ class DryMass(nn.Module):
         opd_converter = self.volume_converter.height_converter.opd_converter
         return self.forward(opd_converter.convert_to_phase(opd))
 
-    def convert_from_height(self, height: Tensor) -> Tensor:
+    def calc_from_height(self, height: Tensor) -> Tensor:
         """Map an optical height (nm) to its dry-mass density (pg), through phase."""
         phase = self.volume_converter.height_converter.convert_to_phase(height)
         return self.forward(phase)
@@ -178,7 +178,7 @@ def calc_drymass_from_opd(
 ) -> Tensor:
     """Integrate an OPD map (nm) into dry mass [pg], entering through phase.
 
-    Composes `DryMass.convert_from_opd` (the wavelength cancels) with the
+    Composes `DryMass.calc_from_opd` (the wavelength cancels) with the
     `iivs.common.data.pytorch` reductions, keeping `opd`'s device and autograd
     graph.
 
@@ -200,7 +200,7 @@ def calc_drymass_from_opd(
         refractive_delta=refractive_delta,
         alpha=alpha,
     )
-    return reduce_regions(module.convert_from_opd(opd), mask, reduce=reduce)
+    return reduce_regions(module.calc_from_opd(opd), mask, reduce=reduce)
 
 
 def calc_drymass_from_height(
@@ -215,7 +215,7 @@ def calc_drymass_from_height(
 ) -> Tensor:
     """Integrate an optical height map (nm) into dry mass [pg] through phase.
 
-    Composes `DryMass.convert_from_height` with the `iivs.common.data.pytorch`
+    Composes `DryMass.calc_from_height` with the `iivs.common.data.pytorch`
     reductions, keeping the input's device and autograd graph.
 
     Args:
@@ -236,4 +236,4 @@ def calc_drymass_from_height(
         refractive_delta=refractive_delta,
         alpha=alpha,
     )
-    return reduce_regions(module.convert_from_height(height), mask, reduce=reduce)
+    return reduce_regions(module.calc_from_height(height), mask, reduce=reduce)

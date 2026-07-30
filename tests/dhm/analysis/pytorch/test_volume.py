@@ -60,7 +60,7 @@ def test_construction_binds_the_given_submodules():
     )
 
 
-def test_convert_from_opd_enters_through_phase():
+def test_calc_from_opd_enters_through_phase():
     # opd -> phase -> volume density; the wavelength cancels, so the opd volume is
     # wavelength-free: two modules at different wavelengths must agree.
     opd = torch.linspace(0, 80, 16).reshape(4, 4)
@@ -70,16 +70,16 @@ def test_convert_from_opd_enters_through_phase():
     b = OpticalVolume.from_args(
         pixel_size=1e-7, wavelength=532e-9, refractive_delta=0.5
     )
-    torch.testing.assert_close(a.convert_from_opd(opd), b.convert_from_opd(opd))
+    torch.testing.assert_close(a.calc_from_opd(opd), b.calc_from_opd(opd))
 
 
-def test_convert_from_height_matches_phase_path():
+def test_calc_from_height_matches_phase_path():
     module = OpticalVolume.from_args(
         pixel_size=1e-7, wavelength=666e-9, refractive_delta=0.5
     )
     phase = torch.rand(3, 3)
     height = module.height_converter.convert_from_phase(phase)
-    torch.testing.assert_close(module.convert_from_height(height), module(phase))
+    torch.testing.assert_close(module.calc_from_height(height), module(phase))
 
 
 def test_calc_optical_volume_matches_numpy():

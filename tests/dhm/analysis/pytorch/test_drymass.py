@@ -91,19 +91,19 @@ def test_forward_is_traceable_and_composable():
     assert torch.allclose(seq(phase), dm(phase))
 
 
-def test_convert_from_opd_is_wavelength_free():
+def test_calc_from_opd_is_wavelength_free():
     # opd -> phase -> mass; the wavelength cancels, so two wavelengths must agree.
     opd = torch.linspace(0, 80, 16).reshape(4, 4)
     a = _drymass(wavelength=666e-9)
     b = _drymass(wavelength=532e-9)
-    torch.testing.assert_close(a.convert_from_opd(opd), b.convert_from_opd(opd))
+    torch.testing.assert_close(a.calc_from_opd(opd), b.calc_from_opd(opd))
 
 
-def test_convert_from_height_matches_phase_path():
+def test_calc_from_height_matches_phase_path():
     dm = _drymass()
     phase = torch.rand(3, 3)
     height = dm.volume_converter.height_converter.convert_from_phase(phase)
-    torch.testing.assert_close(dm.convert_from_height(height), dm(phase))
+    torch.testing.assert_close(dm.calc_from_height(height), dm(phase))
 
 
 def test_composes_with_a_separate_reduction():

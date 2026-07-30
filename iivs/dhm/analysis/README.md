@@ -87,9 +87,8 @@ relation at construction — a `ProjectedAreaCalculator` and an
 (`area_scale * height_scale * 1e-3`, µm³ per rad of phase). Phase is the
 canonical input: an OPD or height map converts back to phase first. Batching,
 `mask`, `reduce`, and the background-correction requirement all match `drymass`
-below; an empty region integrates to 0 µm³. Dry mass is the
-`refractive_delta / alpha` multiple of this volume
-(`DryMassCalculator.calc_from_volume`).
+below; an empty region integrates to 0 µm³. Dry mass is this volume's
+`refractive_delta / alpha` multiple (see `drymass`).
 
 - `OpticalVolumeCalculator(area_calculator=..., height_converter=...)` — bind
   the two engines once.
@@ -128,8 +127,6 @@ caller's responsibility; the masking + reduction is the `iivs.common.data`
     map (rad). `reduce=False` returns the per-pixel mass-density map instead.
   - `calc_from_opd(opd, ...)` / `calc_from_height(height, ...)` — the OPD / height
     entry points, converted back to phase first.
-  - `calc_from_volume(volume, *, refractive_delta=...)` — the Barer bridge from an
-    already-integrated optical volume (µm³): `mass = volume * delta / alpha`.
   - `drymass_scale` — the cached pg-per-summed-rad-phase factor (a plain `float`).
   - `wavelength` / `wavelength_nm`, `pixel_size` / `pixel_size_um`,
     `refractive_delta` — re-surfaced from the bound volume engine.
@@ -161,12 +158,12 @@ are **pure pointwise** `nn.Module`s — one op each, so they drop cleanly into
   phase * volume_scale`, the per-pixel volume density (µm³); owns a `ProjectedArea`
   and an `OpticalHeight` submodule (`from_args(pixel_size=..., wavelength=...,
   refractive_delta=...)` builds both), and an OPD / height map enters through phase
-  via `convert_from_opd` / `convert_from_height`. No `mask` / `reduce`.
+  via `calc_from_opd` / `calc_from_height`. No `mask` / `reduce`.
 - `DryMass(volume_converter=..., alpha=...)` — `forward(phase) =
   phase * drymass_scale`, the per-pixel dry-mass density (pg); owns an
   `OpticalVolume` submodule (`from_args(pixel_size=..., wavelength=...,
   refractive_delta=..., alpha=...)` builds the chain), an OPD / height map entering
-  via `convert_from_opd` / `convert_from_height`. No `mask` / `reduce`.
+  via `calc_from_opd` / `calc_from_height`. No `mask` / `reduce`.
 
 `calc_optical_volume` (phase) / `calc_optical_volume_from_opd` /
 `calc_optical_volume_from_height` and `calc_drymass` (phase) /

@@ -11,7 +11,6 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import numpy as np
-from kaparoo.utils import replace_if_none
 
 from iivs.common.data.reduction import Sum
 from iivs.dhm.analysis.calculator import MaskedRegionCalculator
@@ -222,38 +221,6 @@ class DryMassCalculator(MaskedRegionCalculator):
         phase = self.volume_converter.height_converter.convert_to_phase(height)
 
         return self.calc(phase, mask=mask, reduce=reduce)
-
-    def calc_from_volume(
-        self,
-        volume: NDArray[np.float32],
-        *,
-        refractive_delta: float | None = None,
-    ) -> NDArray[np.float32]:
-        """Convert an already-integrated optical volume [um^3] into dry mass [pg].
-
-        ``mass = volume * refractive_delta / alpha`` (Barer), closing the OPD ->
-        height -> volume -> dry-mass chain: this is `calc_from_opd`'s result when
-        the volume came from the bound engine (`volume_converter`). Unlike the map
-        paths there is nothing left to mask or reduce. `refractive_delta` defaults
-        to the bound engine's; pass it only for a volume computed with a different
-        one.
-
-        Args:
-            volume: Optical volume(s), in um^3.
-            refractive_delta: The refractive-index difference the volume was
-                computed with, or None (default) for the bound engine's.
-
-        Raises:
-            ValueError: If `refractive_delta` is given and not positive.
-        """
-        delta = replace_if_none(refractive_delta, self.refractive_delta)
-        if delta <= 0:
-            msg = f"refractive_delta must be positive (got {delta})"
-            raise ValueError(msg)
-
-        scale = delta / self.alpha * 1e-3  # pg per um^3
-
-        return (volume * scale).astype(np.float32, copy=False)
 
 
 def calc_drymass(
