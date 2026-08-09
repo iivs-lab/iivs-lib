@@ -232,11 +232,11 @@ wheels = [
 
 [[package]]
 name = "kaparoo-python"
-version = "0.11.0"
+version = "0.12.0"
 source = { registry = "https://pypi.org/simple/" }
-sdist = { url = "https://files.pythonhosted.org/packages/6a/ba/0536428f330a33592d83755f586fc43feaa3c4cc58adaec09ecaccf95e27/kaparoo_python-0.11.0.tar.gz", hash = "sha256:0a33ff88f56e3c8311d5d6b8a52a7c0b79baeffbd0a036ac1a9a422d88136058", size = 104350, upload-time = "2026-07-15T15:42:55.623Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8e/fe/31c0533607de4d304fb6ab93f297e27bc6678a3d61c99085998d39baa838/kaparoo_python-0.12.0.tar.gz", hash = "sha256:eed0953d563a0a1af88f9330edcabaf78ca30119716a3f9793e3c5ffb3512cb8", size = 109501, upload-time = "2026-07-29T19:42:38.711Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2c/ac/bda5eff019cc975aaa25404615cc40d47494e0c0a13ea65a64fe6fa4378e/kaparoo_python-0.11.0-py3-none-any.whl", hash = "sha256:942f71b6e6e53161f3937fccef744816226dba72df177510d3d8abbd840bf624", size = 99910, upload-time = "2026-07-15T15:42:54.282Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/09/ed4491d337dfc5178c94fce17331c9d56e390effc11e957f4d61f3888c88/kaparoo_python-0.12.0-py3-none-any.whl", hash = "sha256:354041fdec885d750408d393207a9832c2301175a2ca9f5256e7754db2ff152a", size = 104360, upload-time = "2026-07-29T19:42:37.128Z" },
 ]
 
 [[package]]
