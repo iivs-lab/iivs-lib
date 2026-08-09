@@ -12,6 +12,7 @@ from enum import IntEnum
 from typing import TYPE_CHECKING
 
 import numpy as np
+from kaparoo.utils import resolve_enum
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -39,18 +40,10 @@ def resolve_phase_unit(name: str) -> PhaseUnit:
     of a unit, so nothing converts to or from it.
 
     Raises:
-        ValueError: If `name` is not one of radians, meters, or nanometers (case
+        ValueError: If `name` is not one of RADIANS, METERS, or NANOMETERS (case
             aside).
     """
-    unit = PhaseUnit.__members__.get(name.upper())
-    if unit is None or unit is PhaseUnit.UNKNOWN:
-        expected = ", ".join(
-            m.name.lower() for m in PhaseUnit if m is not PhaseUnit.UNKNOWN
-        )
-        msg = f"unsupported unit {name!r}: expected {expected}"
-        raise ValueError(msg)
-
-    return unit
+    return resolve_enum(name, PhaseUnit, exclude=(PhaseUnit.UNKNOWN,))
 
 
 _NM_PER_M = 1e9

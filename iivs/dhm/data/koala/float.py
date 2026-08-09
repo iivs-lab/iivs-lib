@@ -9,9 +9,10 @@ __all__ = (
 
 from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, Literal, override
 
 import numpy as np
+from kaparoo.utils import literal_values
 from numpy.typing import NDArray
 
 from iivs.common.data import ArrayFileList, ValueRangeMixin
@@ -19,8 +20,6 @@ from iivs.dhm.data.koala.bin import KoalaBinHeader
 from iivs.dhm.data.koala.frame import KoalaFrameFolder
 
 if TYPE_CHECKING:
-    from typing import Literal
-
     from kaparoo.filesystem.types import StrPath
 
     from iivs.common.data import OnNonFinite
@@ -30,7 +29,7 @@ if TYPE_CHECKING:
 type FloatFormat = Literal["bin", "txt", "npy"]
 """A Koala float32 modality's on-disk format (`phase` / `intensity`)."""
 
-FLOAT_FORMATS: tuple[FloatFormat, ...] = ("bin", "txt", "npy")
+FLOAT_FORMATS: tuple[FloatFormat, ...] = literal_values(FloatFormat)
 """The float formats, for runtime membership checks (the `FloatFormat` values)."""
 
 

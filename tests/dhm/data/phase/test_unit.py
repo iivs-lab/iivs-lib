@@ -29,20 +29,20 @@ def test_resolve_phase_unit_is_case_insensitive(name, expected):
 
 
 def test_resolve_phase_unit_rejects_unknown_by_name():
-    # UNKNOWN is a real member, so the lookup succeeds and the guard must reject
-    # it: nothing converts to or from the absence of a unit.
-    with pytest.raises(ValueError, match="unsupported unit 'unknown'"):
+    # UNKNOWN is a real member, so the lookup succeeds and the exclusion must
+    # reject it: nothing converts to or from the absence of a unit.
+    with pytest.raises(ValueError, match=r"got 'unknown'"):
         resolve_phase_unit("unknown")
 
 
 def test_resolve_phase_unit_rejects_an_unrecognized_name():
-    with pytest.raises(ValueError, match="unsupported unit 'radiuns'") as excinfo:
+    with pytest.raises(ValueError, match=r"got 'radiuns'") as excinfo:
         resolve_phase_unit("radiuns")
 
     # the message names the valid set, and never offers UNKNOWN as a choice
     message = str(excinfo.value)
-    assert "expected radians, meters, nanometers" in message
-    assert "unknown" not in message.removeprefix("unsupported unit 'radiuns'")
+    assert all(name in message for name in ("RADIANS", "METERS", "NANOMETERS"))
+    assert "UNKNOWN" not in message
 
 
 # --- resolve_height_scale ---

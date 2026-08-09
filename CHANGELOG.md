@@ -8,6 +8,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- `kaparoo-python`'s floor moves to `>=0.13.0`, whose `resolve_enum` and
+  `literal_values` this release adopts. `resolve_phase_unit` now delegates its
+  lookup, so its rejection message takes the shape the rest of the package's
+  validation already uses (`PhaseUnit must be one of [...] (got 'x')`) instead of
+  its own wording; the accepted names, the case-insensitivity, and the refusal of
+  `UNKNOWN` are unchanged. `FLOAT_FORMATS` / `HOLOGRAM_FORMATS` are now read from
+  their `Literal` aliases rather than repeated by hand — same values, one source.
+
 ## [0.3.1] - 2026-07-31
 
 ### Added

@@ -3,9 +3,9 @@ from __future__ import annotations
 __all__ = ("HOLOGRAM_FORMATS", "HologramFormat", "convert_hologram_sequence")
 
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
-from kaparoo.utils import ensure_one_of
+from kaparoo.utils import ensure_one_of, literal_values
 
 from iivs.dhm.data.hologram.npy import save_hologram_npy
 from iivs.dhm.data.hologram.raw import save_hologram_raw
@@ -13,8 +13,6 @@ from iivs.dhm.data.hologram.tif import save_hologram_tif
 from iivs.dhm.data.koala import save_koala_frames
 
 if TYPE_CHECKING:
-    from typing import Literal
-
     import numpy as np
     from kaparoo.data.sequences import DataSequence
     from kaparoo.filesystem.types import StrPath
@@ -24,7 +22,7 @@ if TYPE_CHECKING:
 type HologramFormat = Literal["raw", "tif", "npy"]
 """A hologram's on-disk format: the multi-frame `.raw` stack, or `.tif` / `.npy`."""
 
-HOLOGRAM_FORMATS: tuple[HologramFormat, ...] = ("raw", "tif", "npy")
+HOLOGRAM_FORMATS: tuple[HologramFormat, ...] = literal_values(HologramFormat)
 """The hologram formats, for runtime membership checks (the `HologramFormat` values)."""
 
 
