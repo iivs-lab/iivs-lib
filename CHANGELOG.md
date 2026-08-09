@@ -8,6 +8,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-09
+
 ### Added
 
 - `TimestampSequence.select(indices)` / `.subsample(step, *, start, count,
@@ -45,19 +47,27 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   wrapper still declares its own `predicate` explicitly, since it is typed by
   what that wrapper returns (a folder, a `KoalaTimelapse`, a `HologramSequence`)
   rather than by the paths the walk visits.
-- `kaparoo-python`'s floor moves to `>=0.13.1` for `get_name` and `contains`'
-  `kind`. `KoalaFrameFolder.validate` reads each frame name through `get_name`,
-  which needs no `Path`, so the name check keeps its speed without materializing
-  the `files` snapshot the previous version had to retain; `open_folder`'s
-  directory search now composes `contains(subpath, kind="dir")` in place of a
-  hand-written predicate.
-- `kaparoo-python`'s floor moves to `>=0.13.0`, whose `resolve_enum` and
-  `literal_values` this release adopts. `resolve_phase_unit` now delegates its
-  lookup, so its rejection message takes the shape the rest of the package's
-  validation already uses (`PhaseUnit must be one of [...] (got 'x')`) instead of
-  its own wording; the accepted names, the case-insensitivity, and the refusal of
-  `UNKNOWN` are unchanged. `FLOAT_FORMATS` / `HOLOGRAM_FORMATS` are now read from
-  their `Literal` aliases rather than repeated by hand — same values, one source.
+- `kaparoo-python`'s floor moves from `>=0.11.0` to `>=0.13.1`, whose additions
+  this release adopts in place of hand-written equivalents: `resolve_enum` backs
+  `resolve_phase_unit`, `literal_values` reads `FLOAT_FORMATS` /
+  `HOLOGRAM_FORMATS` off their `Literal` aliases rather than repeating the values,
+  `contains(subpath, kind="dir")` replaces a hand-written directory predicate, and
+  `get_name` replaces a `Path` built per file to read its name.
+- `resolve_phase_unit`'s rejection message takes the shape the rest of the
+  package's validation already emits (`PhaseUnit must be one of [...] (got 'x')`)
+  now that it delegates the lookup. The accepted names, the case-insensitivity,
+  and the refusal of `UNKNOWN` are unchanged.
+
+### Performance
+
+- `KoalaFrameFolder.validate(level="names")` costs about 0.50 µs per file rather
+  than 10.4 µs, measured over a 2000-frame folder. It resolved the level per file
+  and built a `Path` only to read its `.name`; profiling put 96% of the cost in
+  that construction, so the level is now resolved once and each name read through
+  `get_name`. On a scan of a few hundred thousand frames that is seconds, not
+  microseconds. `validate_file` keeps its own resolution — it is a public
+  single-file entry point — and the two share the check, so the contract and the
+  messages are identical.
 
 ## [0.3.1] - 2026-07-31
 
