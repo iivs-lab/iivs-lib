@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "FrameFolderOpener",
     "ReconstructionGroup",
     "open_folder",
     "open_timelapse_subfolders",
@@ -9,7 +10,7 @@ __all__ = (
 )
 
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 from kaparoo.filesystem import dir_exists, search_dirs
 from kaparoo.filesystem.hierarchy import Directory
@@ -35,13 +36,37 @@ if TYPE_CHECKING:
 # ============================================================ #
 
 
-def open_folder[T: KoalaFrameFolder](path: StrPath, folder: type[T]) -> T | None:
+class FrameFolderOpener[T: KoalaFrameFolder](Protocol):
+    """Opens one numbered folder at a path, with validation controlled by the caller.
+
+    A `KoalaFrameFolder` subclass satisfies this by construction; so does a
+    `functools.partial` of one that pre-binds the extra arguments a format takes
+    (`partial(PhaseBinFolder, target_unit=...)`, say). Taking the opener rather than
+    the class lets a search open each folder *as the caller wants it* in one pass,
+    instead of opening it and rebuilding it.
+
+    `validate` is typed `None` because that is all `open_folder` ever passes: a
+    folder accepting only some levels (a preview folder has no `"headers"`) still
+    satisfies this, where demanding the whole `ValidationLevel` would exclude it.
+    """
+
+    def __call__(self, root: StrPath, *, validate: None) -> T: ...
+
+
+def open_folder[T: KoalaFrameFolder](
+    path: StrPath, folder: FrameFolderOpener[T]
+) -> T | None:
     """Open `path` with `folder` when it is a populated directory, else None.
 
     Tolerant of a missing source: an absent directory or a present-but-empty numbered
     folder yields None rather than raising. Opened without per-file content validation
     (`validate=None`), but a folder that reads a shared header at construction still
     surfaces a corrupt one; a real content error is raised, not hidden as None.
+
+    Args:
+        path: The folder to open.
+        folder: The folder class, or any `FrameFolderOpener` (e.g. a `partial`
+            pre-binding a format's extra arguments).
 
     Type Parameters:
         T: The opened folder type (e.g. `PhaseBinFolder`).
@@ -98,7 +123,7 @@ def search_timelapse_subdirs(
 def open_timelapse_subfolders[T: KoalaFrameFolder](
     root: StrPath,
     subpath: str,
-    folder: type[T],
+    folder: FrameFolderOpener[T],
     *,
     name_filter: Filter | FilterDict | None = None,
     part_filter: Filter | FilterDict | None = None,

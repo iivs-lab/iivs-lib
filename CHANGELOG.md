@@ -8,6 +8,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `search_phase_bin_folders` / `search_phase_txt_folders` take `target_unit`,
+  bound as each folder is opened. A bulk read in one unit previously cost a
+  `with_unit` rebuild per folder — a second directory listing and header read for
+  a directory listed microseconds earlier — which on a large scan is the same
+  work done twice.
+- `FrameFolderOpener`, the protocol `open_folder` / `open_timelapse_subfolders`
+  now take in place of a folder class. A class still satisfies it; so does a
+  `functools.partial` pre-binding a format's extra arguments, which is how the
+  searches above open a folder in one pass.
+
 ### Changed
 
 - `kaparoo-python`'s floor moves to `>=0.13.0`, whose `resolve_enum` and

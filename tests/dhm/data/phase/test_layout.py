@@ -18,6 +18,7 @@ from iivs.dhm.data.phase.layout import (
 )
 from iivs.dhm.data.phase.tif import PhaseTifFolder
 from iivs.dhm.data.phase.txt import PhaseTxtFolder, save_phase_txt
+from iivs.dhm.data.phase.unit import PhaseUnit
 from tests.dhm.data.helpers import spy_on_open
 
 
@@ -259,6 +260,33 @@ def test_search_phase_bin_folders(tmp_path):
     assert isinstance(folders, list)
     assert all(isinstance(f, PhaseBinFolder) for f in folders)
     assert [_timelapse_name(f) for f in folders] == ["tlA", "tlB"]
+
+
+def test_search_phase_bin_folders_binds_target_unit_on_open(tmp_path, monkeypatch):
+    # the stored unit is RADIANS (see `_bin`), with 2e-7 m/rad: 1 rad -> 200 nm
+    _phase_timelapse(tmp_path / "tl", txts=False, tifs=False)
+
+    opens = 0
+    real_init = PhaseBinFolder.__init__
+
+    def counting_init(self, *args, **kwargs):
+        nonlocal opens
+        opens += 1
+        real_init(self, *args, **kwargs)
+
+    monkeypatch.setattr(PhaseBinFolder, "__init__", counting_init)
+
+    (folder,) = search_phase_bin_folders(tmp_path, target_unit=PhaseUnit.NANOMETERS)
+
+    assert folder.target_unit is PhaseUnit.NANOMETERS
+    np.testing.assert_allclose(folder[0], np.full((2, 3), 200.0, np.float32), rtol=1e-6)
+    assert opens == 1  # bound as it is opened, not rebuilt by a second construction
+
+
+def test_search_phase_txt_folders_binds_target_unit(tmp_path):
+    _phase_timelapse(tmp_path / "tl", bins=False, tifs=False)
+    (folder,) = search_phase_txt_folders(tmp_path, target_unit=PhaseUnit.NANOMETERS)
+    assert folder.target_unit is PhaseUnit.NANOMETERS
 
 
 def test_search_phase_folders_override_subpath(tmp_path):

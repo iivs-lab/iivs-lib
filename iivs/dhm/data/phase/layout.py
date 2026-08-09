@@ -9,6 +9,7 @@ __all__ = (
     "search_phase_txt_folders",
 )
 
+from functools import partial
 from typing import TYPE_CHECKING
 
 from kaparoo.utils import ensure_one_of
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
     from kaparoo.filters.types import FilterDict
 
     from iivs.dhm.data.phase.base import PhaseFileFolder
+    from iivs.dhm.data.phase.unit import PhaseUnit
 
 PHASE_TREE = reconstruction_tree(PHASE)
 """The `Phase/` subtree of a Koala time-lapse (`Float/{Bin,Txt}` + `Image`)."""
@@ -68,6 +70,7 @@ def search_phase_bin_folders(
     root: StrPath,
     *,
     subpath: str = PHASE_FLOAT_BIN,
+    target_unit: PhaseUnit | None = None,
     name_filter: Filter | FilterDict | None = None,
     part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[PhaseBinFolder], bool] | None = None,
@@ -84,13 +87,17 @@ def search_phase_bin_folders(
     `Phase/Float/Bin` default to read a re-encoded `.bin` source at another location
     (e.g. `FilteredPhase/Float/Bin`) with the same reader.
 
+    `target_unit` is bound as each folder is opened, so a bulk read in one unit costs
+    one construction rather than a `with_unit` rebuild per folder; None (default)
+    keeps each folder's stored unit, as the constructor does.
+
     The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
     `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
     """
     return open_timelapse_subfolders(
         root,
         subpath,
-        PhaseBinFolder,
+        partial(PhaseBinFolder, target_unit=target_unit),
         name_filter=name_filter,
         part_filter=part_filter,
         predicate=predicate,
@@ -105,6 +112,7 @@ def search_phase_txt_folders(
     root: StrPath,
     *,
     subpath: str = PHASE_FLOAT_TXT,
+    target_unit: PhaseUnit | None = None,
     name_filter: Filter | FilterDict | None = None,
     part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[PhaseTxtFolder], bool] | None = None,
@@ -116,8 +124,8 @@ def search_phase_txt_folders(
     """Return the `Phase/Float/Txt` folder of each time-lapse under `root` that has one.
 
     The `.txt` twin of `search_phase_bin_folders`; `predicate` checks the opened
-    `PhaseTxtFolder`. `subpath` (default `Phase/Float/Txt`) overrides the folder read
-    within each time-lapse.
+    `PhaseTxtFolder`, and `target_unit` is bound as each folder is opened. `subpath`
+    (default `Phase/Float/Txt`) overrides the folder read within each time-lapse.
 
     The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
     `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
@@ -125,7 +133,7 @@ def search_phase_txt_folders(
     return open_timelapse_subfolders(
         root,
         subpath,
-        PhaseTxtFolder,
+        partial(PhaseTxtFolder, target_unit=target_unit),
         name_filter=name_filter,
         part_filter=part_filter,
         predicate=predicate,
