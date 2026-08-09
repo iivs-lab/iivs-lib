@@ -37,6 +37,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- `kaparoo-python`'s floor moves to `>=0.13.1` for `get_name` and `contains`'
+  `kind`. `KoalaFrameFolder.validate` reads each frame name through `get_name`,
+  which needs no `Path`, so the name check keeps its speed without materializing
+  the `files` snapshot the previous version had to retain; `open_folder`'s
+  directory search now composes `contains(subpath, kind="dir")` in place of a
+  hand-written predicate.
 - `kaparoo-python`'s floor moves to `>=0.13.0`, whose `resolve_enum` and
   `literal_values` this release adopts. `resolve_phase_unit` now delegates its
   lookup, so its rejection message takes the shape the rest of the package's

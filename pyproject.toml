@@ -58,7 +58,7 @@ dependencies = [
     # LZW, via `imagecodecs`) ships by default -- only `torch`
     # (`analysis.pytorch`) is an extra.
     "imagecodecs>=2026.5.10",
-    "kaparoo-python>=0.13.0",
+    "kaparoo-python>=0.13.1",
     "numpy>=2.4.6",
     "tifffile>=2026.6.1",
 ]

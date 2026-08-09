@@ -12,7 +12,7 @@ __all__ = (
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, cast
 
-from kaparoo.filesystem import dir_exists, search_dirs
+from kaparoo.filesystem import contains, dir_exists, search_dirs
 from kaparoo.filesystem.hierarchy import Directory
 from kaparoo.utils import fold_optional
 
@@ -111,7 +111,7 @@ def search_timelapse_subdirs(
         root,
         name_filter=name_filter,
         part_filter=part_filter,
-        predicate=lambda path: dir_exists(path / subpath),
+        predicate=contains(subpath, kind="dir"),
         exclude=exclude,
         min_depth=min_depth,
         max_depth=max_depth,

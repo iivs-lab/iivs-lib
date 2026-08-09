@@ -221,18 +221,16 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         picks the depth. There is no level meaning "check nothing" — to skip, do not
         call this.
 
-        Walks `files` rather than calling `validate_file` per index: the level is a
-        loop invariant, and the name check is a string comparison, so the snapshot's
-        one `Path` per file replaces one built and discarded per check. That leaves
-        the snapshot materialized (`files` caches it), which is the trade for a
-        name check that costs a comparison rather than a path construction.
+        Resolves the level once (it cannot change between files) and reads each name
+        with `get_name`, which needs no `Path`. A deeper level still builds one per
+        file, since `_validate_content` reads the file itself.
         """
         resolved = self._resolve_level(level)
 
-        for index, path in enumerate(self.files):
-            self._check_name(index, path.name)
+        for index in range(len(self)):
+            self._check_name(index, self.get_name(index))
             if resolved != "names":
-                self._validate_content(path, level=resolved)
+                self._validate_content(self.get_file(index), level=resolved)
 
     def validate_if_supported(self, *, level: ValidationLevel | None = None) -> None:
         """Validate to `level`, or skip when this folder does not support it.
