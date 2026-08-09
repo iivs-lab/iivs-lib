@@ -220,9 +220,19 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
         open at all?", while here the folder is being validated already and None only
         picks the depth. There is no level meaning "check nothing" — to skip, do not
         call this.
+
+        Walks `files` rather than calling `validate_file` per index: the level is a
+        loop invariant, and the name check is a string comparison, so the snapshot's
+        one `Path` per file replaces one built and discarded per check. That leaves
+        the snapshot materialized (`files` caches it), which is the trade for a
+        name check that costs a comparison rather than a path construction.
         """
-        for index in range(len(self)):
-            self.validate_file(index, level=level)
+        resolved = self._resolve_level(level)
+
+        for index, path in enumerate(self.files):
+            self._check_name(index, path.name)
+            if resolved != "names":
+                self._validate_content(path, level=resolved)
 
     def validate_if_supported(self, *, level: ValidationLevel | None = None) -> None:
         """Validate to `level`, or skip when this folder does not support it.
@@ -249,17 +259,25 @@ class KoalaFrameFolder[T](FileFolderSequence[T, Path], FrameShapedMixin):
             ValueError: If `level` is unsupported, the numbering is non-contiguous, or
                 `_validate_content` rejects the file.
         """
-        resolved = replace_if_none(level, self.DEFAULT_LEVEL)
-        resolved = ensure_one_of(resolved, self.LEVELS, name="level")
+        resolved = self._resolve_level(level)
 
         path = self.get_file(index)
-        expected = koala_frame_name(index, stem=self.FILE_STEM, ext=self.FILE_EXT)
-        if (name := path.name) != expected:
-            msg = f"non-contiguous: expected {expected} at index {index}, got {name}"
-            raise ValueError(msg)
+        self._check_name(index, path.name)
 
         if resolved != "names":
             self._validate_content(path, level=resolved)
+
+    def _resolve_level(self, level: ValidationLevel | None) -> str:
+        """Resolve `level` against `DEFAULT_LEVEL` and reject one outside `LEVELS`."""
+        resolved = replace_if_none(level, self.DEFAULT_LEVEL)
+        return ensure_one_of(resolved, self.LEVELS, name="level")
+
+    def _check_name(self, index: int, name: str) -> None:
+        """Raise unless `name` is the contiguous frame name for `index`."""
+        expected = koala_frame_name(index, stem=self.FILE_STEM, ext=self.FILE_EXT)
+        if name != expected:
+            msg = f"non-contiguous: expected {expected} at index {index}, got {name}"
+            raise ValueError(msg)
 
     def _validate_content(self, path: Path, *, level: str) -> None:
         """Check `path`'s content for levels beyond `"names"` (subclass hook)."""
