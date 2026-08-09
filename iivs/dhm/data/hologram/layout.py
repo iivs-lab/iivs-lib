@@ -10,23 +10,25 @@ __all__ = (
 
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Unpack
 
 from kaparoo.filesystem.hierarchy import Directory, Exclusive, File
 from kaparoo.filters import Regex
 
 from iivs.dhm.data.hologram.raw import HologramRawFile
 from iivs.dhm.data.hologram.tif import HologramTifFolder
-from iivs.dhm.data.koala import HOLOGRAMS, open_folder, search_timelapse_subdirs
+from iivs.dhm.data.koala import (
+    HOLOGRAMS,
+    open_folder,
+    search_timelapse_subdirs,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable
     from typing import Literal
 
-    from kaparoo.filesystem.exclude import ExcludeRule
+    from kaparoo.filesystem import WalkKwargs
     from kaparoo.filesystem.types import StrPath
-    from kaparoo.filters import Filter
-    from kaparoo.filters.types import FilterDict
 
     from iivs.dhm.data.hologram.base import HologramSequence
 
@@ -93,13 +95,8 @@ def search_holograms(
     root: StrPath,
     *,
     on_conflict: Literal["skip", "raise"] = "skip",
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[HologramSequence], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[HologramSequence]:
     """Return the holograms of every time-lapse under `root` that has a `Holograms/`.
 
@@ -114,14 +111,9 @@ def search_holograms(
         on_conflict: What to do when a matched `Holograms/` holds both a `.raw` stack
             and `.tif` previews. `"skip"` (default) drops that time-lapse and warns;
             `"raise"` aborts the search.
-        name_filter: Filter on each candidate time-lapse folder's own name.
-        part_filter: Filter on each visited parent directory's relative path.
-        predicate: A final check on the opened `HologramSequence`; None (default) keeps
-            all.
-        exclude: Path(s) to prune from the walk.
-        min_depth: Shallowest depth to include (>= 1).
-        max_depth: Deepest depth to include, or None (default) for unlimited.
-        ordered: Sort the results by path. Defaults to True.
+        **walk: The `WalkKwargs` set — `predicate`, a final check on the opened
+            `HologramSequence`, plus the walk `search_timelapse_subdirs` passes
+            through.
 
     Returns:
         The opened hologram sequences (excluding any skipped on a conflict).
@@ -133,16 +125,7 @@ def search_holograms(
             `on_conflict`: that is a content error, not the layout ambiguity).
     """
     sequences: list[HologramSequence] = []
-    for directory in search_timelapse_subdirs(
-        root,
-        HOLOGRAMS,
-        name_filter=name_filter,
-        part_filter=part_filter,
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
-    ):
+    for directory in search_timelapse_subdirs(root, HOLOGRAMS, **walk):
         try:
             sequence = open_holograms(directory)
         except MultiFormatHologramsError:
@@ -160,14 +143,7 @@ def search_holograms(
 
 
 def search_multi_format_holograms(
-    root: StrPath,
-    *,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    root: StrPath, **walk: Unpack[WalkKwargs]
 ) -> list[Path]:
     """Return each `Holograms/` under `root` that holds both a `.raw` stack and `.tif`.
 
@@ -179,25 +155,12 @@ def search_multi_format_holograms(
 
     Args:
         root: The directory to scan.
-        name_filter: Filter on each candidate time-lapse folder's own name.
-        part_filter: Filter on each visited parent directory's relative path.
-        exclude: Path(s) to prune from the walk.
-        min_depth: Shallowest depth to include (>= 1).
-        max_depth: Deepest depth to include, or None (default) for unlimited.
-        ordered: Sort the results by path. Defaults to True.
+        **walk: The `WalkKwargs` set `search_timelapse_subdirs` passes through. There
+            is no `predicate`: this audit is itself the check on each folder.
     """
     return [
         directory
-        for directory in search_timelapse_subdirs(
-            root,
-            HOLOGRAMS,
-            name_filter=name_filter,
-            part_filter=part_filter,
-            exclude=exclude,
-            min_depth=min_depth,
-            max_depth=max_depth,
-            ordered=ordered,
-        )
+        for directory in search_timelapse_subdirs(root, HOLOGRAMS, **walk)
         if (directory / _HOLOGRAM_RAW).is_file()
         and open_folder(directory, HologramTifFolder) is not None
     ]

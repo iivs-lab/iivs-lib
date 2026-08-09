@@ -37,6 +37,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The thirteen search wrappers take the walk as `**walk: Unpack[WalkKwargs]`
+  rather than re-declaring `name_filter` / `part_filter` / `exclude` /
+  `min_depth` / `max_depth` / `ordered` apiece. Calls are unaffected — those
+  were keyword-only already — and `descend`, new in kaparoo 0.13.1, comes along
+  for free, so a scan can stop descending once it has found a time-lapse. Each
+  wrapper still declares its own `predicate` explicitly, since it is typed by
+  what that wrapper returns (a folder, a `KoalaTimelapse`, a `HologramSequence`)
+  rather than by the paths the walk visits.
 - `kaparoo-python`'s floor moves to `>=0.13.1` for `get_name` and `contains`'
   `kind`. `KoalaFrameFolder.validate` reads each frame name through `get_name`,
   which needs no `Path`, so the name check keeps its speed without materializing

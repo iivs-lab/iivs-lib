@@ -9,7 +9,7 @@ __all__ = (
     "search_intensity_txt_folders",
 )
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Unpack
 
 from kaparoo.utils import ensure_one_of
 
@@ -28,13 +28,11 @@ from iivs.dhm.data.koala import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Sequence
     from typing import Literal
 
-    from kaparoo.filesystem.exclude import ExcludeRule
+    from kaparoo.filesystem import WalkKwargs
     from kaparoo.filesystem.types import StrPath
-    from kaparoo.filters import Filter
-    from kaparoo.filters.types import FilterDict
 
     from iivs.dhm.data.intensity.base import IntensityFileFolder
 
@@ -72,13 +70,8 @@ def search_intensity_bin_folders(
     root: StrPath,
     *,
     subpath: str = INTENSITY_FLOAT_BIN,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[IntensityBinFolder], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[IntensityBinFolder]:
     """Return the `Intensity/Float/Bin` folder of each time-lapse under `root` with one.
 
@@ -88,20 +81,11 @@ def search_intensity_bin_folders(
     its `Intensity/Float/Bin` default to read a re-encoded `.bin` source at another
     location with the same reader.
 
-    The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
-    `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
+    `**walk` is `open_timelapse_subfolders`'s `WalkKwargs`, passed through
+    unchanged: `predicate` over the opened folders, plus the walk.
     """
     return open_timelapse_subfolders(
-        root,
-        subpath,
-        IntensityBinFolder,
-        name_filter=name_filter,
-        part_filter=part_filter,
-        predicate=predicate,
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
+        root, subpath, IntensityBinFolder, predicate=predicate, **walk
     )
 
 
@@ -109,13 +93,8 @@ def search_intensity_txt_folders(
     root: StrPath,
     *,
     subpath: str = INTENSITY_FLOAT_TXT,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[IntensityTxtFolder], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[IntensityTxtFolder]:
     """Return the `Intensity/Float/Txt` folder of each time-lapse under `root` with one.
 
@@ -123,20 +102,11 @@ def search_intensity_txt_folders(
     `IntensityTxtFolder`. `subpath` (default `Intensity/Float/Txt`) overrides the
     folder read within each time-lapse.
 
-    The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
-    `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
+    `**walk` is `open_timelapse_subfolders`'s `WalkKwargs`, passed through
+    unchanged.
     """
     return open_timelapse_subfolders(
-        root,
-        subpath,
-        IntensityTxtFolder,
-        name_filter=name_filter,
-        part_filter=part_filter,
-        predicate=predicate,
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
+        root, subpath, IntensityTxtFolder, predicate=predicate, **walk
     )
 
 
@@ -144,13 +114,8 @@ def search_intensity_tif_folders(
     root: StrPath,
     *,
     subpath: str = INTENSITY_IMAGE,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[IntensityTifFolder], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[IntensityTifFolder]:
     """Return the uint8 `Intensity/Image` preview folder of every time-lapse with one.
 
@@ -158,20 +123,11 @@ def search_intensity_tif_folders(
     `IntensityTifFolder`. `subpath` (default `Intensity/Image`) overrides the folder
     read within each time-lapse.
 
-    The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
-    `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
+    `**walk` is `open_timelapse_subfolders`'s `WalkKwargs`, passed through
+    unchanged.
     """
     return open_timelapse_subfolders(
-        root,
-        subpath,
-        IntensityTifFolder,
-        name_filter=name_filter,
-        part_filter=part_filter,
-        predicate=predicate,
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
+        root, subpath, IntensityTifFolder, predicate=predicate, **walk
     )
 
 
@@ -180,13 +136,8 @@ def search_intensity_folders(
     *,
     prefer: Literal["bin", "txt"] | Sequence[Literal["bin", "txt"]] = ("bin", "txt"),
     subpath: str = INTENSITY,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[IntensityFileFolder], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[IntensityFileFolder]:
     """Return each time-lapse's quantitative intensity folder, whichever format it holds.
 
@@ -200,12 +151,11 @@ def search_intensity_folders(
     covers them), nor does `.npy`, a re-encoding target rather than part of the Koala
     layout.
 
-    `predicate` checks each opened folder; `name_filter` matches the time-lapse
-    folder's own name. `subpath` is the modality subtree searched under each
-    time-lapse (default `Intensity`); override it to scan a re-exported tree, still
-    resolving `Float/{Bin,Txt}` beneath it. The walk itself (`part_filter`,
-    `exclude`, `min_depth`, `max_depth`, `ordered`) is `search_timelapse_subdirs`'s,
-    passed through unchanged.
+    `subpath` is the modality subtree searched under each time-lapse (default
+    `Intensity`); override it to scan a re-exported tree, still resolving
+    `Float/{Bin,Txt}` beneath it. `**walk` is the `WalkKwargs` set: `predicate`
+    over the opened folders, plus the walk `search_timelapse_subdirs` passes
+    through.
 
     Raises:
         ValueError: If `prefer` is empty or names a format other than bin or txt.
@@ -218,16 +168,7 @@ def search_intensity_folders(
         ensure_one_of(fmt, ("bin", "txt"), name="prefer")
 
     folders: list[IntensityFileFolder] = []
-    for intensity_dir in search_timelapse_subdirs(
-        root,
-        subpath,
-        name_filter=name_filter,
-        part_filter=part_filter,
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
-    ):
+    for intensity_dir in search_timelapse_subdirs(root, subpath, **walk):
         group = IntensityGroup(intensity_dir)
         for fmt in order:
             folder = group.bin_folder if fmt == "bin" else group.txt_folder

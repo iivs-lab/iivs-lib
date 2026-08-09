@@ -10,7 +10,7 @@ __all__ = (
 )
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, Protocol, Unpack, cast
 
 from kaparoo.filesystem import contains, dir_exists, search_dirs
 from kaparoo.filesystem.hierarchy import Directory
@@ -19,12 +19,10 @@ from kaparoo.utils import fold_optional
 from iivs.dhm.data.koala.constants import BIN, FLOAT, IMAGE, TXT
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable
 
-    from kaparoo.filesystem.exclude import ExcludeRule
+    from kaparoo.filesystem import WalkKwargs
     from kaparoo.filesystem.types import StrPath
-    from kaparoo.filters import Filter
-    from kaparoo.filters.types import FilterDict
 
     from iivs.dhm.data.koala.float import KoalaFloatFileFolder
     from iivs.dhm.data.koala.frame import KoalaFrameFolder, ValidationLevel
@@ -80,15 +78,7 @@ def open_folder[T: KoalaFrameFolder](
 
 
 def search_timelapse_subdirs(
-    root: StrPath,
-    subpath: str,
-    *,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    root: StrPath, subpath: str, **walk: Unpack[WalkKwargs]
 ) -> list[Path]:
     """Return each `<time-lapse>/<subpath>` path under `root`.
 
@@ -100,23 +90,11 @@ def search_timelapse_subdirs(
         root: The directory to scan.
         subpath: The relative subfolder each time-lapse must hold (e.g. "Phase" or
             "Phase/Float/Bin").
-        name_filter: Filter on each candidate time-lapse folder's own name.
-        part_filter: Filter on each visited parent directory's relative path.
-        exclude: Path(s) to prune from the walk.
-        min_depth: Shallowest depth to include (>= 1).
-        max_depth: Deepest depth to include, or None for unlimited.
-        ordered: Sort the results by path. Defaults to True.
+        **walk: The `WalkKwargs` set `kaparoo`'s `search_dirs` defines. `predicate`
+            is not among them: this function supplies its own, the check for
+            `subpath`.
     """
-    dirs = search_dirs(
-        root,
-        name_filter=name_filter,
-        part_filter=part_filter,
-        predicate=contains(subpath, kind="dir"),
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
-    )
+    dirs = search_dirs(root, predicate=contains(subpath, kind="dir"), **walk)
     return [directory / subpath for directory in dirs]
 
 
@@ -125,13 +103,8 @@ def open_timelapse_subfolders[T: KoalaFrameFolder](
     subpath: str,
     folder: FrameFolderOpener[T],
     *,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[T], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[T]:
     """Open each `<time-lapse>/<subpath>` folder under `root`.
 
@@ -142,14 +115,10 @@ def open_timelapse_subfolders[T: KoalaFrameFolder](
         root: The directory to scan.
         subpath: The relative subfolder each time-lapse must hold (e.g. "Phase" or
             "Phase/Float/Bin").
-        folder: The class to open each `subpath` with (e.g. `PhaseBinFolder`).
-        name_filter: Filter on each candidate time-lapse folder's own name.
-        part_filter: Filter on each visited parent directory's relative path.
+        folder: The class to open each `subpath` with (e.g. `PhaseBinFolder`), or any
+            `FrameFolderOpener`.
         predicate: A final check on each opened folder; None (default) keeps all.
-        exclude: Path(s) to prune from the walk.
-        min_depth: Shallowest depth to include (>= 1).
-        max_depth: Deepest depth to include, or None (default) for unlimited.
-        ordered: Sort the results by path. Defaults to True.
+        **walk: The `WalkKwargs` set `search_timelapse_subdirs` passes through.
 
     Returns:
         The opened folders, one per matching time-lapse.
@@ -159,16 +128,7 @@ def open_timelapse_subfolders[T: KoalaFrameFolder](
     """
     opened = (
         open_folder(directory, folder)
-        for directory in search_timelapse_subdirs(
-            root,
-            subpath,
-            name_filter=name_filter,
-            part_filter=part_filter,
-            exclude=exclude,
-            min_depth=min_depth,
-            max_depth=max_depth,
-            ordered=ordered,
-        )
+        for directory in search_timelapse_subdirs(root, subpath, **walk)
     )
     present = [item for item in opened if item is not None]
     if predicate is None:

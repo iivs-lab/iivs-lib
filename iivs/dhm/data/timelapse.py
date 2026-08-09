@@ -4,7 +4,7 @@ __all__ = ("KOALA_TIMELAPSE_TREE", "KoalaTimelapse", "search_timelapses")
 
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Unpack
 
 from kaparoo.filesystem.hierarchy import Directory, File
 from kaparoo.filesystem.search import search_dirs
@@ -17,7 +17,13 @@ from iivs.dhm.data.hologram.layout import (
     open_holograms,
 )
 from iivs.dhm.data.intensity.layout import INTENSITY_TREE, IntensityGroup
-from iivs.dhm.data.koala import HOLOGRAMS, INTENSITY, PHASE, PHBOUNDS, TIMESTAMPS
+from iivs.dhm.data.koala import (
+    HOLOGRAMS,
+    INTENSITY,
+    PHASE,
+    PHBOUNDS,
+    TIMESTAMPS,
+)
 from iivs.dhm.data.koala.frame import KoalaFrameFolder
 from iivs.dhm.data.phase.bounds import read_phbounds
 from iivs.dhm.data.phase.layout import PHASE_TREE, PhaseGroup
@@ -26,10 +32,8 @@ from iivs.dhm.data.timestamp import TimestampsTxtFile
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
 
-    from kaparoo.filesystem.exclude import ExcludeRule
+    from kaparoo.filesystem import WalkKwargs
     from kaparoo.filesystem.types import StrPath
-    from kaparoo.filters import Filter
-    from kaparoo.filters.types import FilterDict
 
     from iivs.common.data.timestamp import TimestampSequence
     from iivs.dhm.data.hologram.base import HologramSequence
@@ -312,13 +316,8 @@ def search_timelapses(
     root: StrPath,
     *,
     require: Iterable[str] | None = None,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[KoalaTimelapse], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[KoalaTimelapse]:
     """Return a `KoalaTimelapse` for each Koala acquisition folder under `root`.
 
@@ -336,14 +335,9 @@ def search_timelapses(
             root-level marker or file (`Phase` / `Intensity` / `Holograms` /
             `timestamps.txt` / `phbounds.txt`); an unknown name raises. None (default)
             or empty requires only any one modality.
-        name_filter: Filter on each candidate time-lapse folder's own name.
-        part_filter: Filter on each visited parent directory's relative path.
-        predicate: A final check on the built `KoalaTimelapse`; None (default) keeps
-            all.
-        exclude: Path(s) to prune from the walk.
-        min_depth: Shallowest depth to include (>= 1, direct children are depth 1).
-        max_depth: Deepest depth to include, or None (default) for unlimited.
-        ordered: Sort the results by path. Defaults to True.
+        **walk: The `WalkKwargs` set — `predicate`, a final check on the built
+            `KoalaTimelapse`, plus the walk. The walk's own path `predicate` is not
+            among them: `require` fills that role here.
 
     Raises:
         ValueError: If `require` holds a name outside the root-level markers / files.
@@ -356,16 +350,7 @@ def search_timelapses(
             msg = f"unknown require name(s) {unknown}: expected {sorted(_REQUIRABLE)}"
             raise ValueError(msg)
 
-    directories = search_dirs(
-        root,
-        part_filter=part_filter,
-        name_filter=name_filter,
-        predicate=_requirer(require),
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
-    )
+    directories = search_dirs(root, predicate=_requirer(require), **walk)
     timelapses = (KoalaTimelapse(directory) for directory in directories)
     if predicate is None:
         return list(timelapses)

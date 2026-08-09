@@ -10,7 +10,7 @@ __all__ = (
 )
 
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Unpack
 
 from kaparoo.utils import ensure_one_of
 
@@ -29,13 +29,11 @@ from iivs.dhm.data.phase.tif import PhaseTifFolder
 from iivs.dhm.data.phase.txt import PhaseTxtFolder
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Sequence
     from typing import Literal
 
-    from kaparoo.filesystem.exclude import ExcludeRule
+    from kaparoo.filesystem import WalkKwargs
     from kaparoo.filesystem.types import StrPath
-    from kaparoo.filters import Filter
-    from kaparoo.filters.types import FilterDict
 
     from iivs.dhm.data.phase.base import PhaseFileFolder
     from iivs.dhm.data.phase.unit import PhaseUnit
@@ -71,13 +69,8 @@ def search_phase_bin_folders(
     *,
     subpath: str = PHASE_FLOAT_BIN,
     target_unit: PhaseUnit | None = None,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[PhaseBinFolder], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[PhaseBinFolder]:
     """Return the `Phase/Float/Bin` folder of each time-lapse under `root` that has one.
 
@@ -91,20 +84,15 @@ def search_phase_bin_folders(
     one construction rather than a `with_unit` rebuild per folder; None (default)
     keeps each folder's stored unit, as the constructor does.
 
-    The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
-    `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
+    `**walk` is `open_timelapse_subfolders`'s `WalkKwargs`, passed through
+    unchanged: `predicate` over the opened `PhaseBinFolder`s, plus the walk.
     """
     return open_timelapse_subfolders(
         root,
         subpath,
         partial(PhaseBinFolder, target_unit=target_unit),
-        name_filter=name_filter,
-        part_filter=part_filter,
         predicate=predicate,
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
+        **walk,
     )
 
 
@@ -113,13 +101,8 @@ def search_phase_txt_folders(
     *,
     subpath: str = PHASE_FLOAT_TXT,
     target_unit: PhaseUnit | None = None,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[PhaseTxtFolder], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[PhaseTxtFolder]:
     """Return the `Phase/Float/Txt` folder of each time-lapse under `root` that has one.
 
@@ -127,20 +110,15 @@ def search_phase_txt_folders(
     `PhaseTxtFolder`, and `target_unit` is bound as each folder is opened. `subpath`
     (default `Phase/Float/Txt`) overrides the folder read within each time-lapse.
 
-    The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
-    `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
+    `**walk` is `open_timelapse_subfolders`'s `WalkKwargs`, passed through
+    unchanged.
     """
     return open_timelapse_subfolders(
         root,
         subpath,
         partial(PhaseTxtFolder, target_unit=target_unit),
-        name_filter=name_filter,
-        part_filter=part_filter,
         predicate=predicate,
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
+        **walk,
     )
 
 
@@ -148,13 +126,8 @@ def search_phase_tif_folders(
     root: StrPath,
     *,
     subpath: str = PHASE_IMAGE,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[PhaseTifFolder], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[PhaseTifFolder]:
     """Return the uint8 `Phase/Image` preview folder of every time-lapse that has one.
 
@@ -162,20 +135,11 @@ def search_phase_tif_folders(
     `PhaseTifFolder`. `subpath` (default `Phase/Image`) overrides the folder read
     within each time-lapse.
 
-    The walk itself (`part_filter`, `exclude`, `min_depth`, `max_depth`,
-    `ordered`) is `open_timelapse_subfolders`'s, passed through unchanged.
+    `**walk` is `open_timelapse_subfolders`'s `WalkKwargs`, passed through
+    unchanged.
     """
     return open_timelapse_subfolders(
-        root,
-        subpath,
-        PhaseTifFolder,
-        name_filter=name_filter,
-        part_filter=part_filter,
-        predicate=predicate,
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
+        root, subpath, PhaseTifFolder, predicate=predicate, **walk
     )
 
 
@@ -184,13 +148,8 @@ def search_phase_folders(
     *,
     prefer: Literal["bin", "txt"] | Sequence[Literal["bin", "txt"]] = ("bin", "txt"),
     subpath: str = PHASE,
-    name_filter: Filter | FilterDict | None = None,
-    part_filter: Filter | FilterDict | None = None,
     predicate: Callable[[PhaseFileFolder], bool] | None = None,
-    exclude: ExcludeRule | Iterable[ExcludeRule] | None = None,
-    min_depth: int = 1,
-    max_depth: int | None = None,
-    ordered: bool = True,
+    **walk: Unpack[WalkKwargs],
 ) -> list[PhaseFileFolder]:
     """Return each time-lapse's quantitative phase folder, whichever format it holds.
 
@@ -203,12 +162,11 @@ def search_phase_folders(
     never participate (`search_phase_tif_folders` covers them), nor does `.npy`, a
     re-encoding target rather than part of the Koala layout.
 
-    `predicate` checks each opened folder; `name_filter` matches the time-lapse
-    folder's own name. `subpath` is the modality subtree searched under each
-    time-lapse (default `Phase`); override it to scan a re-exported tree (e.g.
-    `FilteredPhase`), still resolving `Float/{Bin,Txt}` beneath it. The walk itself
-    (`part_filter`, `exclude`, `min_depth`, `max_depth`, `ordered`) is
-    `search_timelapse_subdirs`'s, passed through unchanged.
+    `subpath` is the modality subtree searched under each time-lapse (default
+    `Phase`); override it to scan a re-exported tree (e.g. `FilteredPhase`), still
+    resolving `Float/{Bin,Txt}` beneath it. `**walk` is the `WalkKwargs` set:
+    `predicate` over the opened folders, plus the walk `search_timelapse_subdirs`
+    passes through.
 
     Raises:
         ValueError: If `prefer` is empty or names a format other than bin or txt.
@@ -221,16 +179,7 @@ def search_phase_folders(
         ensure_one_of(fmt, ("bin", "txt"), name="prefer")
 
     folders: list[PhaseFileFolder] = []
-    for phase_dir in search_timelapse_subdirs(
-        root,
-        subpath,
-        name_filter=name_filter,
-        part_filter=part_filter,
-        exclude=exclude,
-        min_depth=min_depth,
-        max_depth=max_depth,
-        ordered=ordered,
-    ):
+    for phase_dir in search_timelapse_subdirs(root, subpath, **walk):
         group = PhaseGroup(phase_dir)
         for fmt in order:
             folder = group.bin_folder if fmt == "bin" else group.txt_folder
