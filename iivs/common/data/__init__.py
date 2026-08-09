@@ -9,6 +9,7 @@ __all__ = (
     "Sum",
     "Timestamp",
     "TimestampSequence",
+    "TimestampSeries",
     "TimestampsFixedFPS",
     "ValueRangeMixin",
     "Variance",
@@ -46,7 +47,12 @@ from iivs.common.data.reduction import (
     Variance,
 )
 from iivs.common.data.sequence import ArrayFileList
-from iivs.common.data.timestamp import Timestamp, TimestampSequence, TimestampsFixedFPS
+from iivs.common.data.timestamp import (
+    Timestamp,
+    TimestampSequence,
+    TimestampSeries,
+    TimestampsFixedFPS,
+)
 
 # `validation`'s composable parts (`validate_ndim` / `validate_dtype`) are public but
 # stay behind their module path: the four `validate_*_array` front doors compose them

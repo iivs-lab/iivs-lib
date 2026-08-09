@@ -10,6 +10,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `TimestampSequence.select(indices)` / `.subsample(step, *, start, count,
+  on_short)` — take a subset with the intervals recomputed. `elapsed_ms` is
+  measured from acquisition start and carries over untouched, but `interval_ms`
+  is the gap to the neighbouring frame, so reading one frame in two doubles it
+  and a subset's first frame restarts at 0.0. A slice or a generic composer
+  (`SlicedSequence`, `ConcatSequence`) hands the items back unchanged, leaving
+  intervals that describe frames the subset no longer has; the docstrings now say
+  so. `subsample` bounds the result with `count`, and `on_short` decides whether
+  fewer available frames are returned as a shorter series (`"allow"`, default) or
+  rejected (`"raise"`).
+- `TimestampSeries`, a `TimestampSequence` over an explicit series — what `select`
+  / `subsample` return, and the way to hold a series computed elsewhere. Its mean
+  is measured from the frames, unlike `TimestampsFixedFPS`, which answers from the
+  rate bound at construction and so must not be what a subsample becomes.
+
 - `search_phase_bin_folders` / `search_phase_txt_folders` take `target_unit`,
   bound as each folder is opened. A bulk read in one unit previously cost a
   `with_unit` rebuild per folder — a second directory listing and header read for

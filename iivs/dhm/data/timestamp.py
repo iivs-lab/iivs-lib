@@ -52,11 +52,7 @@ class TimestampsTxtFile(SingleFileSequence[Timestamp, int], TimestampSequence):
         Raises:
             ValueError: If the sequence has fewer than two frames.
         """
-        if len(self) < 2:
-            msg = f"mean interval requires at least two frames (got {len(self)})"
-            raise ValueError(msg)
-
-        return sum((ts.interval_ms for ts in self), 0.0) / (len(self) - 1)
+        return self._mean_interval_over_series()
 
     @classmethod
     def parse(cls, path: StrPath) -> tuple[Timestamp, ...]:
