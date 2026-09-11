@@ -33,7 +33,7 @@ class FrameShapedMixin(ABC):
         raise NotImplementedError
 
 
-class ValueRangeMixin[T: np.generic, M](DataSequence[NDArray[T], M]):
+class ValueRangeMixin[T: np.integer | np.floating, M](DataSequence[NDArray[T], M]):
     """Mixin adding `value_range` to a `DataSequence` of numeric image frames.
 
     Mix into a `DataSequence[NDArray[T], M]` with matching `T` / `M` to expose the
