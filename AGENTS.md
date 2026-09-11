@@ -5,8 +5,9 @@ Guidance for AI coding assistants working on this project.
 
 ## Project
 
-- Package: `iivs/`
-- Python:  3.13+
+- Package: `iivs/` (the library) and `iivs_cli/` (the `iivs`
+           command), both shipped by one distribution
+- Python:  3.13+ supported; `.python-version` develops on 3.14
 - Kind:    distributable library (`uv_build` backend)
 
 ## Toolchain
@@ -30,9 +31,10 @@ uv run pytest            # run tests (coverage included by default)
 uv run pytest --no-cov   # skip coverage for quick iteration
 ```
 
-Coverage is measured by `pytest-cov` against `iivs/` with
-branch tracking; the `fail_under` gate lives in `pyproject.toml`
-(`0` = measure only — raise it once you have a baseline).
+Coverage is measured by `pytest-cov` against both shipped modules
+with branch tracking; the `fail_under` gate lives in
+`pyproject.toml`. It sits at 95 while measured coverage is 100, so
+the gate absorbs variation rather than tracking the number.
 
 
 ## Conventions
@@ -52,9 +54,11 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   clear, commented reason.
 - Tests live in `tests/` and may use bare `assert` (ruff `S101` is
   waived there).
-- Mirror the package layout under `tests/`: `iivs/sub/mod.py`
-  is tested by `tests/sub/test_mod.py`. Keep `__init__.py` markers in
-  test subpackages (matches the `INP` ruff rule).
+- Mirror the package layout under `tests/`, with the top-level
+  module's name dropped: `iivs/sub/mod.py` is tested by
+  `tests/sub/test_mod.py`, and `iivs_cli/main.py` by
+  `tests/cli/test_main.py`. Keep `__init__.py` markers in test
+  subpackages (matches the `INP` ruff rule).
 - Test layout: flat module-level `def test_*` functions by default;
   reach for a plain `class TestX:` (grouping only, no inheritance) to
   organize a large or multi-feature surface. Don't mix the two styles
@@ -307,21 +311,23 @@ so there is no manual release step after the PyPI gate. Keeping `build`
 separate from publish keeps the `id-token: write` permission scoped
 to the publish jobs only.
 
-### One-time setup (before the first release)
+### Publishing setup (already in place)
 
-1. **PyPI Trusted Publisher** — on PyPI, register a GitHub Actions
-   publisher for the project: owner `iivs-lab`, repo
-   `iivs-lib`, workflow `publish.yml`, environment `pypi`. Use
-   PyPI's *pending publisher* form for the very first upload (before
-   the project exists on PyPI).
-2. **TestPyPI Trusted Publisher** — register the *same* publisher on
+Recorded so it can be checked or rebuilt, not repeated: the project
+has published since `v0.1.0`.
+
+1. **PyPI Trusted Publisher** — registered on PyPI for owner
+   `iivs-lab`, repo `iivs-lib`, workflow `publish.yml`,
+   environment `pypi`. A project that does not exist on PyPI yet
+   needs PyPI's *pending publisher* form instead.
+2. **TestPyPI Trusted Publisher** — the *same* publisher on
    [test.pypi.org](https://test.pypi.org/manage/account/publishing/)
-   for the staging job: owner `iivs-lab`, repo
-   `iivs-lib`, workflow `publish.yml`. The `testpypi` job has
-   no environment, so leave that field blank.
-3. **GitHub `pypi` environment** — create an environment named `pypi`
-   in the repo settings and add yourself as a *required reviewer*, so
-   every publish waits for explicit approval.
+   for the staging job: owner `iivs-lab`, repo `iivs-lib`,
+   workflow `publish.yml`. The `testpypi` job has no environment,
+   so that field is blank.
+3. **GitHub `pypi` environment** — an environment named `pypi` with
+   a *required reviewer*, so every publish waits for an explicit
+   approval.
 
 
 ## Template
