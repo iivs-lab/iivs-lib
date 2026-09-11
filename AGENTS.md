@@ -110,12 +110,13 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   own error names (e.g. `invalid-argument-type`), not mypy/pyright
   codes. Always include the specific code rather than bare
   `# ty: ignore` — bare suppressions can mask future regressions.
-- `ty` (0.0.51) resolves a `cached_property` whose return type names an
-  enclosing **class type parameter** (`B | None`) to plain `None`, which
-  then reads as unreachable downstream. A cast in the body does not help;
-  the mis-typing is at the descriptor's access site. A concrete union
-  resolves fine, as does a generic *method* — see
-  `ReconstructionGroup._open`. Re-check before working around it.
+- `ty` resolved a `cached_property` whose return type names an enclosing
+  **class type parameter** (`B | None`) to plain `None` through 0.0.51,
+  which then read as unreachable downstream; 0.0.80 resolves it
+  correctly. `ReconstructionGroup._open` is a generic *method* because of
+  that bug, and now stays one for its shared per-path cache alone.
+  Re-check a type-checker workaround against the current `ty` before
+  copying it.
 - `E501` is disabled, so **`ruff` will not report a line over 88
   columns**. Check with `awk 'length > 88' $(find iivs -name '*.py')`
   when you touch prose.

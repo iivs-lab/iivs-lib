@@ -97,7 +97,8 @@ def apply_mask(values: Tensor, mask: Tensor | None = None) -> Tensor:
             (see `region_stack`).
     """
     _validate_ndim(values)
-    regions = region_stack(mask, tuple(values.shape[-2:]), device=values.device)
+    height, width = values.shape[-2:]
+    regions = region_stack(mask, (height, width), device=values.device)
     maps = values.unsqueeze(-3) * regions
     return maps[..., 0, :, :] if _single_region(mask) else maps
 
@@ -162,7 +163,8 @@ class MaskedReduction(nn.Module, ABC):
         """
         _validate_ndim(values)
         mask = self.mask if mask is None else mask
-        regions = region_stack(mask, tuple(values.shape[-2:]), device=values.device)
+        height, width = values.shape[-2:]
+        regions = region_stack(mask, (height, width), device=values.device)
         result = self._reduce(values, regions)
 
         empties = regions.sum(dim=(-2, -1)) == 0
