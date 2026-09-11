@@ -81,7 +81,7 @@ torch = [
 dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
-    "ruff>=0.15.22",
+    "ruff>=0.16.7",
     "ty>=0.0.80",
     # Self-referenced extra: test the `[torch]` `analysis.pytorch` runtime path
     # and keep its floor single-sourced.
@@ -167,7 +167,7 @@ exclude_lines = [
 directory = ".cache/coverage/htmlcov"
 
 [tool.ruff]
-required-version = ">=0.15.22"
+required-version = ">=0.16.7"
 cache-dir = "./.cache/ruff"
 extend-exclude = [
     ".cache",
@@ -182,6 +182,10 @@ indent-width = 4
 # preview = true  # Uncomment to enable unstable features
 
 [tool.ruff.format]
+# The formatter reaches Python blocks inside Markdown from 0.16 on. The README
+# examples align their trailing comments into a column, which it collapses, so
+# prose stays hand-formatted; `ruff check` still lints the blocks.
+exclude = ["*.md"]
 quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
@@ -324,7 +328,7 @@ ignore-overlong-task-comments = true
 [tool.ruff.lint.pydoclint]
 ignore-one-line-docstrings = true
 
-# Following sections use default values and are omitted (ruff v0.15.18):
+# Following sections use default values and are omitted (ruff v0.16.7):
 # - tool.ruff.analyze
 # - tool.ruff.lint.flake8-boolean-trap
 # - tool.ruff.lint.flake8-bugbear
