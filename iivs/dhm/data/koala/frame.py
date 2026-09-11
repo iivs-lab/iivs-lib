@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "VALIDATION_LEVELS",
     "KoalaFrameFolder",
     "ValidationLevel",
     "detect_koala_format",
@@ -10,25 +11,27 @@ __all__ = (
 
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, Literal, override
 
 from kaparoo.data.sequences import FileFolderSequence
 from kaparoo.filesystem import StagedDirectory, file_extension
 from kaparoo.filesystem.search import search_files
 from kaparoo.filters import Regex
-from kaparoo.utils import ensure_one_of, replace_if_none
+from kaparoo.utils import ensure_one_of, literal_values, replace_if_none
 
 from iivs.common.data.mixins import FrameShapedMixin
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
-    from typing import Literal
 
     from kaparoo.filesystem.types import StrPath
 
 
 type ValidationLevel = Literal["names", "headers", "data"]
 """How deeply a numbered folder checks each file: name, header, or full data."""
+
+VALIDATION_LEVELS: tuple[ValidationLevel, ...] = literal_values(ValidationLevel)
+"""The validation levels, deepest last (the `ValidationLevel` values)."""
 
 
 @cache

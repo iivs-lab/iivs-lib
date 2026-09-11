@@ -1,4 +1,5 @@
 __all__ = (
+    "ON_NONFINITE_OPTIONS",
     "ArrayFileList",
     "FrameShapedMixin",
     "MaskedReduction",
@@ -58,6 +59,7 @@ from iivs.common.data.timestamp import (
 # stay behind their module path: the four `validate_*_array` front doors compose them
 # for every case here, so reach for a part by name only to assemble a new validator.
 from iivs.common.data.validation import (
+    ON_NONFINITE_OPTIONS,
     OnNonFinite,
     validate_float32_array,
     validate_float_array,

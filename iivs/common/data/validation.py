@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "ON_NONFINITE_OPTIONS",
     "OnNonFinite",
     "validate_dtype",
     "validate_float32_array",
@@ -11,19 +12,20 @@ __all__ = (
 )
 
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
-from kaparoo.utils import ensure_one_of
+from kaparoo.utils import ensure_one_of, literal_values
 
 if TYPE_CHECKING:
-    from typing import Literal
-
     from numpy.typing import DTypeLike, NDArray
 
 
 type OnNonFinite = Literal["ignore", "warn", "raise"]
 """How a floating array validator treats non-finite values (NaN, +/-inf)."""
+
+ON_NONFINITE_OPTIONS: tuple[OnNonFinite, ...] = literal_values(OnNonFinite)
+"""The non-finite policies, for runtime membership checks (the `OnNonFinite` values)."""
 
 
 def validate_ndim[T: np.generic](
@@ -117,7 +119,7 @@ def validate_float_array[F: np.floating](
     array = validate_ndim(array, ndim=ndim, allow_stack=allow_stack)
     array = validate_dtype(array, dtype=dtype, kind=np.floating)
 
-    ensure_one_of(on_nonfinite, ("ignore", "warn", "raise"), name="on_nonfinite")
+    ensure_one_of(on_nonfinite, ON_NONFINITE_OPTIONS, name="on_nonfinite")
 
     if on_nonfinite == "ignore":
         return array

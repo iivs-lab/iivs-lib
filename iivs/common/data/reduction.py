@@ -14,14 +14,12 @@ __all__ = (
 )
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, cast, override
+from typing import cast, override
 
 import numpy as np
+from numpy.typing import NDArray
 
 from iivs.common.data.validation import validate_ndim
-
-if TYPE_CHECKING:
-    from numpy.typing import NDArray
 
 type MaskLike = NDArray[np.bool_] | NDArray[np.integer]
 

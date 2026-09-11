@@ -17,7 +17,7 @@ from numpy.typing import NDArray
 
 from iivs.common.data import ArrayFileList, ValueRangeMixin
 from iivs.dhm.data.koala.bin import KoalaBinHeader
-from iivs.dhm.data.koala.frame import KoalaFrameFolder
+from iivs.dhm.data.koala.frame import VALIDATION_LEVELS, KoalaFrameFolder
 
 if TYPE_CHECKING:
     from kaparoo.filesystem.types import StrPath
@@ -111,7 +111,7 @@ class KoalaFloatFileFolder[H: KoalaBinHeader](
     checks every other file's header against it. Concrete folders supply `FILE_STEM`.
     """
 
-    LEVELS: ClassVar[tuple[str, ...]] = ("names", "headers", "data")
+    LEVELS: ClassVar[tuple[str, ...]] = VALIDATION_LEVELS
     DEFAULT_LEVEL: ClassVar[str] = "headers"
 
     def __init__(

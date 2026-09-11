@@ -8,6 +8,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `VALIDATION_LEVELS` (`iivs.dhm.data.koala`) and `ON_NONFINITE_OPTIONS`
+  (`iivs.common.data`), the value tuples behind the `ValidationLevel` and
+  `OnNonFinite` aliases, for runtime membership checks. They complete the pairing
+  `FLOAT_FORMATS` / `HOLOGRAM_FORMATS` already had, and each is now the single
+  source those values are read from.
+
 ### Changed
 
 - Raise `numpy`'s floor to `>=2.5` (from `2.4.6`). Through 2.4, numpy's stubs
@@ -23,6 +31,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   report (`str_`, `void`, `object_`) for a mixin over numeric image frames. Both
   instantiations (`np.uint8`, `np.float32`) are unaffected, and
   `complexfloating` is excluded deliberately: an unordered dtype has no range.
+
+### Fixed
+
+- `ValidationLevel`, `OnNonFinite` and `MaskLike` could not be evaluated at
+  runtime: a PEP 695 alias resolves its right-hand side lazily in the defining
+  module's runtime namespace, and each had the name it needs (`Literal`,
+  `NDArray`) imported only under `TYPE_CHECKING`, so reading `__value__` (as
+  `typing.get_args` and `kaparoo.utils.literal_values` do) raised `NameError`.
+  Annotations, type checking and imports were unaffected, which is why nothing
+  reported it.
 
 ## [0.4.0] - 2026-08-09
 

@@ -53,6 +53,7 @@ __all__ = (
     "PHBOUNDS",
     "TIMESTAMPS",
     "TXT",
+    "VALIDATION_LEVELS",
     "FloatFormat",
     "ImageFileFolder",
     "ImageTifFolder",
@@ -103,6 +104,7 @@ from iivs.dhm.data.koala.float import (
     KoalaFloatFileList,
 )
 from iivs.dhm.data.koala.frame import (
+    VALIDATION_LEVELS,
     KoalaFrameFolder,
     ValidationLevel,
     detect_koala_format,
