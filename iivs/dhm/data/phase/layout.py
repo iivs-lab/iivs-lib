@@ -85,7 +85,7 @@ def search_phase_bin_folders(
     keeps each folder's stored unit, as the constructor does.
 
     `**walk` is `open_timelapse_subfolders`'s `WalkKwargs`, passed through
-    unchanged: `predicate` over the opened `PhaseBinFolder`s, plus the walk.
+    unchanged.
     """
     return open_timelapse_subfolders(
         root,
@@ -164,9 +164,8 @@ def search_phase_folders(
 
     `subpath` is the modality subtree searched under each time-lapse (default
     `Phase`); override it to scan a re-exported tree (e.g. `FilteredPhase`), still
-    resolving `Float/{Bin,Txt}` beneath it. `**walk` is the `WalkKwargs` set:
-    `predicate` over the opened folders, plus the walk `search_timelapse_subdirs`
-    passes through.
+    resolving `Float/{Bin,Txt}` beneath it. `predicate` checks each opened folder,
+    and `**walk` is the `WalkKwargs` set `search_timelapse_subdirs` passes through.
 
     Raises:
         ValueError: If `prefer` is empty or names a format other than bin or txt.

@@ -335,9 +335,10 @@ def search_timelapses(
             root-level marker or file (`Phase` / `Intensity` / `Holograms` /
             `timestamps.txt` / `phbounds.txt`); an unknown name raises. None (default)
             or empty requires only any one modality.
-        **walk: The `WalkKwargs` set — `predicate`, a final check on the built
-            `KoalaTimelapse`, plus the walk. The walk's own path `predicate` is not
-            among them: `require` fills that role here.
+        **walk: The walk `kaparoo`'s `search_dirs` performs, as its `WalkKwargs`.
+            The walk's own path `predicate` is not among them: that name is taken
+            here by the check on the built `KoalaTimelapse`, and `require` fills the
+            path predicate's role.
 
     Raises:
         ValueError: If `require` holds a name outside the root-level markers / files.

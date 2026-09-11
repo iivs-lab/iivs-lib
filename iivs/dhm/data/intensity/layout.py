@@ -82,7 +82,7 @@ def search_intensity_bin_folders(
     location with the same reader.
 
     `**walk` is `open_timelapse_subfolders`'s `WalkKwargs`, passed through
-    unchanged: `predicate` over the opened folders, plus the walk.
+    unchanged.
     """
     return open_timelapse_subfolders(
         root, subpath, IntensityBinFolder, predicate=predicate, **walk
@@ -153,9 +153,8 @@ def search_intensity_folders(
 
     `subpath` is the modality subtree searched under each time-lapse (default
     `Intensity`); override it to scan a re-exported tree, still resolving
-    `Float/{Bin,Txt}` beneath it. `**walk` is the `WalkKwargs` set: `predicate`
-    over the opened folders, plus the walk `search_timelapse_subdirs` passes
-    through.
+    `Float/{Bin,Txt}` beneath it. `predicate` checks each opened folder, and
+    `**walk` is the `WalkKwargs` set `search_timelapse_subdirs` passes through.
 
     Raises:
         ValueError: If `prefer` is empty or names a format other than bin or txt.

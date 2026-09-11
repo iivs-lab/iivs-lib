@@ -111,9 +111,7 @@ def search_holograms(
         on_conflict: What to do when a matched `Holograms/` holds both a `.raw` stack
             and `.tif` previews. `"skip"` (default) drops that time-lapse and warns;
             `"raise"` aborts the search.
-        **walk: The `WalkKwargs` set — `predicate`, a final check on the opened
-            `HologramSequence`, plus the walk `search_timelapse_subdirs` passes
-            through.
+        **walk: The `WalkKwargs` set `search_timelapse_subdirs` passes through.
 
     Returns:
         The opened hologram sequences (excluding any skipped on a conflict).
