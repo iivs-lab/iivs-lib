@@ -8,6 +8,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Raise `numpy`'s floor to `>=2.5` (from `2.4.6`). Through 2.4, numpy's stubs
+  typed every `np.dtype(...)` call as `dtype[float64]`, whatever it was given, so
+  the two on-disk header layouts and `HologramRawHeader.pixel_dtype` each had to
+  cast their `np.dtype` back to the type it already had. 2.5 types the call
+  correctly, which makes those casts redundant, and the type checker (run with
+  `error-on-warning`) says so, so the workaround and the floor move together.
+  Runtime behaviour is unchanged: `cast` returned its argument untouched, and the
+  dtypes were always `void` / `uint8` on disk.
+- `ValueRangeMixin`'s type parameter is bounded by `np.integer | np.floating`
+  rather than `np.generic`, which had admitted dtypes with no `(min, max)` to
+  report (`str_`, `void`, `object_`) for a mixin over numeric image frames. Both
+  instantiations (`np.uint8`, `np.float32`) are unaffected, and
+  `complexfloating` is excluded deliberately: an unordered dtype has no range.
+
 ## [0.4.0] - 2026-08-09
 
 ### Added

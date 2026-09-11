@@ -4,7 +4,7 @@ __all__ = ("KoalaBinHeader", "load_bin", "write_bin")
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 from kaparoo.filesystem import StagedFile, ensure_file_exists
@@ -45,20 +45,17 @@ class KoalaBinHeader(ABC):
     # Lyncée Tec Koala header layout (cf. Lyncée Tec's pyKoalaUtils `binkoala.py`).
     # Field names are clarified from that reference: header_size=head_size,
     # pixel_size=px_size, height_scale=hconv, unit=unit_code.
-    DTYPE: ClassVar[np.dtype[np.void]] = cast(
-        "np.dtype[np.void]",
-        np.dtype(
-            [
-                ("version", "u1"),
-                ("endian", "u1"),
-                ("header_size", "<i4"),
-                ("width", "<i4"),
-                ("height", "<i4"),
-                ("pixel_size", "<f4"),
-                ("height_scale", "<f4"),
-                ("unit", "u1"),
-            ],
-        ),
+    DTYPE: ClassVar[np.dtype[np.void]] = np.dtype(
+        [
+            ("version", "u1"),
+            ("endian", "u1"),
+            ("header_size", "<i4"),
+            ("width", "<i4"),
+            ("height", "<i4"),
+            ("pixel_size", "<f4"),
+            ("height_scale", "<f4"),
+            ("unit", "u1"),
+        ],
     )
 
     HEADER_SIZE: ClassVar[int] = DTYPE.itemsize

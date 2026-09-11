@@ -42,16 +42,13 @@ class HologramRawHeader:
     """
 
     # Packed (no alignment padding) -> exactly 16 bytes.
-    DTYPE: ClassVar[np.dtype[np.void]] = cast(
-        "np.dtype[np.void]",
-        np.dtype(
-            [
-                ("width", "<i4"),
-                ("height", "<i4"),
-                ("bit_depth", "<i4"),
-                ("frame_count", "<i4"),
-            ],
-        ),
+    DTYPE: ClassVar[np.dtype[np.void]] = np.dtype(
+        [
+            ("width", "<i4"),
+            ("height", "<i4"),
+            ("bit_depth", "<i4"),
+            ("frame_count", "<i4"),
+        ],
     )
     HEADER_SIZE: ClassVar[int] = DTYPE.itemsize
     # Only 8-bit is verified against a real file; extend once a sample of
@@ -88,7 +85,7 @@ class HologramRawHeader:
     @property
     def pixel_dtype(self) -> np.dtype[np.uint8]:
         """On-disk pixel dtype for this `bit_depth`."""
-        return cast("np.dtype[np.uint8]", np.dtype(np.uint8))
+        return np.dtype(np.uint8)
 
     @property
     def frame_nbytes(self) -> int:

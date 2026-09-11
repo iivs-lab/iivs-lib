@@ -55,7 +55,7 @@ dependencies = [
     # data is this library's primary job, and the Koala previews need its LZW.
     "imagecodecs>=2026.5.10",
     "kaparoo-python>=0.13.1",
-    "numpy>=2.4.6",
+    "numpy>=2.5",
     "tifffile>=2026.6.1",
 ]
 
