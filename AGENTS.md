@@ -106,6 +106,19 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   files, or project-wide collection hooks.
 - `ty` has no plugin system; rely on standard typing (PEP 681
   `dataclass_transform`, `.pyi` stubs), not type-checker plugins.
+- A PEP 695 alias (`type X = ...`) is **not** an annotation: its
+  right-hand side is evaluated lazily, in the defining module's
+  *runtime* namespace, so every name in it needs a runtime import.
+  `from __future__ import annotations` does not help, and a name left
+  under `TYPE_CHECKING` raises `NameError` on first `X.__value__` —
+  which type checking, imports and every other code path never touch,
+  so nothing reports it. Pair each `Literal` alias with a
+  `literal_values` constant beside it (`FLOAT_FORMATS`,
+  `VALIDATION_LEVELS`, `ON_NONFINITE_OPTIONS`): it single-sources the
+  values for runtime membership checks, and because it evaluates at
+  import time, a misplaced import fails loudly instead of lying in
+  wait. `tests/test_type_aliases.py` walks the package and forces every
+  alias, so a new one is covered without being listed.
 - Suppress `ty` errors with `# ty: ignore[<error-name>]` using `ty`'s
   own error names (e.g. `invalid-argument-type`), not mypy/pyright
   codes. Always include the specific code rather than bare
