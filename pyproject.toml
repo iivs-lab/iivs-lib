@@ -59,10 +59,19 @@ dependencies = [
     "tifffile>=2026.6.1",
 ]
 
+[project.scripts]
+iivs = "iivs_cli.main:main"
+
 [project.urls]
 GitHub = "https://www.github.com/iivs-lab/iivs-lib"
 
 [project.optional-dependencies]
+# The `iivs` command line. The library needs none of it, so a consumer who only
+# imports `iivs` never installs it; the command ships either way and says so.
+cli = [
+    "cyclopts>=4.25",
+]
+
 # Torch-native `analysis.pytorch` helpers; floor 2.9 has cp313 / cp314 wheels.
 torch = [
     "torch>=2.9",
@@ -74,7 +83,9 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.16.7",
     "ty>=0.0.80",
-    # Self-referenced extra: exercises the `[torch]` path, single-sourcing its floor.
+    # Self-referenced extras: exercise the `[torch]` and `[cli]` paths, and
+    # single-source their floors.
+    "iivs-lib[cli]",
     "iivs-lib[torch]",
 ]
 
@@ -89,7 +100,7 @@ dev = [
 required-version = ">=0.12.6,<0.13"
 
 [tool.uv.build-backend]
-module-name = "iivs"
+module-name = ["iivs", "iivs_cli"]
 module-root = ""
 # Per-package READMEs are for browsing the tree; the root ships via `project.readme`.
 source-exclude = ["iivs/**/README.md"]
@@ -142,7 +153,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["iivs"]
+source = ["iivs", "iivs_cli"]
 branch = true
 data_file = ".cache/coverage/.coverage"
 
@@ -158,6 +169,7 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "\\.\\.\\.",
     "@overload",
+    "if __name__ == .__main__.:",
 ]
 
 [tool.coverage.html]
@@ -270,6 +282,7 @@ ignore = [
     "ANN",    # test functions don't need full annotations
     "FBT",    # `@pytest.mark.parametrize` uses bool positional args
     "ARG",    # pytest fixtures look like unused arguments
+    "S603",   # the one subprocess call runs `sys.executable` on a literal
 ]
 "scripts/**" = [
     "S603",   # maintainer scripts shell out to the fixed `gh` CLI, not user input
@@ -303,7 +316,7 @@ exempt-modules = ["typing", "typing_extensions"]
 ignore-variadic-names = true
 
 [tool.ruff.lint.isort]
-known-first-party = ["iivs"]
+known-first-party = ["iivs", "iivs_cli"]
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.pycodestyle]
