@@ -118,8 +118,11 @@ branch tracking; the `fail_under` gate lives in `pyproject.toml`
   Re-check a type-checker workaround against the current `ty` before
   copying it.
 - `E501` is disabled, so **`ruff` will not report a line over 88
-  columns**. Check with `awk 'length > 88' $(find iivs -name '*.py')`
-  when you touch prose.
+  columns**. Check with `LC_ALL=C.UTF-8 awk 'length > 88' $(find iivs
+  tests scripts -name '*.py')` when you touch prose. Both parts matter:
+  without the locale `awk` counts bytes, so one non-ASCII character
+  makes a compliant line read a column wider than it is, and `tests/`
+  and `scripts/` hold the same limit as `iivs/`.
 - Line wrapping hides text from `grep`: a phrase can sit across two
   lines and match nothing. Sweep docstrings with the whitespace
   flattened (`re.sub(r"\s+", " ", ...)`), not with a raw pattern.
