@@ -60,15 +60,16 @@ declarative layout spec, **composing** each modality's own subtree (`phase.PHASE
 `phbounds.txt`; pass it to `hierarchy.validate(KOALA_TIMELAPSE_TREE, root)` for a
 structural report.
 
-`search_timelapses(root, *, require=None, name_filter=None, part_filter=None,
-predicate=None, exclude=None, min_depth=1, max_depth=None, ordered=True)`
-returns the `KoalaTimelapse` list for the acquisition folders found under `root`. It
-delegates the walk to `kaparoo`'s `search_dirs` (no manual recursion), so it shares the
-same `name_filter` (on the time-lapse folder's own name), `part_filter`, `exclude`,
-`min_depth` / `max_depth`, and `ordered`. `require` names the root-level markers / files
-that must all be present — one or more of `Phase` / `Intensity` / `Holograms` /
-`timestamps.txt` / `phbounds.txt` (an unknown name raises); None or empty means any one
-modality. `predicate` is a final check on the built **`KoalaTimelapse`** (not its path).
+`search_timelapses(root, *, require=None, predicate=None, **walk)` returns the
+`KoalaTimelapse` list for the acquisition folders found under `root`. It delegates the
+walk to `kaparoo`'s `search_dirs` (no manual recursion), so `**walk` is that walk's
+`WalkKwargs`: `name_filter` (on the time-lapse folder's own name), `part_filter`,
+`exclude`, `descend`, `min_depth` / `max_depth`, and `ordered`. The walk's own path
+`predicate` is not among them, since `require` fills that role here. `require` names the
+root-level markers / files that must all be present — one or more of `Phase` /
+`Intensity` / `Holograms` / `timestamps.txt` / `phbounds.txt` (an unknown name raises);
+None or empty means any one modality. `predicate` is a final check on the built
+**`KoalaTimelapse`** (not its path).
 
 ```python
 from iivs.dhm.data.timelapse import KoalaTimelapse, search_timelapses
