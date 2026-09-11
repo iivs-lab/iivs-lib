@@ -151,7 +151,7 @@ def search_phase_folders(
     predicate: Callable[[PhaseFileFolder], bool] | None = None,
     **walk: Unpack[WalkKwargs],
 ) -> list[PhaseFileFolder]:
-    """Return each time-lapse's quantitative phase folder, whichever format it holds.
+    """Return each time-lapse's quantitative phase folder, whatever its format.
 
     The format-agnostic member of the `search_phase_*_folders` family: each time-lapse
     under `root` holding a `Phase` modality contributes its `Float` source in the first

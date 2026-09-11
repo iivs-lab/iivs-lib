@@ -73,7 +73,8 @@ def main() -> None:
             )
             digest = _sha256(archive)
             if digest != meta["sha256"]:
-                msg = f"{name}: checksum mismatch\n  want {meta['sha256']}\n  got  {digest}"
+                want = meta["sha256"]
+                msg = f"{name}: checksum mismatch\n  want {want}\n  got  {digest}"
                 raise SystemExit(msg)
 
             print(f"{name}: checksum OK, extracting ...")

@@ -89,7 +89,7 @@ def test_forward_is_a_constant_density_over_the_grid():
 
 def test_forward_carries_no_gradient_from_the_image():
     # The density is a fresh constant (torch.full), disconnected from image's graph, so
-    # it does not require grad even when image does -- image can get no gradient from it.
+    # it does not require grad even when image does; image gets no gradient from it.
     image = torch.zeros(2, 2, requires_grad=True)
     density = ProjectedArea(pixel_size=1e-7)(image)
     assert not density.requires_grad

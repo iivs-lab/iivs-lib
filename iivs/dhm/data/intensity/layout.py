@@ -139,7 +139,7 @@ def search_intensity_folders(
     predicate: Callable[[IntensityFileFolder], bool] | None = None,
     **walk: Unpack[WalkKwargs],
 ) -> list[IntensityFileFolder]:
-    """Return each time-lapse's quantitative intensity folder, whichever format it holds.
+    """Return each time-lapse's quantitative intensity folder, whatever its format.
 
     The format-agnostic member of the `search_intensity_*_folders` family: each
     time-lapse under `root` holding an `Intensity` modality contributes its `Float`
