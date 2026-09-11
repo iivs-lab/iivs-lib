@@ -112,6 +112,13 @@ exclude = ["tests/"]
 [tool.ty.terminal]
 error-on-warning = true
 
+[tool.ty.analysis]
+# `==` dispatches to `__eq__`, which any class may answer as it likes, so a true
+# comparison proves nothing about the operand's type; this stops ty narrowing
+# through one. Narrowing within a declared `Literal` set is unaffected, as is
+# `is` / `is not`.
+strict-equality-semantics = true
+
 [tool.pytest.ini_options]
 minversion = "9.0"
 cache_dir = "./.cache/pytest"
