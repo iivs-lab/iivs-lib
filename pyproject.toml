@@ -35,9 +35,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
     "Topic :: Scientific/Engineering :: Physics",
     "Typing :: Typed",
-    # The license is declared via the `license` / `license-files` fields (PEP
-    # 639), so no `License ::` classifier (PyPI rejects declaring both).
-    # See https://pypi.org/classifiers/ for more classifiers
+    # No `License ::` classifier: PyPI rejects it alongside PEP 639 `license`.
 ]
 keywords = [
     "digital-holographic-microscopy",
@@ -53,10 +51,8 @@ keywords = [
     "lyncee-tec",
 ]
 dependencies = [
-    # Core image-handling stack: this library's primary job is reading
-    # microscope image data, so the TIFF decoder (incl. the Koala previews'
-    # LZW, via `imagecodecs`) ships by default -- only `torch`
-    # (`analysis.pytorch`) is an extra.
+    # `imagecodecs` ships by default, not as an extra: reading microscope image
+    # data is this library's primary job, and the Koala previews need its LZW.
     "imagecodecs>=2026.5.10",
     "kaparoo-python>=0.13.1",
     "numpy>=2.4.6",
@@ -67,15 +63,10 @@ dependencies = [
 GitHub = "https://www.github.com/iivs-lab/iivs-lib"
 
 [project.optional-dependencies]
-# Torch-native `analysis.pytorch` helpers. Floor 2.9 keeps a recent torch with
-# wheels across the supported Pythons (cp313 / cp314); pairs with NumPy 2.x.
+# Torch-native `analysis.pytorch` helpers; floor 2.9 has cp313 / cp314 wheels.
 torch = [
     "torch>=2.9",
 ]
-
-# ========================== #
-#      [tool.*] Sections     #
-# ========================== #
 
 [dependency-groups]
 dev = [
@@ -83,20 +74,20 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.16.7",
     "ty>=0.0.80",
-    # Self-referenced extra: test the `[torch]` `analysis.pytorch` runtime path
-    # and keep its floor single-sourced.
+    # Self-referenced extra: exercises the `[torch]` path, single-sourcing its floor.
     "iivs-lib[torch]",
 ]
+
+# ========================== #
+#      [tool.*] Sections     #
+# ========================== #
 
 [tool.uv.build-backend]
 module-name = "iivs"
 module-root = ""
-# Per-package READMEs are for browsing the tree only; the root README still
-# ships via `project.readme`.
+# Per-package READMEs are for browsing the tree; the root ships via `project.readme`.
 source-exclude = ["iivs/**/README.md"]
 wheel-exclude = ["iivs/**/README.md"]
-# See the following documentation for more information
-# https://docs.astral.sh/uv/concepts/build-backend/
 
 # Publish targets: `uv publish --index testpypi` (staging), then `--index pypi`.
 # `testpypi` is `explicit` so it stays out of dependency resolution.
@@ -120,9 +111,6 @@ exclude = ["tests/"]
 
 [tool.ty.terminal]
 error-on-warning = true
-# See the following documentation for more information
-# https://docs.astral.sh/ty/reference/configuration/
-# https://docs.astral.sh/ty/reference/rules/
 
 [tool.pytest.ini_options]
 minversion = "9.0"
@@ -139,9 +127,6 @@ addopts = [
 markers = [
     "realdata: exercises a real Koala sample; opt-in by placing samples under tests/fixtures/ (see tests/conftest.py)",
 ]
-# See the following documentation for more information
-# https://docs.pytest.org/en/stable/reference/customize.html
-# https://docs.pytest.org/en/stable/reference/reference.html#configuration-options
 
 [tool.coverage.run]
 source = ["iivs"]
@@ -161,7 +146,6 @@ exclude_lines = [
     "\\.\\.\\.",
     "@overload",
 ]
-# omit = ["iivs/types.py"]  # e.g. type-alias-only modules
 
 [tool.coverage.html]
 directory = ".cache/coverage/htmlcov"
@@ -179,7 +163,6 @@ extend-exclude = [
 ]
 line-length = 88
 indent-width = 4
-# preview = true  # Uncomment to enable unstable features
 
 [tool.ruff.format]
 # The formatter reaches Python blocks inside Markdown from 0.16 on. The README
@@ -190,7 +173,6 @@ quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
 line-ending = "auto"
-# preview = true  # Uncomment to enable unstable formatter features
 
 [tool.ruff.lint]
 select = [
@@ -256,14 +238,6 @@ select = [
     "NPY",   # NumPy-specific rules
 ]
 ignore = [
-    # Complexity rules (often too strict for practical code)
-    "PLR0904",  # too-many-public-methods
-    "PLR0911",  # too-many-return-statements
-    "PLR0912",  # too-many-branches
-    "PLR0913",  # too-many-arguments
-    "PLR0915",  # too-many-statements
-    "PLR0916",  # too-many-boolean-expressions
-    "PLR2004",  # magic-value-comparison
     # Exception handling
     "TRY003",   # raise-vanilla-args
     # Formatter conflicts (handled by ruff format)
@@ -296,9 +270,6 @@ mypy-init-return = true
 suppress-dummy-args = true
 suppress-none-returning = true
 
-[tool.ruff.lint.flake8-bandit]
-# check-typed-exception = true
-
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = true
 mark-parentheses = true
@@ -325,28 +296,25 @@ required-imports = ["from __future__ import annotations"]
 [tool.ruff.lint.pycodestyle]
 ignore-overlong-task-comments = true
 
-[tool.ruff.lint.pydoclint]
-ignore-one-line-docstrings = true
-
 # Following sections use default values and are omitted (ruff v0.16.7):
 # - tool.ruff.analyze
+# - tool.ruff.lint.flake8-bandit
 # - tool.ruff.lint.flake8-boolean-trap
 # - tool.ruff.lint.flake8-bugbear
 # - tool.ruff.lint.flake8-builtins
 # - tool.ruff.lint.flake8-comprehensions
 # - tool.ruff.lint.flake8-copyright
-# - tool.ruff.lint.flake8-datetimez
 # - tool.ruff.lint.flake8-errmsg
 # - tool.ruff.lint.flake8-gettext
 # - tool.ruff.lint.flake8-implicit-str-concat
 # - tool.ruff.lint.flake8-import-conventions
-# - tool.ruff.lint.flake8-no-pep420
 # - tool.ruff.lint.flake8-self
 # - tool.ruff.lint.flake8-tidy-imports
 # - tool.ruff.lint.mccabe
 # - tool.ruff.lint.pep8-naming
+# - tool.ruff.lint.pydoclint
+# - tool.ruff.lint.pydocstyle
 # - tool.ruff.lint.pyflakes
 # - tool.ruff.lint.pylint
-# - tool.ruff.lint.pydocstyle
 # - tool.ruff.lint.pyupgrade
 # - tool.ruff.lint.ruff
