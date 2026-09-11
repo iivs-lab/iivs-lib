@@ -82,6 +82,12 @@ dev = [
 #      [tool.*] Sections     #
 # ========================== #
 
+[tool.uv]
+# Holds `uv` itself to the range `build-system.requires` pins the backend to, so a
+# uv outside it fails here instead of building with a backend it does not match.
+# Move both together.
+required-version = ">=0.12.6,<0.13"
+
 [tool.uv.build-backend]
 module-name = "iivs"
 module-root = ""
